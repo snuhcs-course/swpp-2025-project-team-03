@@ -1,7 +1,7 @@
-# extract_features.py
 import argparse
 import json
 import numpy as np
+import pyworld as pw
 import librosa
 
 
@@ -12,7 +12,7 @@ def moving_average(x, k):
 
 
 def interp_internal_nans(x: np.ndarray) -> np.ndarray:
-    """NaN을 내부 구간에서만 선형보간, 양끝의 NaN은 그대로 남겨둠(외삽하지 않음)"""
+    """NaN을 내부 구간에서만 선형보간, 양끝 NaN은 그대로 남겨둠"""
     xi = x.copy()
     n = len(xi)
     if n == 0:
@@ -29,22 +29,21 @@ def interp_internal_nans(x: np.ndarray) -> np.ndarray:
     return xi
 
 
-def compute_f0(y, sr, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, use_pyin=True):
-    if use_pyin:
-        f0, voiced_flag, _ = librosa.pyin(
-            y, fmin=fmin, fmax=fmax, sr=sr, frame_length=2048, hop_length=hop, center=True
-        )  # noqa: F841
-        # pYIN은 무성 프레임을 NaN으로 부여
-    else:
-        f0 = librosa.yin(y, fmin=fmin, fmax=fmax, sr=sr, frame_length=2048, hop_length=hop, center=True)
-        voiced_flag = np.isfinite(f0) & (f0 > 0)  # noqa: F841
+def compute_f0(y, sr, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0):
+    # hop(ms) 변환
+    frame_period = hop / sr * 1000.0
 
-    t = librosa.frames_to_time(np.arange(len(f0)), sr=sr, hop_length=hop)
+    # pyworld dio + stonemask
+    _f0, t = pw.dio(y.astype(np.float64), sr, f0_floor=fmin, f0_ceil=fmax, frame_period=frame_period)
+    f0 = pw.stonemask(y.astype(np.float64), _f0, t, sr)
+
+    # 0인 구간은 무성으로 보고 NaN 처리
+    f0 = np.where(f0 > 0, f0, np.nan)
 
     # 내부 구간을 보간
     f0i = interp_internal_nans(f0)
 
-    # 경계 근접 프레임 제거 (fmin/fmax의 5% 여유)
+    # 경계 필터 (fmin/fmax 5%)
     lower = fmin * 1.05
     upper = fmax * 0.95
     valid = np.isfinite(f0i) & (f0i > lower) & (f0i < upper)
@@ -123,7 +122,7 @@ def rms_features(
     speech_vals = np.maximum(speech_vals, floor)
 
     if robust:
-        min_r = float(np.percentile(speech_vals, 10))  # p10
+        min_r = float(np.percentile(speech_vals, 10))
     else:
         min_r = float(np.min(speech_vals))
 
@@ -137,7 +136,7 @@ def extract_features(path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_w
     sil = silence_features(y, sr, top_db=top_db)
     intervals = sil["intervals"]
     rms = rms_features(y, sr, intervals=intervals, hop=hop, robust=robust)
-    f = compute_f0(y, sr, fmin=fmin, fmax=fmax, hop=hop, smooth_ms=smooth_ms, use_pyin=True)
+    f = compute_f0(y, sr, fmin=fmin, fmax=fmax, hop=hop, smooth_ms=smooth_ms)
     out = dict(**{k: v for k, v in sil.items() if k != "intervals"}, **rms, sr=int(sr))
 
     if f.get("f0") is None or len(f["f0"]) < 2:
@@ -184,7 +183,7 @@ if __name__ == "__main__":
     ap.add_argument("--fmax", type=float, default=600.0)
     ap.add_argument("--hop", type=int, default=256)
     ap.add_argument("--smooth_ms", type=float, default=30.0)
-    ap.add_argument("--end_win_s", type=float, default=2)
+    ap.add_argument("--end_win_s", type=float, default=3.0)
     ap.add_argument("--top_db", type=float, default=40.0)
     ap.add_argument("--robust", action="store_true", help="use percentile stats (p5/p95) for f0 min/max")
     args = ap.parse_args()
