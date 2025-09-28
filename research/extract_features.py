@@ -80,26 +80,70 @@ def silence_features(y, sr, top_db=40):
     speaking = sum((e - s) / sr for s, e in intervals)
     silence = max(0.0, total - speaking)
     return dict(
-        total_silence_sec=float(silence), percent_silence=float((silence / total * 100.0) if total > 0 else np.nan)
+        total_silence_sec=float(silence),
+        percent_silence=float((silence / total * 100.0) if total > 0 else np.nan),
+        intervals=intervals,
     )
 
 
-def rms_features(y, frame_length=2048, hop=256):
-    rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop, center=True).ravel()
-    return dict(min_rms=float(np.min(rms)) if rms.size else np.nan)
+def rms_features(
+    y, sr, intervals=None, frame_length=2048, hop=256, center=True, robust=False, eps=1e-8, noise_gain=1.5
+):
+    # primitive RMS
+    rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop, center=center).ravel()
+    n_frames = len(rms)
+    if n_frames == 0:
+        return dict(min_rms=np.nan, median_rms=np.nan, noise_rms=np.nan)
+
+    # center timestamps of frame
+    t = librosa.frames_to_time(np.arange(n_frames), sr=sr, hop_length=hop)
+
+    if intervals is None or len(intervals) == 0:
+        speech_mask = np.ones(n_frames, dtype=bool)
+    else:
+        speech_mask = np.zeros(n_frames, dtype=bool)
+        for s, e in intervals:
+            ts = s / sr
+            te = e / sr
+            speech_mask |= (t >= ts) & (t <= te)
+
+    # calculate noise rms
+    nonspeech = (~speech_mask) & np.isfinite(rms)
+    if nonspeech.any():
+        noise_rms = float(np.median(rms[nonspeech]))
+    else:
+        noise_rms = float(np.percentile(rms[np.isfinite(rms)], 5))
+
+    # 발화 프레임 추출 + 노이즈 하한 적용
+    speech_vals = rms[speech_mask & np.isfinite(rms)]
+    if speech_vals.size == 0:
+        return dict(min_rms=np.nan, median_rms=np.nan, noise_rms=noise_rms)
+
+    floor = max(eps, noise_rms * noise_gain)
+    speech_vals = np.maximum(speech_vals, floor)
+
+    if robust:
+        min_r = float(np.percentile(speech_vals, 10))  # p10
+    else:
+        min_r = float(np.min(speech_vals))
+
+    med_r = float(np.median(speech_vals))
+
+    return dict(min_rms=min_r, median_rms=med_r, noise_rms=noise_rms)
 
 
 def extract_features(path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_win_s=0.6, top_db=40, robust=False):
     y, sr = librosa.load(path, sr=None, mono=True)
     sil = silence_features(y, sr, top_db=top_db)
-    rms = rms_features(y, hop=hop)
+    intervals = sil["intervals"]
+    rms = rms_features(y, sr, intervals=intervals, hop=hop, robust=robust)
     f = compute_f0(y, sr, fmin=fmin, fmax=fmax, hop=hop, smooth_ms=smooth_ms, use_pyin=True)
-    out = dict(**sil, **rms, sr=int(sr))
+    out = dict(**{k: v for k, v in sil.items() if k != "intervals"}, **rms, sr=int(sr))
 
     if f.get("f0") is None or len(f["f0"]) < 2:
         out.update(
             dict(
-                abs_slope_f0_st_per_s=np.nan,
+                tot_slope_f0_st_per_s=np.nan,
                 end_slope_f0_st_per_s=np.nan,
                 min_f0_hz=np.nan,
                 max_f0_hz=np.nan,
@@ -124,7 +168,7 @@ def extract_features(path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_w
     out["range_f0_hz"] = float(out["max_f0_hz"] - out["min_f0_hz"])
 
     # calculate slope
-    out["abs_slope_f0_st_per_s"] = float(abs(linear_slope(t, f0_st)))
+    out["tot_slope_f0_st_per_s"] = float(linear_slope(t, f0_st))
     if len(t) >= 2:
         mask = t >= (t[-1] - end_win_s)
         out["end_slope_f0_st_per_s"] = float(linear_slope(t[mask], f0_st[mask]))
