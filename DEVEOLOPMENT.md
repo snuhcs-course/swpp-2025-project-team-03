@@ -96,3 +96,46 @@ python manage.py createsuperuser
 # Run development server
 python manage.py runserver
 ```
+
+# Research
+
+## 1. Initial Setup
+
+### 1. Create and Activate Virtual Environment (venv)
+
+```bash
+# Navigate to the project backend directory
+cd research
+
+# Create virtual environment
+python -m venv .venv
+python3 -m venv .venv # on macOS
+
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+
+# On Windows:
+# On cmd terminal
+.venv\Scripts\activate.bat
+
+# On git bash
+source .venv/Scripts/activate
+```
+
+### 2. Install Dependencies from requirements.txt
+
+```bash
+# Make sure virtual environment is activated
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+## 2. Run
+
+Prepare sample wav file and run **extract_features.py** to extract verbal features  
+Note that **research/data** directory is included in **.gitignore**
+
+```bash
+python extract_features.py data/certain.wav
+```
