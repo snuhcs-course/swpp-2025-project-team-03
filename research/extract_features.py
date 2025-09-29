@@ -3,6 +3,8 @@ import json
 import numpy as np
 import pyworld as pw
 import librosa
+import soundfile as sf
+import time
 
 
 def moving_average(x, k):
@@ -85,6 +87,29 @@ def silence_features(y, sr, top_db=40):
     )
 
 
+def silence_features_fast(y, sr, frame_length=1024, hop_length=512, top_db=40):
+    # rms window
+    frames = np.lib.stride_tricks.sliding_window_view(y, frame_length)[::hop_length]
+    rms = np.sqrt(np.mean(frames**2, axis=1))
+
+    # convert to db
+    ref = np.max(rms) + 1e-10
+    db = 20 * np.log10(rms / ref + 1e-10)
+
+    # threshold filtering
+    speech_mask = db > -top_db
+    speaking = speech_mask.sum() * hop_length / sr
+
+    total = len(y) / sr
+    silence = max(0.0, total - speaking)
+
+    return dict(
+        total_silence_sec=float(silence),
+        percent_silence=float((silence / total * 100.0) if total > 0 else np.nan),
+        # no intervals provided
+    )
+
+
 def rms_features(
     y, sr, intervals=None, frame_length=2048, hop=256, center=True, robust=False, eps=1e-8, noise_gain=1.5
 ):
@@ -132,12 +157,25 @@ def rms_features(
 
 
 def extract_features(path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_win_s=0.6, top_db=40, robust=False):
-    y, sr = librosa.load(path, sr=None, mono=True)
-    sil = silence_features(y, sr, top_db=top_db)
-    intervals = sil["intervals"]
-    rms = rms_features(y, sr, intervals=intervals, hop=hop, robust=robust)
+    start_time = time.time()
+    y, sr = sf.read(path, dtype="float32", always_2d=False)
+    end_time = time.time()
+    print(f"Audio loaded in {end_time - start_time:.4f}sec")
+
+    start_time = time.time()
+    sil = silence_features_fast(y, sr, top_db=top_db)
+    end_time = time.time()
+    print(f"VAD in {end_time - start_time:.4f}sec")
+
+    # # skip rms features
+    # rms = rms_features(y, sr, intervals=intervals, hop=hop, robust=robust)
+
+    start_time = time.time()
     f = compute_f0(y, sr, fmin=fmin, fmax=fmax, hop=hop, smooth_ms=smooth_ms)
-    out = dict(**{k: v for k, v in sil.items() if k != "intervals"}, **rms, sr=int(sr))
+    end_time = time.time()
+    print(f"f0 in {end_time - start_time:.4f}sec")
+
+    out = dict(**{k: v for k, v in sil.items() if k != "intervals"}, sr=int(sr))
 
     if f.get("f0") is None or len(f["f0"]) < 2:
         out.update(
@@ -188,7 +226,11 @@ if __name__ == "__main__":
     ap.add_argument("--robust", action="store_true", help="use percentile stats (p5/p95) for f0 min/max")
     args = ap.parse_args()
 
+    start_time = time.time()
     feats = extract_features(
         args.wav_path, args.fmin, args.fmax, args.hop, args.smooth_ms, args.end_win_s, args.top_db, robust=args.robust
     )
     print(json.dumps(feats, ensure_ascii=False, indent=2))
+    end_time = time.time()
+
+    print(f"time consumed: {end_time - start_time:.4f} sec")
