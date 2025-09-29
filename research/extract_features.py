@@ -1,10 +1,11 @@
 import argparse
 import json
+import time
+
+import librosa
 import numpy as np
 import pyworld as pw
-import librosa
 import soundfile as sf
-import time
 
 
 def moving_average(x, k):
@@ -215,7 +216,7 @@ def extract_features(path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_w
 
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="Extract prosodic features for (un)certainty from a WAV file.")
+    ap = argparse.ArgumentParser(description="Extract prosodic features for uncertainty from a WAV file.")
     ap.add_argument("wav_path")
     ap.add_argument("--fmin", type=float, default=50.0)
     ap.add_argument("--fmax", type=float, default=600.0)
