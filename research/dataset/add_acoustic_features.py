@@ -1,7 +1,7 @@
 import json
 import os
 
-from research.extract_features import extract_features
+from research.extract_acoustic_features import extract_features
 
 
 def extract_features_from_audio(json_path, audio_root="data"):
