@@ -28,3 +28,15 @@ venv.bak/
 
 # ruff cache
 .ruff_cache/
+
+# gemini cli file
+GEMINI.md
+.gemini/
+.gemini-cache/
+.gemini_history
+gemini.log
+gemini_output/
+credentials.json
+
+# model file
+model.joblib
