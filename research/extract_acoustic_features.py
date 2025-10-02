@@ -160,6 +160,9 @@ def rms_features(
 def extract_features(path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_win_s=0.6, top_db=40, robust=False):
     start_time = time.time()
     y, sr = sf.read(path, dtype="float32", always_2d=False)
+    if y.ndim > 1:
+        y = y[:, 0]
+
     end_time = time.time()
     print(f"Audio loaded in {end_time - start_time:.4f}sec")
 
