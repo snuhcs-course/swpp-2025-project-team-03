@@ -219,3 +219,5 @@ __marimo__/
 
 # user defined folder
 data/
+train/
+valid/
