@@ -1,11 +1,12 @@
-# save as add_semantic_features_inplace.py
-import os
-import json
 import argparse
+import json
+import os
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from extract_semantic_features import extract_semantic_features
 from sentence_transformers import SentenceTransformer
-from extract_semantic_features import extract_semantic_features 
+
 
 def add_semantic_features_inplace(
     input_root: str = "dataset",
@@ -29,7 +30,7 @@ def add_semantic_features_inplace(
                 continue
 
             json_path = os.path.join(dirpath, filename)
-            
+
             try:
                 # 원본 로드
                 with open(json_path, "r", encoding="utf-8") as f:
@@ -38,8 +39,8 @@ def add_semantic_features_inplace(
                 # script 유무 확인은 extract_semantic_features에서 처리
                 # dict를 그대로 넘기면 내부에서 data['script'] 사용
                 feats = extract_semantic_features(
-                    data,           # dict 입력 지원
-                    model=model,    # 이미 로드된 모델 재사용
+                    data,  # dict 입력 지원
+                    model=model,  # 이미 로드된 모델 재사용
                     prefix=prefix,
                 )
 
@@ -58,7 +59,7 @@ def add_semantic_features_inplace(
                 n_ok += 1
 
             except ValueError as ve:
-                # 보통 'script 없음' 같은 케이스
+                #'script 없음' 같은 케이스
                 print(f"⚠️ Skip (no script?): {json_path} ({ve})")
                 n_skip += 1
             except Exception as e:
@@ -66,6 +67,7 @@ def add_semantic_features_inplace(
                 n_err += 1
 
     print(f"\n[SUMMARY] ok={n_ok}, skip={n_skip}, err={n_err}")
+
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Add SBERT-based semantic features in-place to JSON files under 'label/'.")
