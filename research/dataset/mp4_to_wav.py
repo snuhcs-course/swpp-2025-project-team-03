@@ -1,3 +1,4 @@
+import argparse
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -12,7 +13,8 @@ def convert_single(mp4_path: str):
         audio.write_audiofile(wav_path, logger=None)
         audio.close()
         video.close()
-        return f"✅ Done: {mp4_path}"
+        os.remove(mp4_path)  # MP4 파일 삭제
+        return f"✅ Converted and removed: {mp4_path}"
     except Exception as e:
         return f"❌ Failed: {mp4_path} ({e})"
 
@@ -41,6 +43,18 @@ def convert_all(root_dir=".", max_workers=4):
 
 
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description="Convert every mp4 files to wav files from all subdirectory")
+    ap.add_argument("--input_root", default=".", help="root folder to search")
+    args = ap.parse_args()
+
+    # 사용자에게 실행 여부 확인
+    user_input = input(
+        f"All .mp4 files in '{os.path.abspath(args.input_root)}' and its subdirectories will be converted to .wav. Proceed? (y/N): "
+    )
+    if user_input.lower() != "y":
+        print("Conversion cancelled.")
+        exit()
+
     # 현재 디렉토리 이하의 모든 mp4 변환
     # CPU 코어 개수에 맞게 max_workers 조절
-    convert_all(".", max_workers=4)
+    convert_all(args.input_root, max_workers=4)
