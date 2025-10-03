@@ -43,3 +43,4 @@ dataset/
 - mp42wav.py: convert mp4 from every sub directory to wav
 - label_formatter.py: trim labels from label_origin/ and save them to label_trim/
 - add_acoustics.py: add acoustic features to the existing label in label_trim/ and save them to label/
+- add_semantic_features.py : add semantic features to the existing label in label/
