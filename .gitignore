@@ -1,0 +1,42 @@
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# build & cache
+*.log
+*.tmp
+__pycache__/
+*$py.class
+*.py[codz]
+*.pyc
+build/
+dist/
+
+# Environments
+.env
+.envrc
+.venv
+.venv/
+env/
+venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ruff cache
+.ruff_cache/
+
+# gemini cli file
+GEMINI.md
+.gemini/
+.gemini-cache/
+.gemini_history
+gemini.log
+gemini_output/
+credentials.json
+
+# model file
+model.joblib

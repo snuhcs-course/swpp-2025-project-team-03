@@ -1,20 +1,21 @@
-# SNU-SWPP-Template
+# VoiceTutor
 
-You can use the README file to showcase and promote your mobile app. The template provided below is just a starting point. Feel free to craft your README as you see fit. 
+![Logo](https://raw.githubusercontent.com/snuhcs-course/swpp-2025-project-team-03/main/docs/images/logo.png)
 
-Please note that the README doesn't affect your grade and is not included in documentation(Wiki).
-
-# [Your Application Name]
-
-[Short application description here]
+VoiceTutor is an AI-powered learning application that helps students strengthen their understanding by **speaking out loud**.  
+Through conversational review sessions, adaptive quizzes, and multimodal analysis (ASR, prosody, and reasoning), the app evaluates not just answers but **conceptual understanding**.  
+It is designed for students, teachers, and parents who want deeper insight into learning progress beyond traditional test scores.
 
 ![Application Screenshot](path_to_screenshot.png)
 
 ## Features
 
-- Feature 1: Brief description
-- Feature 2: Brief description
-- ...
+- **Conversational Review**: Short, AI-guided verbal practice sessions with open-ended questions.  
+- **Adaptive Quizzes**: Automatically generated follow-up questions tailored to each student’s weak points.  
+- **Multimodal Analysis**: Evaluation of content accuracy, reasoning structure, and supportive delivery metrics (speech rate, pauses, intonation).  
+- **Instant Feedback**: Real-time hints and corrective prompts during spoken responses.  
+- **Progress Tracking**: Visual summaries of concept mastery and learning trends over time.  
+- **Cross-Platform Access**: Designed for mobile and web for flexible use in classrooms or at home.  
 
 ## Getting Started
 
@@ -25,4 +26,4 @@ Please note that the README doesn't affect your grade and is not included in doc
 
 ### Installation
 
-[Installation link here]
+(tbu) [Installation link]

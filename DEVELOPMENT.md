@@ -96,3 +96,53 @@ python manage.py createsuperuser
 # Run development server
 python manage.py runserver
 ```
+
+# Research
+
+## 1. Initial Setup
+
+### 1. Create and Activate Virtual Environment (venv)
+
+```bash
+# Navigate to the project backend directory
+cd research
+
+# Create virtual environment
+python -m venv .venv
+python3 -m venv .venv # on macOS
+
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+
+# On Windows:
+# On cmd terminal
+.venv\Scripts\activate.bat
+
+# On git bash
+source .venv/Scripts/activate
+```
+
+### 2. Install Dependencies from requirements.txt
+
+```bash
+# Make sure virtual environment is activated
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+## 2. Run
+
+Prepare sample wav file and run **extract_acoustic_features.py** to extract acoustic features  
+Run **extract_semantic_features.py** to extract semantic features  
+Note that **research/data** directory is included in **.gitignore**
+
+Download public speech dataset (see **research/dataset/README.md**)  
+dataset folder should contain 'train' and 'valid' folder  
+Run **train.py** to fit
+
+```bash
+python extract_acoustic_features.py {wav_file_path}
+python extract_semantic_features.py {json_file_path}
+python train.py {dataset_folder}
+```
