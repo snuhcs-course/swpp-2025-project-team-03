@@ -1,21 +1,18 @@
-# save as semantic_features.py
+import json
 import os
 import re
-import json
 import unicodedata
-from typing import List, Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-# ---------------------------
-# 문장 분할/전처리
-# ---------------------------
 def _normalize(s: str) -> str:
     s = unicodedata.normalize("NFC", s)
     return re.sub(r"\s+", " ", s).strip()
+
 
 def _split_sentences_ko(text: str) -> List[str]:
     t = _normalize(text)
@@ -23,12 +20,11 @@ def _split_sentences_ko(text: str) -> List[str]:
     return [p.strip() for p in parts if p.strip()]
 
 
-
 def _semantic_1d_features_from_script(
     script_text: str,
     model: SentenceTransformer,
     high_thr: float = 0.85,
-    low_thr:  float = 0.50,
+    low_thr: float = 0.50,
 ) -> Dict[str, float]:
     sents = _split_sentences_ko(script_text)
     T = len(sents)
@@ -67,10 +63,10 @@ def _semantic_1d_features_from_script(
     dist_to_centroid = np.sqrt(np.maximum(0.0, 2.0 - 2.0 * np.clip(embs @ centroid, -1.0, 1.0)))
 
     # 앞/중/끝 세그먼트 내부/간
-    idx1, idx2 = int(T * 1/3), int(T * 2/3)
+    idx1, idx2 = int(T * 1 / 3), int(T * 2 / 3)
     segs = [
         embs[:idx1] if idx1 > 0 else embs[:1],
-        embs[idx1:idx2] if idx2 - idx1 > 0 else embs[idx1:idx1+1],
+        embs[idx1:idx2] if idx2 - idx1 > 0 else embs[idx1 : idx1 + 1],
         embs[idx2:] if T - idx2 > 0 else embs[-1:],
     ]
     intra_list, seg_centroids = [], []
@@ -91,26 +87,31 @@ def _semantic_1d_features_from_script(
             inter_cs.append(float(np.dot(seg_centroids[i], seg_centroids[j])))
     inter_div = 1.0 - float(np.mean(inter_cs)) if inter_cs else 0.0
 
-    def pct(x, q): return float(np.percentile(x, q))
+    def pct(x, q):
+        return float(np.percentile(x, q))
+
     return {
-        "adj_sim_mean": float(np.mean(adj_sim)),
-        "adj_sim_std": float(np.std(adj_sim)),
-        "adj_sim_p10": pct(adj_sim, 10),
-        "adj_sim_p50": pct(adj_sim, 50),
-        "adj_sim_p90": pct(adj_sim, 90),
-        "adj_sim_frac_high": float(np.mean(adj_sim >= high_thr)),
-        "adj_sim_frac_low": float(np.mean(adj_sim <= low_thr)),
-        "topic_path_len": topic_path_len,
-        "dist_to_centroid_mean": float(np.mean(dist_to_centroid)),
-        "dist_to_centroid_std": float(np.std(dist_to_centroid)),
-        "coherence_score": float(1.0 - np.mean(dist_to_centroid)),
-        "intra_coh": float(np.mean(intra_list)),
-        "inter_div": inter_div,
+        # 문장 간 의미적 연결성 (adjacent sentence similarity)
+        "adj_sim_mean": float(np.mean(adj_sim)),  # 인접 문장 유사도의 평균
+        "adj_sim_std": float(np.std(adj_sim)),  # 인접 문장 유사도의 표준편차
+        "adj_sim_p10": pct(adj_sim, 10),  # 인접 문장 유사도의 10% 분위값
+        "adj_sim_p50": pct(adj_sim, 50),  # 인접 문장 유사도의 중앙값
+        "adj_sim_p90": pct(adj_sim, 90),  # 인접 문장 유사도의 90% 분위값
+        "adj_sim_frac_high": float(np.mean(adj_sim >= high_thr)),  # 높은 유사도(>=high_thr) 비율
+        "adj_sim_frac_low": float(np.mean(adj_sim <= low_thr)),  # 낮은 유사도(<=low_thr) 비율
+        # 주제 전환 / 전반적 일관성 관련
+        "topic_path_len": topic_path_len,  # 인접 문장 간 의미 거리 누적 길이 (길수록 주제 전환 많음)
+        "dist_to_centroid_mean": float(np.mean(dist_to_centroid)),  # 전체 문장 중심과의 평균 거리
+        "dist_to_centroid_std": float(np.std(dist_to_centroid)),  # 전체 문장 중심과의 거리 분산
+        "coherence_score": float(1.0 - np.mean(dist_to_centroid)),  # 문서 전반의 의미적 응집도 (높을수록 일관성 높음)
+        # 구간 내부/간 응집도
+        "intra_coh": float(np.mean(intra_list)),  # 각 구간(앞/중/끝) 내부의 평균 응집도
+        "inter_div": inter_div,  # 구간 간 중심 벡터의 다양성 (높을수록 주제 차이가 큼)
     }
 
 
 # ---------------------------
-# 외부에서 쓰기 좋은 래퍼 함수
+# add_sementic_features.py에서 재사용하는 함수
 # ---------------------------
 def extract_semantic_features(
     script_or_json: Union[str, dict],
@@ -191,11 +192,12 @@ def extract_semantic_features(
 
 if __name__ == "__main__":
     import argparse
+
     ap = argparse.ArgumentParser(description="Extract semantic 1D features from script text or JSON(file).")
     ap.add_argument("input", help="텍스트 자체, .txt 파일, 또는 .json(안의 'script' 사용)")
     ap.add_argument("--model_name", default="snunlp/KR-SBERT-V40K-klueNLI-augSTS")
     ap.add_argument("--high_thr", type=float, default=0.85)
-    ap.add_argument("--low_thr",  type=float, default=0.50)
+    ap.add_argument("--low_thr", type=float, default=0.50)
     ap.add_argument("--prefix", default=None, help="결과 키 접두사 (예: sem_)")
     args = ap.parse_args()
 
