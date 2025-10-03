@@ -157,7 +157,9 @@ def rms_features(
     return dict(min_rms=min_r, median_rms=med_r, noise_rms=noise_rms)
 
 
-def extract_features(path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_win_s=0.6, top_db=40, robust=False):
+def extract_acoustic_features(
+    path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_win_s=0.6, top_db=40, robust=False
+):
     start_time = time.time()
     y, sr = sf.read(path, dtype="float32", always_2d=False)
     if y.ndim > 1:
@@ -231,7 +233,7 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     start_time = time.time()
-    feats = extract_features(
+    feats = extract_acoustic_features(
         args.wav_path, args.fmin, args.fmax, args.hop, args.smooth_ms, args.end_win_s, args.top_db, robust=args.robust
     )
     print(json.dumps(feats, ensure_ascii=False, indent=2))

@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 
@@ -54,31 +55,40 @@ def convert_json(data: dict) -> dict:
     }
 
 
-def batch_convert(input_root="label_origin", output_root="label"):
+def batch_convert_inplace(input_root="label", save_backup=False):
+    """
+    input_root 밑의 모든 JSON 파일을 순회하면서 포맷을 변환하고,
+    같은 파일에 덮어쓰기 (in-place)
+    """
     for dirpath, _, filenames in os.walk(input_root):
         for filename in filenames:
             if filename.lower().endswith(".json"):
-                in_path = os.path.join(dirpath, filename)
-
-                # 출력 경로: input_root 부분을 output_root로 바꿔줌
-                rel_path = os.path.relpath(in_path, input_root)
-                out_path = os.path.join(output_root, rel_path)
-
-                os.makedirs(os.path.dirname(out_path), exist_ok=True)
+                json_path = os.path.join(dirpath, filename)
 
                 try:
-                    with open(in_path, "r", encoding="utf-8") as f:
+                    with open(json_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
+
+                    # 백업 옵션
+                    if save_backup:
+                        backup_path = json_path + ".bak"
+                        with open(backup_path, "w", encoding="utf-8") as bf:
+                            json.dump(data, bf, ensure_ascii=False, indent=2)
 
                     new_data = convert_json(data)
 
-                    with open(out_path, "w", encoding="utf-8") as f:
+                    with open(json_path, "w", encoding="utf-8") as f:
                         json.dump(new_data, f, ensure_ascii=False, indent=2)
 
-                    print(f"✅ Converted: {in_path} -> {out_path}")
+                    print(f"✅ Formatted and updated: {json_path}")
                 except Exception as e:
-                    print(f"❌ Failed: {in_path} ({e})")
+                    print(f"❌ Failed: {json_path} ({e})")
 
 
 if __name__ == "__main__":
-    batch_convert("label_origin", "label_trim")
+    parser = argparse.ArgumentParser(description="Format JSON label files in-place.")
+    parser.add_argument("--input_root", type=str, default="label", help="Root directory of JSON files to format.")
+    parser.add_argument("--backup", action="store_true", help="Create a .bak backup before overwriting.")
+    args = parser.parse_args()
+
+    batch_convert_inplace(input_root=args.input_root, save_backup=args.backup)
