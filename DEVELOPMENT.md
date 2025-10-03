@@ -136,6 +136,11 @@ pip install -r requirements.txt
 Prepare sample wav file and run **extract_features.py** to extract verbal features  
 Note that **research/data** directory is included in **.gitignore**
 
+Download public speech dataset (see **research/dataset/README.md**)  
+dataset folder should contain 'train' and 'valid' folder  
+Run **train.py** to fit  
+
 ```bash
-python extract_features.py data/certain.wav
+python extract_features.py {wav_file_path}
+python train.py {dataset_folder}
 ```
