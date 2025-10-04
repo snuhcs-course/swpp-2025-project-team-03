@@ -198,6 +198,9 @@ We used the following environment configuration:
 
 ## Demo 1-(b): feature extraction / naive evaluation model
 
+[Feature Extraction Demo Video](demo/videos/preprocess_dataset.mp4)  
+[Train Demo Video](demo/videos/train_basic.mp4)
+
 As part of VoiceTutor, we implemented an acoustic/semantic feature extractor. This module provides useful features to evaluate student's speech.
 
 <details>
@@ -306,15 +309,17 @@ You can preprocess dataset using commands like below.
 
 ```bash
 # Command Examples
-python mp4_to_wav.py --input_root "dataset/train"
-python label_formatter.py --input_root "dataset/train/label"
-python add_acoustic_features.py --input_root "dataset/train"
-python add_semantic_features.py --input_root "dataset/train/label"
+cd dataset
 
-python mp4_to_wav.py --input_root "dataset/valid"
-python label_formatter.py --input_root "dataset/valid/label"
-python add_acoustic_features.py --input_root "dataset/valid"
-python add_semantic_features.py --input_root "dataset/valid/label"
+python mp4_to_wav.py --input_root "sample_dataset/train"
+python label_formatter.py --input_root "sample_dataset/train/label"
+python add_acoustic_features.py --input_root "sample_dataset/train"
+python add_semantic_features.py --input_root "sample_dataset/train/label"
+
+python mp4_to_wav.py --input_root "sample_dataset/valid"
+python label_formatter.py --input_root "sample_dataset/valid/label"
+python add_acoustic_features.py --input_root "sample_dataset/valid"
+python add_semantic_features.py --input_root "sample_dataset/valid/label"
 ```
 
 #### Step 4: Train with Public Speech Dataset
