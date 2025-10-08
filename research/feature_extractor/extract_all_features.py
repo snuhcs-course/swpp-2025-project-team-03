@@ -7,7 +7,9 @@ from pprint import pprint
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
-from feature_extractor import extract_acoustic_features, extract_semantic_features
+from feature_extractor import extract_acoustic_features
+from feature_extractor.extract_features_from_script import extract_features_from_script
+from sentence_transformers import SentenceTransformer
 from stt import wave_to_text
 
 warnings.filterwarnings("ignore")
@@ -31,19 +33,22 @@ def extract_all_features(wav_path: str, model_name: str = "snunlp/KR-SBERT-V40K-
     # below stores integrated features
     features_dict = {"script": script, **acoustic_feats}
 
-    print("3. extract semantic features")
-    semantic_feats = extract_semantic_features(features_dict)
-    features_dict.update(semantic_feats)
+    print("3. extract features from script...")
+    # load SBERT model once
+    model = SentenceTransformer(model_name)
+    script_feats = extract_features_from_script(features_dict, shared_model=model)
 
-    print("4. extract features from script...")
-    # TODO: 도연아 잘 부탁해
+    # below stores integrated features
+    features_dict.update(script_feats)
+
+    print("num features extracted:", len(features_dict))
 
     return features_dict
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WAV 파일에서 모든 특징을 추출합니다.")
-    parser.add_argument("wav_path", type=str, help="입력 WAV 파일의 경로.")
+    parser.add_argument("--wav_path", type=str, help="입력 WAV 파일의 경로.")
     parser.add_argument(
         "--model_name",
         type=str,
