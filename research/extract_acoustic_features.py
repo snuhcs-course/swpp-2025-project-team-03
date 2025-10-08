@@ -105,6 +105,7 @@ def silence_features_fast(y, sr, frame_length=1024, hop_length=512, top_db=40):
     silence = max(0.0, total - speaking)
 
     return dict(
+        total_length=float(total),
         total_silence_sec=float(silence),
         percent_silence=float((silence / total * 100.0) if total > 0 else np.nan),
         # no intervals provided
@@ -157,8 +158,51 @@ def rms_features(
     return dict(min_rms=min_r, median_rms=med_r, noise_rms=noise_rms)
 
 
+def _fmt_pause_key(sec: float) -> str:
+    s = str(sec).replace(".", "_")
+    if s.endswith("_0"):
+        s = s[:-2]
+    return f"pause_{s}_cnt"
+
+
+def count_pauses_from_intervals(
+    intervals: np.ndarray,
+    sr: int,
+    thresholds_sec=(0.5, 1.0, 2.0),
+) -> dict:
+    out = {}
+    thresholds = sorted(float(x) for x in thresholds_sec)
+    for thr in thresholds:
+        out[_fmt_pause_key(thr)] = 0
+
+    if intervals is None or len(intervals) == 0:
+        return out
+
+    silences_sec = []
+    for i in range(len(intervals) - 1):
+        _, e = intervals[i]
+        s_next, _ = intervals[i + 1]
+        gap = (s_next - e) / sr
+        if gap > 0:
+            silences_sec.append(gap)
+
+    for thr in thresholds:
+        cnt = sum(1 for g in silences_sec if g >= thr)
+        out[_fmt_pause_key(thr)] = int(cnt)
+
+    return out
+
+
 def extract_acoustic_features(
-    path, fmin=50.0, fmax=600.0, hop=256, smooth_ms=30.0, end_win_s=0.6, top_db=40, robust=False
+    path,
+    fmin=50.0,
+    fmax=600.0,
+    hop=256,
+    smooth_ms=30.0,
+    end_win_s=0.6,
+    top_db=40,
+    robust=False,
+    pause_secs=(0.5, 1.0, 2.0),
 ):
     start_time = time.time()
     y, sr = sf.read(path, dtype="float32", always_2d=False)
@@ -170,6 +214,7 @@ def extract_acoustic_features(
 
     start_time = time.time()
     sil = silence_features_fast(y, sr, top_db=top_db)
+    sil_exact = silence_features(y, sr, top_db=top_db)
     end_time = time.time()
     print(f"VAD in {end_time - start_time:.4f}sec")
 
@@ -183,6 +228,12 @@ def extract_acoustic_features(
 
     out = dict(**{k: v for k, v in sil.items() if k != "intervals"}, sr=int(sr))
 
+    pause_dict = count_pauses_from_intervals(
+        intervals=sil_exact["intervals"],
+        sr=sr,
+        thresholds_sec=pause_secs,
+    )
+    out.update(pause_dict)
     if f.get("f0") is None or len(f["f0"]) < 2:
         out.update(
             dict(
@@ -220,6 +271,18 @@ def extract_acoustic_features(
     return out
 
 
+def _parse_pause_secs(s: str):
+    if not s:
+        return (0.5, 1.0, 2.0)
+    vals = []
+    for tok in s.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        vals.append(float(tok))
+    return tuple(vals)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Extract prosodic features for uncertainty from a WAV file.")
     ap.add_argument("wav_path")
@@ -230,11 +293,25 @@ if __name__ == "__main__":
     ap.add_argument("--end_win_s", type=float, default=3.0)
     ap.add_argument("--top_db", type=float, default=40.0)
     ap.add_argument("--robust", action="store_true", help="use percentile stats (p5/p95) for f0 min/max")
+    ap.add_argument(
+        "--pause_secs",
+        type=str,
+        default="0.5,1.0,2.0",
+        help="쉼(침묵) 카운트 임계값(초)들을 콤마로 구분해 지정. ex) '0.5,1,2'",
+    )
     args = ap.parse_args()
 
     start_time = time.time()
     feats = extract_acoustic_features(
-        args.wav_path, args.fmin, args.fmax, args.hop, args.smooth_ms, args.end_win_s, args.top_db, robust=args.robust
+        args.wav_path,
+        args.fmin,
+        args.fmax,
+        args.hop,
+        args.smooth_ms,
+        args.end_win_s,
+        args.top_db,
+        robust=args.robust,
+        pause_secs=_parse_pause_secs(args.pause_secs),
     )
     print(json.dumps(feats, ensure_ascii=False, indent=2))
     end_time = time.time()
