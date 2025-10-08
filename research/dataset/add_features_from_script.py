@@ -10,6 +10,7 @@ from sentence_transformers import SentenceTransformer
 def add_features_inplace(
     input_root: str = "dataset",
     *,
+    label_root: str,
     prefix: str = "",
     save_backup: bool = False,
     # fillers
@@ -37,7 +38,7 @@ def add_features_inplace(
     print(f"[INFO] SBERT loaded once: {model_name}")
     n_ok, n_skip, n_err = 0, 0, 0
 
-    for dirpath, _, filenames in os.walk(input_root):
+    for dirpath, _, filenames in os.walk(label_root):
         for filename in filenames:
             if not filename.lower().endswith(".json"):
                 continue
@@ -83,9 +84,14 @@ def add_features_inplace(
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(
-        description="Run enrich_features.enrich_json_file in-place on all JSON files under input_root."
+        description="Run enrich_features.enrich_json_file in-place on all JSON files under label_root."
     )
     ap.add_argument("--input_root", default="dataset", help="JSON 루트 폴더")
+    ap.add_argument(
+        "--label",
+        default="label",
+        help="Subdirectory of input_root that contains JSON files (e.g. label_train, label_test etc.)",
+    )
     ap.add_argument("--prefix", default="", help="저장 키 접두사 (예: sem_)")
     ap.add_argument("--backup", action="store_true", help="덮어쓰기 전 .bak 백업 저장")
 
@@ -110,8 +116,11 @@ if __name__ == "__main__":
 
     args = ap.parse_args()
 
+    label_root = os.path.join(args.input_root, args.label)
+
     add_features_inplace(
         input_root=args.input_root,
+        label_root=label_root,
         prefix=args.prefix,
         save_backup=args.backup,
         # fillers
