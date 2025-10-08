@@ -62,12 +62,12 @@ python add_semantic_features.py --input_root "dataset/valid/label"
 python mp4_to_wav.py --input_root dataset/train
 python make_only_script_data.py --root dataset/train
 python add_acoustic_features.py --input_root dataset/train --label label_test
-python add_features_from_script --input_root dataset/train/label_test
+python add_features_from_script --input_root dataset/train --label label_test
 
 python mp4_to_wav.py --input_root dataset/valid
 python make_only_script_data.py --root dataset/valid
 python add_acoustic_features.py --input_root dataset/valid --label label_test
-python add_features_from_script --input_root dataset/valid/label_test
+python add_features_from_script --input_root dataset/valid --label label_test
 ```
 
 - mp42wav.py: convert mp4 from every sub directory to wav
