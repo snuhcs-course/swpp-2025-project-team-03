@@ -86,10 +86,16 @@ if __name__ == "__main__":
         default="dataset/train",
         help="Root directory containing 'data' and 'label' subdirectories.",
     )
+    parser.add_argument(
+        "--label",
+        type=str,
+        default="label",
+        help="Name of the label subdirectory (default: 'label').",
+    )
     parser.add_argument("--backup", action="store_true", help="Create a .bak backup before overwriting.")
     args = parser.parse_args()
 
-    label_root = os.path.join(args.input_root, "label")
+    label_root = os.path.join(args.input_root, args.label)
     audio_root = os.path.join(args.input_root, "data")
 
     add_acoustic_features_inplace(label_root=label_root, audio_root=audio_root, save_backup=args.backup)
