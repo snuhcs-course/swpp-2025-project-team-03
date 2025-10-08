@@ -8,11 +8,11 @@ extract_features_from_script.py
 
 외부 사용:
     from extract_features_from_script import enrich_json_file
-    enrich_json_file("path/to/file.json", prefix="sem_", use_embeddings=True, add_semantic_1d=True)
+    enrich_json_file("path/to/file.json", prefix="sem_", use_embeddings=True)
 
 CLI 예시:
     python extract_features_from_script.py --json_path path/to/file.json --prefix sem_ --use_embeddings \
-        --emb_thr 0.80 --thr 0.88 --add_semantic_1d --sem_high_thr 0.85 --sem_low_thr 0.50
+        --emb_thr 0.80 --thr 0.88  --sem_high_thr 0.85 --sem_low_thr 0.50
 """
 
 import argparse
@@ -461,14 +461,11 @@ def extract_semantic_features(
     return feats
 
 
-# =========================================================
-# (D) 단일 JSON 파일: feature 계산 & 저장 (외부 import용)
-# =========================================================
-def enrich_json_file(
-    json_path: str,
+# ==== NEW: dict 입력을 직접 처리하는 순수 함수 ====
+def extract_features_from_script(
+    data: dict,
     *,
     prefix: str = "",
-    save_backup: bool = True,
     # 필러(룰/퍼지 + 임베딩 보조)
     token_ratio_thr: float = 0.86,
     use_embeddings: bool = False,
@@ -476,61 +473,51 @@ def enrich_json_file(
     emb_thr: float = 0.78,
     # near-dup (SBERT + k-1)
     neardup_thr: float = 0.85,
-    neardup_window: int = 6,
+    neardup_window: int = 3,
     neardup_ngram_max: int = 2,
     neardup_min_char_len: int = 2,
     neardup_skip_fillers: bool = True,
     store_pairs: bool = False,
     # semantic 1D
-    add_semantic_1d: bool = True,
     sem_high_thr: float = 0.85,
     sem_low_thr: float = 0.50,
+    # 옵션: 미리 로드한 모델 주입
     shared_model: Optional[SentenceTransformer] = None,
-) -> Dict[str, object]:
-    """
-    단일 JSON 파일을 열어 feature 계산 후 in-place로 저장.
-    반환: 저장된 키/값을 포함한 dict (요약)
-    """
-    add_semantic_1d = True
-    if not os.path.isfile(json_path):
-        raise FileNotFoundError(f"JSON file not found: {json_path}")
+) -> dict:
+    """파일 I/O 없이 data(dict)를 직접 갱신해서 (updated_data, summary) 반환"""
+    if not isinstance(data, dict):
+        raise TypeError("data must be a dict")
 
-    with open(json_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    orig_data = dict(data)
-
-    script = data.get("script")
+    updated = dict(data)  # 원본 보존
+    script = updated.get("script")
     if not isinstance(script, str) or not script.strip():
-        raise ValueError(f"'script' not found or empty in: {json_path}")
-    total_length = data.get("total_length")
+        raise ValueError("'script' not found or empty in provided dict")
+
+    total_length = updated.get("total_length")
     if not isinstance(total_length, (int, float)) or total_length <= 0:
-        raise ValueError(f"'total_length' not found or invalid in: {json_path}")
-    # --- 기본 카운트(문자/단어/문장) 추가 ---
+        raise ValueError("'total_length' not found or invalid in provided dict")
+
+    # --- 기본 카운트(음절/단어/문장)
     syllable_cnt = count_syllables_ko(script)
     word_cnt_calc = count_words_ko(script)
     sentence_cnt = count_sentences_ko(script)
+    updated["syllable_cnt"] = int(syllable_cnt)
+    updated["word_cnt"] = int(word_cnt_calc)
+    updated["sentence_cnt"] = int(sentence_cnt)
 
-    # prefix 없이 '고정 키' 이름으로 저장 (데이터셋 표준 키로 가정)
-    data["syllable_cnt"] = int(syllable_cnt)
-    data["word_cnt"] = int(word_cnt_calc)
-    data["sentence_cnt"] = int(sentence_cnt)
+    # 파생 카운트
+    updated["voc_speed"] = float(syllable_cnt) / float(total_length)
+    updated["word_speed"] = float(word_cnt_calc) / float(total_length)
+    updated["avg_word_len"] = float(syllable_cnt) / float(word_cnt_calc) if word_cnt_calc > 0 else 0.0
+    updated["avg_sentence_len"] = float(word_cnt_calc) / float(sentence_cnt) if sentence_cnt > 0 else 0.0
 
-    data["voc_speed"] = float(syllable_cnt) / float(total_length)  # 음절 속도 (syllables/sec)
-    data["word_speed"] = float(word_cnt_calc) / float(total_length)  # 단어 속도 (words/sec)
-    data["avg_word_len"] = (
-        float(syllable_cnt) / float(word_cnt_calc) if word_cnt_calc > 0 else 0.0
-    )  # 평균 단어 길이 (음절/단어)
-    data["avg_sentence_len"] = (
-        float(word_cnt_calc) / float(sentence_cnt) if sentence_cnt > 0 else 0.0
-    )  # 평균 문장 길이 (단어/문장)
-    # (1) 필러 지표
+    # (1) 필러
     rule_counts = rule_fuzzy_fillers(script, token_ratio_thr=token_ratio_thr)
-
     embed_model = None
     if use_embeddings:
         embed_model = shared_model if shared_model is not None else sbert_helper_load(embed_model_name)
         if embed_model is None:
-            print("[WARN] SBERT을 로드하지 못해 임베딩 보조/near-dup/semantic-1D 일부가 제한됩니다.")
+            print("[WARN] SBERT load failed; disable embedding-based boosters.")
             use_embeddings = False
 
     filler_extra = (
@@ -538,8 +525,8 @@ def enrich_json_file(
     )
     filler_total = rule_counts["filler_words_cnt"] + filler_extra
 
-    def put(k: str, v):
-        data[(prefix + k) if prefix else k] = v
+    def put(k, v):
+        updated[(prefix + k) if prefix else k] = v
 
     put("filler_words_cnt", int(filler_total))
     put("filler_single_cnt", int(rule_counts["filler_single_cnt"]))
@@ -547,7 +534,7 @@ def enrich_json_file(
     if use_embeddings:
         put("filler_embed_boost_cnt", int(filler_extra))
 
-    # (2) 의미 근접 중복(near-dup)
+    # (2) near-dup
     neardup_model = embed_model if embed_model is not None else shared_model
     if neardup_model is None and SentenceTransformer is not None:
         try:
@@ -555,7 +542,7 @@ def enrich_json_file(
         except Exception:
             neardup_model = None
 
-    neardup_result = semantic_near_dup_count(
+    nd = semantic_near_dup_count(
         script,
         model=neardup_model,
         thr=neardup_thr,
@@ -565,27 +552,77 @@ def enrich_json_file(
         min_char_len=neardup_min_char_len,
         skip_words=(_STOP_NEARDUP_DEFAULT if neardup_skip_fillers else set()),
     )
-    put("repeat_cnt", int(neardup_result["sem_near_dup_cnt"]))
-    if store_pairs and "sem_near_dup_pairs" in neardup_result:
-        put("near_dup_pairs", neardup_result["sem_near_dup_pairs"])
+    put("repeat_cnt", int(nd["sem_near_dup_cnt"]))
+    if store_pairs and "sem_near_dup_pairs" in nd:
+        put("near_dup_pairs", nd["sem_near_dup_pairs"])
 
     # (3) semantic 1D
-    if add_semantic_1d:
-        sem_model = neardup_model if neardup_model is not None else shared_model
-        if sem_model is None and SentenceTransformer is not None:
-            try:
-                sem_model = SentenceTransformer(embed_model_name)
-            except Exception:
-                sem_model = None
-        if sem_model is not None:
-            sem_feats = _semantic_1d_features_from_script(
-                script_text=script, model=sem_model, high_thr=sem_high_thr, low_thr=sem_low_thr
-            )
-            # 접두사 적용: prefix + key
-            for k, v in sem_feats.items():
-                put(k, v)
-        else:
-            print("[WARN] semantic 1D 미계산: SentenceTransformer 로드 실패")
+
+    sem_model = neardup_model if neardup_model is not None else shared_model
+    if sem_model is None and SentenceTransformer is not None:
+        try:
+            sem_model = SentenceTransformer(embed_model_name)
+        except Exception:
+            sem_model = None
+    if sem_model is not None:
+        sem_feats = _semantic_1d_features_from_script(
+            script_text=script, model=sem_model, high_thr=sem_high_thr, low_thr=sem_low_thr
+        )
+        for k, v in sem_feats.items():
+            put(k, v)
+    else:
+        print("[WARN] semantic 1D skipped: SentenceTransformer not available")
+
+    return updated
+
+
+# =========================================================
+# (D) 단일 JSON 파일: feature 계산 & 저장 (외부 import용)
+# =========================================================
+def enrich_json_file(
+    json_path: str,
+    *,
+    prefix: str = "",
+    save_backup: bool = True,
+    token_ratio_thr: float = 0.86,
+    use_embeddings: bool = False,
+    embed_model_name: str = "snunlp/KR-SBERT-V40K-klueNLI-augSTS",
+    emb_thr: float = 0.78,
+    neardup_thr: float = 0.85,
+    neardup_window: int = 6,
+    neardup_ngram_max: int = 2,
+    neardup_min_char_len: int = 2,
+    neardup_skip_fillers: bool = True,
+    store_pairs: bool = False,
+    add_semantic_1d: bool = True,
+    sem_high_thr: float = 0.85,
+    sem_low_thr: float = 0.50,
+    shared_model: Optional[SentenceTransformer] = None,
+) -> Dict[str, object]:
+    if not os.path.isfile(json_path):
+        raise FileNotFoundError(f"JSON file not found: {json_path}")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    orig_data = dict(data)
+
+    updated = extract_features_from_script(
+        data,
+        prefix=prefix,
+        token_ratio_thr=token_ratio_thr,
+        use_embeddings=use_embeddings,
+        embed_model_name=embed_model_name,
+        emb_thr=emb_thr,
+        neardup_thr=neardup_thr,
+        neardup_window=neardup_window,
+        neardup_ngram_max=neardup_ngram_max,
+        neardup_min_char_len=neardup_min_char_len,
+        neardup_skip_fillers=neardup_skip_fillers,
+        store_pairs=store_pairs,
+        sem_high_thr=sem_high_thr,
+        sem_low_thr=sem_low_thr,
+        shared_model=shared_model,
+    )
 
     # 백업 & 저장
     if save_backup:
@@ -593,15 +630,10 @@ def enrich_json_file(
             json.dump(orig_data, bf, ensure_ascii=False, indent=2)
 
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        json.dump(updated, f, ensure_ascii=False, indent=2)
 
-    summary = {
-        "json_path": json_path,
-        "saved_keys": [k for k in data.keys() if k not in orig_data],
-        "filler_words_cnt": data.get((prefix + "filler_words_cnt") if prefix else "filler_words_cnt"),
-        "repeat_cnt": data.get((prefix + "repeat_cnt") if prefix else "repeat_cnt"),
-    }
-    return summary
+    # 파일 경로 포함해서 반환형 유지
+    return {"json_path": json_path, "saved_keys": [k for k in updated.keys() if k not in orig_data]}
 
 
 def main():
@@ -627,7 +659,6 @@ def main():
     ap.add_argument("--store_pairs", action="store_true", help="near-dup 매칭 쌍까지 저장(파일 커질 수 있음)")
 
     # semantic  파라미터
-    ap.add_argument("--add_semantic_1d", action="store_true", help="semantic 1D 피처를 추가로 계산/저장")
     ap.add_argument("--sem_high_thr", type=float, default=0.85, help="semantic 1D: 인접 유사도 high 임계")
     ap.add_argument("--sem_low_thr", type=float, default=0.50, help="semantic 1D: 인접 유사도 low 임계")
 
@@ -650,7 +681,6 @@ def main():
         neardup_skip_fillers=(not args.no_skip_fillers),
         store_pairs=args.store_pairs,
         # semantic 1D
-        add_semantic_1d=args.add_semantic_1d,
         sem_high_thr=args.sem_high_thr,
         sem_low_thr=args.sem_low_thr,
     )
