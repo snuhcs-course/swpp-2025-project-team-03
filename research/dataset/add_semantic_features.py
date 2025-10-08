@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from extract_semantic_features import extract_semantic_features
+from feature_extractor import extract_semantic_features
 from sentence_transformers import SentenceTransformer
 
 

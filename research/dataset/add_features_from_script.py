@@ -3,7 +3,7 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from extract_features_from_script import enrich_json_file
+from feature_extractor import enrich_json_file
 from sentence_transformers import SentenceTransformer
 
 
@@ -84,7 +84,7 @@ def add_features_inplace(
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(
-        description="Run enrich_features.enrich_json_file in-place on all JSON files under label_root."
+        description="Run enrich_json_file.enrich_json_file in-place on all JSON files under label_root."
     )
     ap.add_argument("--input_root", default="dataset", help="JSON 루트 폴더")
     ap.add_argument(
