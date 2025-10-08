@@ -68,10 +68,11 @@ For the given learning content, design a clear step-by-step plan that leads to g
 
 Each step should be concrete, logically ordered, and executable by another agent.
 Avoid redundancy and ensure that each step uses all available information.
+Think in English, but do not think too much on planning.
 
 The plan should always follow this broad structure:
 1. Summarize key learning concepts from the material.
-2. Generate an initial quiz question, model answer, and explanation based on the summary.
+2. Generate an initial quiz question in Korean, model answer, and explanation based on the summary.
 3. Evaluate the clarity, correctness, and educational value of the generated quiz.
 4. Refine the question, answer, and explanation to improve quality and align with the learning objective.
 5. Finalize the quiz and assign a difficulty rating.
@@ -84,6 +85,7 @@ Output your plan as a numbered list of steps.""",
 
 react_system_prompt = """You are an AI quiz author and reasoning agent.
 You are executing a single step of a larger plan to create a quiz question.
+Note that question should be written in Korean.
 You have access to the following tools to gather information:
 - `web_search`: search the internet for factual support.
 - `vector_search`: retrieve passages from the class material.
@@ -108,7 +110,7 @@ executor_prompt = ChatPromptTemplate.from_messages(
 replanner_prompt = ChatPromptTemplate.from_template(
     """
 You are an AI educational evaluator agent.
-Your goal is to refine or finalize the generation of a **single quiz question**.
+Your goal is to refine or finalize the generation of a **single quiz question in Korean**.
 
 # Context
 Learning Objective:
@@ -154,9 +156,9 @@ Example (Final Response):
   "action": {{
     "response": {{
       "topic": "Newton's Second Law",
-      "question": "How does increasing mass affect acceleration when force remains constant?",
-      "model_answer": "Acceleration decreases as mass increases, according to F = ma.",
-      "explanation": "This tests the inverse relationship between mass and acceleration.",
+      "question": "힘이 일정할 때, 질량이 커지면 가속도는 어떻게 변하나요?",
+      "model_answer": "F = ma에 따라, 힘이 일정하다면 질량이 커지면 가속도는 감소합니다.",
+      "explanation": "뉴턴의 제 2법칙에 따라 힘이 일정할 때 질량과 가속도가 반비례 관계임을 이해할 수 있다.",
       "difficulty": "medium"
     }}
   }}
@@ -306,19 +308,34 @@ graph = workflow.compile()
 if __name__ == "__main__":
     # Example usage:
     learning_material = """
-    Newton's Second Law of Motion
+사과는 왜 땅에 떨어질까요?
 
-    The law states that the acceleration of an object is directly proportional 
-    to the net force acting on it and inversely proportional to its mass.
-    The formula is F = ma, where:
-    - F is the net force (in Newtons, N)
-    - m is the mass of the object (in kilograms, kg)
-    - a is the acceleration (in meters per second squared, m/s^2)
+중력은 물체의 질량(mass) 때문에 생기는 자연의 기본적인 힘이에요.
+모든 물체는 질량을 가지고 있고, 질량이 있는 물체끼리는 서로를 끌어당기죠.
+이 현상을 만유인력의 법칙(Law of Universal Gravitation) 이라고 합니다.
 
-    This means that if you apply the same force to two objects, the one with
-    less mass will accelerate more. For example, pushing a bicycle is easier
-    than pushing a car with the same force.
-    """
+아이작 뉴턴은 중력을 이렇게 설명했어요:
+두 물체 사이에는 서로를 끌어당기는 힘이 작용하며,
+그 힘의 크기는 두 물체의 질량에 비례하고,
+두 물체 사이의 거리의 제곱에 반비례한다.
+
+수식으로는 다음과 같아요:
+F = G × (m₁ × m₂) / r²
+여기서 F는 두 물체 사이의 중력의 크기 (단위: 뉴턴, N),
+G는 만유인력 상수 (약 6.67 × 10⁻¹¹ N·m²/kg²),
+m₁, m₂는 두 물체의 질량 (킬로그램, kg),
+r은 두 물체 사이의 거리 (미터, m)입니다.
+
+즉, 질량이 큰 물체일수록 중력이 강하고, 거리가 멀어질수록 중력이 약해집니다.
+지구의 질량이 아주 크기 때문에, 우리를 비롯한 모든 물체가 지구 중심 방향으로 끌려가죠.
+그래서 공을 던지면 결국 땅으로 떨어지고, 우리가 ‘무게’를 느끼는 것도 바로 이 중력 때문이에요.
+
+예를 들어, 달은 지구보다 질량이 작아서 중력이 약해요.
+그래서 같은 물체라도 달에서는 지구에서보다 약 6분의 1 정도의 무게만 느껴집니다.
+
+결국, 중력은 질량을 가진 모든 물체가 서로 끌어당기는 힘이며,
+이 힘 덕분에 행성은 태양 주위를 돌고, 달은 지구 주위를 도는 거예요.
+"""
 
     inputs = {"input": learning_material}
 
