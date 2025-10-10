@@ -44,13 +44,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'accounts',
-    'catalog',
-    'courses',
-    'assignments',
-    'submissions',
-    'feedbacks',
+    "accounts",
+    "catalog",
+    "courses",
+    "assignments",
+    "submissions",
+    "feedbacks",
+    "rest_framework",
+    "rest_framework_simplejwt",
 ]
+
+AUTH_USER_MODEL = "accounts.Account"  # Use custom user model
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -134,4 +138,26 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",)}
+REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": (
+                    "rest_framework.permissions.AllowAny",
+                    ),
+                  'DEFAULT_AUTHENTICATION_CLASSES': (
+                    'rest_framework_simplejwt.authentication.JWTAuthentication',
+                    ),
+                  }
+
+from datetime import timedelta
+
+REST_USE_JWT = True
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Access Token의 유효 기간: 30분
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Refresh Token의 유효 기간: 1일
+    'ROTATE_REFRESH_TOKENS': True,  # Refresh Token을 사용할 때마다 새 토큰 발급
+    'BLACKLIST_AFTER_ROTATION': True,  # 이전 Refresh Token을 블랙리스트에 추가하여 재사용 방지
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'ACCESS_TOKEN': 'access_token',
+    'REFRESH_TOKEN': 'refresh_token',
+}
+
