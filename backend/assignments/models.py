@@ -22,9 +22,15 @@ class Assignment(models.Model):
         return f"{self.title} / {self.course_class.title}"
 
 class Material(models.Model):
+    class Kind(models.TextChoices):
+        TEXT  = "text",  "Text"
+        IMAGE = "image", "Image"
+        PDF   = "pdf",   "PDF"
+        OTHER = "other", "Other"
+        
     assignment = models.ForeignKey("assignments.Assignment", on_delete=models.CASCADE, related_name="materials")
     created_at = models.DateTimeField(auto_now_add=True)
-    kind = models.CharField(max_length=255)  # file type
+    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.OTHER)
     s3_key = models.CharField(max_length=255)
     bytes = models.PositiveIntegerField()
     
