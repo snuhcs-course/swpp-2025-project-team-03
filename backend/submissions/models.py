@@ -28,10 +28,8 @@ class PersonalAssignment(models.Model):
     def __str__(self) -> str:
         return f"{self.student} - {self.assignment.title} ({self.status})"
   
-  class Questions(models.Model):
-    personal_assignment = models.ForeignKey(
-        "submissions.PersonalAssignment", on_delete=models.CASCADE, related_name="questions"
-    )
+class Questions(models.Model):
+    personal_assignment = models.ForeignKey("submissions.PersonalAssignment", on_delete=models.CASCADE, related_name="questions")
     number = models.PositiveIntegerField(help_text="문항 번호 (1..N)")
     content = models.CharField(max_length=255, blank=True)
     hint = models.CharField(max_length=255, blank=True, null=True)
@@ -46,13 +44,13 @@ class PersonalAssignment(models.Model):
 
     def __str__(self) -> str:
         return f"Q{self.number} of {self.personal_assignment}"
-  
-  class Answer(models.Model):
+
+class Answer(models.Model):
     class State(models.TextChoices):
         CORRECT = "correct",           "Correct"
         INCORRECT = "incorrect",       "Incorrect"
     
-    question = models.ForeignKey("submissions.Question", on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey("submissions.Questions", on_delete=models.CASCADE, related_name="answers")
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="answers")
     started_at = models.DateTimeField(null=True, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
