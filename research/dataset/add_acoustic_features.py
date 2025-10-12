@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from extract_acoustic_features import extract_acoustic_features
+from feature_extractor import extract_acoustic_features
 
 
 def extract_acoustic_features_from_audio(json_path, audio_root="data", label_root="label"):
