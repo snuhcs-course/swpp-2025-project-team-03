@@ -40,3 +40,8 @@ credentials.json
 
 # model file
 model.joblib
+
+# sample data
+sample_data/
+trash_bin/
+secrets/
