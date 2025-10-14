@@ -1,5 +1,8 @@
 package com.example.voicetutor.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,6 +29,10 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
+import com.example.voicetutor.file.FileManager
+import com.example.voicetutor.file.FileType
+import com.example.voicetutor.file.FileInfo
+import kotlinx.coroutines.launch
 
 enum class AssignmentCreationType {
     PDF, MIXED, CURRICULUM
@@ -49,9 +57,33 @@ fun CreateAssignmentScreen(
     val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
     
+    val context = LocalContext.current
+    val fileManager = remember { FileManager(context) }
+    val coroutineScope = rememberCoroutineScope()
+    
     // 파일 선택 상태
-    var selectedFiles by remember { mutableStateOf<List<String>>(emptyList()) }
-    var showFileSelectionDialog by remember { mutableStateOf(false) }
+    var selectedFiles by remember { mutableStateOf<List<FileInfo>>(emptyList()) }
+    
+    // PDF 파일 피커
+    val pdfPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            coroutineScope.launch {
+                val newFiles = mutableListOf<FileInfo>()
+                uris.forEach { uri ->
+                    fileManager.saveFile(uri, fileType = FileType.DOCUMENT)
+                        .onSuccess { fileInfo ->
+                            newFiles.add(fileInfo)
+                        }
+                        .onFailure { exception ->
+                            // TODO: Show error message
+                        }
+                }
+                selectedFiles = newFiles
+            }
+        }
+    }
     
     // 학생 선택 상태
     var selectedStudents by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -378,8 +410,11 @@ fun CreateAssignmentScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     VTButton(
-                        text = "파일 선택",
-                        onClick = { showFileSelectionDialog = true },
+                        text = if (selectedFiles.isEmpty()) "파일 선택" else "파일 추가",
+                        onClick = { 
+                            // PDF 파일만 선택 가능하도록 MIME 타입 지정
+                            pdfPickerLauncher.launch("application/pdf")
+                        },
                         variant = ButtonVariant.Outline,
                         leadingIcon = {
                             Icon(
@@ -395,6 +430,66 @@ fun CreateAssignmentScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
+                    
+                    // 선택된 파일 목록 표시
+                    if (selectedFiles.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "선택된 파일 (${selectedFiles.size}개)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        selectedFiles.forEach { file ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.PictureAsPdf,
+                                        contentDescription = null,
+                                        tint = Error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(
+                                            text = file.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Gray800
+                                        )
+                                        Text(
+                                            text = fileManager.formatFileSize(file.size),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Gray600
+                                        )
+                                    }
+                                }
+                                
+                                IconButton(
+                                    onClick = {
+                                        selectedFiles = selectedFiles.filter { it.path != file.path }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Close,
+                                        contentDescription = "파일 제거",
+                                        tint = Gray500,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -614,143 +709,6 @@ fun CreateAssignmentScreen(
         )
         }
     }
-    
-    // 파일 선택 다이얼로그
-    if (showFileSelectionDialog) {
-        FileSelectionDialog(
-            selectedFiles = selectedFiles,
-            onFilesSelected = { files ->
-                selectedFiles = files
-                showFileSelectionDialog = false
-            },
-            onDismiss = { showFileSelectionDialog = false }
-        )
-    }
-}
-
-@Composable
-fun FileSelectionDialog(
-    selectedFiles: List<String>,
-    onFilesSelected: (List<String>) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var tempSelectedFiles by remember { mutableStateOf(selectedFiles) }
-    
-    // 가상의 파일 목록
-    val availableFiles = remember {
-        listOf(
-            "생물학_교과서_1장.pdf",
-            "세포분열_이미지.jpg",
-            "DNA_구조_애니메이션.mp4",
-            "실험_가이드라인.docx",
-            "퀴즈_문제_모음.xlsx",
-            "참고자료_링크.txt"
-        )
-    }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "파일 선택",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column {
-                Text(
-                    text = "과제에 첨부할 파일을 선택하세요:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // 파일 목록
-                LazyColumn(
-                    modifier = Modifier.height(200.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(availableFiles) { fileName ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    tempSelectedFiles = if (fileName in tempSelectedFiles) {
-                                        tempSelectedFiles - fileName
-                                    } else {
-                                        tempSelectedFiles + fileName
-                                    }
-                                }
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = fileName in tempSelectedFiles,
-                                onCheckedChange = { isChecked ->
-                                    tempSelectedFiles = if (isChecked) {
-                                        tempSelectedFiles + fileName
-                                    } else {
-                                        tempSelectedFiles - fileName
-                                    }
-                                }
-                            )
-                            
-                            Spacer(modifier = Modifier.width(8.dp))
-                            
-                            Icon(
-                                imageVector = when (fileName.substringAfterLast('.')) {
-                                    "pdf" -> Icons.Filled.PictureAsPdf
-                                    "jpg", "png" -> Icons.Filled.Image
-                                    "mp4" -> Icons.Filled.VideoFile
-                                    "docx" -> Icons.Filled.Description
-                                    "xlsx" -> Icons.Filled.TableChart
-                                    else -> Icons.Filled.InsertDriveFile
-                                },
-                                contentDescription = null,
-                                tint = PrimaryIndigo,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            
-                            Spacer(modifier = Modifier.width(8.dp))
-                            
-                            Text(
-                                text = fileName,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-                }
-                
-                if (tempSelectedFiles.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "선택된 파일: ${tempSelectedFiles.size}개",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = PrimaryIndigo
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            VTButton(
-                text = "선택",
-                onClick = { onFilesSelected(tempSelectedFiles) },
-                variant = ButtonVariant.Primary,
-                size = ButtonSize.Small
-            )
-        },
-        dismissButton = {
-            VTButton(
-                text = "취소",
-                onClick = onDismiss,
-                variant = ButtonVariant.Outline,
-                size = ButtonSize.Small
-            )
-        }
-    )
 }
 
 @Preview(showBackground = true)

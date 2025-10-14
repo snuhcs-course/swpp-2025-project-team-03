@@ -32,8 +32,10 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "10.0.2.2", "192.168.1.100", "*"]
 
+# API URL 끝 슬래시 자동 추가 비활성화 (REST API 스타일)
+APPEND_SLASH = False
 
 # Application definition
 

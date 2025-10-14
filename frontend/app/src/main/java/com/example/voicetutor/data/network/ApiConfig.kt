@@ -17,9 +17,9 @@ class ApiConfig @Inject constructor(
         private const val KEY_SERVER_TYPE = "server_type"
         
         // 기본 URL들
-        const val LOCALHOST_URL = "http://10.0.2.2:8080/api/" // Android 에뮬레이터용 localhost
-        const val LOCALHOST_URL_DEVICE = "http://192.168.1.100:8080/api/" // 실제 디바이스용 (IP 변경 필요)
-        const val EC2_URL_TEMPLATE = "http://your-ec2-ip:8080/api/" // EC2 서버용
+        const val LOCALHOST_URL = "http://10.0.2.2:8000/api/" // Android 에뮬레이터용 localhost
+        const val LOCALHOST_URL_DEVICE = "http://192.168.1.100:8000/api/" // 실제 디바이스용 (IP 변경 필요)
+        const val EC2_URL_TEMPLATE = "http://your-ec2-ip:8000/api/" // EC2 서버용
         
         // 서버 타입
         const val SERVER_TYPE_LOCALHOST = "localhost"
