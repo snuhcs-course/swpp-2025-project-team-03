@@ -1,0 +1,75 @@
+package com.example.voicetutor.data.network
+
+import android.content.Context
+import android.content.SharedPreferences
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class ApiConfig @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    private val prefs: SharedPreferences = context.getSharedPreferences("api_config", Context.MODE_PRIVATE)
+    
+    companion object {
+        private const val KEY_BASE_URL = "base_url"
+        private const val KEY_SERVER_TYPE = "server_type"
+        
+        // 기본 URL들
+        const val LOCALHOST_URL = "http://10.0.2.2:8000/api/" // Android 에뮬레이터용 localhost
+        const val LOCALHOST_URL_DEVICE = "http://192.168.1.100:8000/api/" // 실제 디바이스용 (IP 변경 필요)
+        const val EC2_URL_TEMPLATE = "http://your-ec2-ip:8000/api/" // EC2 서버용
+        
+        // 서버 타입
+        const val SERVER_TYPE_LOCALHOST = "localhost"
+        const val SERVER_TYPE_EC2 = "ec2"
+        const val SERVER_TYPE_CUSTOM = "custom"
+    }
+    
+    fun getBaseUrl(): String {
+        return prefs.getString(KEY_BASE_URL, LOCALHOST_URL) ?: LOCALHOST_URL
+    }
+    
+    fun setBaseUrl(url: String) {
+        prefs.edit().putString(KEY_BASE_URL, url).apply()
+    }
+    
+    fun getServerType(): String {
+        return prefs.getString(KEY_SERVER_TYPE, SERVER_TYPE_LOCALHOST) ?: SERVER_TYPE_LOCALHOST
+    }
+    
+    fun setServerType(type: String) {
+        prefs.edit().putString(KEY_SERVER_TYPE, type).apply()
+    }
+    
+    fun setLocalhostServer() {
+        setServerType(SERVER_TYPE_LOCALHOST)
+        setBaseUrl(LOCALHOST_URL)
+    }
+    
+    fun setEc2Server(ip: String) {
+        setServerType(SERVER_TYPE_EC2)
+        setBaseUrl("http://$ip:8080/api/")
+    }
+    
+    fun setCustomServer(url: String) {
+        setServerType(SERVER_TYPE_CUSTOM)
+        setBaseUrl(url)
+    }
+    
+    fun getAvailableServers(): List<ServerOption> {
+        return listOf(
+            ServerOption("Localhost (에뮬레이터)", LOCALHOST_URL, SERVER_TYPE_LOCALHOST),
+            ServerOption("Localhost (디바이스)", LOCALHOST_URL_DEVICE, SERVER_TYPE_LOCALHOST),
+            ServerOption("EC2 서버", EC2_URL_TEMPLATE, SERVER_TYPE_EC2),
+            ServerOption("커스텀 서버", "", SERVER_TYPE_CUSTOM)
+        )
+    }
+}
+
+data class ServerOption(
+    val name: String,
+    val url: String,
+    val type: String
+)
