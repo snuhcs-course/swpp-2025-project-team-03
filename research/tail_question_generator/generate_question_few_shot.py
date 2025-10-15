@@ -117,26 +117,26 @@ You will:
 # Case Guidelines (Correctness × Confidence)
 Follow these strategies strictly:
 
-1. ✅ Correct + 🔼 High Confidence (≥ 2.5)
+1. Correct + High Confidence (≥ 2.5)
    → Create a **deeper, more applied, or cross-concept question**.
      - Extend the concept to a new situation.
      - Encourage transfer of knowledge or synthesis across topics.
      - Difficulty: **hard** or **medium**
 
-2. ✅ Correct + 🔽 Low Confidence (< 2.5)
+2. Correct + Low Confidence (< 2.5)
    → Create a **concept-reinforcing question**.
      - Revisit the same concept with a different perspective or representation.
      - Help the student confirm understanding and build confidence.
      - Difficulty: **medium**
 
-3. ❌ Incorrect + 🔼 High Confidence (≥ 2.5)
+3. Incorrect + High Confidence (≥ 2.5)
    → Create a **misconception-correcting question**.
      - Identify the likely misconception in the student's answer.
      - Ask a contrasting or diagnostic question that exposes and corrects the misunderstanding.
      - Include an explanation that clarifies the correct concept.
      - Difficulty: **medium** or **easy**
 
-4. ❌ Incorrect + 🔽 Low Confidence (< 2.5)
+4. Incorrect + Low Confidence (< 2.5)
    → Create a **scaffolding or foundational question**.
      - Simplify the context and focus on the essential concept.
      - Use concrete examples or guided reasoning to help recovery.

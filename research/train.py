@@ -116,7 +116,6 @@ def main():
     parser = argparse.ArgumentParser(description="발표 평가 등급(숫자) 예측 - XGBoost 회귀")
     parser.add_argument("--dataset_path", type=str, default="./dataset", help="데이터셋의 루트 경로")
     parser.add_argument("--model_output_path", type=str, default="./model.joblib", help="학습된 모델을 저장할 경로")
-    # 아래 argparse 하이퍼파라미터는 유지하지만, 실제 모델에는 고정 파라미터를 사용합니다.
     args = parser.parse_args()
 
     # 데이터 로드
