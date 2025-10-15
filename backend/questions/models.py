@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Question(models.Model):
     personal_assignment = models.ForeignKey("submissions.PersonalAssignment", on_delete=models.CASCADE, related_name="questions")
