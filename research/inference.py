@@ -1,6 +1,5 @@
 # infer_xgb.py
 import argparse
-import glob
 import json
 import os
 import warnings
@@ -104,66 +103,55 @@ def build_feature_row(js: dict):
     return row
 
 
+def run_inference(model_path: str, js: dict) -> dict:
+    """모델 경로와 feature dict(js)를 입력받아 단일 예측 결과 반환"""
+    model = joblib.load(model_path)
+
+    feat_row = build_feature_row(js)
+    X = pd.DataFrame([feat_row], columns=FEATURE_COLUMNS)
+
+    y_pred = model.predict(X)[0]
+    y_round = int(np.clip(np.round(y_pred), 1, 8))
+    y_letter = to_letter_grade(y_round)
+
+    return {
+        "pred_cont": float(y_pred),
+        "pred_rounded": y_round,
+        "pred_letter": y_letter,
+    }
+
+
 def main():
-    ap = argparse.ArgumentParser(description="XGBoost 회귀 모델 inference (JSON 파일 단일/배치)")
-    ap.add_argument(
-        "--model_path", type=str, required=True, help="joblib로 저장된 XGBoost 모델 경로 (ex: model_xgb.joblib)"
-    )
-    ap.add_argument(
-        "--json_path",
-        type=str,
-        required=True,
-        help="JSON 파일 경로 또는 글롭 패턴 (ex: sample.json, './**/*_presentation.json')",
-    )
-    ap.add_argument("--out_csv", type=str, default=None, help="배치 처리 결과를 저장할 CSV 경로(옵션)")
+    ap = argparse.ArgumentParser(description="XGBoost 회귀 모델 inference (단일 JSON 파일)")
+    ap.add_argument("--model_path", type=str, required=True, help="joblib로 저장된 XGBoost 모델 경로")
+    ap.add_argument("--json_path", type=str, required=True, help="예측할 JSON 파일 경로")
     args = ap.parse_args()
 
-    # 모델 로드
-    model = joblib.load(args.model_path)
+    try:
+        json_path = args.json_path
+        if not os.path.exists(json_path):
+            raise FileNotFoundError(f"JSON 파일을 찾을 수 없습니다: {json_path}")
 
-    # 입력 파일 목록 (단일 경로 또는 글롭)
-    if any(ch in args.json_path for ch in ["*", "?", "["]):
-        files = sorted(glob.glob(args.json_path, recursive=True))
-    else:
-        files = [args.json_path]
-
-    if not files:
-        print("입력 JSON 파일을 찾지 못했습니다.")
+        with open(json_path, "r", encoding="utf-8") as f:
+            js = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] JSON 파싱 실패 ({json_path}): {e}")
+        return
+    except Exception as e:
+        print(f"[ERROR] JSON 로드 실패: {e}")
         return
 
-    rows = []
-    for fp in files:
-        try:
-            with open(fp, "r", encoding="utf-8") as f:
-                js = json.load(f)
-        except Exception as e:
-            print(f"[WARN] JSON 로드 실패: {fp} ({e})")
-            continue
+    result = run_inference(args.model_path, js)
 
-        feat_row = build_feature_row(js)
-        X = pd.DataFrame([feat_row], columns=FEATURE_COLUMNS)
-
-        # 예측 (연속 등급)
-        y_pred = model.predict(X)[0]
-        # 1~8로 반올림 & 클리핑
-        y_round = int(np.clip(np.round(y_pred), 1, 8))
-        y_letter = to_letter_grade(y_round)
-
-        rows.append(
-            {
-                "file": fp,
-                "pred_cont": float(y_pred),
-                "pred_rounded": y_round,
-                "pred_letter": y_letter,
-            }
+    try:
+        print(
+            f"{os.path.basename(json_path)} -> "
+            f"pred_cont={result['pred_cont']:.4f}, "
+            f"pred_rounded={result['pred_rounded']}, "
+            f"letter={result['pred_letter']}"
         )
-
-        print(f"{os.path.basename(fp)} -> pred_cont={y_pred:.4f}, pred_rounded={y_round}, letter={y_letter}")
-
-    if args.out_csv and rows:
-        df_out = pd.DataFrame(rows)
-        df_out.to_csv(args.out_csv, index=False, encoding="utf-8-sig")
-        print(f"\n저장 완료: {args.out_csv}")
+    except KeyError as e:
+        print(f"[ERROR] 결과 형식 오류: {e}")
 
 
 if __name__ == "__main__":
