@@ -6,9 +6,12 @@ class QuestionCreateRequestSerializer(serializers.Serializer):
 
     assignment_id = serializers.IntegerField(required=True, help_text="대상 Assignment의 ID")
     material_id = serializers.IntegerField(required=True, help_text="요약할 Material의 ID (PDF)")
+    total_number = serializers.IntegerField(required=True, help_text="생성할 base question의 개수")
 
     def validate(self, data):
         """필요 시 추가 유효성 검사"""
         if data["assignment_id"] <= 0 or data["material_id"] <= 0:
             raise serializers.ValidationError("assignment_id 및 material_id는 양수여야 합니다.")
+        if data["total_number"] <= 0:
+            raise serializers.ValidationError("total_number는 양수여야 합니다.")
         return data
