@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+
 from .models import Account
+
 
 @admin.register(Account)
 class AccountAdmin(UserAdmin):
@@ -17,10 +19,13 @@ class AccountAdmin(UserAdmin):
     )
 
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("email", "password1", "password2", "is_student", "is_staff", "is_superuser", "is_active"),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "password1", "password2", "is_student", "is_staff", "is_superuser", "is_active"),
+            },
+        ),
     )
 
     search_fields = ("email", "display_name")
