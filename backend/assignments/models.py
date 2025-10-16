@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Assignment(models.Model):
     course_class = models.ForeignKey("courses.CourseClass", on_delete=models.CASCADE, related_name="assignments")
     topics = models.ManyToManyField("catalog.Topic", blank=True, related_name="assignments")
@@ -9,7 +10,7 @@ class Assignment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     visible_from = models.DateTimeField()
     due_at = models.DateTimeField()
-    
+
     class Meta:
         indexes = [
             models.Index(fields=["course_class"]),
@@ -20,19 +21,20 @@ class Assignment(models.Model):
     def __str__(self) -> str:
         return f"{self.title} / {self.course_class.title}"
 
+
 class Material(models.Model):
     class Kind(models.TextChoices):
-        TEXT  = "text",  "Text"
+        TEXT = "text", "Text"
         IMAGE = "image", "Image"
-        PDF   = "pdf",   "PDF"
+        PDF = "pdf", "PDF"
         OTHER = "other", "Other"
-        
+
     assignment = models.ForeignKey("assignments.Assignment", on_delete=models.CASCADE, related_name="materials")
     created_at = models.DateTimeField(auto_now_add=True)
     kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.OTHER)
     s3_key = models.CharField(max_length=255)
     bytes = models.PositiveIntegerField()
-    
+
     class Meta:
         indexes = [models.Index(fields=["assignment", "kind"])]
 

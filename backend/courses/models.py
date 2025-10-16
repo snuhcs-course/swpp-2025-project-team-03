@@ -1,5 +1,5 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 
 class CourseClass(models.Model):
@@ -10,7 +10,7 @@ class CourseClass(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         indexes = [
             models.Index(fields=["teacher"]),
@@ -21,10 +21,10 @@ class CourseClass(models.Model):
 
 class Enrollment(models.Model):
     class Status(models.TextChoices):
-        ENROLLED  = "ENROLLED",  "Enrolled"
-        DROPPED   = "DROPPED",   "Dropped"
+        ENROLLED = "ENROLLED", "Enrolled"
+        DROPPED = "DROPPED", "Dropped"
         COMPLETED = "COMPLETED", "Completed"
-    
+
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="enrollments")
     course_class = models.ForeignKey("courses.CourseClass", on_delete=models.CASCADE, related_name="enrollments")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ENROLLED)
