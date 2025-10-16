@@ -35,6 +35,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/assignments/", include("assignments.urls")),
+    path("api/questions/", include("questions.urls")),
     path("api/", include("courses.urls")),  # students, classes, attendance
     path("api/", include("feedbacks.urls")),  # messages, dashboard, reports
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"),
