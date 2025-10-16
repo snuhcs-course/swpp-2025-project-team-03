@@ -1,14 +1,25 @@
 from django.db import models
-from django.conf import settings
+
 
 class Question(models.Model):
-    personal_assignment = models.ForeignKey("submissions.PersonalAssignment", on_delete=models.CASCADE, related_name="questions")
+    personal_assignment = models.ForeignKey(
+        "submissions.PersonalAssignment", on_delete=models.CASCADE, related_name="questions"
+    )
     number = models.PositiveIntegerField(help_text="문항 번호 (1..N)")
     content = models.CharField(max_length=255, blank=True)
     hint = models.CharField(max_length=255, blank=True, null=True)
     explanation = models.TextField(blank=True, null=True)
     model_answer = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    base_question = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="tail_questions",
+        help_text="The base question this one is derived from (null if this is a base question)",
+    )
 
     class Meta:
         unique_together = ("personal_assignment", "number")
