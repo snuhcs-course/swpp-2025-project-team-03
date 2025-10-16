@@ -30,6 +30,10 @@ class AuthViewModel @Inject constructor(
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
     
+    // 로그인 시 받은 초기 과제 목록
+    private val _initialAssignments = MutableStateFlow<List<com.example.voicetutor.data.models.AssignmentData>>(emptyList())
+    val initialAssignments: StateFlow<List<com.example.voicetutor.data.models.AssignmentData>> = _initialAssignments.asStateFlow()
+    
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -40,6 +44,11 @@ class AuthViewModel @Inject constructor(
                 .onSuccess { user ->
                     _currentUser.value = user
                     _isLoggedIn.value = true
+                    
+                    // 로그인 시 받은 과제 목록 저장
+                    user.assignments?.let { assignments ->
+                        _initialAssignments.value = assignments
+                    }
                 }
                 .onFailure { exception ->
                     _error.value = exception.message

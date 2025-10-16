@@ -18,8 +18,17 @@ class AuthRepository @Inject constructor(
             val request = LoginRequest(email, password)
             val response = apiService.login(request)
             
+            println("AuthRepository - Login response code: ${response.code()}")
+            println("AuthRepository - Login response success: ${response.body()?.success}")
+            
             if (response.isSuccessful && response.body()?.success == true) {
                 val user = response.body()?.user
+                println("AuthRepository - User: ${user?.email}")
+                println("AuthRepository - User.assignments: ${user?.assignments?.size}")
+                user?.assignments?.forEach { 
+                    println("  - ${it.title}")
+                }
+                
                 if (user != null) {
                     Result.success(user)
                 } else {
@@ -29,6 +38,8 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.body()?.error ?: "로그인에 실패했습니다"))
             }
         } catch (e: Exception) {
+            println("AuthRepository - Login error: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }

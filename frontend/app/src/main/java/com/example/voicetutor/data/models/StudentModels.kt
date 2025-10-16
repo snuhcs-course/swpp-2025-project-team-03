@@ -20,7 +20,7 @@ data class Student(
     @SerializedName("averageScore")
     val averageScore: Int,
     @SerializedName("lastActive")
-    val lastActive: String
+    val lastActive: String?
 )
 
 data class AllStudentsStudent(
@@ -39,7 +39,7 @@ data class AllStudentsStudent(
     @SerializedName("averageScore")
     val averageScore: Int,
     @SerializedName("lastActive")
-    val lastActive: String
+    val lastActive: String?
 )
 
 
@@ -94,7 +94,7 @@ data class ClassMessageStudent(
     @SerializedName("averageScore")
     val averageScore: Int,
     @SerializedName("lastActive")
-    val lastActive: String,
+    val lastActive: String?,
     @SerializedName("isSelected")
     val isSelected: Boolean = false
 )

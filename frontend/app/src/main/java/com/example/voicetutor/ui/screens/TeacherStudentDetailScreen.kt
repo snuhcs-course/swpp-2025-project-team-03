@@ -332,7 +332,7 @@ data class StudentDetail(
     val studentId: String,
     val className: String,
     val joinDate: String,
-    val lastActive: String,
+    val lastActive: String?,
     val status: String,
     val totalAssignments: Int,
     val completedAssignments: Int,

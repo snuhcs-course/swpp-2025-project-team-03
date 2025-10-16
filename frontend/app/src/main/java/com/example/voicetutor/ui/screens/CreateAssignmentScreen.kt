@@ -19,8 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
@@ -34,32 +39,34 @@ import com.example.voicetutor.file.FileType
 import com.example.voicetutor.file.FileInfo
 import kotlinx.coroutines.launch
 
-enum class AssignmentCreationType {
-    PDF, MIXED, CURRICULUM
-}
-
-enum class DifficultyLevel {
-    EASY, MEDIUM, HARD, MIXED
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAssignmentScreen(
-    teacherId: String = "1", // 임시로 기본값 설정
-    onCreateAssignment: () -> Unit = {}
+    authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
+    assignmentViewModel: AssignmentViewModel? = null,
+    teacherId: String? = null,
+    onCreateAssignment: (String) -> Unit = {} // Pass assignment title on success
 ) {
+    val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
+    val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val classViewModel: ClassViewModel = hiltViewModel()
-    val assignmentViewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: StudentViewModel = hiltViewModel()
+    
+    val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
+    val actualTeacherId = teacherId ?: currentUser?.id?.toString() ?: "1"
     
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val students by studentViewModel.students.collectAsStateWithLifecycle()
-    val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by assignmentViewModel.error.collectAsStateWithLifecycle()
+    val isLoading by actualAssignmentViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
+    val currentAssignment by actualAssignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
     val fileManager = remember { FileManager(context) }
     val coroutineScope = rememberCoroutineScope()
+    
+    // 과제 생성 성공 플래그
+    var assignmentCreated by remember { mutableStateOf(false) }
     
     // 파일 선택 상태
     var selectedFiles by remember { mutableStateOf<List<FileInfo>>(emptyList()) }
@@ -91,39 +98,54 @@ fun CreateAssignmentScreen(
     var assignmentTitle by remember { mutableStateOf("") }
     var assignmentDescription by remember { mutableStateOf("") }
     var selectedClass by remember { mutableStateOf("") }
+    var selectedClassId by remember { mutableStateOf<Int?>(null) }
+    var selectedGrade by remember { mutableStateOf("") }
+    var selectedSubject by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf("") }
     var timeLimit by remember { mutableStateOf("15") }
     var questionCount by remember { mutableStateOf("5") }
-    var selectedType by remember { mutableStateOf(AssignmentCreationType.PDF) }
-    var selectedDifficulty by remember { mutableStateOf(DifficultyLevel.MIXED) }
-    var selectedTopics by remember { mutableStateOf(setOf<String>()) }
     var assignToAll by remember { mutableStateOf(true) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
+    var gradeSelectionExpanded by remember { mutableStateOf(false) }
+    var subjectSelectionExpanded by remember { mutableStateOf(false) }
     
     // Load data on first composition
-    LaunchedEffect(teacherId) {
-        classViewModel.loadClasses(teacherId)
-        studentViewModel.loadAllStudents(teacherId = teacherId)
+    LaunchedEffect(actualTeacherId) {
+        classViewModel.loadClasses(actualTeacherId)
+        studentViewModel.loadAllStudents(teacherId = actualTeacherId)
+    }
+    
+    // Navigate to assignment detail when creation succeeds
+    LaunchedEffect(currentAssignment, assignmentCreated) {
+        if (assignmentCreated && currentAssignment != null) {
+            println("Assignment created successfully: ${currentAssignment?.title}")
+            currentAssignment?.let { assignment ->
+                onCreateAssignment(assignment.title)
+            }
+        }
     }
     
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show error message
-            assignmentViewModel.clearError()
+            actualAssignmentViewModel.clearError()
         }
     }
     
     // Convert API data to UI format
     val classNames = classes.map { "${it.name} - ${it.subject}" }
     
-    val curriculumTopics = listOf(
-        "세포 구조와 기능",
-        "세포분열",
-        "유전과 진화",
-        "생태계",
-        "생물 다양성"
+    // 학년 리스트
+    val grades = listOf(
+        "초등학교 1학년", "초등학교 2학년", "초등학교 3학년", 
+        "초등학교 4학년", "초등학교 5학년", "초등학교 6학년",
+        "중학교 1학년", "중학교 2학년", "중학교 3학년",
+        "고등학교 1학년", "고등학교 2학년", "고등학교 3학년"
     )
+    
+    // 과목 리스트
+    val subjects = listOf("국어", "영어", "수학", "과학", "사회")
     
     val studentNames = students.map { it.name }
     
@@ -167,7 +189,12 @@ fun CreateAssignmentScreen(
                         onValueChange = { assignmentTitle = it },
                         label = { Text("과제 제목") },
                         placeholder = { Text("예: 세포 구조와 기능 복습") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true
                     )
                     
                     // Class selection
@@ -198,7 +225,8 @@ fun CreateAssignmentScreen(
                             expanded = classSelectionExpanded,
                             onDismissRequest = { classSelectionExpanded = false }
                         ) {
-                            classNames.forEach { className ->
+                            classes.forEachIndexed { index, classData ->
+                                val className = "${classData.name} - ${classData.subject}"
                                 DropdownMenuItem(
                                     text = { 
                                         Text(
@@ -208,11 +236,128 @@ fun CreateAssignmentScreen(
                                     },
                                     onClick = {
                                         selectedClass = className
+                                        selectedClassId = classData.id
                                         classSelectionExpanded = false
                                     },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Filled.School,
+                                            contentDescription = null,
+                                            tint = PrimaryIndigo
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Grade selection
+                    ExposedDropdownMenuBox(
+                        expanded = gradeSelectionExpanded,
+                        onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = selectedGrade,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("학년") },
+                            placeholder = { Text("학년을 선택하세요") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = gradeSelectionExpanded)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.School,
+                                    contentDescription = null,
+                                    tint = PrimaryIndigo
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                unfocusedBorderColor = Gray300
+                            ),
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = gradeSelectionExpanded,
+                            onDismissRequest = { gradeSelectionExpanded = false }
+                        ) {
+                            grades.forEach { grade ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Text(
+                                            text = grade,
+                                            fontWeight = FontWeight.Medium
+                                        ) 
+                                    },
+                                    onClick = {
+                                        selectedGrade = grade
+                                        gradeSelectionExpanded = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.School,
+                                            contentDescription = null,
+                                            tint = PrimaryIndigo
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Subject selection
+                    ExposedDropdownMenuBox(
+                        expanded = subjectSelectionExpanded,
+                        onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = selectedSubject,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("과목") },
+                            placeholder = { Text("과목을 선택하세요") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectSelectionExpanded)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.MenuBook,
+                                    contentDescription = null,
+                                    tint = PrimaryIndigo
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                unfocusedBorderColor = Gray300
+                            ),
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = subjectSelectionExpanded,
+                            onDismissRequest = { subjectSelectionExpanded = false }
+                        ) {
+                            subjects.forEach { subject ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Text(
+                                            text = subject,
+                                            fontWeight = FontWeight.Medium
+                                        ) 
+                                    },
+                                    onClick = {
+                                        selectedSubject = subject
+                                        subjectSelectionExpanded = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.MenuBook,
                                             contentDescription = null,
                                             tint = PrimaryIndigo
                                         )
@@ -231,7 +376,11 @@ fun CreateAssignmentScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp),
-                        maxLines = 3
+                        maxLines = 3,
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        )
                     )
                     
                     // Due date and time limit
@@ -244,165 +393,35 @@ fun CreateAssignmentScreen(
                             onValueChange = { dueDate = it },
                             label = { Text("마감일") },
                             placeholder = { Text("2024-01-15") },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Next
+                            ),
+                            singleLine = true
                         )
                         
                         OutlinedTextField(
                             value = timeLimit,
                             onValueChange = { timeLimit = it },
                             label = { Text("제한시간 (분)") },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            singleLine = true
                         )
                     }
                 }
             }
         }
         
-        // Assignment type selection
+        // PDF upload section (mandatory)
         VTCard(variant = CardVariant.Elevated) {
             Column {
                 Text(
-                    text = "과제 유형",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // PDF Assignment Type
-                    VTCard(
-                        variant = if (selectedType == AssignmentCreationType.PDF) CardVariant.Selected else CardVariant.Outlined,
-                        onClick = { selectedType = AssignmentCreationType.PDF },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Description,
-                                contentDescription = null,
-                                tint = if (selectedType == AssignmentCreationType.PDF) PrimaryIndigo else Gray500,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "PDF 자료",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (selectedType == AssignmentCreationType.PDF) PrimaryIndigo else Gray800
-                            )
-                            Text(
-                                text = "업로드 자료 사용",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600
-                            )
-                        }
-                    }
-                    
-                    // Mixed Assignment Type
-                    VTCard(
-                        variant = if (selectedType == AssignmentCreationType.MIXED) CardVariant.Selected else CardVariant.Outlined,
-                        onClick = { selectedType = AssignmentCreationType.MIXED },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.MenuBook,
-                                    contentDescription = null,
-                                    tint = if (selectedType == AssignmentCreationType.MIXED) PrimaryIndigo else Gray500,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Icon(
-                                    imageVector = Icons.Filled.Description,
-                                    contentDescription = null,
-                                    tint = if (selectedType == AssignmentCreationType.MIXED) PrimaryIndigo else Gray500,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "혼합",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (selectedType == AssignmentCreationType.MIXED) PrimaryIndigo else Gray800
-                            )
-                            Text(
-                                text = "교과과정 + PDF 함께",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Curriculum selection (for mixed type)
-        if (selectedType == AssignmentCreationType.MIXED) {
-            VTCard(variant = CardVariant.Elevated) {
-                Column {
-                    Text(
-                        text = "교과과정 선택",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        curriculumTopics.forEach { topic ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = selectedTopics.contains(topic),
-                                    onCheckedChange = { isChecked ->
-                                        selectedTopics = if (isChecked) {
-                                            selectedTopics + topic
-                                        } else {
-                                            selectedTopics - topic
-                                        }
-                                    }
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = topic,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Gray800
-                                    )
-                                    Text(
-                                        text = "난이도: 보통",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Gray600
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        // PDF upload section
-        if (selectedType == AssignmentCreationType.PDF || selectedType == AssignmentCreationType.MIXED) {
-            VTCard(variant = CardVariant.Elevated) {
-                Column {
-                    Text(
-                        text = "PDF 자료 업로드",
+                    text = "PDF 자료 업로드 (필수)",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
@@ -486,7 +505,6 @@ fun CreateAssignmentScreen(
                                         tint = Gray500,
                                         modifier = Modifier.size(20.dp)
                                     )
-                                }
                             }
                         }
                     }
@@ -505,59 +523,18 @@ fun CreateAssignmentScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
                     OutlinedTextField(
                         value = questionCount,
                         onValueChange = { questionCount = it },
                         label = { Text("문제 개수") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    var difficultyExpanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded = difficultyExpanded,
-                        onExpandedChange = { difficultyExpanded = !difficultyExpanded },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            value = when (selectedDifficulty) {
-                                DifficultyLevel.EASY -> "쉬움"
-                                DifficultyLevel.MEDIUM -> "보통"
-                                DifficultyLevel.HARD -> "어려움"
-                                DifficultyLevel.MIXED -> "혼합"
-                            },
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("난이도") },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = difficultyExpanded)
-                            },
-                            modifier = Modifier.menuAnchor()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = difficultyExpanded,
-                            onDismissRequest = { difficultyExpanded = false }
-                        ) {
-                            listOf(
-                                DifficultyLevel.MIXED to "혼합",
-                                DifficultyLevel.EASY to "쉬움",
-                                DifficultyLevel.MEDIUM to "보통",
-                                DifficultyLevel.HARD to "어려움"
-                            ).forEach { (level, label) ->
-                                DropdownMenuItem(
-                                    text = { Text(label) },
-                                    onClick = {
-                                        selectedDifficulty = level
-                                        difficultyExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
+                    placeholder = { Text("5") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    singleLine = true
+                )
             }
         }
         
@@ -685,20 +662,196 @@ fun CreateAssignmentScreen(
         
         // Action buttons
         val isFormValid = assignmentTitle.isNotBlank() && assignmentDescription.isNotBlank() && 
-            selectedClass.isNotBlank() && dueDate.isNotBlank() && timeLimit.isNotBlank() && 
-            questionCount.isNotBlank() &&
-            (selectedType == AssignmentCreationType.PDF || selectedType == AssignmentCreationType.MIXED || selectedTopics.isNotEmpty())
+            selectedClass.isNotBlank() && selectedClassId != null && 
+            selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
+            dueDate.isNotBlank() && timeLimit.isNotBlank() && 
+            questionCount.isNotBlank() && selectedFiles.isNotEmpty()
         
         VTButton(
             text = "과제 생성",
             onClick = {
-                if (isFormValid) {
-                    onCreateAssignment()
+                if (isFormValid && selectedClassId != null) {
+                    // 데모용 샘플 서술형 질문 생성 (음성 답변 + AI 꼬리 질문 형태)
+                    val sampleQuestions = when (selectedSubject) {
+                        "과학" -> listOf(
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 1,
+                                question = "광합성이 무엇인지 설명해주세요.",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "광합성은 식물이 빛 에너지를 이용해 이산화탄소와 물로 포도당을 만드는 과정입니다.",
+                                explanation = "광합성은 식물이 빛 에너지를 이용해 이산화탄소와 물로 포도당을 만드는 과정입니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 2,
+                                question = "그렇다면 광합성이 일어나기 위해 필요한 조건은 무엇인가요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "빛, 이산화탄소, 물, 엽록체가 필요합니다.",
+                                explanation = "빛, 이산화탄소, 물, 엽록체가 필요합니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 3,
+                                question = "광합성의 결과로 만들어지는 산소는 어디에서 나오나요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "물이 분해되면서 산소가 발생합니다.",
+                                explanation = "물이 분해되면서 산소가 발생합니다."
+                            )
+                        )
+                        "수학" -> listOf(
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 1,
+                                question = "이차방정식이 무엇인지 설명해주세요.",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "이차방정식은 미지수의 최고차항이 2인 방정식입니다.",
+                                explanation = "이차방정식은 미지수의 최고차항이 2인 방정식입니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 2,
+                                question = "그렇다면 이차방정식을 푸는 방법에는 어떤 것들이 있나요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "인수분해, 완전제곱식, 근의 공식 등이 있습니다.",
+                                explanation = "인수분해, 완전제곱식, 근의 공식 등이 있습니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 3,
+                                question = "근의 공식은 언제 사용하는 것이 좋을까요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "인수분해가 어려울 때 근의 공식을 사용하면 편리합니다.",
+                                explanation = "인수분해가 어려울 때 근의 공식을 사용하면 편리합니다."
+                            )
+                        )
+                        "국어" -> listOf(
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 1,
+                                question = "비유적 표현이란 무엇인지 설명해주세요.",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "다른 대상에 빗대어 표현하는 방법입니다.",
+                                explanation = "다른 대상에 빗대어 표현하는 방법입니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 2,
+                                question = "은유와 직유의 차이점은 무엇인가요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "직유는 '~처럼'을 사용하고, 은유는 직접 다른 것이라고 표현합니다.",
+                                explanation = "직유는 '~처럼'을 사용하고, 은유는 직접 다른 것이라고 표현합니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 3,
+                                question = "의인법의 예를 하나 들어보세요.",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "'꽃이 웃는다', '바람이 노래한다' 등이 있습니다.",
+                                explanation = "'꽃이 웃는다', '바람이 노래한다' 등이 있습니다."
+                            )
+                        )
+                        "영어" -> listOf(
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 1,
+                                question = "현재완료 시제가 무엇인지 설명해주세요.",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "과거에 시작된 일이 현재까지 영향을 미치는 것을 나타냅니다.",
+                                explanation = "과거에 시작된 일이 현재까지 영향을 미치는 것을 나타냅니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 2,
+                                question = "현재완료는 어떻게 만드나요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "have/has + 과거분사 형태로 만듭니다.",
+                                explanation = "have/has + 과거분사 형태로 만듭니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 3,
+                                question = "현재완료와 과거시제의 차이는 무엇인가요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "과거시제는 과거의 특정 시점을, 현재완료는 과거부터 현재까지를 나타냅니다.",
+                                explanation = "과거시제는 과거의 특정 시점을, 현재완료는 과거부터 현재까지를 나타냅니다."
+                            )
+                        )
+                        "사회" -> listOf(
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 1,
+                                question = "민주주의가 무엇인지 설명해주세요.",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "국민이 주권을 가지고 정치에 참여하는 제도입니다.",
+                                explanation = "국민이 주권을 가지고 정치에 참여하는 제도입니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 2,
+                                question = "민주주의의 기본 원리에는 어떤 것들이 있나요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "국민주권, 권력분립, 기본권 보장 등이 있습니다.",
+                                explanation = "국민주권, 권력분립, 기본권 보장 등이 있습니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 3,
+                                question = "권력분립이 왜 중요한가요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "권력의 집중을 막고 상호 견제를 통해 국민의 자유를 보장하기 위함입니다.",
+                                explanation = "권력의 집중을 막고 상호 견제를 통해 국민의 자유를 보장하기 위함입니다."
+                            )
+                        )
+                        else -> listOf(
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 1,
+                                question = "이 주제에 대해 설명해주세요.",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "자세히 설명해주시면 더 깊이 있게 이야기 나눠볼 수 있습니다.",
+                                explanation = "자세히 설명해주시면 더 깊이 있게 이야기 나눠볼 수 있습니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 2,
+                                question = "조금 더 구체적으로 설명해주실 수 있나요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "예시를 들어 설명해주시면 좋습니다.",
+                                explanation = "예시를 들어 설명해주시면 좋습니다."
+                            ),
+                            com.example.voicetutor.data.models.QuestionData(
+                                id = 3,
+                                question = "그렇다면 이것이 왜 중요한가요?",
+                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                options = null,
+                                correctAnswer = "실생활에서의 적용 사례를 생각해보세요.",
+                                explanation = "실생활에서의 적용 사례를 생각해보세요."
+                            )
+                        )
+                    }
+                    
+                    val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest(
+                        title = assignmentTitle,
+                        subject = selectedSubject,
+                        classId = selectedClassId!!,
+                        dueDate = dueDate,
+                        type = "Quiz",  // PDF 과제는 항상 Quiz 타입
+                        description = assignmentDescription,
+                        questions = sampleQuestions
+                    )
+                    
+                    println("Creating assignment: $createRequest")
+                    println("Grade: $selectedGrade, Subject: $selectedSubject")
+                    println("PDF files: ${selectedFiles.map { it.name }}")
+                    println("Sample questions: ${sampleQuestions.size}개 생성")
+                    assignmentCreated = true  // 플래그 설정
+                    actualAssignmentViewModel.createAssignment(createRequest)
                 }
             },
             variant = ButtonVariant.Gradient,
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid,
+            enabled = isFormValid && !isLoading,
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Add,

@@ -29,23 +29,32 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
 fun TeacherAssignmentResultsScreen(
-    assignmentId: Int = 1, // 임시로 기본값 설정
-    assignmentTitle: String = "과제", // TODO: 실제 과제 제목으로 동적 설정
+    assignmentViewModel: AssignmentViewModel? = null,
+    assignmentTitle: String = "과제",
     onNavigateToStudentDetail: (String) -> Unit = {}
 ) {
-    val viewModel: AssignmentViewModel = hiltViewModel()
+    val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
+    val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val students by viewModel.assignmentResults.collectAsStateWithLifecycle()
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
+    // Find assignment by title from the assignments list
+    val targetAssignment = remember(assignments, assignmentTitle) {
+        assignments.find { it.title == assignmentTitle }
+    }
+    
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
     
     // Load assignment data and results on first composition
-    LaunchedEffect(assignmentId) {
-        viewModel.loadAssignmentById(assignmentId)
-        viewModel.loadAssignmentResults(assignmentId)
+    LaunchedEffect(targetAssignment?.id) {
+        targetAssignment?.let { target ->
+            println("TeacherAssignmentResults - Loading assignment: ${target.title} (ID: ${target.id})")
+            viewModel.loadAssignmentById(target.id)
+            viewModel.loadAssignmentResults(target.id)
+        }
     }
     
     // Handle error
@@ -110,8 +119,13 @@ fun TeacherAssignmentResultsScreen(
             )
             
             VTStatsCard(
-                title = "평균 점수",
-                value = "${if (students.isNotEmpty()) students.filter { it.status == "완료" }.map { it.score }.average().toInt() else 0}점",
+                title = "평균 등급",
+                value = if (students.isNotEmpty() && students.any { it.status == "완료" }) {
+                    val avgScore = students.filter { it.status == "완료" }.map { it.score }.average().toInt()
+                    scoreToGrade(avgScore)
+                } else {
+                    "-"
+                },
                 icon = Icons.Filled.Star,
                 iconColor = Warning,
                 modifier = Modifier.weight(1f),
@@ -179,7 +193,7 @@ fun TeacherAssignmentResultsScreen(
                 students.forEachIndexed { index, student ->
                     TeacherAssignmentResultCard(
                         student = student,
-                        onStudentClick = { onNavigateToStudentDetail(student.name) }
+                        onStudentClick = { onNavigateToStudentDetail(student.studentId) }
                     )
                     
                     if (index < students.size - 1) {
@@ -232,11 +246,6 @@ fun TeacherAssignmentResultCard(
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
                     )
-                    Text(
-                        text = student.studentId,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
                 }
                 
                 // Status badge
@@ -257,23 +266,37 @@ fun TeacherAssignmentResultCard(
                 }
             }
             
-            // Score and time info
+            // Grade and time info
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
-                        text = "점수",
+                        text = "등급",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
-                    Text(
-                        text = "${student.score}점",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
-                    )
+                    val grade = scoreToGrade(student.score)
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                color = getGradeColor(grade).copy(alpha = 0.15f),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = grade,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = getGradeColor(grade),
+                            fontSize = 24.sp
+                        )
+                    }
                 }
                 
                 Column {
@@ -297,41 +320,12 @@ fun TeacherAssignmentResultCard(
                         color = Gray600
                     )
                     Text(
-                        text = student.submittedAt,
+                        text = formatSubmittedTime(student.submittedAt),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = Gray800
                     )
                 }
-            }
-            
-            // Confidence score
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "자신감 점수",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                VTProgressBar(
-                    progress = student.confidenceScore / 100f,
-                    showPercentage = false,
-                    modifier = Modifier.weight(1f)
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                Text(
-                    text = "${student.confidenceScore}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = Gray800
-                )
             }
             
             // Sample answers preview
@@ -356,6 +350,47 @@ fun TeacherAssignmentResultCard(
                 }
             }
         }
+    }
+}
+
+// Helper function to format submitted time
+private fun formatSubmittedTime(isoTime: String): String {
+    return try {
+        // ISO 8601 형식 파싱: "2025-10-16T02:10:13.245620Z"
+        val parts = isoTime.split("T")
+        if (parts.size >= 2) {
+            val date = parts[0] // "2025-10-16"
+            val timePart = parts[1].split(".")[0] // "02:10:13"
+            val time = timePart.substring(0, 5) // "02:10"
+            "$date $time"
+        } else {
+            isoTime
+        }
+    } catch (e: Exception) {
+        isoTime
+    }
+}
+
+// Helper function to convert score to grade
+private fun scoreToGrade(score: Int): String {
+    return when {
+        score >= 90 -> "A"
+        score >= 80 -> "B"
+        score >= 70 -> "C"
+        score >= 60 -> "D"
+        else -> "F"
+    }
+}
+
+// Helper function to get grade color
+private fun getGradeColor(grade: String): Color {
+    return when (grade) {
+        "A" -> Success
+        "B" -> Color(0xFF4CAF50)
+        "C" -> Warning
+        "D" -> Color(0xFFFF9800)
+        "F" -> Error
+        else -> Gray600
     }
 }
 

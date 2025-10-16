@@ -65,9 +65,10 @@ fun TeacherClassDetailScreen(
     
     // Load data on first composition
     LaunchedEffect(classId) {
-        // Load assignments for this class
-        assignmentViewModel.loadAllAssignments()
         classId?.let { id ->
+            // Load assignments for this class
+            println("TeacherClassDetail - Loading assignments for class ID: $id")
+            assignmentViewModel.loadAllAssignments(classId = id.toString())
             // Load students for this class
             studentViewModel.loadAllStudents(classId = id.toString())
             // Load class data

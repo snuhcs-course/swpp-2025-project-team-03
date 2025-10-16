@@ -37,23 +37,48 @@ data class ClassRoom(
 
 @Composable
 fun TeacherClassesScreen(
-    teacherId: String = "1", // 임시로 기본값 설정, 나중에 인증에서 가져오도록 수정
+    authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
+    assignmentViewModel: AssignmentViewModel? = null,
+    teacherId: String? = null, // 파라미터로 받거나 현재 로그인한 사용자 ID 사용
     onNavigateToClassDetail: (String) -> Unit = {},
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToCreateAssignment: () -> Unit = {},
     onNavigateToStudents: (Int) -> Unit = {}
 ) {
     val classViewModel: ClassViewModel = hiltViewModel()
-    val assignmentViewModel: AssignmentViewModel = hiltViewModel()
+    val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
+    val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
+    
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
-    val assignments by assignmentViewModel.assignments.collectAsStateWithLifecycle()
+    val assignments by actualAssignmentViewModel.assignments.collectAsStateWithLifecycle()
     val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
     val error by classViewModel.error.collectAsStateWithLifecycle()
+    val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     
     // Load classes and assignments on first composition
-    LaunchedEffect(teacherId) {
-        classViewModel.loadClasses(teacherId)
-        assignmentViewModel.loadAllAssignments(teacherId = teacherId)
+    LaunchedEffect(currentUser?.id, assignments.isEmpty(), classes.isEmpty()) {
+        val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+        
+        // 이미 assignments가 있으면 재호출하지 않음
+        if (assignments.isNotEmpty()) {
+            println("TeacherClassesScreen - Already have ${assignments.size} assignments from login")
+        } else if (actualTeacherId != null) {
+            println("TeacherClassesScreen - Loading assignments for teacher ID: $actualTeacherId")
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+        }
+        
+        // Classes는 항상 로드 필요
+        if (actualTeacherId == null) {
+            println("TeacherClassesScreen - Waiting for user to be loaded...")
+            return@LaunchedEffect
+        }
+        
+        if (classes.isEmpty()) {
+            println("TeacherClassesScreen - Loading classes for teacher ID: $actualTeacherId")
+            classViewModel.loadClasses(actualTeacherId)
+        } else {
+            println("TeacherClassesScreen - Already have ${classes.size} classes")
+        }
     }
     
     // Handle error

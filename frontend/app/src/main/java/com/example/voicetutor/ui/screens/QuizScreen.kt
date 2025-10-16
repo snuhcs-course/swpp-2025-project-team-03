@@ -48,7 +48,20 @@ data class QuizQuestion(
 
 @Composable
 fun QuizScreen(
-    assignmentId: Int = 1, // 임시로 기본값 설정
+    assignmentId: Int = 1,
+    quizTitle: String = "퀴즈"
+) {
+    // 모든 퀴즈는 음성 답변 + AI 대화형 꼬리 질문 형태로 진행
+    AssignmentContinuousScreen(
+        assignmentId = assignmentId,
+        assignmentTitle = quizTitle
+    )
+}
+
+// 이전 객관식 퀴즈 로직 (참고용으로 보관)
+@Composable
+private fun QuizScreenOld(
+    assignmentId: Int = 1,
     quizTitle: String = "퀴즈"
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
@@ -56,6 +69,7 @@ fun QuizScreen(
     val authViewModel: AuthViewModel = hiltViewModel()
     
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
+    val assignmentQuestions by viewModel.assignmentQuestions.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val quizSubmissionResult by aiViewModel.quizSubmissionResult.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
@@ -80,9 +94,10 @@ fun QuizScreen(
         }
     }
     
-    // Load assignment on first composition
+    // Load assignment and questions on first composition
     LaunchedEffect(assignmentId) {
         viewModel.loadAssignmentById(assignmentId)
+        viewModel.loadAssignmentQuestions(assignmentId)
     }
     
     // Handle error
@@ -94,37 +109,21 @@ fun QuizScreen(
     }
     
     // Convert API data to QuizQuestion format
-    var questions by remember { mutableStateOf(
-        currentAssignment?.let { assignment ->
-            // 임시로 기본 퀴즈 문제 생성 (실제로는 API에서 퀴즈 문제를 가져와야 함)
-            listOf(
-                QuizQuestion(
-                    id = 1,
-                    question = "세포분열 시 DNA가 복제되는 시기는 언제입니까?",
-                    options = listOf("G1기", "S기", "G2기", "M기"),
-                    correctAnswer = 1,
-                    explanation = "S기(Synthesis phase)는 DNA 복제가 일어나는 시기입니다.",
-                    subject = assignment.subject
-                ),
-                QuizQuestion(
-                    id = 2,
-                    question = "식물 세포에만 있고 동물 세포에는 없는 구조는?",
-                    options = listOf("미토콘드리아", "세포벽", "리보솜", "핵"),
-                    correctAnswer = 1,
-                    explanation = "세포벽은 식물 세포의 특징적인 구조로 동물 세포에는 없습니다.",
-                    subject = assignment.subject
-                ),
-                QuizQuestion(
-                    id = 3,
-                    question = "광합성이 일어나는 세포 소기관은?",
-                    options = listOf("엽록체", "미토콘드리아", "골지체", "소포체"),
-                    correctAnswer = 0,
-                    explanation = "엽록체는 식물 세포에서 광합성이 일어나는 소기관입니다.",
-                    subject = assignment.subject
-                )
+    val questions = remember(assignmentQuestions, currentAssignment) {
+        assignmentQuestions.mapIndexed { index, questionData ->
+            // QuestionData의 correctAnswer (String)를 options에서의 index로 변환
+            val correctAnswerIndex = questionData.options?.indexOf(questionData.correctAnswer) ?: 0
+            
+            QuizQuestion(
+                id = questionData.id,
+                question = questionData.question,
+                options = questionData.options ?: emptyList(),
+                correctAnswer = correctAnswerIndex,
+                explanation = questionData.explanation ?: "",
+                subject = currentAssignment?.subject ?: "과목"
             )
-        } ?: emptyList()
-    ) }
+        }
+    }
     
     var currentQuestionIndex by remember { mutableStateOf(0) }
     var selectedAnswer by remember { mutableStateOf<Int?>(null) }
