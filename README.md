@@ -22,12 +22,38 @@ It is designed for elementary or middle school students, teachers, and parents w
 [Demo Video: Student's view (1)](demo/videos/student_view1.mp4)  
 [Demo Video: Student's view (2)](demo/videos/student_view2.mp4)
 
-We've built the frontend of the Voice Tutor project using Android Studio.  
-During sign-up, user can choose between a student account and a teacher account.  
-Entire UI (including question creation, assignment distribution, task submission) is in frontend/ directory.  
-Note that sign-in and sign-up api are already integrated.
+We've built the frontend of the **Voice Tutor** project using **Android Studio**.
+During sign-up, the user can choose between a **Student account** and a **Teacher account**.
+Entire UI (including question creation, assignment distribution, and task submission) is in the `frontend/` directory.
+Note that **sign-in** and **sign-up APIs** are already integrated.
+Open `frontend/` with Android Studio to explore details.
 
-Open frontend/ with android studio to see the detail.
+---
+
+### Teacher Dashboard
+
+After signing in as a **teacher**, you will see the **main dashboard** displaying the list of existing assignments.
+From here, you can click the **“New Assignment”** button to create a new task.
+In the creation form, you can:
+
+* Enter the **assignment name**
+* Choose the **target class**
+* Upload the **related PDF file**
+* Select **grade** and **subject**
+* Specify the **number of questions** and the **difficulty level**
+
+Once created, the assignment will automatically appear on the student dashboard for all students in the selected class.
+
+---
+
+### Student Dashboard
+
+After signing in as a **student**, the main dashboard lists all assignments assigned to them.
+Each assignment contains several **spoken-response questions**.
+Students record their answers directly in the app — and after each submission, the system automatically generates a **follow-up (tail) question** based on their response.
+Students then record another audio answer to that follow-up, creating an **interactive speaking loop** that simulates real teacher feedback.
+
+---
 
 ## Demo 2-(b): API for assignment generation
 
