@@ -29,12 +29,14 @@ Note that sign-in and sign-up api are already integrated.
 
 Open frontend/ with android studio to see the detail.
 
-## Demo ２-(b): API for assignment generation
+## Demo 2-(b): API for assignment generation
 
 [Demo Video: question generation](demo/videos/question_generation.mp4)
 
 As part of VoiceTutor, we've implemented an integrated backend API for assignment creation and automated quiz generation.  
-This module allows teachers to upload class materials (in PDF format) to S3, automatically summarize them using GPT-4o Vision, and generate base quiz questions for students.
+This module allows teachers to upload class materials (in PDF format) to S3, automatically summarize them using GPT-4o Vision, and generate base quiz questions for students.  
+Note that **tail question** generation logic is implemented in **research/tail_question_generator/generate_question_few_shot.py**, and it will be integrated on iter-3.  
+Demo 2-(b) shows **base question** generation.  
 
 ⚙️ Overview
 
