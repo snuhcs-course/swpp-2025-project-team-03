@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Assignment, Material
+from .request_serializers import AssignmentCreateRequestSerializer
 from .serializers import AssignmentCreateSerializer
 
 
@@ -48,14 +49,27 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
 
 
 class AssignmentCreateView(APIView):  # POST /assignments
+    """
+    POST /assignments
+    새로운 과제를 생성하고 PDF 업로드용 presigned S3 URL을 반환합니다.
+    """
+
     @swagger_auto_schema(
         operation_id="과제 생성",
-        operation_description="새로운 과제를 생성하고 PDF 업로드용 presigned URL을 반환합니다.",
-        request_body=AssignmentCreateSerializer,
-        responses={201: "Assignment created with presigned S3 URL"},
+        operation_description=(
+            "새로운 과제를 생성하고 업로드용 S3 presigned URL을 반환합니다.\n\n"
+            "- 요청: class_id, title, due_at, description\n"
+            "- 응답: assignment_id, material_id, s3_key, upload_url"
+        ),
+        request_body=AssignmentCreateRequestSerializer,
+        responses={
+            201: AssignmentCreateSerializer,
+            400: "Invalid input or wrong request format",
+            500: "Failed to generate presigned URL",
+        },
     )
     def post(self, request):
-        serializer = AssignmentCreateSerializer(data=request.data)
+        serializer = AssignmentCreateRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
