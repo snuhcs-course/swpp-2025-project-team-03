@@ -20,7 +20,7 @@ It is designed for elementary or middle school students, teachers, and parents w
 
 [Demo Video: Teacher's view](demo/videos/teacher_view.mp4)  
 [Demo Video: Student's view (1)](demo/videos/student_view1.mp4)  
-[Demo Video: Student's view (２)](demo/videos/student_view２.mp4)
+[Demo Video: Student's view (2)](demo/videos/student_view２.mp4)
 
 We've built the frontend of the Voice Tutor project using Android Studio.  
 During sign-up, user can choose between a student account and a teacher account.  
