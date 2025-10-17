@@ -1,7 +1,19 @@
+import uuid
+from datetime import datetime
+
+import boto3
+from courses.models import CourseClass
+from dateutil import parser
+from django.conf import settings
+from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from .models import Assignment, Material
+from .request_serializers import AssignmentCreateRequestSerializer
+from .serializers import AssignmentCreateSerializer
 
 
 class AssignmentListView(APIView):  # GET /assignments
@@ -37,13 +49,106 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
 
 
 class AssignmentCreateView(APIView):  # POST /assignments
+    """
+    POST /assignments
+    새로운 과제를 생성하고 PDF 업로드용 presigned S3 URL을 반환합니다.
+    """
+
     @swagger_auto_schema(
         operation_id="과제 생성",
-        operation_description="새로운 과제를 생성합니다.",
-        responses={201: "Assignment created"},
+        operation_description=(
+            "새로운 과제를 생성하고 업로드용 S3 presigned URL을 반환합니다.\n\n"
+            "- 요청: class_id, title, due_at, description\n"
+            "- 응답: assignment_id, material_id, s3_key, upload_url"
+        ),
+        request_body=AssignmentCreateRequestSerializer,
+        responses={
+            201: AssignmentCreateSerializer,
+            400: "Invalid input or wrong request format",
+            500: "Failed to generate presigned URL",
+        },
     )
     def post(self, request):
-        return Response({"message": "과제 생성"}, status=status.HTTP_201_CREATED)
+        serializer = AssignmentCreateRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # assignment에 연동될 course를 조회
+        try:
+            course_class = CourseClass.objects.get(id=data["class_id"])
+        except CourseClass.DoesNotExist:
+            # TODO: course_class api를 개발한 이후에는 pass를 지우고 밑에 주석을 해제해야합니다!!
+            course_class = None
+            pass
+            # return Response({"error": "Invalid class_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # due_at을 timezone-aware로 변환 (유연한 파싱)
+        # 예: "2025-10-25T23:59:00+09:00", "2025-10-25 23:59", "2025-10-25T23:59Z" 등 모두 허용
+        try:
+            raw_due = str(data["due_at"]).strip()  # 혹시 모를 공백 제거
+            due_at = parser.parse(raw_due)
+            if due_at.tzinfo is None:
+                due_at = timezone.make_aware(due_at, timezone.get_current_timezone())
+        except Exception as e:
+            return Response(
+                {"error": "Invalid due_at format (use ISO 8601)", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        assignment = Assignment.objects.create(
+            course_class=course_class,
+            title=data["title"],
+            description=data.get("description", ""),
+            visible_from=datetime.now(),
+            due_at=due_at,
+        )
+
+        # S3 presigned URL 생성
+        s3_key = f"pdf/{data['class_id']}/{assignment.id}/{uuid.uuid4()}.pdf"
+
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION,
+            endpoint_url=f"https://s3.{settings.AWS_REGION}.amazonaws.com",
+        )
+
+        try:
+            presigned_url = s3_client.generate_presigned_url(
+                ClientMethod="put_object",
+                Params={
+                    "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
+                    "Key": s3_key,
+                    "ContentType": "application/pdf",
+                },
+                ExpiresIn=3600,
+                HttpMethod="PUT",
+            )
+        except Exception as e:
+            assignment.delete()  # 실패 시 rollback
+            return Response(
+                {"error": f"Failed to generate presigned URL: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # Material 행 추가
+        material = Material.objects.create(
+            assignment=assignment,
+            kind=Material.Kind.PDF,
+            s3_key=s3_key,
+            bytes=None,  # 아직 업로드 전
+        )
+
+        # Response 반환
+        return Response(
+            {
+                "assignment_id": assignment.id,
+                "material_id": material.id,
+                "s3_key": s3_key,
+                "upload_url": presigned_url,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class AssignmentSubmitView(APIView):  # POST /assignments/{id}/submit

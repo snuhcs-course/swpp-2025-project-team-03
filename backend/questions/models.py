@@ -2,14 +2,21 @@ from django.db import models
 
 
 class Question(models.Model):
+    class Difficulty(models.TextChoices):
+        EASY = "easy", "Easy"
+        MEDIUM = "medium", "Medium"
+        HARD = "hard", "Hard"
+
+    # TODO: api 테스트 목적으로 null을 허용했지만 반드시!!!! 제거해야합니다!!!!!
     personal_assignment = models.ForeignKey(
-        "submissions.PersonalAssignment", on_delete=models.CASCADE, related_name="questions"
+        "submissions.PersonalAssignment", on_delete=models.CASCADE, related_name="questions", null=True, blank=True
     )
     number = models.PositiveIntegerField(help_text="문항 번호 (1..N)")
     content = models.CharField(max_length=255, blank=True)
     hint = models.CharField(max_length=255, blank=True, null=True)
     explanation = models.TextField(blank=True, null=True)
     model_answer = models.TextField(blank=True)
+    difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.MEDIUM)
     created_at = models.DateTimeField(auto_now_add=True)
 
     base_question = models.ForeignKey(
