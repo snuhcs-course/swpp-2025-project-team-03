@@ -20,7 +20,7 @@ if "OPENAI_API_KEY" not in os.environ:
     raise ValueError("OPENAI_API_KEY is not set in environment variables.")
 
 # Use lightweight model for speed (adjust as needed)
-llm = ChatOpenAI(model="gpt-5-nano", temperature=0.7)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
 
 
 # Quiz schema
