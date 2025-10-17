@@ -77,13 +77,26 @@ This API handles the entire pipeline of assignment creation and content generati
    cd backend
    ```
 
-2. **Create Virtual Environment**
+2. **Create .env**  
+   Create your S3 bucket first, and make **.env** at **backend/** directory like below.
+
+   ```bash
+   OPENAI_API_KEY='YOUR_OPENAI_API_KEY'
+   SECRET_KEY='DJANGO_SECRET_KEY'
+   
+   AWS_ACCESS_KEY_ID='YOUR_AWS_ACCESS_KEY_ID'
+   AWS_SECRET_ACCESS_KEY='YOUR_AWS_SECRET_ACCESS_KEY'
+   AWS_REGION=ap-northeast-2
+   AWS_STORAGE_BUCKET_NAME='YOUR_S3_BUCKET_NAME' 
+   ```
+
+3. **Create Virtual Environment**
 
    ```bash
    python -m venv venv
    ```
 
-3. **Activate Virtual Environment**
+4. **Activate Virtual Environment**
 
    ```bash
    # Windows
@@ -93,7 +106,7 @@ This API handles the entire pipeline of assignment creation and content generati
    source venv/bin/activate
    ```
 
-4. **Install Dependencies**
+5. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
@@ -110,7 +123,7 @@ eg. https://localhost:8000/swagger/
 
 #### Step 4: POST /assignment/create/
 
-First, you can test "POST /assignment/create/" (과제 생성) API.
+First, you can test **POST /assignment/create/** (과제 생성) API.
 
 Sample Request
 
@@ -143,7 +156,7 @@ Run **demo/upload.py** to upload sample pdf using result from **Step 4**
 
 #### Step 6: POST /questions/create/
 
-Second, you can test test POST method: /questions/create/
+Second, you can test POST method: **/questions/create/**
 
 Sample Request
 
