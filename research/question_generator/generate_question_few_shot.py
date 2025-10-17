@@ -5,6 +5,7 @@ Few-shot Multi-Quiz Generator (balanced version)
 import argparse
 import json
 import os
+import time
 from typing import List
 
 from dotenv import load_dotenv
@@ -19,7 +20,7 @@ if "OPENAI_API_KEY" not in os.environ:
     raise ValueError("OPENAI_API_KEY is not set in environment variables.")
 
 # Use lightweight model for speed (adjust as needed)
-llm = ChatOpenAI(model="gpt-5", temperature=0.7)
+llm = ChatOpenAI(model="gpt-5-nano", temperature=0.7)
 
 
 # Quiz schema
@@ -86,6 +87,7 @@ Avoid vague, factual, or overly general questions.
 - 왜 덧셈이 중요한가요?
 
 These are too abstract or lack a clear conceptual target.
+Do consider that target student is from elementary or middle school student, do not make it too hard.
 
 ---
 
@@ -176,9 +178,11 @@ def main():
             이 힘 덕분에 행성은 태양 주위를 돌고, 달은 지구 주위를 도는 거예요.
         """
 
+    start_time = time.time()
     quizzes = generate_quizzes(material, args.n)
+    end_time = time.time()
 
-    print(f"\n✅ Generated {len(quizzes)} quizzes:\n")
+    print(f"\n✅ Generated {len(quizzes)} quizzes in {end_time - start_time} seconds:\n")
     for i, q in enumerate(quizzes, 1):
         print(f"[{i}] Topic: {q.topic}")
         print(f"Q: {q.question}")
