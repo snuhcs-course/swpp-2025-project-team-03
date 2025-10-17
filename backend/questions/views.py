@@ -4,21 +4,36 @@ import boto3
 from assignments.models import Assignment, Material
 from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema
-from questions.models import Question
-from questions.serializers import QuestionCreateRequestSerializer
-from questions.utils.base_question_generator import generate_base_quizzes
-from questions.utils.pdf_to_text import summarize_pdf_from_s3
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .models import Question
+from .request_serializers import QuestionCreateRequestSerializer
+from .serializers import QuestionCreateSerializer
+from .utils.base_question_generator import generate_base_quizzes
+from .utils.pdf_to_text import summarize_pdf_from_s3
+
 
 class QuestionCreateView(APIView):
+    """
+    POST /questions/generate
+    S3의 PDF를 요약하고, 그 내용을 기반으로 자동 문제를 생성합니다.
+    """
+
     @swagger_auto_schema(
-        operation_id="PDF Summarize + Question Generate",
-        operation_description="S3의 PDF를 요약하고 그 내용을 바탕으로 자동으로 질문을 생성합니다.",
+        operation_id="PDF 요약 & 기본 질문 생성",
+        operation_description=(
+            "S3의 PDF를 요약하고 그 내용을 바탕으로 자동으로 질문을 생성합니다.\n\n"
+            "- 입력: assignment_id, material_id, total_number\n"
+            "- 출력: 요약 결과 + 생성된 질문 리스트"
+        ),
         request_body=QuestionCreateRequestSerializer,
-        responses={200: "Summarization & Question generation complete"},
+        responses={
+            200: QuestionCreateSerializer,
+            404: "Invalid assignment_id or material_id",
+            500: "Summarization or question generation failed",
+        },
     )
     def post(self, request):
         serializer = QuestionCreateRequestSerializer(data=request.data)
@@ -77,7 +92,7 @@ class QuestionCreateView(APIView):
                     # topic=quiz.topic,
                     explanation=quiz.explanation,
                     model_answer=quiz.model_answer,
-                    difficulty=quiz.difficulty,
+                    difficulty=quiz.difficulty.lower(),
                 )
                 created_questions.append(
                     {
@@ -94,7 +109,7 @@ class QuestionCreateView(APIView):
                 {
                     "assignment_id": assignment.id,
                     "material_summary_id": text_material.id,
-                    "summary_preview": summarized_text[:500],
+                    "summary_preview": summarized_text[:100],
                     "questions": created_questions,
                 },
                 status=status.HTTP_200_OK,

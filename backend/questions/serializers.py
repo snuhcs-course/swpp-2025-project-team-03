@@ -1,17 +1,21 @@
 from rest_framework import serializers
 
 
-class QuestionCreateRequestSerializer(serializers.Serializer):
-    """요약용 PDF를 지정하기 위한 요청 serializer"""
+class QuestionSerializer(serializers.Serializer):
+    """생성된 개별 문항 정보"""
 
-    assignment_id = serializers.IntegerField(required=True, help_text="대상 Assignment의 ID")
-    material_id = serializers.IntegerField(required=True, help_text="요약할 Material의 ID (PDF)")
-    total_number = serializers.IntegerField(required=True, help_text="생성할 base question의 개수")
+    id = serializers.IntegerField(help_text="DB에 저장된 Question의 고유 ID")
+    number = serializers.IntegerField(help_text="문항 번호 (1부터 시작)")
+    question = serializers.CharField(help_text="질문 내용")
+    answer = serializers.CharField(help_text="정답 텍스트")
+    explanation = serializers.CharField(help_text="정답 해설")
+    difficulty = serializers.ChoiceField(choices=["easy", "medium", "hard"], help_text="난이도")
 
-    def validate(self, data):
-        """필요 시 추가 유효성 검사"""
-        if data["assignment_id"] <= 0 or data["material_id"] <= 0:
-            raise serializers.ValidationError("assignment_id 및 material_id는 양수여야 합니다.")
-        if data["total_number"] <= 0:
-            raise serializers.ValidationError("total_number는 양수여야 합니다.")
-        return data
+
+class QuestionCreateSerializer(serializers.Serializer):
+    """PDF 요약 + 문제 생성 결과"""
+
+    assignment_id = serializers.IntegerField(help_text="요약/질문이 생성된 과제 ID")
+    material_summary_id = serializers.IntegerField(help_text="요약 텍스트 Material의 ID")
+    summary_preview = serializers.CharField(help_text="요약문 일부 (앞 100자)")
+    questions = QuestionSerializer(many=True, help_text="생성된 질문 리스트")
