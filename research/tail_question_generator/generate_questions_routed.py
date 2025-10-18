@@ -21,7 +21,7 @@ load_dotenv()
 if "OPENAI_API_KEY" not in os.environ:
     raise ValueError("OPENAI_API_KEY is not set")
 
-LLM_MODEL = "gpt-5-nano"
+LLM_MODEL = "gpt-4o-mini"
 planner_llm = ChatOpenAI(
     model=LLM_MODEL,
     temperature=0,
@@ -128,10 +128,31 @@ Rules:
     ]
 )
 
-strategy_A = """deeper or applied question (difficulty="hard")"""
-strategy_B = """reinforce same concept (difficulty="medium")"""
-strategy_C = """correct misconception with contrasting question + short explanation (difficulty="medium" or "easy")"""
-strategy_D = """foundational, simplified question (difficulty="easy")"""
+strategy_A = """
+- Create a **deeper, more applied, or cross-concept question**.
+- Extend the concept to a new situation.
+- Encourage transfer of knowledge or synthesis across topics.
+- Difficulty: **hard**
+     """
+strategy_B = """
+- Create a **concept-reinforcing question**.
+- Revisit the same concept with a different perspective or representation.
+- Help the student confirm understanding and build confidence.
+- Difficulty: **medium**
+"""
+strategy_C = """
+- Create a **misconception-correcting question**.
+- Identify the likely misconception in the student's answer.
+- Ask a contrasting or diagnostic question that exposes and corrects the misunderstanding.
+- Include an explanation that clarifies the correct concept.
+- Difficulty: **medium**
+"""
+strategy_D = """
+- Create a **scaffolding or foundational question**.
+- Simplify the context and focus on the essential concept.
+- Use concrete examples or guided reasoning to help recovery.
+- Difficulty: **easy**
+"""
 
 ACTOR_PROMPT = ChatPromptTemplate.from_messages(
     [
@@ -140,18 +161,29 @@ ACTOR_PROMPT = ChatPromptTemplate.from_messages(
             """You are an educational follow-up question generator. Produce ONE concise Korean question.
 
 Strategy: 
-- {strategy}
-- Keep the topic consistent but make the question distinct.
+{strategy}
 
 Return ONLY this JSON:
-{{"response":{{"topic":"","question":"","model_answer":"","hint":"","explanation":"","difficulty":""}}}}
+{{
+  "response": {{
+    "topic": "<short topic name>",
+    "question": "<the follow-up question>",
+    "model_answer": "<ideal answer>",
+    "hint": "<hint for the question>",
+    "explanation": "<why this question matters and what concept it tests>",
+    "difficulty": "easy | medium | hard"
+  }}
+}}
 
-Constraints:
+Output Requirements:
 - question ≤ 50 Korean words
 - explanation ≤ 30 Korean words
 - All fields MUST be in Korean. No extra text.
 - Do NOT use any backslash-based notation.
 - Write math in plain text only, e.g., "x > 4", "y = 2x + 1".
+- Ensure the question is conceptually aligned with the original topic.
+- Include a clear model answer and concise explanation.
+- The question should help the student **progress** from their current understanding state.
 
 Example:{example}""",
         ),

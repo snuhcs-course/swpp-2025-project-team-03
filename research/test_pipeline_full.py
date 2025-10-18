@@ -86,8 +86,11 @@ def test_pipeline_full(wav_path: str, model_name: str, learning_material: str, n
     print("\n=== Execution Time Summary ===")
     for step, sec in timings.items():
         print(f"{step:20s}: {sec:.3f} sec")
-    total_time = sum(timings.values())
-    print(f"{'total':20s}: {total_time:.3f} sec")
+    response_time = 0
+    for step, sec in timings.items():
+        if step != "quiz_generation":
+            response_time += sec
+    print(f"{'Total response time':20s}: {response_time:.3f} sec")
 
     return tail
 
