@@ -78,6 +78,8 @@ Each quiz must:
 - Be suitable for elementary ~ middle school korean students or similar educational level.
 - Do not simply ask "~가 왜 중요한가요?"!!
 - Never ask overly trivial questions and always consider educational purpose for every question.
+- Do NOT use any backslash-based notation.
+- Write math in plain text only, e.g., "x > 4", "y = 2x + 1".
 
 ---
 
@@ -147,7 +149,7 @@ def generate_quizzes(material: str, n: int) -> List[Quiz]:
         data = parser.parse(response)
         quizzes = [Quiz(**item) for item in data.values()]
     except Exception as e:
-        print("⚠️ JSON parsing failed, showing raw output:\n", response)
+        print("JSON parsing failed, showing raw output:\n", response)
         raise e
 
     return quizzes
