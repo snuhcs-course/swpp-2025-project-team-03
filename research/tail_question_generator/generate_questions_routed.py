@@ -150,6 +150,8 @@ Constraints:
 - question ≤ 50 Korean words
 - explanation ≤ 30 Korean words
 - All fields MUST be in Korean. No extra text.
+- Do NOT use any backslash-based notation.
+- Write math in plain text only, e.g., "x > 4", "y = 2x + 1".
 
 Example:{example}""",
         ),
