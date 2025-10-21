@@ -90,7 +90,7 @@ class TestClassListView:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["data"]) == 1
         assert response.data["data"][0]["id"] == class1.id
-        assert response.data["data"][0]["id"] == class2.id
+        assert response.data["data"][0]["id"] != class2.id
 
 
 class TestClassDetailView:
