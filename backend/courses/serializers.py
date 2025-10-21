@@ -1,4 +1,5 @@
 from catalog.models import Subject
+from courses.models import CourseClass, Enrollment
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -13,6 +14,8 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 class StudentSerializer(serializers.ModelSerializer):
     """학생 정보를 위한 serializer"""
+
+    # enrollments 추가 가능
 
     role = serializers.SerializerMethodField()
 
@@ -55,3 +58,28 @@ class StudentDeleteResponseSerializer(serializers.Serializer):
 
     success = serializers.BooleanField()
     message = serializers.CharField()
+
+
+class CourseClassSerializer(serializers.ModelSerializer):
+    """클래스 정보를 위한 serializer"""
+
+    subject = SubjectSerializer(read_only=True)
+    teacher_name = serializers.CharField(source="teacher.display_name", read_only=True)
+    student_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CourseClass
+        fields = [
+            "id",
+            "name",
+            "description",
+            "subject",
+            "teacher_name",
+            "start_date",
+            "end_date",
+            "student_count",
+            "created_at",
+        ]
+
+    def get_student_count(self, obj):
+        return obj.enrollments.filter(status=Enrollment.Status.ENROLLED).count()
