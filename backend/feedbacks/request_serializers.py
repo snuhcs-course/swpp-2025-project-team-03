@@ -14,7 +14,7 @@ class MessageSendRequestSerializer(serializers.Serializer):
     def validate_class_id(self, value):
         """클래스 존재 여부 확인"""
         if not CourseClass.objects.filter(id=value).exists():
-            raise serializers.ValidationError("Invalid class_id")
+            raise serializers.ValidationError("Invalid class_id. Class not found")
         return value
 
     def validate_student_id(self, value):
@@ -24,7 +24,7 @@ class MessageSendRequestSerializer(serializers.Serializer):
             if not student.is_student:
                 raise serializers.ValidationError("User is not a student")
         except Account.DoesNotExist:
-            raise serializers.ValidationError("Invalid student_id")
+            raise serializers.ValidationError("Invalid student_id. Student not found")
         return value
 
     def validate_teacher_id(self, value):
@@ -34,5 +34,5 @@ class MessageSendRequestSerializer(serializers.Serializer):
             if teacher.is_student:
                 raise serializers.ValidationError("User is not a teacher")
         except Account.DoesNotExist:
-            raise serializers.ValidationError("Invalid teacher_id")
+            raise serializers.ValidationError("Invalid teacher_id. Teacher not found")
         return value

@@ -7,7 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from feedbacks.models import TeacherFeedback
 from feedbacks.request_serializers import MessageSendRequestSerializer
 from feedbacks.serializers import MessageSerializer
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -84,8 +84,24 @@ class MessageSendView(APIView):
                 )
 
             # 학생 조회
+            student_id = request.data.get("student_id")
+            if not student_id:
+                return create_api_response(
+                    success=False,
+                    error="student_id is required",
+                    message="student_id is required",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
             try:
-                student = Account.objects.get(id=data["student_id"])
+                student = Account.objects.get(id=student_id)
+                if not student.is_student:
+                    return create_api_response(
+                        success=False,
+                        error="User is not a student",
+                        message="User is not a student",
+                        status_code=status.HTTP_403_FORBIDDEN,
+                    )
             except Account.DoesNotExist:
                 return create_api_response(
                     success=False,
@@ -108,7 +124,14 @@ class MessageSendView(APIView):
             return create_api_response(
                 data=response_serializer.data, message="메시지 전송 성공", status_code=status.HTTP_201_CREATED
             )
-
+        except serializers.ValidationError as ve:
+            logger.error(f"[MessageSendView] Validation error: {ve}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(ve),
+                message="메시지 전송 실패",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         except Exception as e:
             logger.error(f"[MessageSendView] Error: {e}", exc_info=True)
             return create_api_response(
