@@ -15,8 +15,6 @@ class SubjectSerializer(serializers.ModelSerializer):
 class StudentSerializer(serializers.ModelSerializer):
     """학생 정보를 위한 serializer"""
 
-    # enrollments 추가 가능
-
     role = serializers.SerializerMethodField()
 
     class Meta:
@@ -31,13 +29,18 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     """학생 상세 정보를 위한 serializer"""
 
     role = serializers.SerializerMethodField()
+    enrollments = serializers.SerializerMethodField()
 
     class Meta:
         model = Account
-        fields = ["id", "email", "display_name", "is_student", "role", "created_at"]
+        fields = ["id", "email", "display_name", "is_student", "role", "created_at", "enrollments"]
 
     def get_role(self, obj):
         return "STUDENT" if obj.is_student else "TEACHER"
+
+    def get_enrollments(self, obj):
+        enrollments = obj.enrollments.filter(status=Enrollment.Status.ENROLLED)
+        return CourseClassSerializer([enrollment.course_class for enrollment in enrollments], many=True).data
 
 
 class StudentEditResponseSerializer(serializers.ModelSerializer):
