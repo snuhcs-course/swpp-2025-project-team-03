@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 # from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db import IntegrityError
 
 from .request_serializers import LoginRequestSerializer, SignupRequestSerializer
 from .serializers import UserResponseSerializer
@@ -53,6 +54,11 @@ class SignupView(APIView):
             if serializer.is_valid(raise_exception=True):
                 user = serializer.save()
                 return set_jwt_cookie_response(user, status_code=status.HTTP_201_CREATED)
+        except IntegrityError:
+            return Response(
+                {"success": False, "message": "이미 존재하는 이메일입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except serializers.ValidationError as ve:
             print("Validation Error:", ve.detail)
             return Response(
