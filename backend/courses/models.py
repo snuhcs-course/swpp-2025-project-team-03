@@ -5,7 +5,7 @@ from django.db import models
 class CourseClass(models.Model):
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="course_classes")
     subject = models.ForeignKey("catalog.Subject", on_delete=models.CASCADE, related_name="course_classes")
-    title = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
@@ -17,6 +17,9 @@ class CourseClass(models.Model):
             models.Index(fields=["subject"]),
             models.Index(fields=["start_date", "end_date"]),
         ]
+
+    def __str__(self):
+        return f"{self.name} ({self.subject.name})"
 
 
 class Enrollment(models.Model):
@@ -36,3 +39,6 @@ class Enrollment(models.Model):
             models.Index(fields=["course_class"]),
             models.Index(fields=["status"]),
         ]
+
+    def __str__(self):
+        return f"{self.student.display_name} - {self.course_class.name}"

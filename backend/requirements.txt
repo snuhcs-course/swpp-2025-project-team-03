@@ -53,3 +53,7 @@ tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 zstandard==0.25.0
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
