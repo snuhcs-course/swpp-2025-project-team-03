@@ -1,7 +1,8 @@
 from datetime import timedelta
 
 import factory
-from assignments.models import Assignment, Material, Topic
+from assignments.models import Assignment, Material
+from catalog.models import Topic
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from factory.django import DjangoModelFactory
