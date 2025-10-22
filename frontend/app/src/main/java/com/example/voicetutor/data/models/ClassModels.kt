@@ -17,10 +17,10 @@ data class ClassData(
     val studentCount: Int,
     @SerializedName("createdAt")
     val createdAt: String? = null,
-    @SerializedName("startedAt")
-    val startedAt: String? = null,
-    @SerializedName("endedAt")
-    val endedAt: String? = null
+    @SerializedName("startDate")
+    val startDate: String? = null,
+    @SerializedName("endDate")
+    val endDate: String? = null
 )
 
 data class MessageData(
