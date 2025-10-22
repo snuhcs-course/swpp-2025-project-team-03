@@ -78,7 +78,7 @@ class TestStudentSerializerUnit:
 class TestStudentDetailViewUnit:
     """StudentDetailView 단위 테스트 (DB/Request 모킹)"""
 
-    @patch("courses.views.StudentSerializer")
+    @patch("courses.views.StudentDetailSerializer")  # StudentDetailSerializer
     @patch("courses.views.Account.objects.get")
     def test_get_student_returns_serialized_data(self, mock_get, mock_serializer_class):
         """학생 조회 시 직렬화된 데이터 반환 로직 테스트"""
@@ -89,6 +89,13 @@ class TestStudentDetailViewUnit:
         mock_student.display_name = "Test Student"
         mock_student.created_at = timezone.now()
         mock_student.is_student = True
+
+        # enrollments Mock 추가 (get_enrollments 메서드를 위해)
+        mock_enrollment_queryset = []  # 빈 리스트 (등록된 클래스 없음)
+        mock_enrollments_manager = Mock()
+        mock_enrollments_manager.filter.return_value = mock_enrollment_queryset
+        mock_student.enrollments = mock_enrollments_manager
+
         mock_get.return_value = mock_student
 
         # Mock Serializer 인스턴스
@@ -98,6 +105,8 @@ class TestStudentDetailViewUnit:
             "email": "test@example.com",
             "display_name": "Test Student",
             "is_student": True,
+            "role": "STUDENT",
+            "enrollments": [],  # enrollments 필드 추가
         }
         mock_serializer_class.return_value = mock_serializer
 
@@ -116,6 +125,7 @@ class TestStudentDetailViewUnit:
         assert response.status_code == 200
         assert response.data["success"] is True
         assert response.data["data"]["id"] == 1
+        assert "enrollments" in response.data["data"]  # enrollments 필드 확인
         mock_get.assert_called_once_with(id=1, is_student=True)
 
     @patch("courses.views.Account.objects.get")
@@ -136,7 +146,7 @@ class TestStudentDetailViewUnit:
         assert response.data["success"] is False
         assert "not found" in response.data["error"].lower()
 
-    @patch("courses.views.StudentSerializer")
+    @patch("courses.views.StudentEditResponseSerializer")  # 수정 응답용 Serializer
     @patch("courses.views.Account.objects.get")
     def test_update_student_logic(self, mock_get, mock_serializer_class):
         """학생 정보 업데이트 로직만 테스트"""
@@ -151,7 +161,7 @@ class TestStudentDetailViewUnit:
         mock_serializer = Mock()
         mock_serializer.is_valid.return_value = True
         mock_serializer.validated_data = {"display_name": "New Name"}
-        mock_serializer.data = {"id": 1, "display_name": "New Name", "email": "test@example.com"}
+        mock_serializer.data = {"id": 1, "display_name": "New Name", "email": "test@example.com", "role": "STUDENT"}
         mock_serializer_class.return_value = mock_serializer
 
         view = StudentDetailView()

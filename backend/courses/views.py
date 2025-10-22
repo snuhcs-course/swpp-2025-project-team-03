@@ -8,7 +8,12 @@ from rest_framework.views import APIView
 
 from .models import CourseClass, Enrollment
 from .request_serializers import StudentDeleteRequestSerializer, StudentEditRequestSerializer
-from .serializers import StudentDetailSerializer, StudentEditResponseSerializer, StudentSerializer
+from .serializers import (
+    CourseClassSerializer,
+    StudentDetailSerializer,
+    StudentEditResponseSerializer,
+    StudentSerializer,
+)
 
 logger = logging.getLogger(__name__)
 Account = get_user_model()
@@ -204,7 +209,25 @@ class ClassListView(APIView):  # GET /classes
         responses={200: "Class list"},
     )
     def get(self, request):
-        return Response({"message": "클래스 목록 조회"}, status=status.HTTP_200_OK)
+        try:
+            teacher_id = request.query_params.get("teacherId")
+
+            classes = CourseClass.objects.all()
+
+            if teacher_id:
+                classes = classes.filter(teacher_id=teacher_id)
+
+            serializer = CourseClassSerializer(classes, many=True)
+            return create_api_response(data=serializer.data, message="클래스 목록 조회 성공")
+
+        except Exception as e:
+            logger.error(f"[ClassListView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="클래스 목록 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ClassDetailView(APIView):  # GET /classes/{id}
@@ -214,7 +237,99 @@ class ClassDetailView(APIView):  # GET /classes/{id}
         responses={200: "Class detail"},
     )
     def get(self, request, id):
-        return Response({"message": "클래스 상세 조회"}, status=status.HTTP_200_OK)
+        try:
+            course_class = CourseClass.objects.get(id=id)
+            serializer = CourseClassSerializer(course_class)
+            return create_api_response(data=serializer.data, message="클래스 상세 조회 성공")
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassDetailView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="클래스 상세 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @swagger_auto_schema(
+        operation_id="클래스 정보 수정",
+        operation_description="특정 클래스의 정보를 수정합니다.",
+        request_body=CourseClassSerializer,
+        responses={200: "Class updated"},
+    )
+    def put(self, request, id):
+        try:
+            course_class = CourseClass.objects.get(id=id)
+            serializer = CourseClassSerializer(course_class, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return create_api_response(
+                    data=serializer.data, message="클래스 정보 수정 성공", status_code=status.HTTP_200_OK
+                )
+            else:
+                return create_api_response(
+                    success=False,
+                    error=serializer.errors,
+                    message="입력값 오류",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassDetailView PUT] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="클래스 정보 수정 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @swagger_auto_schema(
+        operation_id="클래스 삭제",
+        operation_description="특정 클래스를 삭제합니다.",
+        responses={200: "Class deleted"},
+    )
+    def delete(self, request, id):
+        try:
+            course_class = CourseClass.objects.get(id=id)
+            class_name = course_class.name
+            course_class.delete()
+
+            return create_api_response(
+                data={"id": id, "name": class_name},
+                message="클래스가 성공적으로 삭제되었습니다.",
+                status_code=status.HTTP_200_OK,
+            )
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassDetailView DELETE] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="클래스 삭제 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ClassStudentsView(APIView):  # GET /classes/{id}/students
