@@ -3,12 +3,12 @@ package com.example.voicetutor.data.models
 import com.google.gson.annotations.SerializedName
 
 data class ProgressReportData(
-    @SerializedName("period")
-    val period: String,
+    // @SerializedName("period")
+    // val period: String,
     @SerializedName("totalStudents")
     val totalStudents: Int,
-    @SerializedName("activeStudents")
-    val activeStudents: Int,
+    // @SerializedName("activeStudents")
+    // val activeStudents: Int,
     @SerializedName("totalAssignments")
     val totalAssignments: Int,
     @SerializedName("completedAssignments")
