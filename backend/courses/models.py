@@ -41,4 +41,4 @@ class Enrollment(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.student.display_name} - {self.course_class.title}"
+        return f"{self.student.display_name} - {self.course_class.name}"
