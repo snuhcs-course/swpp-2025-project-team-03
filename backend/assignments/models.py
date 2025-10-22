@@ -4,9 +4,7 @@ from django.db import models
 class Assignment(models.Model):
     # TODO: 반드시!!!!!! 반드시!!!!!!! null과 blank가 True인 옵션을 지워주셔야합니다!!!!!!
     # TODO: s3 연결 & 과제 생성 api test를 위해서 임시로 course_class가 없는 상태에서 "테스트 목적"으로 허용한 설정이기 때문에 반드시 제거해야합니다!!!!!!!!
-    course_class = models.ForeignKey(
-        "courses.CourseClass", on_delete=models.CASCADE, related_name="assignments", null=True, blank=True
-    )
+    course_class = models.ForeignKey("courses.CourseClass", on_delete=models.CASCADE, related_name="assignments")
     topics = models.ManyToManyField("catalog.Topic", blank=True, related_name="assignments")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
