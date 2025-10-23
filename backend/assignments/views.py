@@ -198,7 +198,6 @@ class AssignmentCreateView(APIView):  # POST /assignments
         try:
             course_class = CourseClass.objects.get(id=data["class_id"])
         except CourseClass.DoesNotExist:
-            # TODO: course_class api를 개발한 이후에는 pass를 지우고 밑에 주석을 해제해야합니다!!
             course_class = None
             return create_api_response(
                 success=False,
