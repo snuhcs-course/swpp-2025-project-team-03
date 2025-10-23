@@ -20,7 +20,7 @@ class Assignment(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.title} / {self.course_class.title}"
+        return f"{self.title} / {self.course_class.name}"
 
 
 class Material(models.Model):
