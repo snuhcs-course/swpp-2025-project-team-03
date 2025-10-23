@@ -29,6 +29,10 @@ class Command(BaseCommand):
             self.stdout.write(self.style.HTTP_INFO("▶ 과제 정보 생성 중..."))
             call_command("create_test_assignments")
 
+            # (6) 개인별 과제 정보 생성
+            self.stdout.write(self.style.HTTP_INFO("▶ 개인별 과제 정보 생성 중..."))
+            call_command("create_test_personal_assignments")
+
             #
             # self.stdout.write(self.style.HTTP_INFO("▶ seed_assignments 실행 중..."))
             # call_command("seed_assignments")
