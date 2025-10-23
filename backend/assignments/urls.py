@@ -3,7 +3,6 @@ from django.urls import path
 from .views import (
     AssignmentCreateView,
     AssignmentDetailView,
-    AssignmentDraftView,
     AssignmentListView,
     AssignmentQuestionsView,
     AssignmentResultsView,
@@ -17,5 +16,4 @@ urlpatterns = [
     path("<int:id>/submit/", AssignmentSubmitView.as_view(), name="assignment-submit"),
     path("<int:id>/results/", AssignmentResultsView.as_view(), name="assignment-results"),
     path("<int:id>/questions/", AssignmentQuestionsView.as_view(), name="assignment-questions"),
-    path("<int:id>/draft/", AssignmentDraftView.as_view(), name="assignment-draft"),
 ]

@@ -14,6 +14,9 @@ from django.contrib.auth import get_user_model
 
 Account = get_user_model()
 
+# pytest 실행 예시
+# pytest assignments/test/test_assignment_unit.py -v
+
 
 class TestAssignmentCreateViewUnit:
     """AssignmentCreateView 단위 테스트"""
@@ -326,7 +329,3 @@ class TestAssignmentCreateViewUnit:
         # bulk_create에 전달된 인자 확인
         call_args = mock_personal_assignment_objects.bulk_create.call_args[0][0]
         assert len(call_args) == 2  # 2명의 학생
-
-
-# pytest 실행 예시
-# pytest assignments/test/test_assignment_unit.py -v

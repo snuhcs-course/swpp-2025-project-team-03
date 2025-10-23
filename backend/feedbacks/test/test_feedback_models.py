@@ -11,6 +11,9 @@ from feedbacks.test.test_factories import (
     TeacherFeedbackFactory,
 )
 
+# pytest 실행 예시
+# pytest feedbacks/test/test_feedback_models.py -v
+
 
 class TeacherFeedbackModelTestCase(TestCase):
     """TeacherFeedback 모델 테스트"""
@@ -387,7 +390,3 @@ class TeacherFeedbackModelIntegrationTestCase(TestCase):
         self.assertEqual(class_feedbacks.first(), feedback)
         self.assertEqual(student_feedbacks.first(), feedback)
         self.assertEqual(teacher_feedbacks.first(), feedback)
-
-
-# pytest 실행 예시
-# pytest feedbacks/test/test_feedback_models.py -v

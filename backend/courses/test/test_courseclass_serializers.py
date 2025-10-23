@@ -7,8 +7,11 @@ from .test_factories import CourseClassFactory, EnrollmentFactory, StudentFactor
 
 Account = get_user_model()
 
-# ✅ 모든 테스트에서 DB 접근 허용
+# 모든 테스트에서 DB 접근 허용
 pytestmark = pytest.mark.django_db
+
+# pytest 실행 예시
+# pytest courses/test/test_courseclass_serializers.py -v
 
 
 @pytest.fixture
@@ -246,7 +249,3 @@ class TestCourseClassSerializerValidation:
 
         # subject가 None이어야 함
         assert data["subject"] is None
-
-
-# pytest 실행 예시
-# pytest courses/test/test_courseclass_serializers.py -v

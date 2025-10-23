@@ -11,6 +11,9 @@ Account = get_user_model()
 # 모든 테스트에서 DB 접근 허용
 pytestmark = pytest.mark.django_db
 
+# pytest 실행 예시
+# pytest courses/test/test_student_apis.py -v
+
 
 @pytest.fixture
 def api_client():
@@ -222,7 +225,3 @@ class TestStudentDeleteView:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.data["success"] is False
-
-
-# pytest 실행 예시
-# pytest courses/test/test_student_apis.py -v

@@ -11,6 +11,9 @@ Account = get_user_model()
 
 pytestmark = pytest.mark.django_db
 
+# pytest 실행 예시
+# pytest courses/test/test_courseclass_apis.py -v
+
 
 @pytest.fixture
 def api_client():
@@ -325,7 +328,3 @@ class TestClassStudentsView:
         # 등록되지 않은 학생은 결과에 없어야 함
         student_ids = [student["id"] for student in response.data["data"]]
         assert unenrolled_student.id not in student_ids
-
-
-# pytest 실행 예시
-# pytest courses/test/test_courseclass_apis.py -v

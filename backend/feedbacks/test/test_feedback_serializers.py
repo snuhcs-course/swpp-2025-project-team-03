@@ -14,6 +14,9 @@ from feedbacks.test.test_factories import (
     TeacherFeedbackFactory,
 )
 
+# pytest 실행 예시
+# pytest feedbacks/test/test_feedback_serializers.py -v
+
 
 class TeacherInfoSerializerTestCase(TestCase):
     """TeacherInfoSerializer 테스트"""
@@ -378,7 +381,3 @@ class SerializerIntegrationTestCase(TestCase):
             self.assertIn("course_class", feedback_data)
             self.assertIn("student", feedback_data)
             self.assertIn("teacher", feedback_data)
-
-
-# pytest 실행 예시
-# pytest feedbacks/test/test_feedback_serializers.py -v
