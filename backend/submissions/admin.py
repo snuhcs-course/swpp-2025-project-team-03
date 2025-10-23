@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import PersonalAssignment, Questions, Answer
+
+from .models import Answer, PersonalAssignment
+
 admin.site.register(PersonalAssignment)
-admin.site.register(Questions)
 admin.site.register(Answer)

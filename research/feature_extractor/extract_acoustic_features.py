@@ -76,19 +76,37 @@ def linear_slope(x, y):
     return float(b)
 
 
-def silence_features(y, sr, top_db=40):
-    intervals = librosa.effects.split(y, top_db=top_db)
-    total = len(y) / sr
-    speaking = sum((e - s) / sr for s, e in intervals)
-    silence = max(0.0, total - speaking)
-    return dict(
-        total_silence_sec=float(silence),
-        percent_silence=float((silence / total * 100.0) if total > 0 else np.nan),
-        intervals=intervals,
-    )
+def _remove_short_runs(mask: np.ndarray, min_len: int, val: int) -> np.ndarray:
+    if mask.size == 0:
+        return mask
+    x = mask.astype(np.int8)
+    d = np.diff(np.pad(x, (1, 1)))
+    starts = np.where(d == 1)[0]
+    ends = np.where(d == -1)[0]
+    out = x.copy()
+    for s, e in zip(starts, ends):
+        if (e - s) < min_len and np.all(out[s:e] == val):
+            out[s:e] = 1 - val
+    return out.astype(bool)
 
 
-def silence_features_fast(y, sr, frame_length=1024, hop_length=512, top_db=40):
+def _binary_open_close(mask: np.ndarray, min_speech_frames: int, min_silence_frames: int) -> np.ndarray:
+    opened = _remove_short_runs(mask, min_speech_frames, val=1)  # 짧은 발화 제거
+    closed = _remove_short_runs(opened, min_silence_frames, val=0)  # 짧은 침묵 제거
+    return closed
+
+
+def silence_features_fast(
+    y, sr, frame_length=1024, hop_length=512, top_db=40, min_speech_sec=0.12, min_silence_sec=0.16
+):
+    if len(y) < frame_length:  # if audio is shorter than one frame
+        total = len(y) / sr
+        return dict(
+            total_length=float(total),
+            total_silence_sec=float(total),
+            percent_silence=float(100.0 if total > 0 else np.nan),
+            intervals=np.empty((0, 2), dtype=np.int64),
+        )
     # rms window
     frames = np.lib.stride_tricks.sliding_window_view(y, frame_length)[::hop_length]
     rms = np.sqrt(np.mean(frames**2, axis=1))
@@ -99,16 +117,35 @@ def silence_features_fast(y, sr, frame_length=1024, hop_length=512, top_db=40):
 
     # threshold filtering
     speech_mask = db > -top_db
-    speaking = speech_mask.sum() * hop_length / sr
+
+    min_speech_frames = max(1, int(round(min_speech_sec * sr / hop_length)))
+    min_silence_frames = max(1, int(round(min_silence_sec * sr / hop_length)))
+    smooth_mask = _binary_open_close(speech_mask, min_speech_frames, min_silence_frames)
+
+    # intervals로 변환 (프레임 -> 샘플)
+    x = smooth_mask.astype(np.int8)
+    d = np.diff(np.pad(x, (1, 1)))
+    starts = np.where(d == 1)[0]
+    ends = np.where(d == -1)[0]
+    starts_samp = starts * hop_length
+    ends_samp = np.minimum(ends * hop_length + frame_length, len(y))
+    intervals = (
+        np.stack([starts_samp, ends_samp], axis=1).astype(np.int64)
+        if starts.size and ends.size
+        else np.empty((0, 2), dtype=np.int64)
+    )
 
     total = len(y) / sr
-    silence = max(0.0, total - speaking)
-
+    if len(intervals) == 0:
+        silence = total
+    else:
+        speaking = np.sum((intervals[:, 1] - intervals[:, 0])) / sr
+        silence = max(0.0, total - speaking)
     return dict(
         total_length=float(total),
         total_silence_sec=float(silence),
         percent_silence=float((silence / total * 100.0) if total > 0 else np.nan),
-        # no intervals provided
+        intervals=intervals,  # now intervals provided
     )
 
 
@@ -213,8 +250,7 @@ def extract_acoustic_features(
     print(f"Audio loaded in {end_time - start_time:.4f}sec")
 
     start_time = time.time()
-    sil = silence_features_fast(y, sr, top_db=top_db)
-    sil_exact = silence_features(y, sr, top_db=top_db)
+    sil = silence_features_fast(y, sr, hop_length=hop, top_db=top_db)  # use only fast VAD
     end_time = time.time()
     print(f"VAD in {end_time - start_time:.4f}sec")
 
@@ -229,7 +265,7 @@ def extract_acoustic_features(
     out = dict(**{k: v for k, v in sil.items() if k != "intervals"}, sr=int(sr))
 
     pause_dict = count_pauses_from_intervals(
-        intervals=sil_exact["intervals"],
+        intervals=sil["intervals"],
         sr=sr,
         thresholds_sec=pause_secs,
     )

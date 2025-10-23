@@ -1,15 +1,18 @@
-from django.contrib import auth
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, serializers
+import logging
+
+from django.contrib.auth import get_user_model
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework import serializers, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 # from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
-from .request_serializers import SignupRequestSerializer, LoginRequestSerializer
+from django.db import IntegrityError
+
+from .request_serializers import LoginRequestSerializer, SignupRequestSerializer
 from .serializers import UserResponseSerializer
 
-import logging
 logger = logging.getLogger(__name__)
 
 Account = get_user_model()
@@ -51,7 +54,13 @@ class SignupView(APIView):
             if serializer.is_valid(raise_exception=True):
                 user = serializer.save()
                 return set_jwt_cookie_response(user, status_code=status.HTTP_201_CREATED)
+        except IntegrityError:
+            return Response(
+                {"success": False, "message": "이미 존재하는 이메일입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except serializers.ValidationError as ve:
+            print("Validation Error:", ve.detail)
             return Response(
                 {"success": False, "error": ve.detail, "message": "입력값 오류"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -62,6 +71,7 @@ class SignupView(APIView):
                 {"success": False, "error": str(e), "message": "회원가입 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 class LoginView(APIView):
     @swagger_auto_schema(
@@ -95,6 +105,7 @@ class LoginView(APIView):
                 {"success": False, "message": "해당 이메일의 사용자가 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
 
 class LogoutView(APIView):
     @swagger_auto_schema(

@@ -1,5 +1,6 @@
-from rest_framework import serializers
 from django.contrib.auth import authenticate
+from rest_framework import serializers
+
 from .models import Account
 
 
@@ -36,6 +37,7 @@ class LoginSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
 
 class UserResponseSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()

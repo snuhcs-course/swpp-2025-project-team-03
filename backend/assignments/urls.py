@@ -1,15 +1,21 @@
 from django.urls import path
+
 from .views import (
-    AssignmentListView, AssignmentCreateView, AssignmentDetailView,
-    AssignmentSubmitView, AssignmentResultsView, AssignmentQuestionsView, AssignmentDraftView
+    AssignmentCreateView,
+    AssignmentDetailView,
+    AssignmentDraftView,
+    AssignmentListView,
+    AssignmentQuestionsView,
+    AssignmentResultsView,
+    AssignmentSubmitView,
 )
 
 urlpatterns = [
-    path("", AssignmentListView.as_view()),
-    path("<int:id>", AssignmentDetailView.as_view()),
-    path("create", AssignmentCreateView.as_view()),
-    path("<int:id>/submit", AssignmentSubmitView.as_view()),
-    path("<int:id>/results", AssignmentResultsView.as_view()),
-    path("<int:id>/questions", AssignmentQuestionsView.as_view()),
-    path("<int:id>/draft", AssignmentDraftView.as_view()),
+    path("", AssignmentListView.as_view(), name="assignment-list"),
+    path("<int:id>/", AssignmentDetailView.as_view(), name="assignment-detail"),
+    path("create/", AssignmentCreateView.as_view(), name="assignment-create"),
+    path("<int:id>/submit/", AssignmentSubmitView.as_view(), name="assignment-submit"),
+    path("<int:id>/results/", AssignmentResultsView.as_view(), name="assignment-results"),
+    path("<int:id>/questions/", AssignmentQuestionsView.as_view(), name="assignment-questions"),
+    path("<int:id>/draft/", AssignmentDraftView.as_view(), name="assignment-draft"),
 ]

@@ -10,9 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from datetime import timedelta
+from pathlib import Path
+
 import environ
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,6 +25,7 @@ env = environ.Env(DEBUG=(bool, True))
 
 environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -53,6 +57,7 @@ INSTALLED_APPS = [
     "assignments",
     "submissions",
     "feedbacks",
+    "questions",
     "rest_framework",
     "rest_framework_simplejwt",
 ]
@@ -141,26 +146,26 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": (
-                    "rest_framework.permissions.AllowAny",
-                    ),
-                  'DEFAULT_AUTHENTICATION_CLASSES': (
-                    'rest_framework_simplejwt.authentication.JWTAuthentication',
-                    ),
-                  }
-
-from datetime import timedelta
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+}
 
 REST_USE_JWT = True
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Access Token의 유효 기간: 30분
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Refresh Token의 유효 기간: 1일
-    'ROTATE_REFRESH_TOKENS': True,  # Refresh Token을 사용할 때마다 새 토큰 발급
-    'BLACKLIST_AFTER_ROTATION': True,  # 이전 Refresh Token을 블랙리스트에 추가하여 재사용 방지
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'ACCESS_TOKEN': 'access_token',
-    'REFRESH_TOKEN': 'refresh_token',
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),  # Access Token의 유효 기간: 30분
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),  # Refresh Token의 유효 기간: 1일
+    "ROTATE_REFRESH_TOKENS": True,  # Refresh Token을 사용할 때마다 새 토큰 발급
+    "BLACKLIST_AFTER_ROTATION": True,  # 이전 Refresh Token을 블랙리스트에 추가하여 재사용 방지
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "ACCESS_TOKEN": "access_token",
+    "REFRESH_TOKEN": "refresh_token",
 }
 
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION", "ap-northeast-2")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

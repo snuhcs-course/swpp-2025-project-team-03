@@ -115,15 +115,7 @@ def load_and_preprocess_data(dataset_path, split):
 def main():
     parser = argparse.ArgumentParser(description="발표 평가 등급(숫자) 예측 - XGBoost 회귀")
     parser.add_argument("--dataset_path", type=str, default="./dataset", help="데이터셋의 루트 경로")
-    parser.add_argument("--model_output_path", type=str, default="./model_xgb.joblib", help="학습된 모델을 저장할 경로")
-    # XGBoost 주요 하이퍼파라미터 외부에서 조정 가능
-    parser.add_argument("--n_estimators", type=int, default=1500)
-    parser.add_argument("--max_depth", type=int, default=6)
-    parser.add_argument("--learning_rate", type=float, default=0.05)
-    parser.add_argument("--subsample", type=float, default=0.9)
-    parser.add_argument("--colsample_bytree", type=float, default=0.8)
-    parser.add_argument("--reg_lambda", type=float, default=1.0)
-    parser.add_argument("--reg_alpha", type=float, default=0.0)
+    parser.add_argument("--model_output_path", type=str, default="./model.joblib", help="학습된 모델을 저장할 경로")
     args = parser.parse_args()
 
     # 데이터 로드
@@ -142,25 +134,43 @@ def main():
 
     print(f"학습 데이터: {X_train.shape}, 검증 데이터: {X_valid.shape}")
 
-    # XGBoost 회귀 모델
+    # XGBoost 회귀 모델 (고정 하이퍼파라미터 적용)
     # tree_method는 CPU: 'hist', GPU 사용 시 'gpu_hist'
     model = XGBRegressor(
-        n_estimators=args.n_estimators,
-        max_depth=args.max_depth,
-        learning_rate=args.learning_rate,
-        subsample=args.subsample,
-        colsample_bytree=args.colsample_bytree,
-        reg_lambda=args.reg_lambda,
-        reg_alpha=args.reg_alpha,
+        n_estimators=2731,
+        max_depth=4,
+        learning_rate=0.028522191973286638,
+        subsample=0.742110376026309,
+        colsample_bytree=0.7187056310787405,
+        reg_lambda=0.6883344760395778,
+        reg_alpha=0.7782595992848244,
+        min_child_weight=3,
+        gamma=0.44988621458172695,
         objective="reg:squarederror",
         random_state=42,
         eval_metric="rmse",
         tree_method="hist",
         n_jobs=-1,
     )
+    # --- 불균형 보정: 등급별 가중치 계산 (inverse frequency with smoothing) ---
+    counts = y_train.value_counts().sort_index()  # 등급별 개수
+    max_cnt = counts.max()
+    # 과보정 방지용 지수(alpha)와 클리핑 범위는 상황에 맞게 조절
+    alpha = 0.5  # 0.5~1.0 권장 (0.5=루트 보정, 1.0=정확한 역비율)
+    raw_weight = (max_cnt / counts) ** alpha
+    # 평균 1로 정규화 + 과한 가중치 클리핑
+    raw_weight = raw_weight / raw_weight.mean()
+    weight_map = raw_weight.clip(lower=0.5, upper=3.0)  # 과보정 방지
 
+    # 각 샘플 가중치 벡터
+    w = y_train.map(weight_map).astype(float).values
+    print("Class weights:", weight_map.to_dict())
     print("모델 학습을 시작합니다 (XGBoost Regressor,)...")
-    model.fit(X_train, y_train)
+    model.fit(
+        X_train,
+        y_train,
+        sample_weight=w,
+    )
     print("모델 학습 완료")
 
     # 예측 및 평가
@@ -171,12 +181,10 @@ def main():
     mae = mean_absolute_error(y_valid, y_pred)
 
     # 회귀를 등급으로 변환: 반올림
-    y_pred_rounded = np.clip(np.round(y_pred), 1, 8)  # 1~8 범위로 클립
-    accuracy = accuracy_score(y_valid, y_pred_rounded)
+    y_pred_rounded = np.clip(np.round(y_pred), 1, 8)
 
     print(f"검증 RMSE: {rmse:.4f}")
     print(f"검증 MAE : {mae:.4f}")
-    print(f"검증 Accuracy(반올림 기준): {accuracy:.2%}")
 
     def to_letter_grade(num):
         if num >= 7:  # A+:8, A0:7

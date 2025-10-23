@@ -26,7 +26,7 @@ interface ApiService {
     
     @GET("assignments/{id}/")
     suspend fun getAssignmentById(@Path("id") id: Int): Response<ApiResponse<AssignmentData>>
-    
+  
     @POST("assignments/create/")
     suspend fun createAssignment(@Body assignment: CreateAssignmentRequest): Response<ApiResponse<AssignmentData>>
     
@@ -106,14 +106,14 @@ interface ApiService {
     ): Response<ApiResponse<List<com.example.voicetutor.data.models.RecentActivity>>>
     
     // AI APIs
-    @POST("ai/conversation")
+    @POST("ai/conversation/")
     suspend fun sendAIMessage(@Body request: AIConversationRequest): Response<ApiResponse<AIConversationResponse>>
     
-    @POST("ai/voice-recognition")
+    @POST("ai/voice-recognition/")
     suspend fun recognizeVoice(@Body request: VoiceRecognitionRequest): Response<ApiResponse<VoiceRecognitionResponse>>
     
     // Quiz APIs
-    @POST("quiz/submit")
+    @POST("quiz/submit/")
     suspend fun submitQuiz(@Body request: QuizSubmissionRequest): Response<ApiResponse<QuizSubmissionResponse>>
     
     @GET("messages/")
@@ -135,16 +135,16 @@ interface ApiService {
     suspend fun getSubjectAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
     
     // Attendance APIs
-    @POST("attendance/record")
+    @POST("attendance/record/")
     suspend fun recordAttendance(@Body request: AttendanceRecordRequest): Response<ApiResponse<AttendanceRecordResponse>>
     
-    @POST("attendance/query")
+    @POST("attendance/query/")
     suspend fun queryAttendance(@Body request: AttendanceQueryRequest): Response<ApiResponse<AttendanceQueryResponse>>
     
-    @GET("attendance/summary/{studentId}")
+    @GET("attendance/summary/{studentId}/")
     suspend fun getStudentAttendanceSummary(@Path("studentId") studentId: Int): Response<ApiResponse<AttendanceSummary>>
     
-    @GET("attendance/class/{classId}")
+    @GET("attendance/class/{classId}/")
     suspend fun getClassAttendance(@Path("classId") classId: Int, @Query("date") date: String): Response<ApiResponse<ClassAttendanceSummary>>
     
     // Student Edit APIs

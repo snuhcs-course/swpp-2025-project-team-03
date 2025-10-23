@@ -1,5 +1,6 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db import models
+
 
 class AccountManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -24,20 +25,22 @@ class AccountManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
+
 class Account(AbstractUser):
     """
     이메일 기반 로그인용 커스텀 유저
     ERD: id, email, password, display_name, is_student, created_at
     """
+
     username = None  # 기본 username 제거
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=100, blank=True)
     is_student = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    USERNAME_FIELD = "email"   # 로그인 필드로 email 사용
-    REQUIRED_FIELDS = []       # createsuperuser 시 추가로 요구할 필드 없음
-    
+    USERNAME_FIELD = "email"  # 로그인 필드로 email 사용
+    REQUIRED_FIELDS = []  # createsuperuser 시 추가로 요구할 필드 없음
+
     objects = AccountManager()  # 커스텀 매니저 지정
 
     def __str__(self):

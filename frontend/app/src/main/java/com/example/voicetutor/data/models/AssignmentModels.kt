@@ -11,14 +11,14 @@ enum class AssignmentStatus {
     DRAFT         // 임시저장
 }
 
-enum class AssignmentType {
-    @SerializedName("Quiz")
-    Quiz,         // 퀴즈
-    @SerializedName("Continuous")
-    Continuous,   // 연속형
-    @SerializedName("Discussion")
-    Discussion    // 토론
-}
+// enum class AssignmentType {
+//     @SerializedName("Quiz")
+//     Quiz,         // 퀴즈
+//     @SerializedName("Continuous")
+//     Continuous,   // 연속형
+//     @SerializedName("Discussion")
+//     Discussion    // 토론
+// }
 
 enum class AssignmentFilter {
     @SerializedName("ALL")
@@ -35,27 +35,29 @@ data class AssignmentData(
     @SerializedName("title")
     val title: String,
     @SerializedName("subject")
-    val subject: String,
-    @SerializedName("className")
-    val className: String,
+    val subject: Subject,
+    @SerializedName("class")
+    val class: ClassData,
     @SerializedName("classId")
     val classId: Int,
-    @SerializedName("dueDate")
-    val dueDate: String,
-    @SerializedName("submittedCount")
-    val submittedCount: Int,
-    @SerializedName("totalCount")
-    val totalCount: Int,
+    @SerializedName("dueAt")
+    val dueAt: String,
+    // @SerializedName("submittedCount")
+    // val submittedCount: Int,
+    @SerializedName("totalQuestions")
+    val totalQuestions: Int,
     @SerializedName("status")
     val status: AssignmentStatus,
-    @SerializedName("type")
-    val type: AssignmentType,
+    // @SerializedName("type")
+    // val type: AssignmentType,
     @SerializedName("description")
     val description: String? = null,
     @SerializedName("createdAt")
     val createdAt: String? = null,
-    @SerializedName("updatedAt")
-    val updatedAt: String? = null
+    @SerializedName("visibleAt")
+    val visibleAt: String? = null,
+    @SerializedName("dueAt")
+    val dueAt: String? = null
 )
 
 data class QuestionData(
@@ -75,22 +77,22 @@ data class QuestionData(
     val explanation: String? = null
 )
 
-enum class QuestionType {
-    @SerializedName("MULTIPLE_CHOICE")
-    MULTIPLE_CHOICE,
-    @SerializedName("SHORT_ANSWER")
-    SHORT_ANSWER,
-    @SerializedName("VOICE_RESPONSE")
-    VOICE_RESPONSE
-}
+// enum class QuestionType {
+//     @SerializedName("MULTIPLE_CHOICE")
+//     MULTIPLE_CHOICE,
+//     @SerializedName("SHORT_ANSWER")
+//     SHORT_ANSWER,
+//     @SerializedName("VOICE_RESPONSE")
+//     VOICE_RESPONSE
+// }
 
 data class StudentResult(
     @SerializedName("studentId")
     val studentId: String,
     @SerializedName("name")
     val name: String,
-    @SerializedName("completionTime")
-    val completionTime: String,
+    // @SerializedName("completionTime")
+    // val completionTime: String,
     @SerializedName("score")
     val score: Int,
     @SerializedName("confidenceScore")
@@ -118,8 +120,8 @@ data class DetailedAnswer(
     val isCorrect: Boolean,
     @SerializedName("confidenceScore")
     val confidenceScore: Int,
-    @SerializedName("pronunciationScore")
-    val pronunciationScore: Int?,
+    // @SerializedName("pronunciationScore")
+    // val pronunciationScore: Int?,
     @SerializedName("responseTime")
     val responseTime: String
 )
