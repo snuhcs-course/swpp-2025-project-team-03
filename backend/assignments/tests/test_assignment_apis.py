@@ -18,7 +18,7 @@ Account = get_user_model()
 pytestmark = pytest.mark.django_db
 
 # pytest 실행 예시
-# pytest assignments/test/test_assignment_apis.py -v
+# pytest assignments/tests/test_assignment_apis.py -v
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def student():
 
 @pytest.fixture
 def subject():
-    return Subject.objects.create(name="Mathematics", code="MATH101")
+    return Subject.objects.create(name="Mathematics")
 
 
 @pytest.fixture
@@ -67,6 +67,7 @@ def assignment(course_class):
     return Assignment.objects.create(
         course_class=course_class,
         title="Test Assignment",
+        subject="Test Subject",
         description="Test Description",
         visible_from=timezone.now(),
         due_at=timezone.now() + timedelta(days=7),
@@ -88,6 +89,7 @@ class TestAssignmentCreateView:
         data = {
             "class_id": course_class.id,
             "title": "Midterm Exam",
+            "subject": "Test Subject",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
             "description": "Midterm exam assignment",
         }
@@ -133,6 +135,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "class_id": course_class.id,
+            "subject": "Test Subject",
             "title": "Group Assignment",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
         }
@@ -160,6 +163,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "class_id": course_class.id,
+            "subject": "Test Subject",
             "title": "Assignment for Empty Class",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
         }
@@ -195,6 +199,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "class_id": course_class.id,
+            "subject": "Test Subject",
             "title": "Test Assignment",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
         }
@@ -214,6 +219,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "class_id": 99999,
+            "subject": "Test Subject",
             "title": "Invalid Assignment",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
         }
@@ -230,6 +236,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "class_id": course_class.id,
+            "subject": "Test Subject",
             "title": "Invalid Date Assignment",
             "due_at": "invalid-date-format",
         }
@@ -246,7 +253,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "title": "Incomplete Assignment",
-            # class_id, due_at 누락
+            # class_id, subject, due_at 누락
         }
 
         response = api_client.post(url, data, format="json")
@@ -264,6 +271,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "class_id": course_class.id,
+            "subject": "Test Subject",
             "title": "S3 Failed Assignment",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
         }
@@ -288,6 +296,7 @@ class TestAssignmentCreateView:
         description = "This is a detailed assignment description with special characters: 한글, @#$%"
         data = {
             "class_id": course_class.id,
+            "subject": "Test Subject",
             "title": "Assignment with Description",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
             "description": description,
@@ -311,6 +320,7 @@ class TestAssignmentCreateView:
         url = reverse("assignment-create")
         data = {
             "class_id": course_class.id,
+            "subject": "Test Subject",
             "title": "Response Format Test",
             "due_at": (timezone.now() + timedelta(days=7)).isoformat(),
         }

@@ -5,18 +5,19 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from feedbacks.models import TeacherFeedback
-from feedbacks.test.test_factories import (
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from .test_feedback_factories import (
     CourseClassFactory,
     StudentFactory,
     SubjectFactory,
     TeacherFactory,
     TeacherFeedbackFactory,
 )
-from rest_framework import status
-from rest_framework.test import APIClient
 
 # pytest 실행 예시
-# pytest feedbacks/test/test_feedback_apis.py -v
+# pytest feedbacks/tests/test_feedback_apis.py -v
 
 
 class FeedbackAPITestCase(TestCase):

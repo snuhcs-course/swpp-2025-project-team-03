@@ -18,7 +18,7 @@ from django.utils import timezone
 Account = get_user_model()
 
 # pytest 실행 예시
-# pytest courses/test/test_student_unit.py -v
+# pytest courses/tests/test_student_unit.py -v
 
 
 class TestStudentSerializerUnit:

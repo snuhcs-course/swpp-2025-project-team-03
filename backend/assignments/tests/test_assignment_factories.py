@@ -13,7 +13,7 @@ class AssignmentFactory(DjangoModelFactory):
     class Meta:
         model = Assignment
 
-    course_class = factory.SubFactory("courses.test.test_factories.CourseClassFactory")
+    course_class = factory.SubFactory("courses.tests.test_factories.CourseClassFactory")
     title = factory.Sequence(lambda n: f"Assignment {n}")
     description = factory.Faker("text", max_nb_chars=200)
     visible_from = factory.LazyFunction(timezone.now)

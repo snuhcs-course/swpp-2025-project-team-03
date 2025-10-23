@@ -15,7 +15,7 @@ from django.contrib.auth import get_user_model
 Account = get_user_model()
 
 # pytest 실행 예시
-# pytest assignments/test/test_assignment_unit.py -v
+# pytest assignments/tests/test_assignment_unit.py -v
 
 
 class TestAssignmentCreateViewUnit:
@@ -27,6 +27,7 @@ class TestAssignmentCreateViewUnit:
     @patch("assignments.views.Material.objects")
     @patch("assignments.views.boto3.client")
     @patch("assignments.views.PersonalAssignment")
+    @patch("assignments.views.Subject.objects")
     @patch("assignments.views.Enrollment.objects")
     @patch("assignments.views.Assignment.objects")
     @patch("assignments.views.CourseClass.objects")
@@ -37,6 +38,7 @@ class TestAssignmentCreateViewUnit:
         mock_courseclass_objects,
         mock_assignment_objects,
         mock_enrollment_objects,
+        mock_subject_objects,
         mock_personal_assignment_class,
         mock_boto3,
         mock_material_objects,
@@ -60,6 +62,7 @@ class TestAssignmentCreateViewUnit:
         mock_serializer.validated_data = {
             "class_id": 1,
             "title": "Test Assignment",
+            "subject": "Test Subject",
             "due_at": "2025-10-25T23:59:00+09:00",
             "description": "Test description",
         }
@@ -74,6 +77,11 @@ class TestAssignmentCreateViewUnit:
         mock_assignment = Mock(spec=Assignment)
         mock_assignment.id = 10
         mock_assignment_objects.create.return_value = mock_assignment
+
+        # Mock Subject
+        mock_subject = Mock()
+        mock_subject.id = 123
+        mock_subject_objects.get_or_create.return_value = (mock_subject, True)
 
         # Mock Enrollment (Student)
         mock_student = Mock(spec=Account)
@@ -127,7 +135,12 @@ class TestAssignmentCreateViewUnit:
         # Mock Serializer
         mock_serializer = Mock()
         mock_serializer.is_valid.return_value = True
-        mock_serializer.validated_data = {"class_id": 99999, "title": "Test", "due_at": "2025-10-25T23:59:00+09:00"}
+        mock_serializer.validated_data = {
+            "class_id": 99999,
+            "title": "Test",
+            "subject": "Test Subject",
+            "due_at": "2025-10-25T23:59:00+09:00",
+        }
         mock_serializer_class.return_value = mock_serializer
 
         # CourseClass.DoesNotExist 발생
@@ -148,17 +161,30 @@ class TestAssignmentCreateViewUnit:
 
     @patch("assignments.views.AssignmentCreateRequestSerializer")
     @patch("assignments.views.CourseClass.objects")
-    def test_create_assignment_invalid_due_at_format(self, mock_courseclass_objects, mock_serializer_class):
+    @patch("assignments.views.Subject.objects")
+    def test_create_assignment_invalid_due_at_format(
+        self, mock_subject_objects, mock_courseclass_objects, mock_serializer_class
+    ):
         """잘못된 due_at 형식 처리 로직 검증"""
         # Mock Serializer
         mock_serializer = Mock()
         mock_serializer.is_valid.return_value = True
-        mock_serializer.validated_data = {"class_id": 1, "title": "Test", "due_at": "invalid-date"}
+        mock_serializer.validated_data = {
+            "class_id": 1,
+            "title": "Test",
+            "subject": "Test Subject",
+            "due_at": "invalid-date",
+        }
         mock_serializer_class.return_value = mock_serializer
 
         # Mock CourseClass
         mock_course_class = Mock()
         mock_courseclass_objects.get.return_value = mock_course_class
+
+        # Mock Subject
+        mock_subject = Mock()
+        mock_subject.id = 1
+        mock_subject_objects.get_or_create.return_value = (mock_subject, True)
 
         view = AssignmentCreateView()
         mock_request = Mock()
@@ -175,6 +201,7 @@ class TestAssignmentCreateViewUnit:
     @patch("assignments.views.settings")
     @patch("assignments.views.logger")
     @patch("assignments.views.boto3.client")
+    @patch("assignments.views.Subject.objects")
     @patch("assignments.views.Enrollment.objects")
     @patch("assignments.views.Assignment.objects")
     @patch("assignments.views.CourseClass.objects")
@@ -185,6 +212,7 @@ class TestAssignmentCreateViewUnit:
         mock_courseclass_objects,
         mock_assignment_objects,
         mock_enrollment_objects,
+        mock_subject_objects,
         mock_boto3,
         mock_logger,
         mock_settings,
@@ -203,7 +231,12 @@ class TestAssignmentCreateViewUnit:
         # Mock Serializer
         mock_serializer = Mock()
         mock_serializer.is_valid.return_value = True
-        mock_serializer.validated_data = {"class_id": 1, "title": "Test", "due_at": "2025-10-25T23:59:00+09:00"}
+        mock_serializer.validated_data = {
+            "class_id": 1,
+            "title": "Test",
+            "subject": "Test Subject",
+            "due_at": "2025-10-25T23:59:00+09:00",
+        }
         mock_serializer_class.return_value = mock_serializer
 
         # Mock CourseClass
@@ -220,6 +253,11 @@ class TestAssignmentCreateViewUnit:
         mock_assignment.id = 10
         mock_assignment.delete = Mock()
         mock_assignment_objects.create.return_value = mock_assignment
+
+        # Mock Subject
+        mock_subject = Mock()
+        mock_subject.id = 1
+        mock_subject_objects.get_or_create.return_value = (mock_subject, True)
 
         # Mock S3 실패
         mock_s3 = Mock()
@@ -243,6 +281,7 @@ class TestAssignmentCreateViewUnit:
     @patch("assignments.views.Material.objects")
     @patch("assignments.views.boto3.client")
     @patch("assignments.views.PersonalAssignment")
+    @patch("assignments.views.Subject.objects")
     @patch("assignments.views.Enrollment.objects")
     @patch("assignments.views.Assignment.objects")
     @patch("assignments.views.CourseClass.objects")
@@ -253,6 +292,7 @@ class TestAssignmentCreateViewUnit:
         mock_courseclass_objects,
         mock_assignment_objects,
         mock_enrollment_objects,
+        mock_subject_objects,
         mock_personal_assignment_class,
         mock_boto3,
         mock_material_objects,
@@ -273,7 +313,12 @@ class TestAssignmentCreateViewUnit:
         # Mock Serializer
         mock_serializer = Mock()
         mock_serializer.is_valid.return_value = True
-        mock_serializer.validated_data = {"class_id": 1, "title": "Test", "due_at": "2025-10-25T23:59:00+09:00"}
+        mock_serializer.validated_data = {
+            "class_id": 1,
+            "title": "Test",
+            "subject": "Test Subject",
+            "due_at": "2025-10-25T23:59:00+09:00",
+        }
         mock_serializer_class.return_value = mock_serializer
 
         # Mock Students
@@ -305,6 +350,11 @@ class TestAssignmentCreateViewUnit:
         # PersonalAssignment Mock
         mock_personal_assignment_objects = Mock()
         mock_personal_assignment_class.objects = mock_personal_assignment_objects
+
+        # Mock Subject
+        mock_subject = Mock()
+        mock_subject.id = 1
+        mock_subject_objects.get_or_create.return_value = (mock_subject, True)
 
         # Mock S3
         mock_s3 = Mock()

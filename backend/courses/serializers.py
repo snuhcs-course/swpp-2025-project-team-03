@@ -9,7 +9,7 @@ Account = get_user_model()
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ["id", "name", "code"]
+        fields = ["id", "name"]
 
 
 class StudentSerializer(serializers.ModelSerializer):

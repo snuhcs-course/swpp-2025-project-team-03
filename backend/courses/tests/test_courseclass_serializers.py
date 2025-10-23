@@ -3,7 +3,13 @@ from courses.models import Enrollment
 from courses.serializers import CourseClassSerializer
 from django.contrib.auth import get_user_model
 
-from .test_factories import CourseClassFactory, EnrollmentFactory, StudentFactory, SubjectFactory, TeacherFactory
+from .test_courseclass_factories import (
+    CourseClassFactory,
+    EnrollmentFactory,
+    StudentFactory,
+    SubjectFactory,
+    TeacherFactory,
+)
 
 Account = get_user_model()
 
@@ -11,7 +17,7 @@ Account = get_user_model()
 pytestmark = pytest.mark.django_db
 
 # pytest 실행 예시
-# pytest courses/test/test_courseclass_serializers.py -v
+# pytest courses/tests/test_courseclass_serializers.py -v
 
 
 @pytest.fixture

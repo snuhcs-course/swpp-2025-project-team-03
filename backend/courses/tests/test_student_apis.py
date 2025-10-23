@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from .test_factories import CourseClassFactory, EnrollmentFactory, StudentFactory, TeacherFactory
+from .test_courseclass_factories import CourseClassFactory, EnrollmentFactory, StudentFactory, TeacherFactory
 
 Account = get_user_model()
 
@@ -12,7 +12,7 @@ Account = get_user_model()
 pytestmark = pytest.mark.django_db
 
 # pytest 실행 예시
-# pytest courses/test/test_student_apis.py -v
+# pytest courses/tests/test_student_apis.py -v
 
 
 @pytest.fixture

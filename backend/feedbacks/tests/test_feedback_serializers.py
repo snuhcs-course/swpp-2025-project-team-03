@@ -6,7 +6,8 @@ from feedbacks.serializers import (
     StudentInfoSerializer,
     TeacherInfoSerializer,
 )
-from feedbacks.test.test_factories import (
+
+from .test_feedback_factories import (
     CourseClassFactory,
     StudentFactory,
     SubjectFactory,
@@ -15,7 +16,7 @@ from feedbacks.test.test_factories import (
 )
 
 # pytest 실행 예시
-# pytest feedbacks/test/test_feedback_serializers.py -v
+# pytest feedbacks/tests/test_feedback_serializers.py -v
 
 
 class TeacherInfoSerializerTestCase(TestCase):

@@ -15,7 +15,6 @@ class SubjectFactory(factory.django.DjangoModelFactory):
         model = Subject
 
     name = factory.Sequence(lambda n: f"Subject {n}")
-    code = factory.Sequence(lambda n: f"SUB{n:03d}")
 
 
 class TeacherFactory(factory.django.DjangoModelFactory):

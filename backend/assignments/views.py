@@ -209,7 +209,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
         subject_name = data["subject"].strip()
 
         # Subject가 존재하면 가져오고, 없으면 새로 생성
-        subject_id, _ = Subject.objects.get_or_create(name=subject_name)
+        subject, _ = Subject.objects.get_or_create(name=subject_name)
 
         # due_at을 timezone-aware로 변환 (유연한 파싱)
         # 예: "2025-10-25T23:59:00+09:00", "2025-10-25 23:59", "2025-10-25T23:59Z" 등 모두 허용
@@ -228,7 +228,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
 
         assignment = Assignment.objects.create(
             course_class=course_class,
-            subject_id=subject_id,
+            subject=subject,
             title=data["title"],
             description=data.get("description", ""),
             visible_from=datetime.now(),
