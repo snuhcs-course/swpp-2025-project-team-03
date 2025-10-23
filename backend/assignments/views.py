@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 import boto3
+from catalog.models import Subject
 from courses.models import CourseClass, Enrollment
 from dateutil import parser
 from django.conf import settings
@@ -204,6 +205,12 @@ class AssignmentCreateView(APIView):  # POST /assignments
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
+        # assignment에 연동될 subject를 조회
+        subject_name = data["subject"].strip()
+
+        # Subject가 존재하면 가져오고, 없으면 새로 생성
+        subject_id, _ = Subject.objects.get_or_create(name=subject_name)
+
         # due_at을 timezone-aware로 변환 (유연한 파싱)
         # 예: "2025-10-25T23:59:00+09:00", "2025-10-25 23:59", "2025-10-25T23:59Z" 등 모두 허용
         try:
@@ -221,6 +228,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
 
         assignment = Assignment.objects.create(
             course_class=course_class,
+            subject_id=subject_id,
             title=data["title"],
             description=data.get("description", ""),
             visible_from=datetime.now(),

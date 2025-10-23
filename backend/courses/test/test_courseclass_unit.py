@@ -32,7 +32,6 @@ class TestCourseClassSerializerUnit:
         mock_subject = Mock()
         mock_subject.id = 1
         mock_subject.name = "Mathematics"
-        mock_subject.code = "MATH101"
 
         # Mock Teacher 객체
         mock_teacher = Mock(spec=Account)

@@ -69,10 +69,8 @@ class TestCourseClassSerializer:
         subject_data = data["subject"]
         assert "id" in subject_data
         assert "name" in subject_data
-        assert "code" in subject_data
         assert subject_data["id"] == course_class.subject.id
         assert subject_data["name"] == course_class.subject.name
-        assert subject_data["code"] == course_class.subject.code
 
     def test_serialize_course_class_student_count(self, course_class, student):
         """학생 수 계산 테스트"""
