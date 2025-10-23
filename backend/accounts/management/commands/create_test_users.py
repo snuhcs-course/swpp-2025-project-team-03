@@ -36,6 +36,20 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING(f"학생 계정이 이미 존재합니다: {student_email}"))
 
+        mma_email = "mma@narasarang.or.kr"
+        if not Account.objects.filter(email=mma_email).exists():
+            mma_student = Account.objects.create_user(
+                email=mma_email,
+                password="student1234",
+                display_name="나굳건",
+                is_student=True,
+                is_staff=False,
+                is_superuser=False,
+            )
+            self.stdout.write(self.style.SUCCESS(f"✓ 학생 계정 생성: {mma_email} / student1234"))
+        else:
+            self.stdout.write(self.style.WARNING(f"학생 계정이 이미 존재합니다: {mma_email}"))
+
         self.stdout.write(self.style.SUCCESS("\n테스트 계정 생성 완료!"))
         self.stdout.write("선생님: teacher@voicetutor.com / teacher123")
         self.stdout.write("학생: student@voicetutor.com / student123")

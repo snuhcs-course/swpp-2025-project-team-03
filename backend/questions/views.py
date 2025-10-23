@@ -89,7 +89,8 @@ class QuestionCreateView(APIView):
                     personal_assignment=None,  # 테스트 목적, 나중에 연동
                     number=i,
                     content=quiz.question,
-                    # topic=quiz.topic,
+                    # topic=None,
+                    recalled_num=0,
                     explanation=quiz.explanation,
                     model_answer=quiz.model_answer,
                     difficulty=quiz.difficulty.lower(),

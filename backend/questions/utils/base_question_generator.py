@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 
 # === Quiz Schema ===
 class Quiz(BaseModel):
-    topic: str = Field(description="related topic")
     question: str = Field(description="question in korean")
     model_answer: str = Field(description="answer in korean")
     explanation: str = Field(description="explanation of the key concept and educational purpose of the question")
@@ -20,28 +19,24 @@ class Quiz(BaseModel):
 # --- Few-shot Examples ---
 FEW_SHOT_EXAMPLES = [
     {
-        "topic": "뉴턴의 제2운동법칙",
         "question": "힘이 일정할 때, 질량이 커지면 가속도는 어떻게 변할까요?",
         "model_answer": "F = ma에 따라, 힘이 일정하면 질량이 커질수록 가속도는 작아집니다.",
         "explanation": "가속도는 힘에 비례하고 질량에 반비례하므로, 무거운 물체는 같은 힘에서 덜 움직입니다.",
         "difficulty": "easy",
     },
     {
-        "topic": "중력의 영향",
         "question": "달에서 물체의 무게가 지구보다 작게 느껴지는 이유는 무엇일까요?",
         "model_answer": "달의 질량이 지구보다 작아서, 중력도 지구보다 약하기 때문입니다.",
         "explanation": "달의 질량이 작아 중력이 약하므로, 같은 물체라도 달에서는 더 가볍게 느껴집니다.",
         "difficulty": "medium",
     },
     {
-        "topic": "온도와 부피 변화",
         "question": "풍선을 냉동실에 넣으면 부피가 줄어드는 이유는 무엇인가요?",
         "model_answer": "온도가 낮아지면 기체 분자의 운동 에너지가 줄어들어 압력이 낮아지고 부피가 줄어듭니다.",
         "explanation": "보일-샤를 법칙에 따라 온도와 부피는 비례 관계에 있습니다.",
         "difficulty": "easy",
     },
     {
-        "topic": "식물의 증산 작용",
         "question": "만약 식물의 잎이 모두 잘려 나간다면, 증산 작용과 물의 이동에는 어떤 변화가 생길까요?",
         "model_answer": "잎이 없으면 기공이 사라져 증산이 거의 일어나지 않으며, 물기둥이 유지되지 못하고 끊어져 물의 이동이 원할하게 이뤄지지 못하게 됩니다.",
         "explanation": "증산 작용은 잎의 기공을 통해 물을 증발시키는 과정이므로 잎이 사라지면 증산 작용이 거의 일어나지 않으며, 증산 작용은 뿌리의 물 흡수를 유도하는 물기둥 유지력을 제공하기 때문에, 증산이 줄면 물의 이동이 거의 멈춥니다.",
@@ -103,14 +98,12 @@ Return your output **only** as valid JSON with the following structure:
 
 {{
   "0": {{
-    "topic": "...",
     "question": "...",
     "model_answer": "...",
     "explanation": "...",
     "difficulty": "..."
   }},
   "1": {{
-    "topic": "...",
     "question": "...",
     "model_answer": "...",
     "explanation": "...",

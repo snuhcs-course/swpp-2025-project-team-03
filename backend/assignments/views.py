@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 import boto3
+from catalog.models import Subject
 from courses.models import CourseClass, Enrollment
 from dateutil import parser
 from django.conf import settings
@@ -41,7 +42,7 @@ class AssignmentListView(APIView):  # GET /assignments
             # 기본 쿼리셋
             assignments = Assignment.objects.select_related(
                 "course_class", "course_class__subject", "course_class__teacher"
-            ).prefetch_related("topics", "materials")
+            ).prefetch_related("materials")
 
             # 필터링
             teacher_id = request.query_params.get("teacherId")
@@ -73,9 +74,7 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
     )
     def get(self, request, id):
         try:
-            assignment = (
-                Assignment.objects.select_related("course_class").prefetch_related("topics", "materials").get(id=id)
-            )
+            assignment = Assignment.objects.select_related("course_class").prefetch_related("materials").get(id=id)
             serializer = AssignmentDetailSerializer(assignment)
             return create_api_response(data=serializer.data, message="과제 상세 조회 성공")
 
@@ -114,7 +113,7 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
                 # 업데이트된 객체를 다시 조회하여 모든 관계를 포함한 데이터 반환
                 updated_assignment = (
                     Assignment.objects.select_related("course_class", "course_class__subject", "course_class__teacher")
-                    .prefetch_related("topics", "materials")
+                    .prefetch_related("materials")
                     .get(id=id)
                 )
                 response_serializer = AssignmentDetailSerializer(updated_assignment)
@@ -198,7 +197,6 @@ class AssignmentCreateView(APIView):  # POST /assignments
         try:
             course_class = CourseClass.objects.get(id=data["class_id"])
         except CourseClass.DoesNotExist:
-            # TODO: course_class api를 개발한 이후에는 pass를 지우고 밑에 주석을 해제해야합니다!!
             course_class = None
             return create_api_response(
                 success=False,
@@ -206,6 +204,12 @@ class AssignmentCreateView(APIView):  # POST /assignments
                 message="Invalid class_id",
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
+
+        # assignment에 연동될 subject를 조회
+        subject_name = data["subject"].strip()
+
+        # Subject가 존재하면 가져오고, 없으면 새로 생성
+        subject, _ = Subject.objects.get_or_create(name=subject_name)
 
         # due_at을 timezone-aware로 변환 (유연한 파싱)
         # 예: "2025-10-25T23:59:00+09:00", "2025-10-25 23:59", "2025-10-25T23:59Z" 등 모두 허용
@@ -224,6 +228,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
 
         assignment = Assignment.objects.create(
             course_class=course_class,
+            subject=subject,
             title=data["title"],
             description=data.get("description", ""),
             visible_from=datetime.now(),

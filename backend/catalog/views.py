@@ -13,14 +13,3 @@ class SubjectListView(APIView):
     )
     def get(self, request):
         return Response({"message": "과목 목록 조회"}, status=status.HTTP_200_OK)
-
-
-# 주제 목록 조회
-class TopicListView(APIView):
-    @swagger_auto_schema(
-        operation_id="주제 목록 조회",
-        operation_description="특정 과목에 속한 주제 목록을 조회합니다.",
-        responses={200: "Topic list"},
-    )
-    def get(self, request):
-        return Response({"message": "주제 목록 조회"}, status=status.HTTP_200_OK)
