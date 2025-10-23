@@ -9,18 +9,20 @@ data class Student(
     val name: String,
     @SerializedName("email")
     val email: String,
-    @SerializedName("className")
-    val className: String,
-    @SerializedName("classId")
-    val classId: Int,
-    @SerializedName("completedAssignments")
-    val completedAssignments: Int,
-    @SerializedName("totalAssignments")
-    val totalAssignments: Int,
-    @SerializedName("averageScore")
-    val averageScore: Int,
-    @SerializedName("lastActive")
-    val lastActive: String
+    // @SerializedName("className")
+    // val className: String,
+    // @SerializedName("classId")
+    // val classId: Int,
+    // @SerializedName("completedAssignments")
+    // val completedAssignments: Int,
+    // @SerializedName("totalAssignments")
+    // val totalAssignments: Int,
+    // @SerializedName("averageScore")
+    // val averageScore: Int,
+    // @SerializedName("lastActive")
+    // val lastActive: String
+    @SerializedName("role")
+    val role: UserRole
 )
 
 data class AllStudentsStudent(
@@ -30,16 +32,18 @@ data class AllStudentsStudent(
     val name: String,
     @SerializedName("email")
     val email: String,
-    @SerializedName("className")
-    val className: String,
-    @SerializedName("completedAssignments")
-    val completedAssignments: Int,
-    @SerializedName("totalAssignments")
-    val totalAssignments: Int,
-    @SerializedName("averageScore")
-    val averageScore: Int,
-    @SerializedName("lastActive")
-    val lastActive: String
+    // @SerializedName("className")
+    // val className: String,
+    // @SerializedName("completedAssignments")
+    // val completedAssignments: Int,
+    // @SerializedName("totalAssignments")
+    // val totalAssignments: Int,
+    // @SerializedName("averageScore")
+    // val averageScore: Int,
+    // @SerializedName("lastActive")
+    // val lastActive: String
+    @SerializedName("role")
+    val role: UserRole
 )
 
 
@@ -81,20 +85,26 @@ data class SubjectProgress(
 data class ClassMessageStudent(
     @SerializedName("id")
     val id: Int,
-    @SerializedName("name")
-    val name: String,
-    @SerializedName("email")
-    val email: String,
+    // @SerializedName("name")
+    // val name: String,
+    // @SerializedName("email")
+    // val email: String,
+    // @SerializedName("studentId")
+    // val studentId: String,
+    // @SerializedName("completedAssignments")
+    // val completedAssignments: Int,
+    // @SerializedName("totalAssignments")
+    // val totalAssignments: Int,
+    // @SerializedName("averageScore")
+    // val averageScore: Int,
+    // @SerializedName("lastActive")
+    // val lastActive: String,
+    // @SerializedName("isSelected")
+    // val isSelected: Boolean = false
     @SerializedName("studentId")
-    val studentId: String,
-    @SerializedName("completedAssignments")
-    val completedAssignments: Int,
-    @SerializedName("totalAssignments")
-    val totalAssignments: Int,
-    @SerializedName("averageScore")
-    val averageScore: Int,
-    @SerializedName("lastActive")
-    val lastActive: String,
-    @SerializedName("isSelected")
-    val isSelected: Boolean = false
+    val studentId: Int,
+    @SerializedName("teacherId")
+    val teacherId: Int,
+    @SerializedName("content")
+    val content: String
 )

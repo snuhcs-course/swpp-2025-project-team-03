@@ -18,12 +18,12 @@ data class User(
     val email: String,
     @SerializedName("role")
     val role: UserRole,
-    @SerializedName("avatar")
-    val avatar: String? = null,
-    @SerializedName("className")
-    val className: String? = null,
-    @SerializedName("classId")
-    val classId: Int? = null,
+    // @SerializedName("avatar")
+    // val avatar: String? = null,
+    // @SerializedName("className")
+    // val className: String? = null,
+    // @SerializedName("classId")
+    // val classId: Int? = null,
     @SerializedName("lastLoginAt")
     val lastLoginAt: String? = null
 ) {
@@ -78,8 +78,8 @@ data class SignupRequest(
     val password: String,
     @SerializedName("role")
     val role: UserRole,
-    @SerializedName("className")
-    val className: String? = null
+    // @SerializedName("className")
+    // val className: String? = null
 )
 
 // 대시보드 통계 데이터
@@ -95,17 +95,17 @@ data class DashboardStats(
 )
 
 // 최근 활동 데이터
-data class RecentActivity(
-    @SerializedName("id")
-    val id: String,
-    @SerializedName("studentName")
-    val studentName: String,
-    @SerializedName("action")
-    val action: String,
-    @SerializedName("time")
-    val time: String,
-    @SerializedName("iconType")
-    val iconType: String,
-    @SerializedName("assignmentTitle")
-    val assignmentTitle: String? = null
-)
+// data class RecentActivity(
+//     @SerializedName("id")
+//     val id: String,
+//     @SerializedName("studentName")
+//     val studentName: String,
+//     @SerializedName("action")
+//     val action: String,
+//     @SerializedName("time")
+//     val time: String,
+//     @SerializedName("iconType")
+//     val iconType: String,
+//     @SerializedName("assignmentTitle")
+//     val assignmentTitle: String? = null
+// )
