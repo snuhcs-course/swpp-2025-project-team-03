@@ -90,6 +90,7 @@ class QuestionCreateView(APIView):
                     number=i,
                     content=quiz.question,
                     # topic=None,
+                    recalled_num=0,
                     explanation=quiz.explanation,
                     model_answer=quiz.model_answer,
                     difficulty=quiz.difficulty.lower(),
