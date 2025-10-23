@@ -1,4 +1,70 @@
+from catalog.serializers import TopicSerializer
+from courses.serializers import CourseClassSerializer
 from rest_framework import serializers
+
+from .models import Assignment, Material
+
+
+class MaterialSerializer(serializers.ModelSerializer):
+    """Material 정보를 위한 serializer"""
+
+    class Meta:
+        model = Material
+        fields = ["id", "kind", "s3_key", "bytes", "created_at"]
+
+
+class AssignmentSerializer(serializers.ModelSerializer):
+    """Assignment 기본 정보를 위한 serializer"""
+
+    course_class = CourseClassSerializer(read_only=True)
+    topics = TopicSerializer(many=True, read_only=True)
+    materials = MaterialSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Assignment
+        fields = [
+            "id",
+            "title",
+            "description",
+            "total_questions",
+            "created_at",
+            "visible_from",
+            "due_at",
+            "course_class",
+            "topics",
+            "materials",
+        ]
+
+
+class AssignmentDetailSerializer(serializers.ModelSerializer):
+    """Assignment 상세 정보를 위한 serializer"""
+
+    course_class = CourseClassSerializer(read_only=True)
+    topics = TopicSerializer(many=True, read_only=True)
+    materials = MaterialSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Assignment
+        fields = [
+            "id",
+            "title",
+            "description",
+            "total_questions",
+            "created_at",
+            "visible_from",
+            "due_at",
+            "course_class",
+            "topics",
+            "materials",
+        ]
+
+
+class AssignmentUpdateSerializer(serializers.ModelSerializer):
+    """Assignment 수정용 serializer"""
+
+    class Meta:
+        model = Assignment
+        fields = ["title", "description", "total_questions", "visible_from", "due_at"]
 
 
 class AssignmentCreateSerializer(serializers.Serializer):
