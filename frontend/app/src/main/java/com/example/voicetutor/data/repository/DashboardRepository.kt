@@ -1,7 +1,6 @@
 package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.DashboardStats
-import com.example.voicetutor.data.models.RecentActivity
 import com.example.voicetutor.data.network.ApiService
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,20 +28,4 @@ class DashboardRepository @Inject constructor(
             Result.failure(e)
         }
     }
-    
-    suspend fun getRecentActivities(teacherId: String, limit: Int = 5): Result<List<RecentActivity>> {
-        return try {
-            val response = apiService.getRecentActivities(teacherId, limit)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                val activities = response.body()?.data ?: emptyList()
-                Result.success(activities)
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "최근 활동을 가져오는데 실패했습니다"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
 }

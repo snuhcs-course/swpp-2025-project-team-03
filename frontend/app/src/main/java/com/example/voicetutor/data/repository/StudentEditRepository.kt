@@ -16,27 +16,13 @@ class StudentEditRepository @Inject constructor(
     suspend fun editStudent(
         studentId: Int,
         name: String,
-        email: String,
-        phoneNumber: String? = null,
-        parentName: String? = null,
-        parentPhone: String? = null,
-        address: String? = null,
-        birthDate: String? = null,
-        notes: String? = null,
-        isActive: Boolean = true
+        email: String
     ): Result<StudentEditResponse> {
         return try {
             val request = StudentEditRequest(
                 studentId = studentId,
                 name = name,
-                email = email,
-                phoneNumber = phoneNumber,
-                parentName = parentName,
-                parentPhone = parentPhone,
-                address = address,
-                birthDate = birthDate,
-                notes = notes,
-                isActive = isActive
+                email = email
             )
             
             val response = apiService.editStudent(studentId, request)
@@ -60,13 +46,11 @@ class StudentEditRepository @Inject constructor(
      * 학생을 삭제합니다
      */
     suspend fun deleteStudent(
-        studentId: Int,
-        reason: String? = null
+        studentId: Int
     ): Result<StudentDeleteResponse> {
         return try {
             val request = StudentDeleteRequest(
-                studentId = studentId,
-                reason = reason
+                studentId = studentId
             )
             
             val response = apiService.deleteStudent(studentId, request)
@@ -80,70 +64,6 @@ class StudentEditRepository @Inject constructor(
                 }
             } else {
                 Result.failure(Exception(response.body()?.message ?: "학생 삭제에 실패했습니다"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    /**
-     * 학생 상태를 변경합니다 (활성/비활성)
-     */
-    suspend fun updateStudentStatus(
-        studentId: Int,
-        isActive: Boolean,
-        reason: String? = null
-    ): Result<StudentStatusResponse> {
-        return try {
-            val request = StudentStatusRequest(
-                studentId = studentId,
-                isActive = isActive,
-                reason = reason
-            )
-            
-            val response = apiService.updateStudentStatus(studentId, request)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                val statusResult = response.body()?.data
-                if (statusResult != null) {
-                    Result.success(statusResult)
-                } else {
-                    Result.failure(Exception("학생 상태 변경 결과를 받을 수 없습니다"))
-                }
-            } else {
-                Result.failure(Exception(response.body()?.message ?: "학생 상태 변경에 실패했습니다"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    /**
-     * 학생 비밀번호를 재설정합니다
-     */
-    suspend fun resetStudentPassword(
-        studentId: Int,
-        newPassword: String? = null,
-        temporaryPassword: Boolean = true
-    ): Result<StudentPasswordResetResponse> {
-        return try {
-            val request = StudentPasswordResetRequest(
-                studentId = studentId,
-                newPassword = newPassword ?: generateTemporaryPassword(),
-                temporaryPassword = temporaryPassword
-            )
-            
-            val response = apiService.resetStudentPassword(studentId, request)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                val passwordResult = response.body()?.data
-                if (passwordResult != null) {
-                    Result.success(passwordResult)
-                } else {
-                    Result.failure(Exception("비밀번호 재설정 결과를 받을 수 없습니다"))
-                }
-            } else {
-                Result.failure(Exception(response.body()?.message ?: "비밀번호 재설정에 실패했습니다"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -182,12 +102,5 @@ class StudentEditRepository @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-    
-    private fun generateTemporaryPassword(): String {
-        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        return (1..8)
-            .map { chars.random() }
-            .joinToString("")
     }
 }

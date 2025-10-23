@@ -68,11 +68,7 @@ fun AllStudentsScreen(
             id = student.id,
             name = student.name,
             email = student.email,
-            className = student.className,
-            completedAssignments = student.completedAssignments,
-            totalAssignments = student.totalAssignments,
-            averageScore = student.averageScore,
-            lastActive = student.lastActive
+            role = student.role
         )
     }
     
@@ -81,8 +77,7 @@ fun AllStudentsScreen(
         allStudents.filter { student ->
             val matchesSearch = searchQuery.isEmpty() || 
                 student.name.contains(searchQuery, ignoreCase = true) ||
-                student.email.contains(searchQuery, ignoreCase = true) ||
-                student.className.contains(searchQuery, ignoreCase = true)
+                student.email.contains(searchQuery, ignoreCase = true)
             
             val matchesFilter = true // 모든 학생 표시
             
@@ -92,9 +87,7 @@ fun AllStudentsScreen(
     
     // Calculate stats
     val totalStudents = allStudents.size
-    val averageScore = if (allStudents.isNotEmpty()) {
-        allStudents.map { it.averageScore }.average().toInt()
-    } else 0
+    val averageScore = 0 // 평균 점수 정보가 없으므로 0으로 설정
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -261,7 +254,7 @@ fun AllStudentsScreen(
 
 @Composable
 fun AllStudentsCard(
-    student: AllStudentsStudent,
+    student: com.example.voicetutor.data.models.AllStudentsStudent,
     onStudentClick: () -> Unit,
     onMessageClick: () -> Unit
 ) {
@@ -307,7 +300,7 @@ fun AllStudentsCard(
                         color = Gray600
                     )
                     Text(
-                        text = student.className,
+                        text = "학생", // 클래스 정보가 없으므로 기본값
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray500
                     )
@@ -327,10 +320,10 @@ fun AllStudentsCard(
                         color = Gray600
                     )
                     Text(
-                        text = "${student.completedAssignments}/${student.totalAssignments}",
+                        text = "정보 없음", // 과제 정보가 없으므로 기본값
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
+                        color = Gray500
                     )
                 }
                 
@@ -341,10 +334,10 @@ fun AllStudentsCard(
                         color = Gray600
                     )
                     Text(
-                        text = "${student.averageScore}점",
+                        text = "정보 없음", // 평균 점수 정보가 없으므로 기본값
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (student.averageScore >= 80) Success else Warning
+                        color = Gray500
                     )
                 }
                 
@@ -355,19 +348,17 @@ fun AllStudentsCard(
                         color = Gray600
                     )
                     Text(
-                        text = student.lastActive ?: "활동 없음",
+                        text = "활동 없음", // 마지막 활동 정보가 없으므로 기본값
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = if (student.lastActive != null) Gray800 else Gray500
+                        color = Gray500
                     )
                 }
             }
             
             // Progress bar
             VTProgressBar(
-                progress = student.totalAssignments.toFloat().let { 
-                    if (it > 0) student.completedAssignments / it else 0f 
-                },
+                progress = 0f, // 과제 정보가 없으므로 0으로 설정
                 showPercentage = true
             )
             

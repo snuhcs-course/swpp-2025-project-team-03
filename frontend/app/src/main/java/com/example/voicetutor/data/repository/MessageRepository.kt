@@ -16,15 +16,13 @@ class MessageRepository @Inject constructor(
     suspend fun sendMessage(
         teacherId: Int,
         studentIds: List<Int>,
-        message: String,
-        messageType: String = "TEXT"
+        content: String
     ): Result<SendMessageResponse> {
         return try {
             val request = SendMessageRequest(
                 teacherId = teacherId,
                 studentIds = studentIds,
-                message = message,
-                messageType = messageType
+                content = content
             )
             
             val response = apiService.sendMessage(request)

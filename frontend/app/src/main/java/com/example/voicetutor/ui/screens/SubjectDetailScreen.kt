@@ -141,7 +141,7 @@ fun SubjectDetailScreen(
                         ) {
                             VTStatsCard(
                                 title = "총 과제",
-                                value = assignments.filter { it.subject == subject }.size.toString(),
+                                value = assignments.filter { it.subject.name == subject }.size.toString(),
                                 icon = Icons.Filled.Assignment,
                                 iconColor = PrimaryIndigo,
                                 modifier = Modifier.weight(1f),
@@ -168,7 +168,7 @@ fun SubjectDetailScreen(
                     color = Gray900
                 )
                 
-                val subjectAssignments = assignments.filter { it.subject == subject }
+                val subjectAssignments = assignments.filter { it.subject.name == subject }
                 
                 if (subjectAssignments.isEmpty()) {
                     VTCard(variant = CardVariant.Outlined) {
@@ -239,7 +239,7 @@ fun SubjectDetailScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "마감일: ${assignment.dueDate}",
+                                        text = "마감일: ${assignment.dueAt}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Gray500
                                     )

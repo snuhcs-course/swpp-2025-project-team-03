@@ -99,12 +99,6 @@ interface ApiService {
         @Query("teacherId") teacherId: String
     ): Response<ApiResponse<com.example.voicetutor.data.models.DashboardStats>>
     
-    @GET("dashboard/recent-activities/")
-    suspend fun getRecentActivities(
-        @Query("teacherId") teacherId: String,
-        @Query("limit") limit: Int = 5
-    ): Response<ApiResponse<List<com.example.voicetutor.data.models.RecentActivity>>>
-    
     // AI APIs
     @POST("ai/conversation/")
     suspend fun sendAIMessage(@Body request: AIConversationRequest): Response<ApiResponse<AIConversationResponse>>
@@ -134,31 +128,12 @@ interface ApiService {
     @POST("analysis/subject/")
     suspend fun getSubjectAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
     
-    // Attendance APIs
-    @POST("attendance/record/")
-    suspend fun recordAttendance(@Body request: AttendanceRecordRequest): Response<ApiResponse<AttendanceRecordResponse>>
-    
-    @POST("attendance/query/")
-    suspend fun queryAttendance(@Body request: AttendanceQueryRequest): Response<ApiResponse<AttendanceQueryResponse>>
-    
-    @GET("attendance/summary/{studentId}/")
-    suspend fun getStudentAttendanceSummary(@Path("studentId") studentId: Int): Response<ApiResponse<AttendanceSummary>>
-    
-    @GET("attendance/class/{classId}/")
-    suspend fun getClassAttendance(@Path("classId") classId: Int, @Query("date") date: String): Response<ApiResponse<ClassAttendanceSummary>>
-    
     // Student Edit APIs
     @PUT("students/{studentId}/")
     suspend fun editStudent(@Path("studentId") studentId: Int, @Body request: StudentEditRequest): Response<ApiResponse<StudentEditResponse>>
     
     @DELETE("students/{studentId}/")
     suspend fun deleteStudent(@Path("studentId") studentId: Int, @Body request: StudentDeleteRequest): Response<ApiResponse<StudentDeleteResponse>>
-    
-    @PUT("students/{studentId}/status/")
-    suspend fun updateStudentStatus(@Path("studentId") studentId: Int, @Body request: StudentStatusRequest): Response<ApiResponse<StudentStatusResponse>>
-    
-    @PUT("students/{studentId}/password/")
-    suspend fun resetStudentPassword(@Path("studentId") studentId: Int, @Body request: StudentPasswordResetRequest): Response<ApiResponse<StudentPasswordResetResponse>>
     
     @PUT("students/{studentId}/class/")
     suspend fun changeStudentClass(@Path("studentId") studentId: Int, @Body request: StudentClassChangeRequest): Response<ApiResponse<StudentClassChangeResponse>>

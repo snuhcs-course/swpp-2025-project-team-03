@@ -41,7 +41,7 @@ class MessageViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             
-            messageRepository.sendMessage(teacherId, studentIds, message, messageType)
+            messageRepository.sendMessage(teacherId, studentIds, message)
                 .onSuccess { result ->
                     _sendMessageResult.value = result
                 }

@@ -66,17 +66,17 @@ fun TeacherAssignmentDetailScreen(
     val assignmentDetail = assignment?.let { a ->
         AssignmentDetail(
             title = a.title,
-            subject = a.subject,
-            className = a.className,
-            dueDate = a.dueDate,
+            subject = a.subject.name,
+            className = a.`class`.name,
+            dueDate = a.dueAt,
             createdAt = a.createdAt ?: "",
             status = a.status.name,
-            type = a.type.name,
+            type = "연속형", // type 속성이 없으므로 기본값
             description = a.description ?: "",
-            totalStudents = a.totalCount,
-            submittedStudents = a.submittedCount,
-            averageScore = (a.submittedCount * 85) / maxOf(a.totalCount, 1), // 임시 계산
-            completionRate = (a.submittedCount * 100) / maxOf(a.totalCount, 1)
+            totalStudents = a.totalQuestions,
+            submittedStudents = 0,
+            averageScore = (0 * 85) / maxOf(a.totalQuestions, 1), // 임시 계산
+            completionRate = (0 * 100) / maxOf(a.totalQuestions, 1)
         )
     }
     

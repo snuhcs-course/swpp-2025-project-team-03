@@ -11,9 +11,7 @@ data class SendMessageRequest(
     @SerializedName("studentIds")
     val studentIds: List<Int>,
     @SerializedName("content")
-    val content: String,
-    // @SerializedName("contentType")
-    // val contentType: String = "TEXT" // TEXT, VOICE, IMAGE
+    val content: String
 )
 
 /**
@@ -46,12 +44,8 @@ data class Message(
     val studentName: String,
     @SerializedName("content")
     val content: String,
-    // @SerializedName("messageType")
-    // val messageType: String,
     @SerializedName("timestamp")
-    val timestamp: Long,
-    // @SerializedName("isRead")
-    // val isRead: Boolean = false
+    val timestamp: Long
 )
 
 /**
@@ -61,7 +55,5 @@ data class MessageListResponse(
     @SerializedName("messages")
     val messages: List<Message>,
     @SerializedName("totalCount")
-    val totalCount: Int,
-    // @SerializedName("unreadCount")
-    // val unreadCount: Int
+    val totalCount: Int
 )

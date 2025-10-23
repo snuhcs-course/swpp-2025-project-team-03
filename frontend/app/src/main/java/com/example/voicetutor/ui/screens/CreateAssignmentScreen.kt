@@ -677,7 +677,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 1,
                                 question = "광합성이 무엇인지 설명해주세요.",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "광합성은 식물이 빛 에너지를 이용해 이산화탄소와 물로 포도당을 만드는 과정입니다.",
                                 explanation = "광합성은 식물이 빛 에너지를 이용해 이산화탄소와 물로 포도당을 만드는 과정입니다."
@@ -685,7 +685,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 2,
                                 question = "그렇다면 광합성이 일어나기 위해 필요한 조건은 무엇인가요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "빛, 이산화탄소, 물, 엽록체가 필요합니다.",
                                 explanation = "빛, 이산화탄소, 물, 엽록체가 필요합니다."
@@ -693,7 +693,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 3,
                                 question = "광합성의 결과로 만들어지는 산소는 어디에서 나오나요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "물이 분해되면서 산소가 발생합니다.",
                                 explanation = "물이 분해되면서 산소가 발생합니다."
@@ -703,7 +703,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 1,
                                 question = "이차방정식이 무엇인지 설명해주세요.",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "이차방정식은 미지수의 최고차항이 2인 방정식입니다.",
                                 explanation = "이차방정식은 미지수의 최고차항이 2인 방정식입니다."
@@ -711,7 +711,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 2,
                                 question = "그렇다면 이차방정식을 푸는 방법에는 어떤 것들이 있나요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "인수분해, 완전제곱식, 근의 공식 등이 있습니다.",
                                 explanation = "인수분해, 완전제곱식, 근의 공식 등이 있습니다."
@@ -719,7 +719,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 3,
                                 question = "근의 공식은 언제 사용하는 것이 좋을까요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "인수분해가 어려울 때 근의 공식을 사용하면 편리합니다.",
                                 explanation = "인수분해가 어려울 때 근의 공식을 사용하면 편리합니다."
@@ -729,7 +729,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 1,
                                 question = "비유적 표현이란 무엇인지 설명해주세요.",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "다른 대상에 빗대어 표현하는 방법입니다.",
                                 explanation = "다른 대상에 빗대어 표현하는 방법입니다."
@@ -737,7 +737,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 2,
                                 question = "은유와 직유의 차이점은 무엇인가요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "직유는 '~처럼'을 사용하고, 은유는 직접 다른 것이라고 표현합니다.",
                                 explanation = "직유는 '~처럼'을 사용하고, 은유는 직접 다른 것이라고 표현합니다."
@@ -745,7 +745,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 3,
                                 question = "의인법의 예를 하나 들어보세요.",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "'꽃이 웃는다', '바람이 노래한다' 등이 있습니다.",
                                 explanation = "'꽃이 웃는다', '바람이 노래한다' 등이 있습니다."
@@ -755,7 +755,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 1,
                                 question = "현재완료 시제가 무엇인지 설명해주세요.",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "과거에 시작된 일이 현재까지 영향을 미치는 것을 나타냅니다.",
                                 explanation = "과거에 시작된 일이 현재까지 영향을 미치는 것을 나타냅니다."
@@ -763,7 +763,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 2,
                                 question = "현재완료는 어떻게 만드나요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "have/has + 과거분사 형태로 만듭니다.",
                                 explanation = "have/has + 과거분사 형태로 만듭니다."
@@ -771,7 +771,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 3,
                                 question = "현재완료와 과거시제의 차이는 무엇인가요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "과거시제는 과거의 특정 시점을, 현재완료는 과거부터 현재까지를 나타냅니다.",
                                 explanation = "과거시제는 과거의 특정 시점을, 현재완료는 과거부터 현재까지를 나타냅니다."
@@ -781,7 +781,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 1,
                                 question = "민주주의가 무엇인지 설명해주세요.",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "국민이 주권을 가지고 정치에 참여하는 제도입니다.",
                                 explanation = "국민이 주권을 가지고 정치에 참여하는 제도입니다."
@@ -789,7 +789,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 2,
                                 question = "민주주의의 기본 원리에는 어떤 것들이 있나요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "국민주권, 권력분립, 기본권 보장 등이 있습니다.",
                                 explanation = "국민주권, 권력분립, 기본권 보장 등이 있습니다."
@@ -797,7 +797,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 3,
                                 question = "권력분립이 왜 중요한가요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "권력의 집중을 막고 상호 견제를 통해 국민의 자유를 보장하기 위함입니다.",
                                 explanation = "권력의 집중을 막고 상호 견제를 통해 국민의 자유를 보장하기 위함입니다."
@@ -807,7 +807,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 1,
                                 question = "이 주제에 대해 설명해주세요.",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "자세히 설명해주시면 더 깊이 있게 이야기 나눠볼 수 있습니다.",
                                 explanation = "자세히 설명해주시면 더 깊이 있게 이야기 나눠볼 수 있습니다."
@@ -815,7 +815,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 2,
                                 question = "조금 더 구체적으로 설명해주실 수 있나요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "예시를 들어 설명해주시면 좋습니다.",
                                 explanation = "예시를 들어 설명해주시면 좋습니다."
@@ -823,7 +823,7 @@ fun CreateAssignmentScreen(
                             com.example.voicetutor.data.models.QuestionData(
                                 id = 3,
                                 question = "그렇다면 이것이 왜 중요한가요?",
-                                type = com.example.voicetutor.data.models.QuestionType.VOICE_RESPONSE,
+                                type = "VOICE_RESPONSE",
                                 options = null,
                                 correctAnswer = "실생활에서의 적용 사례를 생각해보세요.",
                                 explanation = "실생활에서의 적용 사례를 생각해보세요."

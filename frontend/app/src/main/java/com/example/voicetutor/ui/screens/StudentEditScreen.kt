@@ -33,8 +33,7 @@ fun StudentEditScreen(
     val currentStudent by studentViewModel.currentStudent.collectAsStateWithLifecycle()
     val editResult by studentEditViewModel.editResult.collectAsStateWithLifecycle()
     val deleteResult by studentEditViewModel.deleteResult.collectAsStateWithLifecycle()
-    val statusUpdateResult by studentEditViewModel.statusUpdateResult.collectAsStateWithLifecycle()
-    val passwordResetResult by studentEditViewModel.passwordResetResult.collectAsStateWithLifecycle()
+    // Status update and password reset are not supported by current backend API
     val isLoading by studentEditViewModel.isLoading.collectAsStateWithLifecycle()
     val error by studentEditViewModel.error.collectAsStateWithLifecycle()
     
@@ -88,23 +87,7 @@ fun StudentEditScreen(
         }
     }
     
-    LaunchedEffect(statusUpdateResult) {
-        statusUpdateResult?.let { result ->
-            if (result.success) {
-                // Status update successful, but isActive not available in Student model
-            }
-            studentEditViewModel.clearStatusUpdateResult()
-        }
-    }
-    
-    LaunchedEffect(passwordResetResult) {
-        passwordResetResult?.let { result ->
-            if (result.success) {
-                // Show temporary password to user
-            }
-            studentEditViewModel.clearPasswordResetResult()
-        }
-    }
+    // Status update and password reset are not supported by current backend API
     
     // Handle error
     error?.let { errorMessage ->
@@ -370,7 +353,7 @@ fun StudentEditScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        studentEditViewModel.resetStudentPassword(studentId)
+                        // Password reset is not supported by current backend API
                         showPasswordResetDialog = false
                     }
                 ) {
@@ -394,7 +377,7 @@ fun StudentEditScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        studentEditViewModel.updateStudentStatus(studentId, !isActive)
+                        // Status update is not supported by current backend API
                         showStatusChangeDialog = false
                     }
                 ) {

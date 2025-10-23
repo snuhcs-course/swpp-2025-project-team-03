@@ -306,7 +306,7 @@ fun TeacherAssignmentResultCard(
                         color = Gray600
                     )
                     Text(
-                        text = student.completionTime,
+                        text = "정보 없음",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = Gray800

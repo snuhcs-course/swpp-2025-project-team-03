@@ -226,10 +226,10 @@ fun StudentDashboardScreen(
                     assignments.forEachIndexed { index, assignment ->
                         StudentAssignmentCard(
                             title = assignment.title,
-                            subject = assignment.subject,
-                            dueDate = formatDueDate(assignment.dueDate),
+                            subject = assignment.subject.name,
+                            dueDate = formatDueDate(assignment.dueAt),
                             progress = 0.3f, // 임시로 진행률 설정
-                            isUrgent = assignment.dueDate.contains("오늘") || assignment.dueDate.contains("내일"),
+                            isUrgent = assignment.dueAt.contains("오늘") || assignment.dueAt.contains("내일"),
                             onClick = { onNavigateToAssignmentDetail(assignment.title) }
                         )
                         
@@ -404,11 +404,11 @@ fun StudentDashboardScreen(
                 // 동적 과제 목록 표시 (실제 데이터에서 가져오기)
                 assignments.take(2).forEachIndexed { index, assignment ->
                     StudentDeadlineItem(
-                        subject = assignment.subject,
+                        subject = assignment.subject.name,
                         assignmentName = assignment.title,
-                        dueDate = formatDueDate(assignment.dueDate ?: "마감일 없음"),
-                        progress = if (assignment.totalCount > 0) assignment.submittedCount.toFloat() / assignment.totalCount else 0f,
-                        onClick = { onNavigateToSubjectDetail(assignment.subject) }
+                        dueDate = formatDueDate(assignment.dueAt ?: "마감일 없음"),
+                        progress = if (assignment.totalQuestions > 0) 0.toFloat() / assignment.totalQuestions else 0f,
+                        onClick = { onNavigateToSubjectDetail(assignment.subject.name) }
                     )
                     if (index < assignments.take(2).size - 1) {
                         Spacer(modifier = Modifier.height(8.dp))

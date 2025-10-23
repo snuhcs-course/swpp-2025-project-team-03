@@ -60,7 +60,7 @@ fun TeacherClassDetailScreen(
     
     // 동적 클래스 정보 가져오기
     val dynamicClassName = currentClass?.name ?: className
-    val dynamicSubject = currentClass?.subject ?: subject
+    val dynamicSubject = currentClass?.subject?.name ?: subject
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
     
     // Load data on first composition
@@ -89,13 +89,13 @@ fun TeacherClassDetailScreen(
         ClassAssignment(
             id = assignment.id,
             title = assignment.title,
-            subject = assignment.subject,
-            dueDate = assignment.dueDate,
+            subject = assignment.subject.name,
+            dueDate = assignment.dueAt,
             completionRate = 0.0f, // 임시로 0% 설정
             totalStudents = students.size,
             completedStudents = students.count { student ->
                 // 임시로 완료된 학생 수 계산
-                student.completedAssignments > 0
+                0 > 0
             },
             averageScore = 85 // 임시로 기본값 사용
         )

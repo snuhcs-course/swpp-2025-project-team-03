@@ -100,7 +100,7 @@ fun TeacherClassesScreen(
         ClassRoom(
             id = classData.id,
             name = classData.name,
-            subject = classData.subject,
+            subject = classData.subject.name,
             description = classData.description,
             studentCount = classData.studentCount,
             assignmentCount = assignmentCount,

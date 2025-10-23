@@ -22,11 +22,7 @@ class StudentEditViewModel @Inject constructor(
     private val _deleteResult = MutableStateFlow<StudentDeleteResponse?>(null)
     val deleteResult: StateFlow<StudentDeleteResponse?> = _deleteResult.asStateFlow()
     
-    private val _statusUpdateResult = MutableStateFlow<StudentStatusResponse?>(null)
-    val statusUpdateResult: StateFlow<StudentStatusResponse?> = _statusUpdateResult.asStateFlow()
-    
-    private val _passwordResetResult = MutableStateFlow<StudentPasswordResetResponse?>(null)
-    val passwordResetResult: StateFlow<StudentPasswordResetResponse?> = _passwordResetResult.asStateFlow()
+    // Status update and password reset are not supported by current backend API
     
     private val _classChangeResult = MutableStateFlow<StudentClassChangeResponse?>(null)
     val classChangeResult: StateFlow<StudentClassChangeResponse?> = _classChangeResult.asStateFlow()
@@ -59,14 +55,7 @@ class StudentEditViewModel @Inject constructor(
             studentEditRepository.editStudent(
                 studentId = studentId,
                 name = name,
-                email = email,
-                phoneNumber = phoneNumber,
-                parentName = parentName,
-                parentPhone = parentPhone,
-                address = address,
-                birthDate = birthDate,
-                notes = notes,
-                isActive = isActive
+                email = email
             ).onSuccess { result ->
                 _editResult.value = result
             }.onFailure { exception ->
@@ -88,7 +77,7 @@ class StudentEditViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             
-            studentEditRepository.deleteStudent(studentId, reason)
+            studentEditRepository.deleteStudent(studentId)
                 .onSuccess { result ->
                     _deleteResult.value = result
                 }.onFailure { exception ->
@@ -99,51 +88,7 @@ class StudentEditViewModel @Inject constructor(
         }
     }
     
-    /**
-     * 학생 상태를 변경합니다
-     */
-    fun updateStudentStatus(
-        studentId: Int,
-        isActive: Boolean,
-        reason: String? = null
-    ) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            studentEditRepository.updateStudentStatus(studentId, isActive, reason)
-                .onSuccess { result ->
-                    _statusUpdateResult.value = result
-                }.onFailure { exception ->
-                    _error.value = exception.message
-                }
-            
-            _isLoading.value = false
-        }
-    }
-    
-    /**
-     * 학생 비밀번호를 재설정합니다
-     */
-    fun resetStudentPassword(
-        studentId: Int,
-        newPassword: String? = null,
-        temporaryPassword: Boolean = true
-    ) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            studentEditRepository.resetStudentPassword(studentId, newPassword, temporaryPassword)
-                .onSuccess { result ->
-                    _passwordResetResult.value = result
-                }.onFailure { exception ->
-                    _error.value = exception.message
-                }
-            
-            _isLoading.value = false
-        }
-    }
+    // Status update and password reset functions are not supported by current backend API
     
     /**
      * 학생의 클래스를 변경합니다
@@ -183,19 +128,7 @@ class StudentEditViewModel @Inject constructor(
         _deleteResult.value = null
     }
     
-    /**
-     * 상태 업데이트 결과 초기화
-     */
-    fun clearStatusUpdateResult() {
-        _statusUpdateResult.value = null
-    }
-    
-    /**
-     * 비밀번호 재설정 결과 초기화
-     */
-    fun clearPasswordResetResult() {
-        _passwordResetResult.value = null
-    }
+    // Status update and password reset functions are not supported by current backend API
     
     /**
      * 클래스 변경 결과 초기화

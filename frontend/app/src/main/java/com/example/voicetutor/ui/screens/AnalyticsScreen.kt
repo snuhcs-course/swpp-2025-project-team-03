@@ -202,13 +202,12 @@ fun AnalyticsScreen(
                 // API에서 가져온 학생 데이터를 점수순으로 정렬
                 val topStudents = remember(apiStudents) {
                     apiStudents
-                        .sortedByDescending { it.averageScore }
                         .take(5)
                         .map { student ->
                             TopStudent(
                                 name = student.name,
-                                score = student.averageScore,
-                                improvement = "+${kotlin.random.Random.nextInt(1, 10)}점" // 실제 개선 데이터는 API에 없음
+                                score = 0, // averageScore 정보가 없으므로 0으로 설정
+                                improvement = "정보 없음"
                             )
                         }
                 }
