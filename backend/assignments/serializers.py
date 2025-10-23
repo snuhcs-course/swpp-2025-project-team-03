@@ -33,6 +33,7 @@ class AssignmentSerializer(serializers.ModelSerializer):
             "course_class",
             "topics",
             "materials",
+            "grade",
         ]
 
 
@@ -56,6 +57,7 @@ class AssignmentDetailSerializer(serializers.ModelSerializer):
             "course_class",
             "topics",
             "materials",
+            "grade",
         ]
 
 
@@ -64,7 +66,7 @@ class AssignmentUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assignment
-        fields = ["title", "description", "total_questions", "visible_from", "due_at"]
+        fields = ["title", "description", "total_questions", "visible_from", "due_at", "grade"]
 
 
 class AssignmentCreateSerializer(serializers.Serializer):

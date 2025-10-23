@@ -17,6 +17,9 @@ from django.utils import timezone
 
 Account = get_user_model()
 
+# pytest 실행 예시
+# pytest courses/test/test_student_unit.py -v
+
 
 class TestStudentSerializerUnit:
     """StudentSerializer 단위 테스트 (DB 접근 없음)"""
@@ -180,7 +183,3 @@ class TestStudentDetailViewUnit:
         assert mock_student.display_name == "New Name"
         mock_student.save.assert_called_once()
         assert response.data["success"] is True
-
-
-# pytest 실행 예시
-# pytest courses/test/test_student_unit.py -v

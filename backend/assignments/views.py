@@ -345,13 +345,3 @@ class AssignmentQuestionsView(APIView):  # GET /assignments/{id}/questions
     )
     def get(self, request, id):
         return Response({"message": "과제 문제 목록 조회"}, status=status.HTTP_200_OK)
-
-
-class AssignmentDraftView(APIView):  # POST /assignments/{id}/draft
-    @swagger_auto_schema(
-        operation_id="과제 초안 저장",
-        operation_description="특정 과제의 초안을 저장합니다.",
-        responses={200: "Assignment draft saved"},
-    )
-    def post(self, request, id):
-        return Response({"message": "과제 초안 저장"}, status=status.HTTP_200_OK)

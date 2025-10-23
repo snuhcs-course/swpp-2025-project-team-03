@@ -17,6 +17,9 @@ Account = get_user_model()
 # 모든 테스트에서 DB 접근 허용
 pytestmark = pytest.mark.django_db
 
+# pytest 실행 예시
+# pytest assignments/test/test_assignment_apis.py -v
+
 
 @pytest.fixture
 def api_client():
@@ -328,7 +331,3 @@ class TestAssignmentCreateView:
         assert isinstance(response.data["s3_key"], str)
         assert isinstance(response.data["upload_url"], str)
         assert response.data["upload_url"].startswith("https://")
-
-
-# pytest 실행 예시
-# pytest assignments/test/test_assignment_apis.py -v

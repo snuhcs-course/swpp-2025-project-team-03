@@ -15,6 +15,9 @@ from feedbacks.test.test_factories import (
 from rest_framework import status
 from rest_framework.test import APIClient
 
+# pytest 실행 예시
+# pytest feedbacks/test/test_feedback_apis.py -v
+
 
 class FeedbackAPITestCase(TestCase):
     """Feedbacks API 테스트 케이스"""
@@ -378,7 +381,3 @@ class FeedbackIntegrationTestCase(TestCase):
         self.assertEqual(class_feedback["content"], teacher_feedback["content"])
         self.assertEqual(class_feedback["id"], student_feedback["id"])
         self.assertEqual(class_feedback["id"], teacher_feedback["id"])
-
-
-# pytest 실행 예시
-# pytest feedbacks/test/test_feedback_apis.py -v

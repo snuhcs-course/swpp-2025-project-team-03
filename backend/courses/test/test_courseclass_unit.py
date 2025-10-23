@@ -19,6 +19,9 @@ from django.utils import timezone
 
 Account = get_user_model()
 
+# pytest 실행 예시
+# pytest courses/test/test_courseclass_unit.py -v
+
 
 class TestCourseClassSerializerUnit:
     """CourseClassSerializer 단위 테스트 (DB 접근 없음)"""
@@ -387,7 +390,3 @@ class TestCourseClassBusinessLogicUnit:
         assert calculate_duration_days(start, end) == 30
         assert calculate_duration_days(None, end) == 0
         assert calculate_duration_days(start, None) == 0
-
-
-# pytest 실행 예시
-# pytest courses/test/test_courseclass_unit.py -v
