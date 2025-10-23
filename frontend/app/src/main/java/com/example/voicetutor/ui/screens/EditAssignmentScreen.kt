@@ -72,13 +72,9 @@ fun EditAssignmentScreen(
         currentAssignment?.let { assignment ->
             title = assignment.title
             description = assignment.description ?: ""
-            selectedClass = assignment.className
-            dueDate = assignment.dueDate
-            assignmentType = when (assignment.type) {
-                AssignmentType.Continuous -> "연속형"
-                AssignmentType.Quiz -> "퀴즈"
-                AssignmentType.Discussion -> "토론형"
-            }
+            selectedClass = assignment.`class`.name
+            dueDate = assignment.dueAt
+            assignmentType = "연속형" // type 속성이 없으므로 기본값
             isPublished = assignment.status == AssignmentStatus.IN_PROGRESS
         }
     }

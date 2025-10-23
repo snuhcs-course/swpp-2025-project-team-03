@@ -240,10 +240,10 @@ class AssignmentViewModel @Inject constructor(
                         RecentAssignment(
                             id = assignment.id.toString(),
                             title = assignment.title,
-                            subject = assignment.subject,
+                            subject = assignment.subject.name,
                             progress = if (assignment.status == AssignmentStatus.COMPLETED) 1.0f else 0.3f,
                             lastActivity = "방금 전", // TODO: 실제 마지막 활동 시간으로 변경
-                            isUrgent = assignment.dueDate.contains("오늘") || assignment.dueDate.contains("내일")
+                            isUrgent = assignment.dueAt.contains("오늘") || assignment.dueAt.contains("내일")
                         )
                     }
                     _recentAssignment.value = recent

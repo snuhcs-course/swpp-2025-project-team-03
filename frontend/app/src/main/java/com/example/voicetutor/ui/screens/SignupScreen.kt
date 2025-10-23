@@ -52,10 +52,13 @@ fun SignupScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     
-    // Handle signup success
+    // Handle signup success - 회원가입 성공 시 로그인 화면으로 이동
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
+            // 회원가입 성공 시 로그인 화면으로 이동
             onSignupSuccess()
+            // currentUser를 초기화하여 로그인 화면에서 자동 로그인되지 않도록 함
+            authViewModel.logout()
         }
     }
     

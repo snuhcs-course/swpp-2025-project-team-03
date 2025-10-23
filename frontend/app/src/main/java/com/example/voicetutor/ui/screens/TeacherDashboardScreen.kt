@@ -47,7 +47,7 @@ fun TeacherDashboardScreen(
     val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     val dashboardStats by dashboardViewModel.dashboardStats.collectAsStateWithLifecycle()
-    val recentActivities by dashboardViewModel.recentActivities.collectAsStateWithLifecycle()
+    // Recent activities are not supported by current backend API
     
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
@@ -397,10 +397,10 @@ fun TeacherDashboardScreen(
                 filteredAssignments.forEachIndexed { index, assignment ->
                     TeacherAssignmentCard(
                         title = assignment.title,
-                        className = assignment.className,
-                        submittedCount = assignment.submittedCount,
-                        totalCount = assignment.totalCount,
-                        dueDate = assignment.dueDate,
+                        className = assignment.`class`.name,
+                        submittedCount = 0,
+                        totalCount = assignment.totalQuestions,
+                        dueDate = assignment.dueAt,
                         status = assignment.status,
                         onClick = { onNavigateToAssignmentDetail(assignment.title) },
                         onViewResults = { onNavigateToAssignmentResults(assignment.title) },
@@ -434,38 +434,16 @@ fun TeacherDashboardScreen(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (recentActivities.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "최근 활동이 없습니다",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Gray600
-                            )
-                        }
-                    } else {
-                        recentActivities.forEach { activity ->
-                            ActivityItem(
-                                studentName = activity.studentName,
-                                action = activity.action,
-                                time = activity.time,
-                                icon = when (activity.iconType) {
-                                    "DONE" -> Icons.Filled.Done
-                                    "MESSAGE" -> Icons.Filled.Message
-                                    "UPLOAD" -> Icons.Filled.Upload
-                                    else -> Icons.Filled.Info
-                                },
-                                iconColor = when (activity.iconType) {
-                                    "DONE" -> Success
-                                    "MESSAGE" -> PrimaryIndigo
-                                    "UPLOAD" -> PrimaryEmerald
-                                    else -> Gray600
-                                },
-                                onStudentClick = { onNavigateToStudentDetail(activity.studentName) }
-                            )
-                        }
+                    // Recent activities are not supported by current backend API
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "최근 활동 기능은 현재 지원되지 않습니다",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
+                        )
                     }
                 }
             }

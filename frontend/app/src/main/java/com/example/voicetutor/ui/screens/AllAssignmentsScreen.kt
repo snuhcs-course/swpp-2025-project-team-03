@@ -169,10 +169,10 @@ fun AllAssignmentsScreen(
                 assignments.forEach { assignment ->
                     AssignmentCard(
                         assignment = assignment,
-                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.subject} - ${assignment.title}") },
-                        onEditClick = { onNavigateToEditAssignment("${assignment.subject} - ${assignment.title}") },
+                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.subject.name} - ${assignment.title}") },
+                        onEditClick = { onNavigateToEditAssignment("${assignment.subject.name} - ${assignment.title}") },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
-                        onViewResults = { onNavigateToAssignmentResults("${assignment.subject} - ${assignment.title}") }
+                        onViewResults = { onNavigateToAssignmentResults("${assignment.subject.name} - ${assignment.title}") }
                     )
                 }
             }
@@ -190,7 +190,7 @@ fun AssignmentCard(
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onAssignmentClick("${assignment.subject} - ${assignment.title}") }
+        onClick = { onAssignmentClick("${assignment.subject.name} - ${assignment.title}") }
     ) {
         Column {
             Row(
@@ -206,7 +206,7 @@ fun AssignmentCard(
                     ) {
                         StatusBadge(status = assignment.status)
                         Spacer(modifier = Modifier.width(8.dp))
-                        TypeBadge(type = assignment.type)
+                        TypeBadge(type = "Quiz") // 기본값으로 설정
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -219,13 +219,13 @@ fun AssignmentCard(
                     )
                     
                     Text(
-                        text = "${assignment.subject} • ${assignment.className}",
+                        text = "${assignment.subject.name} • ${assignment.`class`.name}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray600
                     )
                     
                     Text(
-                        text = "마감: ${assignment.dueDate}",
+                        text = "마감: ${assignment.dueAt}",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray500
                     )
@@ -235,13 +235,13 @@ fun AssignmentCard(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "${assignment.submittedCount}/${assignment.totalCount}",
+                        text = "${assignment.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryIndigo
                     )
                     Text(
-                        text = "제출",
+                        text = "문제",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
@@ -252,7 +252,7 @@ fun AssignmentCard(
             
             // Progress bar
             VTProgressBar(
-                progress = if (assignment.totalCount > 0) assignment.submittedCount.toFloat() / assignment.totalCount else 0f,
+                progress = 0f, // 제출 정보가 없으므로 0으로 설정
                 showPercentage = false,
                 color = when (assignment.status) {
                     AssignmentStatus.IN_PROGRESS -> PrimaryIndigo
@@ -324,11 +324,12 @@ fun StatusBadge(status: AssignmentStatus) {
 }
 
 @Composable
-fun TypeBadge(type: AssignmentType) {
+fun TypeBadge(type: String) {
     val (text, color, icon) = when (type) {
-        AssignmentType.Quiz -> Triple("퀴즈", Warning, Icons.Filled.Quiz)
-        AssignmentType.Continuous -> Triple("연속", Success, Icons.Filled.Schedule)
-        AssignmentType.Discussion -> Triple("토론", PrimaryPurple, Icons.Filled.Chat)
+        "Quiz" -> Triple("퀴즈", Warning, Icons.Filled.Quiz)
+        "Continuous" -> Triple("연속", Success, Icons.Filled.Schedule)
+        "Discussion" -> Triple("토론", PrimaryPurple, Icons.Filled.Chat)
+        else -> Triple("알 수 없음", MaterialTheme.colorScheme.onSurface, Icons.Filled.Help)
     }
     
     Box(

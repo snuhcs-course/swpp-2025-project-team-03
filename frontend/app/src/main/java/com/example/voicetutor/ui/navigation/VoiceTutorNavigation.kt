@@ -114,23 +114,8 @@ fun VoiceTutorNavigation(
             
             SignupScreen(
                 onSignupSuccess = {
-                    // Navigate to appropriate dashboard based on user role
-                    val userRole = authViewModel.currentUser.value?.role
-                    when (userRole) {
-                        com.example.voicetutor.data.models.UserRole.TEACHER -> {
-                            navController.navigate(VoiceTutorScreens.TeacherDashboard.route) {
-                                popUpTo(VoiceTutorScreens.Signup.route) { inclusive = true }
-                            }
-                        }
-                        com.example.voicetutor.data.models.UserRole.STUDENT -> {
-                            navController.navigate(VoiceTutorScreens.StudentDashboard.route) {
-                                popUpTo(VoiceTutorScreens.Signup.route) { inclusive = true }
-                            }
-                        }
-                        null -> {
-                            // Stay on signup screen if no user
-                        }
-                    }
+                    // 회원가입 성공 시 로그인 화면으로 이동
+                    navController.popBackStack()
                 },
                 onLoginClick = {
                     navController.popBackStack()
@@ -695,26 +680,6 @@ fun VoiceTutorNavigation(
             )
         }
         
-        // Attendance management screen
-        composable(
-            route = VoiceTutorScreens.AttendanceManagement.route,
-            arguments = listOf(
-                navArgument("classId") {
-                    type = NavType.IntType
-                }
-            )
-        ) { backStackEntry ->
-            val classId = backStackEntry.arguments?.getInt("classId") ?: 1
-            MainLayout(
-                navController = navController,
-                userRole = UserRole.TEACHER
-            ) {
-                AttendanceManagementScreen(
-                    classId = classId,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-        }
         
         // Student edit screen
         composable(

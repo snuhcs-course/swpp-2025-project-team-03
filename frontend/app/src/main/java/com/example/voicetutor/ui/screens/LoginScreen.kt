@@ -46,10 +46,21 @@ fun LoginScreen(
     val isLoading by viewModelAuth.isLoading.collectAsStateWithLifecycle()
     val error by viewModelAuth.error.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
+    val autoFillCredentials by viewModelAuth.autoFillCredentials.collectAsStateWithLifecycle()
     
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    
+    // 자동 입력 정보가 있을 때 필드에 설정
+    LaunchedEffect(autoFillCredentials) {
+        autoFillCredentials?.let { (autoEmail, autoPassword) ->
+            email = autoEmail
+            password = autoPassword
+            // 자동 입력 정보 사용 후 초기화
+            viewModelAuth.clearAutoFillCredentials()
+        }
+    }
     
     // Handle login success
     LaunchedEffect(currentUser) {

@@ -4,6 +4,7 @@ import com.example.voicetutor.data.models.LoginRequest
 import com.example.voicetutor.data.models.LoginResponse
 import com.example.voicetutor.data.models.SignupRequest
 import com.example.voicetutor.data.models.User
+import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.ApiService
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,8 +45,14 @@ class AuthRepository @Inject constructor(
         }
     }
     
-    suspend fun signup(signupRequest: SignupRequest): Result<User> {
+    suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
         return try {
+            val signupRequest = SignupRequest(
+                name = name,
+                email = email,
+                password = password,
+                role = role.name // UserRole enum을 String으로 변환
+            )
             val response = apiService.signup(signupRequest)
             
             if (response.isSuccessful && response.body()?.success == true) {

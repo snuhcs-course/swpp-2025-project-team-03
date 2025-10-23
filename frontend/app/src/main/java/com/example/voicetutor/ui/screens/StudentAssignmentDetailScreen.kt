@@ -197,7 +197,7 @@ fun StudentAssignmentDetailScreen(
             ) {
                 VTStatsCard(
                     title = "완료 시간",
-                    value = studentResult.completionTime,
+                    value = "정보 없음",
                     icon = Icons.Filled.Timer,
                     iconColor = PrimaryIndigo,
                     modifier = Modifier.weight(1f),

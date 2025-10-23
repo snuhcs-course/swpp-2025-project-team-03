@@ -69,14 +69,9 @@ fun ClassMessageScreen(
     val messageStudents = apiStudents.map { student ->
         ClassMessageStudent(
             id = student.id,
-            name = student.name,
-            email = student.email,
-            studentId = student.id.toString(), // 임시로 ID를 studentId로 사용
-            completedAssignments = student.completedAssignments,
-            totalAssignments = student.totalAssignments,
-            averageScore = student.averageScore,
-            lastActive = student.lastActive,
-            isSelected = false
+            studentId = student.id,
+            teacherId = 1, // 임시 값
+            content = "" // 임시 값
         )
     }
     
@@ -245,7 +240,7 @@ fun ClassMessageScreen(
                                 selectedStudents + student.id
                             }
                         },
-                        onMessageClick = { onNavigateToMessage(student.name) }
+                        onMessageClick = { onNavigateToMessage("학생") }
                     )
                     
                     if (student != messageStudents.last()) {
@@ -322,7 +317,7 @@ fun ClassMessageStudentCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = student.name.first().toString(),
+                    text = "학",
                     color = PrimaryIndigo,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
@@ -335,18 +330,18 @@ fun ClassMessageStudentCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = student.name,
+                    text = "학생",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
                 Text(
-                    text = student.studentId,
+                    text = student.studentId.toString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600
                 )
                 Text(
-                    text = "평균 ${student.averageScore}점 • ${student.completedAssignments}/${student.totalAssignments} 과제",
+                    text = "정보 없음",
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray500
                 )

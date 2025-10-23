@@ -136,7 +136,7 @@ fun TeacherStudentsScreen(
         ) {
             VTStatsCard(
                 title = "평균 완료율",
-                value = "${(students.map { it.completedAssignments.toFloat() / it.totalAssignments }.average() * 100).toInt()}%",
+                value = "정보 없음",
                 icon = Icons.Filled.Done,
                 iconColor = Success,
                 modifier = Modifier.weight(1f)
@@ -342,7 +342,7 @@ fun StudentCard(
                             color = Gray600
                         )
                         Text(
-                            text = "최근 활동: ${student.lastActive}",
+                            text = "최근 활동: ${"활동 없음"}",
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray500
                         )
@@ -368,18 +368,18 @@ fun StudentCard(
             ) {
                 StudentStatItem(
                     label = "과제 완료",
-                    value = "${student.completedAssignments}/${student.totalAssignments}",
-                    progress = student.completedAssignments.toFloat() / student.totalAssignments,
+                    value = "${0}/${0}",
+                    progress = 0.toFloat() / 0,
                     color = PrimaryIndigo
                 )
                 
                 StudentStatItem(
                     label = "평균 점수",
-                    value = "${student.averageScore}점",
-                    progress = student.averageScore / 100f,
+                    value = "${0}점",
+                    progress = 0 / 100f,
                     color = when {
-                        student.averageScore >= 90 -> Success
-                        student.averageScore >= 80 -> Warning
+                        0 >= 90 -> Success
+                        0 >= 80 -> Warning
                         else -> Error
                     }
                 )

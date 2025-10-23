@@ -64,13 +64,13 @@ fun TeacherStudentDetailScreen(
             name = s.name,
             email = s.email,
             studentId = s.id.toString(),
-            className = s.className,
+            className = "학생",
             joinDate = "", // Student 모델에 joinDate 없음
-            lastActive = s.lastActive,
+            lastActive = "활동 없음",
             status = "활성", // 상태 필드 제거됨
-            totalAssignments = s.totalAssignments,
-            completedAssignments = s.completedAssignments,
-            averageScore = s.averageScore,
+            totalAssignments = 0,
+            completedAssignments = 0,
+            averageScore = 0,
             totalStudyTime = "0시간" // Student 모델에 totalStudyTime 없음
         )
     }
@@ -79,8 +79,8 @@ fun TeacherStudentDetailScreen(
     val recentAssignments = studentAssignments.map { assignment ->
         StudentAssignment(
             title = assignment.title,
-            subject = assignment.subject,
-            dueDate = assignment.dueDate,
+            subject = assignment.subject.name,
+            dueDate = assignment.dueAt,
             submittedDate = "", // AssignmentData 모델에 submittedDate 없음
             score = 0, // AssignmentData 모델에 score 없음
             status = "미제출", // 임시로 미제출로 설정

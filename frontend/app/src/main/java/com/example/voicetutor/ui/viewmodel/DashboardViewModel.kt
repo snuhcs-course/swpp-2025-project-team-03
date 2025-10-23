@@ -3,7 +3,6 @@ package com.example.voicetutor.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.DashboardStats
-import com.example.voicetutor.data.models.RecentActivity
 import com.example.voicetutor.data.repository.DashboardRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +19,7 @@ class DashboardViewModel @Inject constructor(
     private val _dashboardStats = MutableStateFlow<DashboardStats?>(null)
     val dashboardStats: StateFlow<DashboardStats?> = _dashboardStats.asStateFlow()
     
-    private val _recentActivities = MutableStateFlow<List<RecentActivity>>(emptyList())
-    val recentActivities: StateFlow<List<RecentActivity>> = _recentActivities.asStateFlow()
+    // Recent activities are not supported by current backend API
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -43,13 +41,7 @@ class DashboardViewModel @Inject constructor(
                     _error.value = exception.message
                 }
             
-            dashboardRepository.getRecentActivities(teacherId)
-                .onSuccess { activities ->
-                    _recentActivities.value = activities
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
+            // Recent activities are not supported by current backend API
             
             _isLoading.value = false
         }

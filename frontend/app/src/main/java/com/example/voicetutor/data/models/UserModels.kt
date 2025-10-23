@@ -12,12 +12,14 @@ enum class UserRole {
 data class User(
     @SerializedName("id")
     val id: Int,
-    @SerializedName("name")
+    @SerializedName("display_name")
     val name: String,
     @SerializedName("email")
     val email: String,
     @SerializedName("role")
     val role: UserRole,
+    @SerializedName("is_student")
+    val isStudent: Boolean? = null,
     // @SerializedName("avatar")
     // val avatar: String? = null,
     // @SerializedName("className")
@@ -91,7 +93,7 @@ data class SignupRequest(
     @SerializedName("password")
     val password: String,
     @SerializedName("role")
-    val role: UserRole,
+    val role: String, // 백엔드에서는 String으로 받음
     // @SerializedName("className")
     // val className: String? = null
 )

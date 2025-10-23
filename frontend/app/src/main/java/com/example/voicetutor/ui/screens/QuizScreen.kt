@@ -120,7 +120,7 @@ private fun QuizScreenOld(
                 options = questionData.options ?: emptyList(),
                 correctAnswer = correctAnswerIndex,
                 explanation = questionData.explanation ?: "",
-                subject = currentAssignment?.subject ?: "과목"
+                subject = currentAssignment?.subject?.name ?: "과목"
             )
         }
     }

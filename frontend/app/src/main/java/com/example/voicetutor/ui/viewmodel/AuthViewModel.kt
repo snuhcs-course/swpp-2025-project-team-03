@@ -2,7 +2,6 @@ package com.example.voicetutor.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.voicetutor.data.models.SignupRequest
 import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.repository.AuthRepository
@@ -29,6 +28,10 @@ class AuthViewModel @Inject constructor(
     
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+    
+    // 회원가입 후 로그인 화면으로 이동할 때 사용할 자동 입력 정보
+    private val _autoFillCredentials = MutableStateFlow<Pair<String, String>?>(null)
+    val autoFillCredentials: StateFlow<Pair<String, String>?> = _autoFillCredentials.asStateFlow()
     
     // 로그인 시 받은 초기 과제 목록
     private val _initialAssignments = MutableStateFlow<List<com.example.voicetutor.data.models.AssignmentData>>(emptyList())
@@ -64,11 +67,13 @@ class AuthViewModel @Inject constructor(
             _error.value = null
             
             // 실제 API 호출
-            val signupRequest = SignupRequest(name, email, password, role, className)
-            authRepository.signup(signupRequest)
+            authRepository.signup(name, email, password, role)
                 .onSuccess { user ->
+                    // 회원가입 성공 시 자동 입력 정보 저장
+                    _autoFillCredentials.value = Pair(email, password)
+                    // currentUser를 설정하여 SignupScreen에서 감지할 수 있도록 함
                     _currentUser.value = user
-                    _isLoggedIn.value = true
+                    _error.value = null
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
@@ -86,6 +91,11 @@ class AuthViewModel @Inject constructor(
     
     fun clearError() {
         _error.value = null
+    }
+    
+    // 자동 입력 정보 사용 후 초기화
+    fun clearAutoFillCredentials() {
+        _autoFillCredentials.value = null
     }
     
     private fun determineRoleFromEmail(email: String): UserRole {
