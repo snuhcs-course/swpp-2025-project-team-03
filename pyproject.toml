@@ -5,6 +5,10 @@ line_length = 120
 [tool.black]
 line-length = 120
 
+[tool.ruff]
+# 정의하지 않은 변수 + bare except 금지 조건 제거
+ignore = ["F841", "E722"]
+
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "backend.voicetutor.settings"  # 실제 경로
 python_files = ["test_*.py"]

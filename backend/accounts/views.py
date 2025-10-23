@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -8,7 +9,6 @@ from rest_framework.views import APIView
 
 # from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.db import IntegrityError
 
 from .request_serializers import LoginRequestSerializer, SignupRequestSerializer
 from .serializers import UserResponseSerializer

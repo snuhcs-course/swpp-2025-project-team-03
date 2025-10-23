@@ -1,12 +1,12 @@
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.contrib.auth import get_user_model
 
 Account = get_user_model()
 
-class SignupLoginTestCase(APITestCase):
 
+class SignupLoginTestCase(APITestCase):
     def setUp(self):
         self.signup_url = reverse("signup")
         self.login_url = reverse("login")
@@ -32,9 +32,7 @@ class SignupLoginTestCase(APITestCase):
 
     # (3) 로그인 성공 테스트
     def test_login_success(self):
-        user = Account.objects.create_user(
-            email="test@example.com", password="testpass123", display_name="테스트유저"
-        )
+        user = Account.objects.create_user(email="test@example.com", password="testpass123", display_name="테스트유저")
         response = self.client.post(
             self.login_url, {"email": "test@example.com", "password": "testpass123"}, format="json"
         )
@@ -53,9 +51,6 @@ class SignupLoginTestCase(APITestCase):
 
     # (5) 로그인 실패 테스트 (존재하지 않는 이메일)
     def test_login_nonexistent_user(self):
-        response = self.client.post(
-            self.login_url, {"email": "nouser@example.com", "password": "1234"}, format="json"
-        )
+        response = self.client.post(self.login_url, {"email": "nouser@example.com", "password": "1234"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("해당 이메일의 사용자가 없습니다.", response.data["message"])
-

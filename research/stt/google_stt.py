@@ -7,6 +7,7 @@ Google Cloud Speech-to-Text API를 사용한 음성 인식
 """
 
 import io
+import json
 import os
 
 from google.cloud import speech
