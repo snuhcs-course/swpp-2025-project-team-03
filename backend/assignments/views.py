@@ -41,7 +41,7 @@ class AssignmentListView(APIView):  # GET /assignments
             # 기본 쿼리셋
             assignments = Assignment.objects.select_related(
                 "course_class", "course_class__subject", "course_class__teacher"
-            ).prefetch_related("topics", "materials")
+            ).prefetch_related("materials")
 
             # 필터링
             teacher_id = request.query_params.get("teacherId")
@@ -73,9 +73,7 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
     )
     def get(self, request, id):
         try:
-            assignment = (
-                Assignment.objects.select_related("course_class").prefetch_related("topics", "materials").get(id=id)
-            )
+            assignment = Assignment.objects.select_related("course_class").prefetch_related("materials").get(id=id)
             serializer = AssignmentDetailSerializer(assignment)
             return create_api_response(data=serializer.data, message="과제 상세 조회 성공")
 
@@ -114,7 +112,7 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
                 # 업데이트된 객체를 다시 조회하여 모든 관계를 포함한 데이터 반환
                 updated_assignment = (
                     Assignment.objects.select_related("course_class", "course_class__subject", "course_class__teacher")
-                    .prefetch_related("topics", "materials")
+                    .prefetch_related("materials")
                     .get(id=id)
                 )
                 response_serializer = AssignmentDetailSerializer(updated_assignment)

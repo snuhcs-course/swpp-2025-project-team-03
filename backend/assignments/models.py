@@ -3,7 +3,6 @@ from django.db import models
 
 class Assignment(models.Model):
     course_class = models.ForeignKey("courses.CourseClass", on_delete=models.CASCADE, related_name="assignments")
-    topics = models.ManyToManyField("catalog.Topic", blank=True, related_name="assignments")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     total_questions = models.PositiveIntegerField(default=0)

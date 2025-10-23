@@ -2,7 +2,6 @@ from datetime import timedelta
 
 import factory
 from assignments.models import Assignment, Material
-from catalog.models import Topic
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from factory.django import DjangoModelFactory
@@ -29,10 +28,3 @@ class MaterialFactory(DjangoModelFactory):
     kind = Material.Kind.PDF
     s3_key = factory.Sequence(lambda n: f"pdf/test/{n}/material.pdf")
     bytes = 1024
-
-
-class TopicFactory(DjangoModelFactory):
-    class Meta:
-        model = Topic
-
-    name = factory.Sequence(lambda n: f"Topic {n}")

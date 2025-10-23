@@ -1,4 +1,3 @@
-from catalog.serializers import TopicSerializer
 from courses.serializers import CourseClassSerializer
 from rest_framework import serializers
 
@@ -17,7 +16,6 @@ class AssignmentSerializer(serializers.ModelSerializer):
     """Assignment 기본 정보를 위한 serializer"""
 
     course_class = CourseClassSerializer(read_only=True)
-    topics = TopicSerializer(many=True, read_only=True)
     materials = MaterialSerializer(many=True, read_only=True)
 
     class Meta:
@@ -31,7 +29,6 @@ class AssignmentSerializer(serializers.ModelSerializer):
             "visible_from",
             "due_at",
             "course_class",
-            "topics",
             "materials",
             "grade",
         ]
@@ -41,7 +38,6 @@ class AssignmentDetailSerializer(serializers.ModelSerializer):
     """Assignment 상세 정보를 위한 serializer"""
 
     course_class = CourseClassSerializer(read_only=True)
-    topics = TopicSerializer(many=True, read_only=True)
     materials = MaterialSerializer(many=True, read_only=True)
 
     class Meta:
@@ -55,7 +51,6 @@ class AssignmentDetailSerializer(serializers.ModelSerializer):
             "visible_from",
             "due_at",
             "course_class",
-            "topics",
             "materials",
             "grade",
         ]

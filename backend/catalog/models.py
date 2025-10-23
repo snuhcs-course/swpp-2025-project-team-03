@@ -8,14 +8,3 @@ class Subject(models.Model):
 
     def __str__(self) -> str:
         return f"[{self.code}] {self.name}"
-
-
-class Topic(models.Model):
-    subject = models.ForeignKey("catalog.Subject", on_delete=models.CASCADE, related_name="topics")
-    name = models.CharField(max_length=255)
-
-    class Meta:
-        unique_together = ("subject", "name")
-
-    def __str__(self) -> str:
-        return f"{self.subject.code} / {self.name}"

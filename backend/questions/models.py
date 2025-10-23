@@ -13,7 +13,7 @@ class Question(models.Model):
     )
     number = models.PositiveIntegerField(help_text="문항 번호 (1..N)")
     content = models.CharField(max_length=255, blank=True)
-    hint = models.CharField(max_length=255, blank=True, null=True)
+    topic = models.CharField(max_length=64, blank=True, null=True, help_text="단원")
     explanation = models.TextField(blank=True, null=True)
     model_answer = models.TextField(blank=True)
     difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.MEDIUM)
