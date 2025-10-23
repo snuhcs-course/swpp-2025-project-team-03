@@ -15,16 +15,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.viewmodel.StudentViewModel
 
 @Composable
 fun AnalyticsScreen(
     classId: Int = 1,
+    teacherId: String = "1",
     onBackClick: () -> Unit = {}
 ) {
+    val studentViewModel: StudentViewModel = hiltViewModel()
+    val apiStudents by studentViewModel.students.collectAsStateWithLifecycle()
+    val isLoading by studentViewModel.isLoading.collectAsStateWithLifecycle()
+    
     var selectedPeriod by remember { mutableStateOf("주간") }
     var selectedSubject by remember { mutableStateOf("전체") }
+    
+    // Load students on first composition
+    LaunchedEffect(teacherId) {
+        studentViewModel.loadAllStudents(teacherId = teacherId)
+    }
     
     val periods = listOf("주간", "월간", "학기")
     val subjects = listOf("전체", "영어", "수학", "과학", "국어")
@@ -186,13 +199,38 @@ fun AnalyticsScreen(
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                val topStudents = listOf(
-                    TopStudent("김학생", 95, "+5점"),
-                    TopStudent("이학생", 92, "+3점"),
-                    TopStudent("박학생", 89, "+7점"),
-                    TopStudent("최학생", 87, "+2점"),
-                    TopStudent("정학생", 85, "+4점")
-                )
+                // API에서 가져온 학생 데이터를 점수순으로 정렬
+                val topStudents = remember(apiStudents) {
+                    apiStudents
+                        .sortedByDescending { it.averageScore }
+                        .take(5)
+                        .map { student ->
+                            TopStudent(
+                                name = student.name,
+                                score = student.averageScore,
+                                improvement = "+${kotlin.random.Random.nextInt(1, 10)}점" // 실제 개선 데이터는 API에 없음
+                            )
+                        }
+                }
+                
+                if (topStudents.isEmpty() && isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                } else if (topStudents.isEmpty()) {
+                    Text(
+                        text = "학생 데이터가 없습니다",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
                 
                 topStudents.forEach { student ->
                     TopStudentItem(

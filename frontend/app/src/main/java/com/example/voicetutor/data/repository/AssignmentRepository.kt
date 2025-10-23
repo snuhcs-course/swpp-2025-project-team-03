@@ -46,6 +46,25 @@ class AssignmentRepository @Inject constructor(
         }
     }
     
+    suspend fun getStudentAssignments(studentId: Int): Result<List<AssignmentData>> {
+        return try {
+            println("AssignmentRepository - Calling API for student $studentId")
+            val response = apiService.getStudentAssignments(studentId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val assignments = response.body()?.data ?: emptyList()
+                println("AssignmentRepository - API returned ${assignments.size} assignments")
+                Result.success(assignments)
+            } else {
+                println("AssignmentRepository - API error: ${response.body()?.error}")
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            println("AssignmentRepository - Exception: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
     suspend fun createAssignment(assignment: com.example.voicetutor.data.network.CreateAssignmentRequest): Result<AssignmentData> {
         return try {
             val response = apiService.createAssignment(assignment)

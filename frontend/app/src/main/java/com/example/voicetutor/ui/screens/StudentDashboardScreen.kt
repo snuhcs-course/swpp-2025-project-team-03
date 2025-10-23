@@ -22,9 +22,25 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
+// 날짜 포맷 유틸 함수
+private fun formatDueDate(dueDate: String): String {
+    return try {
+        val zonedDateTime = ZonedDateTime.parse(dueDate)
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        zonedDateTime.format(formatter)
+    } catch (e: Exception) {
+        dueDate
+    }
+}
 
 @Composable
 fun StudentDashboardScreen(
+    authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
+    assignmentViewModel: AssignmentViewModel? = null,
+    dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
     studentId: Int? = null, // 실제 사용자 ID 사용
     onNavigateToQuiz: () -> Unit = {},
     onNavigateToAllAssignments: () -> Unit = {},
@@ -33,31 +49,42 @@ fun StudentDashboardScreen(
     onNavigateToSubjectDetail: (String) -> Unit = {},
     onNavigateToAllDeadlines: () -> Unit = {}
 ) {
-    val assignmentViewModel: AssignmentViewModel = hiltViewModel()
-    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
-    val dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel = hiltViewModel()
+    val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
+    val viewModelAuth = authViewModel ?: hiltViewModel()
+    val viewModelDashboard = dashboardViewModel ?: hiltViewModel()
     
-    val assignments by assignmentViewModel.assignments.collectAsStateWithLifecycle()
-    val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by assignmentViewModel.error.collectAsStateWithLifecycle()
-    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
-    val dashboardStats by dashboardViewModel.dashboardStats.collectAsStateWithLifecycle()
+    val assignments by viewModelAssignment.assignments.collectAsStateWithLifecycle()
+    val isLoading by viewModelAssignment.isLoading.collectAsStateWithLifecycle()
+    val error by viewModelAssignment.error.collectAsStateWithLifecycle()
+    val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
+    val dashboardStats by viewModelDashboard.dashboardStats.collectAsStateWithLifecycle()
     
     // 동적 사용자 이름 가져오기
     val studentName = currentUser?.name ?: "학생"
     
+    // 디버깅 로그
+    LaunchedEffect(assignments) {
+        println("StudentDashboard - currentUser: ${currentUser?.email}")
+        println("StudentDashboard - assignments from ViewModel: ${assignments.size}")
+        assignments.forEach { 
+            println("  - ${it.title}")
+        }
+    }
+    
     // Load student assignments and dashboard data on first composition
-    LaunchedEffect(studentId, currentUser?.id) {
-        val actualStudentId = studentId ?: currentUser?.id ?: return@LaunchedEffect
-        assignmentViewModel.loadAllAssignments()
-        dashboardViewModel.loadDashboardData(actualStudentId.toString())
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            // 학생 ID를 사용하여 학생 전용 과제 API 호출
+            println("StudentDashboard - Loading assignments for student ID: ${user.id}")
+            viewModelAssignment.loadStudentAssignments(user.id)
+        }
     }
     
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show error message
-            assignmentViewModel.clearError()
+            viewModelAssignment.clearError()
         }
     }
     LazyColumn(
@@ -200,7 +227,7 @@ fun StudentDashboardScreen(
                         StudentAssignmentCard(
                             title = assignment.title,
                             subject = assignment.subject,
-                            dueDate = assignment.dueDate,
+                            dueDate = formatDueDate(assignment.dueDate),
                             progress = 0.3f, // 임시로 진행률 설정
                             isUrgent = assignment.dueDate.contains("오늘") || assignment.dueDate.contains("내일"),
                             onClick = { onNavigateToAssignmentDetail(assignment.title) }
@@ -379,7 +406,7 @@ fun StudentDashboardScreen(
                     StudentDeadlineItem(
                         subject = assignment.subject,
                         assignmentName = assignment.title,
-                        dueDate = assignment.dueDate ?: "마감일 없음",
+                        dueDate = formatDueDate(assignment.dueDate ?: "마감일 없음"),
                         progress = if (assignment.totalCount > 0) assignment.submittedCount.toFloat() / assignment.totalCount else 0f,
                         onClick = { onNavigateToSubjectDetail(assignment.subject) }
                     )
@@ -460,16 +487,14 @@ fun StudentAssignmentCard(
                 Box(
                     modifier = Modifier
                         .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                        .background(
-                            if (isUrgent) Error.copy(alpha = 0.1f) else Gray100
-                        )
+                        .background(Warning.copy(alpha = 0.15f))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = dueDate,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (isUrgent) Error else Gray600,
-                        fontWeight = FontWeight.Medium
+                        color = Warning,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -540,7 +565,8 @@ fun StudentDeadlineItem(
                     Text(
                         text = dueDate,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Warning,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

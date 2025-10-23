@@ -25,21 +25,27 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditAssignmentScreen(
-    assignmentId: Int? = null, // 실제 과제 ID 사용
+    assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null, // 실제 선생님 ID 사용
-    assignmentTitle: String? = null, // 실제 과제 제목 사용
+    assignmentTitle: String = "과제",
     onSaveAssignment: () -> Unit = {}
 ) {
     val classViewModel: ClassViewModel = hiltViewModel()
-    val assignmentViewModel: AssignmentViewModel = hiltViewModel()
+    val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     
+    val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
-    val currentAssignment by assignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
-    val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by assignmentViewModel.error.collectAsStateWithLifecycle()
+    val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    
+    // Find assignment by title from the assignments list
+    val targetAssignment = remember(assignments, assignmentTitle) {
+        assignments.find { it.title == assignmentTitle }
+    }
     
     // 동적 과제 제목 가져오기
-    val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle ?: "과제"
+    val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
     var title: String by remember { mutableStateOf(dynamicAssignmentTitle) }
     var description by remember { mutableStateOf("세포분열 과정을 단계별로 설명하고, 각 단계에서 일어나는 주요 변화들을 정리해보세요.") }
     
@@ -51,9 +57,10 @@ fun EditAssignmentScreen(
     var isPublished by remember { mutableStateOf(true) }
     
     // Load data on first composition
-    LaunchedEffect(assignmentId, teacherId) {
-        assignmentId?.let { id ->
-            assignmentViewModel.loadAssignmentById(id)
+    LaunchedEffect(targetAssignment?.id, teacherId) {
+        targetAssignment?.let { target ->
+            println("EditAssignment - Loading assignment: ${target.title} (ID: ${target.id})")
+            viewModel.loadAssignmentById(target.id)
         }
         teacherId?.let { id ->
             classViewModel.loadClasses(id)
@@ -80,7 +87,7 @@ fun EditAssignmentScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show error message
-            assignmentViewModel.clearError()
+            viewModel.clearError()
         }
     }
     
@@ -471,7 +478,9 @@ fun EditAssignmentScreen(
                         text = "삭제",
                         onClick = {
                             // 실제 삭제 API 호출
-                            assignmentViewModel.deleteAssignment(assignmentId ?: 1)
+                            targetAssignment?.id?.let { id ->
+                                viewModel.deleteAssignment(id)
+                            }
                             showDeleteDialog = false
                             onSaveAssignment() // 삭제 후 뒤로가기
                         },

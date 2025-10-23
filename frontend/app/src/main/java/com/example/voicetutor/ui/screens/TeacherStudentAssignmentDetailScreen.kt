@@ -27,17 +27,22 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
 fun TeacherStudentAssignmentDetailScreen(
-    assignmentId: Int = 1, // 임시로 기본값 설정
-    studentId: String = "2024001", // 임시로 기본값 설정
-    assignmentTitle: String = "과제" // TODO: 실제 과제 제목으로 동적 설정
+    studentId: String,
+    assignmentTitle: String = "과제"
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: com.example.voicetutor.ui.viewmodel.StudentViewModel = hiltViewModel()
+    val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val assignmentResults by viewModel.assignmentResults.collectAsStateWithLifecycle()
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val currentStudent by studentViewModel.currentStudent.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    
+    // Find assignment by title
+    val targetAssignment = remember(assignments, assignmentTitle) {
+        assignments.find { it.title == assignmentTitle }
+    }
     
     // 동적 학생 이름 가져오기
     val studentName = currentStudent?.name ?: "학생"
@@ -46,9 +51,12 @@ fun TeacherStudentAssignmentDetailScreen(
     val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
     
     // Load assignment data, student data and results on first composition
-    LaunchedEffect(assignmentId, studentId) {
-        viewModel.loadAssignmentById(assignmentId)
-        viewModel.loadAssignmentResults(assignmentId)
+    LaunchedEffect(targetAssignment?.id, studentId) {
+        targetAssignment?.let { assignment ->
+            println("TeacherStudentAssignmentDetail - Loading assignment: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
+            viewModel.loadAssignmentById(assignment.id)
+            viewModel.loadAssignmentResults(assignment.id)
+        }
         studentViewModel.loadStudentById(studentId.toIntOrNull() ?: 1)
     }
     
@@ -135,11 +143,38 @@ fun TeacherStudentAssignmentDetailScreen(
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "${studentResult.studentId} • ${studentResult.score}점",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
+                    val grade = scoreToGrade(studentResult.score)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = studentResult.studentId,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                        Text(
+                            text = " • 등급: ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(
+                                    color = Color.White.copy(alpha = 0.2f),
+                                    shape = androidx.compose.foundation.shape.CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = grade,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
                 }
                 
                 Box(
@@ -184,10 +219,10 @@ fun TeacherStudentAssignmentDetailScreen(
             )
             
             VTStatsCard(
-                title = "평균 확실성",
-                value = "${studentResult.detailedAnswers.map { it.confidenceScore }.average().toInt()}점",
-                icon = Icons.Filled.Speed,
-                iconColor = PrimaryIndigo,
+                title = "등급",
+                value = scoreToGrade(studentResult.score),
+                icon = Icons.Filled.Star,
+                iconColor = getGradeColor(scoreToGrade(studentResult.score)),
                 variant = CardVariant.Elevated,
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Vertical
@@ -224,31 +259,25 @@ fun TeacherStudentAssignmentDetailScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = Gray600
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         
-                        // Pronunciation Score
+                        // Correctness indicator
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
-                                Text(
-                                    text = "발음 점수",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Gray600
-                                )
-                                Text(
-                                    text = "${answer.pronunciationScore ?: 0}점",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = when {
-                                        (answer.pronunciationScore ?: 0) >= 80 -> Success
-                                        (answer.pronunciationScore ?: 0) >= 60 -> Warning
-                                        else -> Error
-                                    }
-                                )
-                            }
+                            Icon(
+                                imageVector = if (answer.isCorrect) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
+                                contentDescription = null,
+                                tint = if (answer.isCorrect) Success else Error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (answer.isCorrect) "정답" else "오답",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = if (answer.isCorrect) Success else Error
+                            )
                         }
                     }
                 }
@@ -302,18 +331,6 @@ fun DetailedAnswerCard(
                             fontWeight = FontWeight.Medium
                         )
                     }
-                    
-                    // Confidence score
-                    Text(
-                        text = "확실성: ${answer.confidenceScore}점",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = when {
-                            answer.confidenceScore >= 80 -> Success
-                            answer.confidenceScore >= 60 -> Warning
-                            else -> Error
-                        },
-                        fontWeight = FontWeight.Medium
-                    )
                 }
             }
             
@@ -372,45 +389,48 @@ fun DetailedAnswerCard(
                 Spacer(modifier = Modifier.height(12.dp))
             }
             
-            // Performance metrics
+            // Response time
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "발음 점수",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "${answer.pronunciationScore ?: 0}점",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = when {
-                            (answer.pronunciationScore ?: 0) >= 80 -> Success
-                            (answer.pronunciationScore ?: 0) >= 60 -> Warning
-                            else -> Error
-                        }
-                    )
-                }
-                
-                Column {
-                    Text(
-                        text = "응답 시간",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = answer.responseTime,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray800
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Filled.AccessTime,
+                    contentDescription = null,
+                    tint = Gray600,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "응답 시간: ${answer.responseTime}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Gray600
+                )
             }
         }
         }
+    }
+}
+
+// Helper function to convert score to grade
+private fun scoreToGrade(score: Int): String {
+    return when {
+        score >= 90 -> "A"
+        score >= 80 -> "B"
+        score >= 70 -> "C"
+        score >= 60 -> "D"
+        else -> "F"
+    }
+}
+
+// Helper function to get grade color
+private fun getGradeColor(grade: String): Color {
+    return when (grade) {
+        "A" -> Success
+        "B" -> Color(0xFF4CAF50)
+        "C" -> Warning
+        "D" -> Color(0xFFFF9800)
+        "F" -> Error
+        else -> Gray600
     }
 }
 
@@ -418,6 +438,9 @@ fun DetailedAnswerCard(
 @Composable
 fun TeacherStudentAssignmentDetailScreenPreview() {
     VoiceTutorTheme {
-        TeacherStudentAssignmentDetailScreen()
+        TeacherStudentAssignmentDetailScreen(
+            studentId = "8",
+            assignmentTitle = "화학 기초 퀴즈"
+        )
     }
 }

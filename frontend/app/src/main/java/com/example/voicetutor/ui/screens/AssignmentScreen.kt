@@ -58,21 +58,7 @@ fun AssignmentScreen(
         }
     }
     
-    // 과제 유형 결정: 과제 제목에 따라 자동으로 결정
-    // "연속형", "대화형", "토론" 등이 포함된 과제는 연속형
-    // 과제 타입을 동적으로 판단 (실제 구현에서는 assignment 데이터에서 가져오기)
-    val isContinuousType = dynamicAssignmentTitle.contains("연속형") || 
-                          dynamicAssignmentTitle.contains("대화형") || 
-                          dynamicAssignmentTitle.contains("토론") ||
-                          dynamicAssignmentTitle.contains("녹음") ||
-                          dynamicAssignmentTitle.contains("발음")
-    
-    val isQuizType = dynamicAssignmentTitle.contains("퀴즈") || 
-                    dynamicAssignmentTitle.contains("객관식") || 
-                    dynamicAssignmentTitle.contains("선택형") ||
-                    dynamicAssignmentTitle.contains("문제") ||
-                    dynamicAssignmentTitle.contains("테스트")
-    
+    // 모든 과제는 음성 답변 + AI 대화형 꼬리 질문 형태로 진행
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -82,66 +68,44 @@ fun AssignmentScreen(
                 color = PrimaryIndigo
             )
         }
-    } else if (isContinuousType) {
-        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제")
-    } else if (isQuizType) {
-        AssignmentQuizScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제")
     } else {
-        // 기본값으로 연속형 화면 표시
         AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제")
     }
 }
+
+// Mock 데이터: 화학 기초 퀴즈
+data class QuizQuestionData(
+    val questionNumber: Int,
+    val question: String,
+    val hint: String,
+    val modelAnswer: String
+)
+
+private val mockChemistryQuestions = listOf(
+    QuizQuestionData(1, "원소주기율표에서 같은 족의 원소들의 공통점은?", "전자 배치를 생각해보세요", "최외각 전자 수가 같다"),
+    QuizQuestionData(2, "물(H2O)의 분자량은? (H=1, O=16)", "원자량을 더하세요", "18"),
+    QuizQuestionData(3, "산소의 원소 기호는?", "Oxygen", "O"),
+    QuizQuestionData(4, "공유결합은 무엇을 공유하는가?", "원자들이 함께 사용하는 것", "전자"),
+    QuizQuestionData(5, "이온화 에너지가 가장 큰 원소족은?", "가장 안정한 원소들", "18족 (비활성 기체)")
+)
 
 @Composable
 fun AssignmentContinuousScreen(
     assignmentId: Int = 1,
     assignmentTitle: String
 ) {
-    val aiViewModel: AIViewModel = hiltViewModel()
     val authViewModel: AuthViewModel = hiltViewModel()
-    
-    val aiResponse by aiViewModel.aiResponse.collectAsStateWithLifecycle()
-    val voiceRecognitionResult by aiViewModel.voiceRecognitionResult.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     
     var timeLeft by remember { mutableStateOf(15 * 60) } // 15분
-    var isListening by remember { mutableStateOf(false) }
     var isRecording by remember { mutableStateOf(false) }
-    var conversation by remember { mutableStateOf(
-        listOf(
-            ConversationMessage(
-                speaker = "ai",
-                text = "안녕하세요! 오늘은 ${assignmentTitle.split(" - ").getOrElse(1) { assignmentTitle }}에 대해 이야기해보겠습니다. 먼저 간단히 설명해주시겠어요?"
-            )
-        )
-    ) }
-    var currentInput by remember { mutableStateOf("") }
-    var remainingQuestions by remember { mutableStateOf(3) }
+    var currentQuestionIndex by remember { mutableStateOf(0) }
+    var recordedAudio by remember { mutableStateOf(false) }
+    var recordingDuration by remember { mutableStateOf(0) }
     
-    // AI 응답 처리
-    LaunchedEffect(aiResponse) {
-        aiResponse?.let { response ->
-            conversation = conversation + ConversationMessage(
-                speaker = "ai",
-                text = response.response
-            )
-            if (response.isComplete) {
-                remainingQuestions = 0
-            } else {
-                remainingQuestions = maxOf(0, remainingQuestions - 1)
-            }
-            aiViewModel.clearAIResponse()
-        }
-    }
+    val currentQuestion = mockChemistryQuestions.getOrNull(currentQuestionIndex)
+    val scope = rememberCoroutineScope()
     
-    // 음성 인식 결과 처리
-    LaunchedEffect(voiceRecognitionResult) {
-        voiceRecognitionResult?.let { result ->
-            currentInput = result.text
-            aiViewModel.clearVoiceRecognitionResult()
-        }
-    }
-
     // Timer countdown effect
     LaunchedEffect(timeLeft) {
         if (timeLeft > 0) {
@@ -149,159 +113,282 @@ fun AssignmentContinuousScreen(
             timeLeft--
         }
     }
+    
+    // Recording duration effect
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            recordingDuration = 0
+            while (isRecording) {
+                delay(1000)
+                recordingDuration++
+            }
+        }
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Header
+    if (currentQuestion == null) {
+        // 퀴즈 완료 화면
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = PrimaryIndigo,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
-                )
-                .shadow(
-                    elevation = 8.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                    spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                )
-                .padding(24.dp)
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Column {
-                        Text(
-                            text = assignmentTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                    color = Color.White
-                        )
-                        Text(
-                    text = "AI와 함께 대화하며 학습해보세요",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-            }
-        }
-        
-        // Timer and progress
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            VTCard(
+                variant = CardVariant.Elevated,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-            // Timer
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Timer,
-                    contentDescription = null,
-                    tint = PrimaryIndigo,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint = Success,
+                        modifier = Modifier.size(64.dp)
+                    )
                     Text(
-                    text = String.format("%02d:%02d", timeLeft / 60, timeLeft % 60),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (timeLeft < 300) Error else Gray800 // 5분 이하일 때 빨간색
-                )
-            }
-            
-            // Progress
-            Text(
-                text = "남은 질문: ${remainingQuestions}개",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray600
-            )
-        }
-        
-        // Conversation area
-        VTCard(
-            variant = CardVariant.Elevated,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                conversation.forEach { message ->
-                    ConversationBubble(message = message)
+                        text = "과제 완료!",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Gray800
+                    )
+                    Text(
+                        text = "모든 문제를 완료했습니다.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Gray600,
+                        textAlign = TextAlign.Center
+                    )
+                    VTButton(
+                        text = "결과 확인",
+                        onClick = { /* TODO: Navigate to results */ },
+                        variant = ButtonVariant.Gradient
+                    )
                 }
             }
         }
-        
-        // Input area
-        VTCard(variant = CardVariant.Outlined) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = PrimaryIndigo,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                    )
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
+                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
+                    )
+                    .padding(24.dp)
             ) {
-                // Text input
-                OutlinedTextField(
-                    value = currentInput,
-                    onValueChange = { currentInput = it },
-                    label = { Text("답변을 입력하세요") },
-                    placeholder = { Text("여기에 답변을 작성해주세요...") },
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3
-                )
+                Column {
+                    Text(
+                        text = "화학 기초 퀴즈",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "문제 ${currentQuestionIndex + 1} / ${mockChemistryQuestions.size}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
+            
+            // Timer and progress
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Timer
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Timer,
+                        contentDescription = null,
+                        tint = PrimaryIndigo,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = String.format("%02d:%02d", timeLeft / 60, timeLeft % 60),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (timeLeft < 300) Error else Gray800
+                    )
+                }
                 
-                // Voice input using VoiceRecorder component
-                VoiceRecorder(
-                    isRecording = isListening,
-                    onStartRecording = {
-                        isListening = true
-                        isRecording = true
-                        println("음성 녹음 시작")
-                    },
-                    onStopRecording = {
-                        isListening = false
-                        isRecording = false
-                        // TODO: 실제 녹음 파일을 Base64로 인코딩하여 전송
-                        // 실제 음성 인식 API 호출
-                        val audioData = "" // 실제 녹음된 오디오 데이터로 교체 필요
-                        aiViewModel.recognizeVoice(audioData)
-                        println("음성 녹음 중지 및 인식 시작")
-                    },
-                    recordingDuration = "00:00" // 실제 녹음 시간으로 업데이트 필요
+                // Progress
+                VTProgressBar(
+                    progress = (currentQuestionIndex + 1).toFloat() / mockChemistryQuestions.size.toFloat(),
+                    showPercentage = true,
+                    modifier = Modifier.weight(1f).padding(start = 16.dp)
                 )
-                
-                // Send button
-                VTButton(
-                    text = "전송",
-                    onClick = {
-                        if (currentInput.isNotBlank()) {
-                            // 사용자 메시지 추가
-                            conversation = conversation + ConversationMessage(
-                                speaker = "user",
-                                text = currentInput
+            }
+            
+            // Question card
+            VTCard(
+                variant = CardVariant.Elevated,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Question number
+                    Text(
+                        text = "질문 ${currentQuestion.questionNumber}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = PrimaryIndigo,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    // Question text
+                    Text(
+                        text = currentQuestion.question,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Gray800
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Hint card
+                    VTCard(variant = CardVariant.Outlined) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = Warning,
+                                modifier = Modifier.size(20.dp)
                             )
-                            
-                            // AI에게 메시지 전송
-                            val studentId = currentUser?.id ?: 1
-                            aiViewModel.sendMessageToAI(
-                                assignmentId = assignmentId.toString(),
-                                studentId = studentId,
-                                message = currentInput,
-                                conversationHistory = conversation
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "힌트: ${currentQuestion.hint}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Gray700
                             )
-                            
-                            currentInput = ""
                         }
-                    },
-                    variant = ButtonVariant.Gradient,
-                    fullWidth = true
-                )
+                    }
+                }
+            }
+            
+            // Recording and send area
+            VTCard(variant = CardVariant.Outlined) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Recording status
+                    if (isRecording) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.RadioButtonChecked,
+                                contentDescription = null,
+                                tint = Error,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "녹음 중... ${String.format("%02d:%02d", recordingDuration / 60, recordingDuration % 60)}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Error,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else if (recordedAudio) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.CheckCircle,
+                                contentDescription = null,
+                                tint = Success,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "녹음 완료 (${String.format("%02d:%02d", recordingDuration / 60, recordingDuration % 60)})",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Success,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    
+                    // Voice recorder button
+                    VTButton(
+                        text = if (isRecording) "녹음 중지" else "녹음 시작",
+                        onClick = {
+                            if (isRecording) {
+                                // 녹음 중지
+                                isRecording = false
+                                recordedAudio = true
+                                println("음성 녹음 중지")
+                            } else {
+                                // 녹음 시작
+                                isRecording = true
+                                recordedAudio = false
+                                println("음성 녹음 시작")
+                            }
+                        },
+                        variant = if (isRecording) ButtonVariant.Outline else ButtonVariant.Gradient,
+                        fullWidth = true,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (isRecording) Icons.Filled.Stop else Icons.Filled.Mic,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    
+                    // Send button
+                    VTButton(
+                        text = if (currentQuestionIndex < mockChemistryQuestions.size - 1) "전송 및 다음 문제" else "전송 및 완료",
+                        onClick = {
+                            if (recordedAudio) {
+                                // Mock: 답변 전송 및 다음 문제로 이동
+                                println("답변 전송: 문제 ${currentQuestionIndex + 1}")
+                                
+                                // 다음 문제로 이동
+                                if (currentQuestionIndex < mockChemistryQuestions.size - 1) {
+                                    currentQuestionIndex++
+                                    recordedAudio = false
+                                    recordingDuration = 0
+                                } else {
+                                    // 모든 문제 완료
+                                    currentQuestionIndex++
+                                }
+                            }
+                        },
+                        variant = ButtonVariant.Gradient,
+                        fullWidth = true,
+                        enabled = recordedAudio && !isRecording
+                    )
+                }
             }
         }
     }
@@ -309,11 +396,25 @@ fun AssignmentContinuousScreen(
 
 @Composable
 fun AssignmentQuizScreen(
-    assignmentId: Int = 1, // 임시로 기본값 설정
+    assignmentId: Int = 1,
+    assignmentTitle: String
+) {
+    // 모든 퀴즈는 음성 답변 + AI 대화형 꼬리 질문 형태로 진행
+    AssignmentContinuousScreen(
+        assignmentId = assignmentId,
+        assignmentTitle = assignmentTitle
+    )
+}
+
+// 이전 객관식 퀴즈 로직 (참고용으로 보관)
+@Composable
+private fun AssignmentQuizScreenOld(
+    assignmentId: Int = 1,
     assignmentTitle: String
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
+    val assignmentQuestions by viewModel.assignmentQuestions.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
@@ -326,9 +427,10 @@ fun AssignmentQuizScreen(
     var hasExplained by remember { mutableStateOf(false) }
     var isListening by remember { mutableStateOf(false) }
     
-    // Load assignment on first composition
+    // Load assignment and questions on first composition
     LaunchedEffect(assignmentId) {
         viewModel.loadAssignmentById(assignmentId)
+        viewModel.loadAssignmentQuestions(assignmentId)
     }
     
     // Handle error
@@ -340,37 +442,21 @@ fun AssignmentQuizScreen(
     }
     
     // Convert API data to QuizQuestion format
-    val questions = currentAssignment?.let { assignment ->
-        // 임시로 기본 퀴즈 문제 생성 (실제로는 API에서 퀴즈 문제를 가져와야 함)
-        listOf(
-        QuizQuestion(
-            id = 1,
-            question = "다음 중 원소주기율표에서 같은 족(group)에 속하는 원소들의 공통점은?",
-            options = listOf(
-                "원자 반지름이 같다",
-                "최외각 전자 수가 같다", 
-                "원자량이 비슷하다",
-                "이온화 에너지가 같다"
-            ),
-            correctAnswer = 1,
-            explanation = "같은 족의 원소들은 최외각 전자 수가 같아서 비슷한 화학적 성질을 가집니다.",
-            subject = "화학"
-        ),
-        QuizQuestion(
-            id = 2,
-            question = "주기율표에서 왼쪽에서 오른쪽으로 갈수록 변화하는 성질은?",
-            options = listOf(
-                "원자 반지름이 증가한다",
-                "이온화 에너지가 증가한다",
-                "전기음성도가 감소한다", 
-                "금속성이 증가한다"
-            ),
-            correctAnswer = 1,
-            explanation = "주기에서 왼쪽에서 오른쪽으로 갈수록 이온화 에너지와 전기음성도가 증가합니다.",
-            subject = "화학"
-        )
-    )
-    } ?: emptyList()
+    val questions = remember(assignmentQuestions, currentAssignment) {
+        assignmentQuestions.mapIndexed { index, questionData ->
+            // QuestionData의 correctAnswer (String)를 options에서의 index로 변환
+            val correctAnswerIndex = questionData.options?.indexOf(questionData.correctAnswer) ?: 0
+            
+            QuizQuestion(
+                id = questionData.id,
+                question = questionData.question,
+                options = questionData.options ?: emptyList(),
+                correctAnswer = correctAnswerIndex,
+                explanation = questionData.explanation ?: "",
+                subject = currentAssignment?.subject ?: "과목"
+            )
+        }
+    }
 
     // Timer countdown effect
     LaunchedEffect(timeLeft) {

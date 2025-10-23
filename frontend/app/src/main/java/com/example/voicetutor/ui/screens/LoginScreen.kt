@@ -35,14 +35,17 @@ import com.example.voicetutor.ui.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
+    authViewModel: AuthViewModel? = null,
+    assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel? = null,
     onLoginSuccess: () -> Unit = {},
     onSignupClick: () -> Unit = {},
     onForgotPasswordClick: () -> Unit = {}
 ) {
-    val authViewModel: AuthViewModel = hiltViewModel()
-    val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by authViewModel.error.collectAsStateWithLifecycle()
-    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val viewModelAuth = authViewModel ?: hiltViewModel()
+    val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
+    val isLoading by viewModelAuth.isLoading.collectAsStateWithLifecycle()
+    val error by viewModelAuth.error.collectAsStateWithLifecycle()
+    val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -51,6 +54,17 @@ fun LoginScreen(
     // Handle login success
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
+            println("LoginScreen - currentUser: ${currentUser?.email}")
+            println("LoginScreen - assignments: ${currentUser?.assignments?.size}")
+            
+            // 로그인 시 받은 과제를 AssignmentViewModel에 저장
+            currentUser?.assignments?.let { assignments ->
+                if (assignments.isNotEmpty()) {
+                    println("LoginScreen - Setting ${assignments.size} assignments to ViewModel")
+                    viewModelAssignment.setInitialAssignments(assignments)
+                }
+            }
+            
             onLoginSuccess()
         }
     }
@@ -175,7 +189,7 @@ fun LoginScreen(
                         value = email,
                         onValueChange = { 
                             email = it
-                            authViewModel.clearError()
+                            viewModelAuth.clearError()
                         },
                         label = { Text("이메일") },
                         placeholder = { Text("이메일을 입력하세요") },
@@ -202,7 +216,7 @@ fun LoginScreen(
                         value = password,
                         onValueChange = { 
                             password = it
-                            authViewModel.clearError()
+                            viewModelAuth.clearError()
                         },
                         label = { Text("비밀번호") },
                         placeholder = { Text("••••••••") },
@@ -258,7 +272,7 @@ fun LoginScreen(
                             }
                             
                             // Call actual login API
-                            authViewModel.login(email, password)
+                            viewModelAuth.login(email, password)
                         },
                         variant = ButtonVariant.Gradient,
                         size = ButtonSize.Large,

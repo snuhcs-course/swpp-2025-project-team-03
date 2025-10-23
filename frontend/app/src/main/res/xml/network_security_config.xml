@@ -5,7 +5,8 @@
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">127.0.0.1</domain>
-        <!-- 실제 디바이스용 로컬 IP (필요시 수정) -->
+        <!-- 실제 디바이스용 로컬 IP -->
+        <domain includeSubdomains="true">192.168.35.202</domain>
         <domain includeSubdomains="true">192.168.1.100</domain>
     </domain-config>
 </network-security-config>

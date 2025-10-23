@@ -26,7 +26,10 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
 fun TeacherDashboardScreen(
+    authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
+    assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null, // 실제 사용자 ID 사용
+    refreshTimestamp: Long = 0L, // 새로고침 트리거
     onNavigateToAllAssignments: () -> Unit = {},
     onNavigateToAllStudents: () -> Unit = {},
     onCreateNewAssignment: () -> Unit = {},
@@ -35,41 +38,84 @@ fun TeacherDashboardScreen(
     onNavigateToEditAssignment: (String) -> Unit = {},
     onNavigateToStudentDetail: (String) -> Unit = {}
 ) {
-    val assignmentViewModel: AssignmentViewModel = hiltViewModel()
-    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
+    val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
+    val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
     val dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel = hiltViewModel()
     
-    val assignments by assignmentViewModel.assignments.collectAsStateWithLifecycle()
-    val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by assignmentViewModel.error.collectAsStateWithLifecycle()
-    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val assignments by actualAssignmentViewModel.assignments.collectAsStateWithLifecycle()
+    val isLoading by actualAssignmentViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
+    val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     val dashboardStats by dashboardViewModel.dashboardStats.collectAsStateWithLifecycle()
     val recentActivities by dashboardViewModel.recentActivities.collectAsStateWithLifecycle()
     
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
+    // Compute actual teacher ID
+    val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+    
     // Load assignments and dashboard data on first composition
-    LaunchedEffect(teacherId, currentUser?.id) {
-        val actualTeacherId = teacherId ?: currentUser?.id?.toString() ?: return@LaunchedEffect
-        assignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+    LaunchedEffect(Unit) {
+        // ViewModel 초기화 완료 대기
+        kotlinx.coroutines.delay(100)
+    }
+    
+    LaunchedEffect(assignments.size) {
+        println("TeacherDashboard - Assignments changed: ${assignments.size}")
+        assignments.forEach { 
+            println("  - ${it.title} (${it.subject})")
+        }
+    }
+    
+    // 강제 새로고침 처리 (과제 생성 후 등)
+    LaunchedEffect(refreshTimestamp, actualTeacherId) {
+        println("TeacherDashboard - LaunchedEffect triggered with refreshTimestamp: $refreshTimestamp")
+        println("TeacherDashboard - actualTeacherId: $actualTeacherId")
+        
+        if (refreshTimestamp > 0L && actualTeacherId != null) {
+            println("TeacherDashboard - ✅ Force refreshing data (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+            dashboardViewModel.loadDashboardData(actualTeacherId)
+        } else {
+            println("TeacherDashboard - ❌ Skipping refresh (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
+        }
+    }
+    
+    // 초기 로드 (로그인 후 처음 진입 시)
+    LaunchedEffect(actualTeacherId, assignments.isEmpty()) {
+        // 이미 assignments가 있으면 API 호출하지 않음 (로그인 시 받은 데이터 사용)
+        if (assignments.isNotEmpty()) {
+            println("TeacherDashboard - Already have ${assignments.size} assignments from login")
+            return@LaunchedEffect
+        }
+        
+        if (actualTeacherId == null) {
+            println("TeacherDashboard - Waiting for user to be loaded...")
+            return@LaunchedEffect
+        }
+        println("TeacherDashboard - Initial loading data for teacher ID: $actualTeacherId")
+        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
         dashboardViewModel.loadDashboardData(actualTeacherId)
     }
     
     // Handle filter changes
-    LaunchedEffect(selectedFilter) {
+    LaunchedEffect(selectedFilter, actualTeacherId) {
+        if (actualTeacherId == null) return@LaunchedEffect
+        
         val status = when (selectedFilter) {
             AssignmentFilter.ALL -> null
             AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
             AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
         }
-        assignmentViewModel.loadAllAssignments(teacherId = teacherId, status = status)
+        println("TeacherDashboard - Loading assignments with filter: $selectedFilter, teacherId: $actualTeacherId")
+        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
     }
     
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show error message
-            assignmentViewModel.clearError()
+            actualAssignmentViewModel.clearError()
         }
     }
     
@@ -157,12 +203,12 @@ fun TeacherDashboardScreen(
         ) {
             VTStatsCard(
                 title = "총 과제",
-                value = dashboardStats?.totalAssignments?.toString() ?: "0",
+                value = (currentUser?.totalAssignments ?: assignments.size).toString(),
                 icon = Icons.Filled.List,
                 iconColor = PrimaryIndigo,
                 variant = CardVariant.Elevated,
                 trend = TrendDirection.Up,
-                trendValue = "+${dashboardStats?.inProgressAssignments ?: 0}",
+                trendValue = "진행중 ${filteredAssignments.count { it.status == AssignmentStatus.IN_PROGRESS }}",
                 onClick = { onNavigateToAllAssignments() },
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Horizontal
@@ -170,12 +216,12 @@ fun TeacherDashboardScreen(
             
             VTStatsCard(
                 title = "총 학생",
-                value = dashboardStats?.totalStudents?.toString() ?: "0",
+                value = currentUser?.totalStudents?.toString() ?: "0",
                 icon = Icons.Filled.People,
                 iconColor = Success,
                 variant = CardVariant.Elevated,
-                trend = TrendDirection.Up,
-                trendValue = "+${dashboardStats?.completedAssignments ?: 0}",
+                trend = TrendDirection.None,
+                trendValue = "${currentUser?.totalClasses ?: 0}개 클래스",
                 onClick = { onNavigateToAllStudents() },
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Horizontal

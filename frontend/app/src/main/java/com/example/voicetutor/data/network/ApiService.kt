@@ -26,8 +26,8 @@ interface ApiService {
     
     @GET("assignments/{id}/")
     suspend fun getAssignmentById(@Path("id") id: Int): Response<ApiResponse<AssignmentData>>
-    
-    @POST("assignments/")
+  
+    @POST("assignments/create/")
     suspend fun createAssignment(@Body assignment: CreateAssignmentRequest): Response<ApiResponse<AssignmentData>>
     
     @PUT("assignments/{id}/")

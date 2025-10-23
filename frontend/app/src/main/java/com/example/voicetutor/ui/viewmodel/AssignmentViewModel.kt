@@ -62,6 +62,29 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
+    fun loadStudentAssignments(studentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            println("AssignmentViewModel - Loading assignments for student ID: $studentId")
+            assignmentRepository.getStudentAssignments(studentId)
+                .onSuccess { assignments ->
+                    println("AssignmentViewModel - Received ${assignments.size} assignments")
+                    assignments.forEach { 
+                        println("  - ${it.title} (${it.subject})")
+                    }
+                    _assignments.value = assignments
+                }
+                .onFailure { exception ->
+                    println("AssignmentViewModel - Error: ${exception.message}")
+                    _error.value = exception.message
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
     fun loadAssignmentById(id: Int) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -235,5 +258,9 @@ class AssignmentViewModel @Inject constructor(
     
     fun clearError() {
         _error.value = null
+    }
+    
+    fun setInitialAssignments(assignments: List<AssignmentData>) {
+        _assignments.value = assignments
     }
 }

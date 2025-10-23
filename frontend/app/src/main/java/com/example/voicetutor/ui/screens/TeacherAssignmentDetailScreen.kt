@@ -25,13 +25,19 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
 fun TeacherAssignmentDetailScreen(
-    assignmentId: Int = 1, // 임시로 기본값 설정
-    assignmentTitle: String = "과제", // TODO: 실제 과제 제목으로 동적 설정
+    assignmentViewModel: AssignmentViewModel? = null,
+    assignmentTitle: String = "과제",
     onNavigateToAssignmentResults: (String) -> Unit = {},
     onNavigateToEditAssignment: (String) -> Unit = {}
 ) {
-    val viewModel: AssignmentViewModel = hiltViewModel()
+    val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
+    val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val assignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
+    
+    // Find assignment by title from the assignments list
+    val targetAssignment = remember(assignments, assignmentTitle) {
+        assignments.find { it.title == assignmentTitle }
+    }
     
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = assignment?.title ?: assignmentTitle
@@ -40,9 +46,12 @@ fun TeacherAssignmentDetailScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     // Load assignment data on first composition
-    LaunchedEffect(assignmentId) {
-        viewModel.loadAssignmentById(assignmentId)
-        viewModel.loadAssignmentResults(assignmentId)
+    LaunchedEffect(targetAssignment?.id) {
+        targetAssignment?.let { target ->
+            println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
+            viewModel.loadAssignmentById(target.id)
+            viewModel.loadAssignmentResults(target.id)
+        }
     }
     
     // Handle error

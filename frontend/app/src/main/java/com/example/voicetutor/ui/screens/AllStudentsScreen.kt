@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +33,7 @@ data class AllStudentsStudent(
     val completedAssignments: Int,
     val totalAssignments: Int,
     val averageScore: Int,
-    val lastActive: String
+    val lastActive: String?
 )
 
 @Composable
@@ -354,10 +355,10 @@ fun AllStudentsCard(
                         color = Gray600
                     )
                     Text(
-                        text = student.lastActive,
+                        text = student.lastActive ?: "활동 없음",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Gray800
+                        color = if (student.lastActive != null) Gray800 else Gray500
                     )
                 }
             }
@@ -379,7 +380,7 @@ fun AllStudentsCard(
                     onClick = onMessageClick
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Message,
+                        imageVector = Icons.AutoMirrored.Filled.Message,
                         contentDescription = "메시지 보내기",
                         tint = PrimaryIndigo
                     )

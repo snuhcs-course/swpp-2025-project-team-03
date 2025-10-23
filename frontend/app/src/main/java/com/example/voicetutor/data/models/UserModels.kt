@@ -25,7 +25,21 @@ data class User(
     // @SerializedName("classId")
     // val classId: Int? = null,
     @SerializedName("lastLoginAt")
-    val lastLoginAt: String? = null
+    val lastLoginAt: String? = null,
+    
+    // 로그인 시 받은 추가 데이터
+    @SerializedName("totalAssignments")
+    val totalAssignments: Int? = null,
+    @SerializedName("completedAssignments")
+    val completedAssignments: Int? = null,
+    @SerializedName("inProgressAssignments")
+    val inProgressAssignments: Int? = null,
+    @SerializedName("totalStudents")
+    val totalStudents: Int? = null,
+    @SerializedName("totalClasses")
+    val totalClasses: Int? = null,
+    @SerializedName("assignments")
+    val assignments: List<AssignmentData>? = null
 ) {
     // 사용자 이름의 첫 글자를 반환 (프로필 이니셜용)
     val initial: String
