@@ -20,6 +20,7 @@ class QuestionCreateSerializer(serializers.Serializer):
     summary_preview = serializers.CharField(help_text="요약문 일부 (앞 100자)")
     questions = QuestionSerializer(many=True, help_text="생성된 질문 리스트")
 
+
 class TailQuestionSerializer(serializers.Serializer):
     """생성된 개별 문항 정보 (Tail Question)"""
 
@@ -29,4 +30,3 @@ class TailQuestionSerializer(serializers.Serializer):
         required=False,  # 필수가 아님
         allow_null=True,  # null 값 허용
     )
-    

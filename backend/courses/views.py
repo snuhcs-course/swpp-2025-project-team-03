@@ -11,10 +11,10 @@ from .models import CourseClass, Enrollment
 from .request_serializers import StudentDeleteRequestSerializer, StudentEditRequestSerializer
 from .serializers import (
     CourseClassSerializer,
+    EnrollmentSerializer,
     StudentDetailSerializer,
     StudentEditResponseSerializer,
     StudentSerializer,
-    EnrollmentSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -364,31 +364,19 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
                 message="클래스 학생 목록 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-    
+
     @swagger_auto_schema(
         operation_id="클래스에 학생 등록",
         operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId, studentName, studentEmail 중 최소 하나를 제공해야 합니다.",
         manual_parameters=[
             openapi.Parameter(
-                'studentId',
-                openapi.IN_QUERY,
-                description="학생 ID",
-                type=openapi.TYPE_STRING,
-                required=False
+                "studentId", openapi.IN_QUERY, description="학생 ID", type=openapi.TYPE_STRING, required=False
             ),
             openapi.Parameter(
-                'studentName',
-                openapi.IN_QUERY,
-                description="학생 이름",
-                type=openapi.TYPE_STRING,
-                required=False
+                "studentName", openapi.IN_QUERY, description="학생 이름", type=openapi.TYPE_STRING, required=False
             ),
             openapi.Parameter(
-                'studentEmail',
-                openapi.IN_QUERY,
-                description="학생 이메일",
-                type=openapi.TYPE_STRING,
-                required=False
+                "studentEmail", openapi.IN_QUERY, description="학생 이메일", type=openapi.TYPE_STRING, required=False
             ),
         ],
         responses={200: "Student enrolled in class"},
