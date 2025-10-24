@@ -320,6 +320,17 @@ class AnswerSubmitView(APIView):
                     # PersonalAssignment 가져오기
                     personal_assignment = question.personal_assignment
 
+                    # personal_assignment의 STATUS: NOT_STARTED 이면 personal_assignment의 STATUS: IN_PROGRESS로 변경
+                    # plan 이 ONLY_CORRECT 면 STATUS: SUBMITTED 로 변경, solved_num +1
+                    if personal_assignment.status == PersonalAssignment.Status.NOT_STARTED:
+                        personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
+
+                    if tail_payload.get("plan") == "ONLY_CORRECT" and is_correct:
+                        personal_assignment.solved_num += 1
+                        personal_assignment.status = PersonalAssignment.Status.SUBMITTED
+
+                    personal_assignment.save()
+
                     # Answer 생성 또는 업데이트
                     answer, created = Answer.objects.update_or_create(
                         question=question,
