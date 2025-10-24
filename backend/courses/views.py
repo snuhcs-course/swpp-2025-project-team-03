@@ -7,7 +7,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import CourseClass, Enrollment
-from .request_serializers import StudentDeleteRequestSerializer, StudentEditRequestSerializer
+from .request_serializers import (
+    ClassCreateRequestSerializer,
+    StudentDeleteRequestSerializer,
+    StudentEditRequestSerializer,
+)
 from .serializers import (
     CourseClassSerializer,
     StudentDetailSerializer,
@@ -202,7 +206,7 @@ class StudentProgressView(APIView):  # GET /students/{id}/progress
         return Response({"message": "학생 진도 조회"}, status=status.HTTP_200_OK)
 
 
-class ClassListView(APIView):  # GET /classes
+class ClassListView(APIView):  # GET, POST /classes
     @swagger_auto_schema(
         operation_id="클래스 목록 조회",
         operation_description="전체 클래스 목록을 조회합니다. teacherId로 필터링 가능합니다.",
@@ -226,6 +230,30 @@ class ClassListView(APIView):  # GET /classes
                 success=False,
                 error=str(e),
                 message="클래스 목록 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @swagger_auto_schema(
+        operation_id="클래스 생성",
+        operation_description="새로운 클래스를 생성합니다.",
+        request_body=ClassCreateRequestSerializer,
+        responses={201: "Class created", 400: "Invalid input"},
+    )
+    def post(self, request):
+        try:
+            serializer = ClassCreateRequestSerializer(data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                course_class = serializer.save()
+                response_serializer = CourseClassSerializer(course_class)
+                return create_api_response(
+                    data=response_serializer.data, message="클래스 생성 성공", status_code=status.HTTP_201_CREATED
+                )
+        except Exception as e:
+            logger.error(f"[ClassListView POST] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="클래스 생성 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
