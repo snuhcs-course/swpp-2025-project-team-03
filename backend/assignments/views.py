@@ -322,6 +322,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
             kind=Material.Kind.PDF,
             s3_key=s3_key,
             bytes=None,  # 아직 업로드 전
+            summary="",  # 초기에는 빈 문자열
         )
 
         # Response 반환
