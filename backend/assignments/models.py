@@ -33,6 +33,7 @@ class Material(models.Model):
     assignment = models.ForeignKey("assignments.Assignment", on_delete=models.CASCADE, related_name="materials")
     created_at = models.DateTimeField(auto_now_add=True)
     kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.OTHER)
+    summary = models.TextField(blank=True, help_text="summary text of the material")
     s3_key = models.CharField(max_length=255)
     bytes = models.PositiveIntegerField(null=True, blank=True)
 
