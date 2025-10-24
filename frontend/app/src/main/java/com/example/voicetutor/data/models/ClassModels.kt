@@ -43,12 +43,3 @@ data class MessageData(
     // @SerializedName("isRead")
     // val isRead: Boolean = false
 )
-
-data class Subject(
-    @SerializedName("id")
-    val id: Int,
-    @SerializedName("name")
-    val name: String,
-    @SerializedName("code")
-    val code: String
-)

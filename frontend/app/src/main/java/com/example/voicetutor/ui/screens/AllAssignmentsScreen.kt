@@ -26,8 +26,7 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun AllAssignmentsScreen(
     onNavigateToAssignmentResults: (String) -> Unit = {},
     onNavigateToEditAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onCreateNewAssignment: () -> Unit = {}
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -66,37 +65,17 @@ fun AllAssignmentsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "모든 과제",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Gray800
-                )
-                Text(
-                    text = "총 ${assignments.size}개의 과제",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
-                )
-            }
-            
-            VTButton(
-                text = "새 과제",
-                onClick = onCreateNewAssignment,
-                variant = ButtonVariant.Primary,
-                size = ButtonSize.Small,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+        Column {
+            Text(
+                text = "모든 과제",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Gray800
+            )
+            Text(
+                text = "총 ${assignments.size}개의 과제",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Gray600
             )
         }
         
@@ -169,10 +148,10 @@ fun AllAssignmentsScreen(
                 assignments.forEach { assignment ->
                     AssignmentCard(
                         assignment = assignment,
-                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.subject.name} - ${assignment.title}") },
-                        onEditClick = { onNavigateToEditAssignment("${assignment.subject.name} - ${assignment.title}") },
+                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        onEditClick = { onNavigateToEditAssignment("${assignment.courseClass.subject.name} - ${assignment.title}") },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
-                        onViewResults = { onNavigateToAssignmentResults("${assignment.subject.name} - ${assignment.title}") }
+                        onViewResults = { onNavigateToAssignmentResults("${assignment.courseClass.subject.name} - ${assignment.title}") }
                     )
                 }
             }
@@ -190,7 +169,7 @@ fun AssignmentCard(
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onAssignmentClick("${assignment.subject.name} - ${assignment.title}") }
+        onClick = { onAssignmentClick("${assignment.courseClass.subject.name} - ${assignment.title}") }
     ) {
         Column {
             Row(
@@ -204,7 +183,7 @@ fun AssignmentCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        StatusBadge(status = assignment.status)
+                        StatusBadge(status = AssignmentStatus.IN_PROGRESS) // 기본값으로 설정
                         Spacer(modifier = Modifier.width(8.dp))
                         TypeBadge(type = "Quiz") // 기본값으로 설정
                     }
@@ -219,7 +198,7 @@ fun AssignmentCard(
                     )
                     
                     Text(
-                        text = "${assignment.subject.name} • ${assignment.`class`.name}",
+                        text = "${assignment.courseClass.subject.name} • ${assignment.courseClass.name}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray600
                     )
@@ -254,11 +233,7 @@ fun AssignmentCard(
             VTProgressBar(
                 progress = 0f, // 제출 정보가 없으므로 0으로 설정
                 showPercentage = false,
-                color = when (assignment.status) {
-                    AssignmentStatus.IN_PROGRESS -> PrimaryIndigo
-                    AssignmentStatus.COMPLETED -> Success
-                    AssignmentStatus.DRAFT -> Gray400
-                },
+                color = PrimaryIndigo, // 기본 색상으로 설정
                 height = 6
             )
             
@@ -279,7 +254,7 @@ fun AssignmentCard(
                 
                 VTButton(
                     text = "편집",
-                    onClick = { onEditClick("${assignment.subject} - ${assignment.title}") },
+                    onClick = { onEditClick("${assignment.courseClass.subject.name} - ${assignment.title}") },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
                     modifier = Modifier.weight(1f)

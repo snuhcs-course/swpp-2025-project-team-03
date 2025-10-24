@@ -63,7 +63,7 @@ fun TeacherDashboardScreen(
     LaunchedEffect(assignments.size) {
         println("TeacherDashboard - Assignments changed: ${assignments.size}")
         assignments.forEach { 
-            println("  - ${it.title} (${it.subject})")
+            println("  - ${it.title} (${it.courseClass.subject.name})")
         }
     }
     
@@ -102,13 +102,8 @@ fun TeacherDashboardScreen(
     LaunchedEffect(selectedFilter, actualTeacherId) {
         if (actualTeacherId == null) return@LaunchedEffect
         
-        val status = when (selectedFilter) {
-            AssignmentFilter.ALL -> null
-            AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
-            AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
-        }
         println("TeacherDashboard - Loading assignments with filter: $selectedFilter, teacherId: $actualTeacherId")
-        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
+        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
     }
     
     // Handle error
@@ -119,12 +114,8 @@ fun TeacherDashboardScreen(
         }
     }
     
-    // 필터링된 과제 목록
-    val filteredAssignments = when (selectedFilter) {
-        AssignmentFilter.ALL -> assignments
-        AssignmentFilter.IN_PROGRESS -> assignments.filter { it.status == AssignmentStatus.IN_PROGRESS }
-        AssignmentFilter.COMPLETED -> assignments.filter { it.status == AssignmentStatus.COMPLETED }
-    }
+    // 필터링된 과제 목록 (모든 과제 표시)
+    val filteredAssignments = assignments
     
     Column(
         modifier = Modifier
@@ -208,7 +199,7 @@ fun TeacherDashboardScreen(
                 iconColor = PrimaryIndigo,
                 variant = CardVariant.Elevated,
                 trend = TrendDirection.Up,
-                trendValue = "진행중 ${filteredAssignments.count { it.status == AssignmentStatus.IN_PROGRESS }}",
+                trendValue = "진행중 ${filteredAssignments.size}",
                 onClick = { onNavigateToAllAssignments() },
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Horizontal
@@ -397,11 +388,11 @@ fun TeacherDashboardScreen(
                 filteredAssignments.forEachIndexed { index, assignment ->
                     TeacherAssignmentCard(
                         title = assignment.title,
-                        className = assignment.`class`.name,
+                        className = assignment.courseClass.name,
                         submittedCount = 0,
                         totalCount = assignment.totalQuestions,
                         dueDate = assignment.dueAt,
-                        status = assignment.status,
+                        status = AssignmentStatus.IN_PROGRESS, // 기본값으로 설정
                         onClick = { onNavigateToAssignmentDetail(assignment.title) },
                         onViewResults = { onNavigateToAssignmentResults(assignment.title) },
                         onEdit = { onNavigateToEditAssignment(assignment.title) }

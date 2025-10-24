@@ -19,8 +19,7 @@ class AssignmentRepository @Inject constructor(
         status: AssignmentStatus? = null
     ): Result<List<AssignmentData>> {
         return try {
-            val statusString = status?.name
-            val response = apiService.getAllAssignments(teacherId, classId, statusString)
+            val response = apiService.getAllAssignments(teacherId, classId, status?.name)
             
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()?.data ?: emptyList())

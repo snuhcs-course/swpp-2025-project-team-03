@@ -138,23 +138,14 @@ fun VoiceTutorNavigation(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
                     dashboardViewModel = dashboardViewModel,
-                    onNavigateToQuiz = {
-                        navController.navigate(VoiceTutorScreens.Quiz.route)
-                    },
                     onNavigateToAllAssignments = {
-                        navController.navigate(VoiceTutorScreens.Assignment.createRoute("과제"))
+                        navController.navigate(VoiceTutorScreens.AllAssignments.route)
                     },
                     onNavigateToProgressReport = {
                         navController.navigate(VoiceTutorScreens.Progress.route)
                     },
                     onNavigateToAssignmentDetail = { assignmentTitle ->
                         navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute("1", assignmentTitle))
-                    },
-                    onNavigateToSubjectDetail = { subject ->
-                        navController.navigate(VoiceTutorScreens.SubjectDetail.createRoute(subject))
-                    },
-                    onNavigateToAllDeadlines = {
-                        navController.navigate(VoiceTutorScreens.AllAssignments.route)
                     }
                 )
             }
@@ -191,9 +182,12 @@ fun VoiceTutorNavigation(
                 navController = navController,
                 userRole = UserRole.STUDENT
             ) {
-                ProgressReportScreen(
+                CompletedAssignmentsScreen(
                     onNavigateToAssignmentDetail = { assignmentTitle ->
                         navController.navigate(VoiceTutorScreens.StudentAssignmentDetail.createRoute(assignmentTitle))
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -320,7 +314,7 @@ fun VoiceTutorNavigation(
         composable(VoiceTutorScreens.AllAssignments.route) {
             MainLayout(
                 navController = navController,
-                userRole = UserRole.TEACHER
+                userRole = UserRole.STUDENT
             ) {
                 AllAssignmentsScreen(
                     onNavigateToAssignmentResults = { assignmentTitle ->
@@ -331,9 +325,6 @@ fun VoiceTutorNavigation(
                     },
                     onNavigateToAssignmentDetail = { assignmentTitle ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentTitle))
-                    },
-                    onCreateNewAssignment = {
-                        navController.navigate(VoiceTutorScreens.CreateAssignment.route)
                     }
                 )
             }

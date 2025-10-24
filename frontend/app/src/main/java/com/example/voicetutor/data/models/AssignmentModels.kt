@@ -25,24 +25,65 @@ data class AssignmentData(
     val id: Int,
     @SerializedName("title")
     val title: String,
-    @SerializedName("subject")
-    val subject: Subject,
-    @SerializedName("class")
-    val `class`: ClassData,
-    @SerializedName("classId")
-    val classId: Int,
-    @SerializedName("dueAt")
-    val dueAt: String,
-    @SerializedName("totalQuestions")
-    val totalQuestions: Int,
-    @SerializedName("status")
-    val status: AssignmentStatus,
     @SerializedName("description")
     val description: String? = null,
-    @SerializedName("createdAt")
+    @SerializedName("total_questions")
+    val totalQuestions: Int,
+    @SerializedName("created_at")
     val createdAt: String? = null,
-    @SerializedName("visibleAt")
-    val visibleAt: String? = null
+    @SerializedName("visible_from")
+    val visibleFrom: String? = null,
+    @SerializedName("due_at")
+    val dueAt: String,
+    @SerializedName("course_class")
+    val courseClass: CourseClass,
+    @SerializedName("materials")
+    val materials: List<Material>? = null,
+    @SerializedName("grade")
+    val grade: String? = null
+)
+
+data class CourseClass(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("description")
+    val description: String? = null,
+    @SerializedName("subject")
+    val subject: Subject,
+    @SerializedName("teacher_name")
+    val teacherName: String,
+    @SerializedName("start_date")
+    val startDate: String,
+    @SerializedName("end_date")
+    val endDate: String,
+    @SerializedName("student_count")
+    val studentCount: Int,
+    @SerializedName("created_at")
+    val createdAt: String
+)
+
+data class Subject(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("code")
+    val code: String? = null
+)
+
+data class Material(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("kind")
+    val kind: String,
+    @SerializedName("s3_key")
+    val s3Key: String,
+    @SerializedName("bytes")
+    val bytes: Int? = null,
+    @SerializedName("created_at")
+    val createdAt: String
 )
 
 data class QuestionData(

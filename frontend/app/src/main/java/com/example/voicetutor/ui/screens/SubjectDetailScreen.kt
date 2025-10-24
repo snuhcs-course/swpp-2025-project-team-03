@@ -141,7 +141,7 @@ fun SubjectDetailScreen(
                         ) {
                             VTStatsCard(
                                 title = "총 과제",
-                                value = assignments.filter { it.subject.name == subject }.size.toString(),
+                                value = assignments.filter { it.courseClass.subject.name == subject }.size.toString(),
                                 icon = Icons.Filled.Assignment,
                                 iconColor = PrimaryIndigo,
                                 modifier = Modifier.weight(1f),
@@ -168,7 +168,7 @@ fun SubjectDetailScreen(
                     color = Gray900
                 )
                 
-                val subjectAssignments = assignments.filter { it.subject.name == subject }
+                val subjectAssignments = assignments.filter { it.courseClass.subject.name == subject }
                 
                 if (subjectAssignments.isEmpty()) {
                     VTCard(variant = CardVariant.Outlined) {
@@ -245,17 +245,9 @@ fun SubjectDetailScreen(
                                     )
                                     
                                     Text(
-                                        text = when (assignment.status) {
-                                            AssignmentStatus.DRAFT -> "임시저장"
-                                            AssignmentStatus.IN_PROGRESS -> "진행중"
-                                            AssignmentStatus.COMPLETED -> "완료"
-                                        },
+                                        text = "진행중", // 기본값으로 설정
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = when (assignment.status) {
-                                            AssignmentStatus.DRAFT -> Warning
-                                            AssignmentStatus.IN_PROGRESS -> PrimaryIndigo
-                                            AssignmentStatus.COMPLETED -> Success
-                                        }
+                                        color = PrimaryIndigo // 기본 색상으로 설정
                                     )
                                 }
                             }
