@@ -15,6 +15,7 @@ from .serializers import (
     StudentDetailSerializer,
     StudentEditResponseSerializer,
     StudentSerializer,
+    StudentStatisticsSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -184,24 +185,48 @@ class StudentDetailView(APIView):  # GET /students/{id}
             )
 
 
-class StudentAssignmentsView(APIView):  # GET /students/{id}/assignments
+class StudentStatisticsView(APIView):  # GET /students/{id}/statistics
     @swagger_auto_schema(
-        operation_id="학생 과제 조회",
-        operation_description="특정 학생의 과제 목록을 조회합니다.",
-        responses={200: "Student assignments"},
-    )
-    def get(self, request, id):
-        return Response({"message": "학생 과제 조회"}, status=status.HTTP_200_OK)
-
-
-class StudentProgressView(APIView):  # GET /students/{id}/progress
-    @swagger_auto_schema(
-        operation_id="학생 진도 조회",
+        operation_id="학생 진도 통계량 조회",
         operation_description="특정 학생의 진도 현황을 조회합니다.",
         responses={200: "Student progress"},
     )
     def get(self, request, id):
-        return Response({"message": "학생 진도 조회"}, status=status.HTTP_200_OK)
+        try:
+            student = Account.objects.get(id=id, is_student=True)
+            personal_assignments = student.personal_assignments.all()
+
+            total_assignments_num = personal_assignments.count()
+            submitted_assignments_num = personal_assignments.filter(status="SUBMITTED").count()
+            in_progress_assignments_num = personal_assignments.filter(status="IN_PROGRESS").count()
+            not_started_assignments_num = personal_assignments.filter(status="NOT_STARTED").count()
+
+            student_progress_statistics = {
+                "total_assignments": total_assignments_num,
+                "submitted_assignments": submitted_assignments_num,
+                "in_progress_assignments": in_progress_assignments_num,
+                "not_started_assignments": not_started_assignments_num,
+            }
+
+            serializer = StudentStatisticsSerializer(student_progress_statistics)
+            return create_api_response(
+                data=serializer.data, message="학생 진도 통계량 조회 성공", status_code=status.HTTP_200_OK
+            )
+        except Account.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Student not found",
+                message="해당 학생을 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[StudentStatisticsView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="학생 진도 통계량 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ClassListView(APIView):  # GET /classes

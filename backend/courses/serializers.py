@@ -96,3 +96,12 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             "class_name",
             "status",
         ]
+
+
+class StudentStatisticsSerializer(serializers.Serializer):
+    """학생 진도 통계량을 위한 serializer"""
+
+    total_assignments = serializers.IntegerField()  # 총 과제 수
+    completed_assignments = serializers.IntegerField()  # 완료된 과제 수
+    in_progress_assignments = serializers.IntegerField()  # 진행 중인 과제 수
+    not_started_assignments = serializers.IntegerField()  # 시작하지 않은 과제 수
