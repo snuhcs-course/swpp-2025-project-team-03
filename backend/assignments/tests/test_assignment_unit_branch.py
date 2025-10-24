@@ -120,7 +120,7 @@ def test_detailview_get_exception(mock_objects, mock_logger):
     mock_logger.error.assert_called_once()
 
 
-@patch("assignments.views.AssignmentUpdateSerializer")
+@patch("assignments.views.AssignmentUpdateRequestSerializer")
 @patch("assignments.views.AssignmentDetailSerializer")
 @patch("assignments.views.Assignment.objects")
 def test_detailview_put_success(mock_objects, mock_detail, mock_update):
@@ -135,7 +135,7 @@ def test_detailview_put_success(mock_objects, mock_detail, mock_update):
     assert r.status_code == 200
 
 
-@patch("assignments.views.AssignmentUpdateSerializer")
+@patch("assignments.views.AssignmentUpdateRequestSerializer")
 @patch("assignments.views.Assignment.objects")
 def test_detailview_put_invalid(mock_objects, mock_update):
     ser = Mock()
