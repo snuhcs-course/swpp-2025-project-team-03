@@ -7,6 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from submissions.models import PersonalAssignment
 
 from .models import Question
 from .request_serializers import QuestionCreateRequestSerializer
@@ -77,28 +78,43 @@ class QuestionCreateView(APIView):
 
             quizzes = generate_base_quizzes(summarized_text, n=data["total_number"])
 
+            # 해당 assignment에 연결된 모든 personal assignment들 가져오기
+            personal_assignments = PersonalAssignment.objects.filter(assignment=assignment)
+
+            if not personal_assignments.exists():
+                return Response(
+                    {"error": "No personal assignments found for this assignment"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
             created_questions = []
-            for i, quiz in enumerate(quizzes, 1):
-                q = Question.objects.create(
-                    personal_assignment=None,  # 테스트 목적, 나중에 연동
-                    number=i,
-                    content=quiz.question,
-                    # topic=None,
-                    recalled_num=0,
-                    explanation=quiz.explanation,
-                    model_answer=quiz.model_answer,
-                    difficulty=quiz.difficulty.lower(),
-                )
-                created_questions.append(
-                    {
-                        "id": q.id,
-                        "number": q.number,
-                        "question": q.content,
-                        "answer": q.model_answer,
-                        "explanation": q.explanation,
-                        "difficulty": q.difficulty,
-                    }
-                )
+            total_questions_created = 0
+
+            # 각 personal assignment에 대해 질문 생성
+            for personal_assignment in personal_assignments:
+                for i, quiz in enumerate(quizzes, 1):
+                    q = Question.objects.create(
+                        personal_assignment=personal_assignment,
+                        number=i,
+                        content=quiz.question,
+                        recalled_num=0,
+                        explanation=quiz.explanation,
+                        model_answer=quiz.model_answer,
+                        difficulty=quiz.difficulty.lower(),
+                    )
+                    total_questions_created += 1
+
+                    # 첫 번째 personal assignment의 질문들만 응답에 포함
+                    if personal_assignment == personal_assignments.first():
+                        created_questions.append(
+                            {
+                                "id": q.id,
+                                "number": q.number,
+                                "question": q.content,
+                                "answer": q.model_answer,
+                                "explanation": q.explanation,
+                                "difficulty": q.difficulty,
+                            }
+                        )
 
             return Response(
                 {

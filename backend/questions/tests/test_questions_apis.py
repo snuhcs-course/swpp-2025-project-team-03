@@ -14,8 +14,11 @@ class TestQuestionCreateView(TestCase):
 
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
+    @patch("questions.views.PersonalAssignment.objects.filter")
     @patch("questions.views.generate_base_quizzes")
-    def test_post_success_with_existing_summary(self, mock_generate, mock_material_get, mock_assignment_get):
+    def test_post_success_with_existing_summary(
+        self, mock_generate, mock_personal_assignment_filter, mock_material_get, mock_assignment_get
+    ):
         """summary가 있는 경우 성공 테스트"""
         # Given
         mock_assignment = Mock()
@@ -26,6 +29,21 @@ class TestQuestionCreateView(TestCase):
         mock_material.id = 1
         mock_material.summary = "테스트 요약 텍스트입니다."
         mock_material_get.return_value = mock_material
+
+        # PersonalAssignment Mock 설정
+        mock_personal_assignment1 = Mock()
+        mock_personal_assignment1.id = 1
+        mock_personal_assignment2 = Mock()
+        mock_personal_assignment2.id = 2
+
+        mock_personal_assignment_qs = Mock()
+        mock_personal_assignment_qs.exists.return_value = True
+        mock_personal_assignment_qs.count.return_value = 2
+        mock_personal_assignment_qs.first.return_value = mock_personal_assignment1
+        mock_personal_assignment_qs.__iter__ = Mock(
+            return_value=iter([mock_personal_assignment1, mock_personal_assignment2])
+        )
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
 
         mock_generate.return_value = [
             Mock(question="질문1", explanation="설명1", model_answer="답1", difficulty="EASY"),
@@ -55,7 +73,8 @@ class TestQuestionCreateView(TestCase):
             mock_question2.explanation = "설명2"
             mock_question2.difficulty = "medium"
 
-            mock_question_create.side_effect = [mock_question1, mock_question2]
+            # 2개 personal assignment × 2개 질문 = 4번 호출
+            mock_question_create.side_effect = [mock_question1, mock_question2, mock_question1, mock_question2]
 
             # When
             response = self.client.post("/api/questions/create/", request_data, format="json")
@@ -70,12 +89,56 @@ class TestQuestionCreateView(TestCase):
 
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
+    @patch("questions.views.PersonalAssignment.objects.filter")
+    def test_post_no_personal_assignments(
+        self, mock_personal_assignment_filter, mock_material_get, mock_assignment_get
+    ):
+        """PersonalAssignment가 없는 경우 테스트"""
+        # Given
+        mock_assignment = Mock()
+        mock_assignment.id = 1
+        mock_assignment_get.return_value = mock_assignment
+
+        mock_material = Mock()
+        mock_material.id = 1
+        mock_material.summary = "테스트 요약"
+        mock_material_get.return_value = mock_material
+
+        # PersonalAssignment가 없는 경우
+        mock_personal_assignment_qs = Mock()
+        mock_personal_assignment_qs.exists.return_value = False
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
+
+        request_data = {
+            "assignment_id": 1,
+            "material_id": 1,
+            "total_number": 1,
+        }
+
+        # When
+        response = self.client.post("/api/questions/create/", request_data, format="json")
+
+        # Then
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"], "No personal assignments found for this assignment")
+
+    @patch("questions.views.Assignment.objects.get")
+    @patch("questions.views.Material.objects.get")
+    @patch("questions.views.PersonalAssignment.objects.filter")
     @patch("questions.views.boto3.client")
     @patch("questions.views.tempfile.NamedTemporaryFile")
     @patch("questions.views.summarize_pdf_from_s3")
     @patch("questions.views.generate_base_quizzes")
     def test_post_success_without_summary(
-        self, mock_generate, mock_summarize, mock_tempfile, mock_boto3, mock_material_get, mock_assignment_get
+        self,
+        mock_generate,
+        mock_summarize,
+        mock_tempfile,
+        mock_boto3,
+        mock_personal_assignment_filter,
+        mock_material_get,
+        mock_assignment_get,
     ):
         """summary가 없는 경우 성공 테스트"""
         # Given
@@ -88,6 +151,17 @@ class TestQuestionCreateView(TestCase):
         mock_material.summary = ""
         mock_material.s3_key = "test/test.pdf"
         mock_material_get.return_value = mock_material
+
+        # PersonalAssignment Mock 설정
+        mock_personal_assignment = Mock()
+        mock_personal_assignment.id = 1
+
+        mock_personal_assignment_qs = Mock()
+        mock_personal_assignment_qs.exists.return_value = True
+        mock_personal_assignment_qs.count.return_value = 1
+        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
+        mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
 
         mock_s3_client = Mock()
         mock_boto3.return_value = mock_s3_client
@@ -308,12 +382,20 @@ class TestQuestionCreateView(TestCase):
 
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
+    @patch("questions.views.PersonalAssignment.objects.filter")
     @patch("questions.views.boto3.client")
     @patch("questions.views.tempfile.NamedTemporaryFile")
     @patch("questions.views.summarize_pdf_from_s3")
     @patch("questions.views.generate_base_quizzes")
     def test_post_empty_summary_handling(
-        self, mock_generate, mock_summarize, mock_tempfile, mock_boto3, mock_material_get, mock_assignment_get
+        self,
+        mock_generate,
+        mock_summarize,
+        mock_tempfile,
+        mock_boto3,
+        mock_personal_assignment_filter,
+        mock_material_get,
+        mock_assignment_get,
     ):
         """빈 summary 문자열 처리 테스트"""
         # Given
@@ -326,6 +408,17 @@ class TestQuestionCreateView(TestCase):
         mock_material.summary = ""  # 빈 문자열
         mock_material.s3_key = "test/test.pdf"
         mock_material_get.return_value = mock_material
+
+        # PersonalAssignment Mock 설정
+        mock_personal_assignment = Mock()
+        mock_personal_assignment.id = 1
+
+        mock_personal_assignment_qs = Mock()
+        mock_personal_assignment_qs.exists.return_value = True
+        mock_personal_assignment_qs.count.return_value = 1
+        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
+        mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
 
         mock_s3_client = Mock()
         mock_boto3.return_value = mock_s3_client
@@ -365,12 +458,20 @@ class TestQuestionCreateView(TestCase):
 
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
+    @patch("questions.views.PersonalAssignment.objects.filter")
     @patch("questions.views.boto3.client")
     @patch("questions.views.tempfile.NamedTemporaryFile")
     @patch("questions.views.summarize_pdf_from_s3")
     @patch("questions.views.generate_base_quizzes")
     def test_post_none_summary_handling(
-        self, mock_generate, mock_summarize, mock_tempfile, mock_boto3, mock_material_get, mock_assignment_get
+        self,
+        mock_generate,
+        mock_summarize,
+        mock_tempfile,
+        mock_boto3,
+        mock_personal_assignment_filter,
+        mock_material_get,
+        mock_assignment_get,
     ):
         """None summary 처리 테스트"""
         # Given
@@ -383,6 +484,17 @@ class TestQuestionCreateView(TestCase):
         mock_material.summary = None
         mock_material.s3_key = "test/test.pdf"
         mock_material_get.return_value = mock_material
+
+        # PersonalAssignment Mock 설정
+        mock_personal_assignment = Mock()
+        mock_personal_assignment.id = 1
+
+        mock_personal_assignment_qs = Mock()
+        mock_personal_assignment_qs.exists.return_value = True
+        mock_personal_assignment_qs.count.return_value = 1
+        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
+        mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
 
         mock_s3_client = Mock()
         mock_boto3.return_value = mock_s3_client
@@ -422,8 +534,11 @@ class TestQuestionCreateView(TestCase):
 
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
+    @patch("questions.views.PersonalAssignment.objects.filter")
     @patch("questions.views.generate_base_quizzes")
-    def test_question_creation_fields(self, mock_generate, mock_material_get, mock_assignment_get):
+    def test_question_creation_fields(
+        self, mock_generate, mock_personal_assignment_filter, mock_material_get, mock_assignment_get
+    ):
         """생성된 Question 객체의 필드 확인"""
         # Given
         mock_assignment = Mock()
@@ -434,6 +549,17 @@ class TestQuestionCreateView(TestCase):
         mock_material.id = 1
         mock_material.summary = "테스트 요약"
         mock_material_get.return_value = mock_material
+
+        # PersonalAssignment Mock 설정
+        mock_personal_assignment = Mock()
+        mock_personal_assignment.id = 1
+
+        mock_personal_assignment_qs = Mock()
+        mock_personal_assignment_qs.exists.return_value = True
+        mock_personal_assignment_qs.count.return_value = 1
+        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
+        mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
 
         mock_generate.return_value = [
             Mock(question="테스트 질문", explanation="테스트 설명", model_answer="테스트 답", difficulty="HARD"),
@@ -472,4 +598,4 @@ class TestQuestionCreateView(TestCase):
             self.assertEqual(call_args["difficulty"], "hard")
             self.assertEqual(call_args["number"], 1)
             self.assertEqual(call_args["recalled_num"], 0)
-            self.assertIsNone(call_args["personal_assignment"])
+            self.assertEqual(call_args["personal_assignment"], mock_personal_assignment)
