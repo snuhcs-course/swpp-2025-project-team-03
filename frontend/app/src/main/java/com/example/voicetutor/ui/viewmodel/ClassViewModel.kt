@@ -82,6 +82,28 @@ class ClassViewModel @Inject constructor(
         }
     }
     
+    fun createClass(createClassRequest: CreateClassRequest) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            classRepository.createClass(createClassRequest)
+                .onSuccess { classData ->
+                    // 새로 생성된 클래스를 목록에 추가
+                    _classes.value = _classes.value + classData
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    fun refreshClasses(teacherId: String) {
+        loadClasses(teacherId)
+    }
+    
     fun clearError() {
         _error.value = null
     }

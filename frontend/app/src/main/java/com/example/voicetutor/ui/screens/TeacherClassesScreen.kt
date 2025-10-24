@@ -81,6 +81,15 @@ fun TeacherClassesScreen(
         }
     }
     
+    // 클래스 목록이 변경될 때마다 새로고침
+    LaunchedEffect(classes.size) {
+        val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+        if (actualTeacherId != null && classes.isNotEmpty()) {
+            println("TeacherClassesScreen - Classes updated, refreshing...")
+            classViewModel.refreshClasses(actualTeacherId)
+        }
+    }
+    
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
