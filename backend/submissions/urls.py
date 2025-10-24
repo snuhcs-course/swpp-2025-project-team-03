@@ -5,5 +5,5 @@ from .views import AnswerSubmitView, PersonalAssignmentListView, PersonalAssignm
 urlpatterns = [
     path("", PersonalAssignmentListView.as_view(), name="personal-assignment-list"),
     path("<int:id>/questions/", PersonalAssignmentQuestionsView.as_view(), name="personal-assignment-questions"),
-    path("<int:id>/submit/", AnswerSubmitView.as_view(), name="answer-submit"),
+    path("answer/", AnswerSubmitView.as_view(), name="answer"),
 ]
