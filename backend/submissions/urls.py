@@ -3,7 +3,7 @@ from django.urls import path
 from .views import AnswerSubmitView, PersonalAssignmentListView, PersonalAssignmentQuestionsView
 
 urlpatterns = [
-    path("", PersonalAssignmentListView.as_view()),
-    path("<int:id>/questions/", PersonalAssignmentQuestionsView.as_view()),
-    path("<int:id>/submit/", AnswerSubmitView.as_view()),
+    path("", PersonalAssignmentListView.as_view(), name="personal-assignment-list"),
+    path("<int:id>/questions/", PersonalAssignmentQuestionsView.as_view(), name="personal-assignment-questions"),
+    path("<int:id>/submit/", AnswerSubmitView.as_view(), name="answer-submit"),
 ]
