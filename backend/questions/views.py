@@ -54,33 +54,27 @@ class QuestionCreateView(APIView):
         except Material.DoesNotExist:
             return Response({"error": "Invalid material_id"}, status=status.HTTP_404_NOT_FOUND)
 
-        s3_key = material.s3_key
-        s3 = boto3.client(
-            "s3",
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_REGION,
-        )
-
         try:
-            # --- PDF 다운로드 ---
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-                s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp)
-                tmp.flush()
-                local_pdf = tmp.name
+            if material.summary:
+                summarized_text = material.summary
+            else:
+                s3_key = material.s3_key
+                s3 = boto3.client(
+                    "s3",
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=settings.AWS_REGION,
+                )
 
-            # --- Vision summarization ---
-            summarized_text = summarize_pdf_from_s3(local_pdf)
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                    s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp)
+                    tmp.flush()
+                    local_pdf = tmp.name
 
-            # --- Text Material 생성 ---
-            text_material = Material.objects.create(
-                assignment=assignment,
-                kind=Material.Kind.TEXT,
-                s3_key=s3_key.replace(".pdf", "_summary.txt"),
-                bytes=len(summarized_text.encode("utf-8")),
-            )
+                summarized_text = summarize_pdf_from_s3(local_pdf)
+                material.summary = summarized_text
+                material.save()
 
-            # --- Quiz Generation ---
             quizzes = generate_base_quizzes(summarized_text, n=data["total_number"])
 
             created_questions = []
@@ -109,7 +103,7 @@ class QuestionCreateView(APIView):
             return Response(
                 {
                     "assignment_id": assignment.id,
-                    "material_summary_id": text_material.id,
+                    "material_id": material.id,
                     "summary_preview": summarized_text[:100],
                     "questions": created_questions,
                 },
