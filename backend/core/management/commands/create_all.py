@@ -37,6 +37,10 @@ class Command(BaseCommand):
             self.stdout.write(self.style.HTTP_INFO("▶ 질문 정보 생성 중..."))
             call_command("create_test_questions")
 
+            # (8) 답안 정보 생성
+            self.stdout.write(self.style.HTTP_INFO("▶ 답안 정보 생성 중..."))
+            call_command("create_test_answers")
+
             #
             # self.stdout.write(self.style.HTTP_INFO("▶ seed_assignments 실행 중..."))
             # call_command("seed_assignments")
