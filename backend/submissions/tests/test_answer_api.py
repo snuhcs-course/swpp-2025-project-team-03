@@ -652,3 +652,300 @@ def test_answer_submit_started_at_calculation(
 
     # started_at이 요청 시간보다 이전이어야 함
     assert answer.started_at < after_request_time
+
+
+# ============================================================================
+# 10. PersonalAssignment 상태 변경 테스트
+# ============================================================================
+
+
+@patch("submissions.views.generate_tail_question")
+@patch("submissions.views.run_inference")
+@patch("submissions.views.extract_all_features")
+def test_personal_assignment_status_not_started_to_in_progress(
+    mock_extract_features,
+    mock_inference,
+    mock_tail_gen,
+    api_client,
+    student,
+    question,
+    personal_assignment,
+    mock_audio_file,
+    mock_features,
+    mock_inference_result,
+    mock_tail_question_payload_pass,
+):
+    """PersonalAssignment 상태가 NOT_STARTED에서 IN_PROGRESS로 변경되는지 테스트"""
+    url = reverse("answer")
+
+    # PersonalAssignment 상태를 NOT_STARTED로 설정
+    personal_assignment.status = PersonalAssignment.Status.NOT_STARTED
+    personal_assignment.save()
+
+    mock_extract_features.return_value = mock_features
+    mock_inference.return_value = mock_inference_result
+    mock_tail_gen.return_value = mock_tail_question_payload_pass
+
+    mock_audio_file.name = "test.wav"
+
+    data = {
+        "studentId": student.id,
+        "questionId": question.id,
+        "audioFile": mock_audio_file,
+    }
+
+    response = api_client.post(url, data, format="multipart")
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # PersonalAssignment 상태가 IN_PROGRESS로 변경되었는지 확인
+    personal_assignment.refresh_from_db()
+    assert personal_assignment.status == PersonalAssignment.Status.IN_PROGRESS
+
+
+@patch("submissions.views.generate_tail_question")
+@patch("submissions.views.run_inference")
+@patch("submissions.views.extract_all_features")
+def test_personal_assignment_status_in_progress_remains(
+    mock_extract_features,
+    mock_inference,
+    mock_tail_gen,
+    api_client,
+    student,
+    question,
+    personal_assignment,
+    mock_audio_file,
+    mock_features,
+    mock_inference_result,
+    mock_tail_question_payload_ask,
+):
+    """PersonalAssignment 상태가 이미 IN_PROGRESS일 때 그대로 유지되는지 테스트"""
+    url = reverse("answer")
+
+    # PersonalAssignment 상태를 IN_PROGRESS로 설정
+    personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
+    personal_assignment.save()
+
+    mock_extract_features.return_value = mock_features
+    mock_inference.return_value = mock_inference_result
+    mock_tail_gen.return_value = mock_tail_question_payload_ask
+
+    mock_audio_file.name = "test.wav"
+
+    data = {
+        "studentId": student.id,
+        "questionId": question.id,
+        "audioFile": mock_audio_file,
+    }
+
+    response = api_client.post(url, data, format="multipart")
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # PersonalAssignment 상태가 여전히 IN_PROGRESS인지 확인
+    personal_assignment.refresh_from_db()
+    assert personal_assignment.status == PersonalAssignment.Status.IN_PROGRESS
+
+
+@pytest.fixture
+def mock_tail_question_payload_only_correct():
+    """테스트용 Mock Tail Question 생성 결과 (ONLY_CORRECT plan)"""
+    return {
+        "is_correct": True,
+        "confidence": 0.95,
+        "plan": "ONLY_CORRECT",
+        "recalled_time": 0,
+    }
+
+
+@patch("submissions.views.generate_tail_question")
+@patch("submissions.views.run_inference")
+@patch("submissions.views.extract_all_features")
+def test_personal_assignment_solved_num_increment_only_correct(
+    mock_extract_features,
+    mock_inference,
+    mock_tail_gen,
+    api_client,
+    student,
+    question,
+    personal_assignment,
+    mock_audio_file,
+    mock_features,
+    mock_inference_result,
+    mock_tail_question_payload_only_correct,
+):
+    """plan이 ONLY_CORRECT이고 정답일 때 solved_num이 증가하는지 테스트"""
+    url = reverse("answer")
+
+    # PersonalAssignment 초기 상태 설정
+    personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
+    personal_assignment.solved_num = 0
+    personal_assignment.save()
+
+    mock_extract_features.return_value = mock_features
+    mock_inference.return_value = mock_inference_result
+    mock_tail_gen.return_value = mock_tail_question_payload_only_correct
+
+    mock_audio_file.name = "test.wav"
+
+    data = {
+        "studentId": student.id,
+        "questionId": question.id,
+        "audioFile": mock_audio_file,
+    }
+
+    response = api_client.post(url, data, format="multipart")
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # solved_num이 1 증가했는지 확인
+    personal_assignment.refresh_from_db()
+    assert personal_assignment.solved_num == 1
+    assert personal_assignment.status == PersonalAssignment.Status.SUBMITTED
+
+
+@patch("submissions.views.generate_tail_question")
+@patch("submissions.views.run_inference")
+@patch("submissions.views.extract_all_features")
+def test_personal_assignment_solved_num_not_increment_when_incorrect(
+    mock_extract_features,
+    mock_inference,
+    mock_tail_gen,
+    api_client,
+    student,
+    question,
+    personal_assignment,
+    mock_audio_file,
+    mock_features,
+    mock_inference_result,
+):
+    """plan이 ONLY_CORRECT이지만 오답일 때 solved_num이 증가하지 않는지 테스트"""
+    url = reverse("answer")
+
+    # PersonalAssignment 초기 상태 설정
+    personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
+    personal_assignment.solved_num = 0
+    personal_assignment.save()
+
+    # 오답으로 판정되는 payload
+    only_correct_but_incorrect = {
+        "is_correct": False,
+        "confidence": 0.55,
+        "plan": "ONLY_CORRECT",
+        "recalled_time": 0,
+    }
+
+    mock_extract_features.return_value = mock_features
+    mock_inference.return_value = mock_inference_result
+    mock_tail_gen.return_value = only_correct_but_incorrect
+
+    mock_audio_file.name = "test.wav"
+
+    data = {
+        "studentId": student.id,
+        "questionId": question.id,
+        "audioFile": mock_audio_file,
+    }
+
+    response = api_client.post(url, data, format="multipart")
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # solved_num이 증가하지 않았는지 확인
+    personal_assignment.refresh_from_db()
+    assert personal_assignment.solved_num == 0
+    # 상태가 SUBMITTED로 변경되지 않았는지 확인
+    assert personal_assignment.status == PersonalAssignment.Status.IN_PROGRESS
+
+
+@patch("submissions.views.generate_tail_question")
+@patch("submissions.views.run_inference")
+@patch("submissions.views.extract_all_features")
+def test_personal_assignment_solved_num_not_increment_with_pass_plan(
+    mock_extract_features,
+    mock_inference,
+    mock_tail_gen,
+    api_client,
+    student,
+    question,
+    personal_assignment,
+    mock_audio_file,
+    mock_features,
+    mock_inference_result,
+    mock_tail_question_payload_pass,
+):
+    """plan이 PASS일 때 solved_num이 증가하지 않는지 테스트"""
+    url = reverse("answer")
+
+    # PersonalAssignment 초기 상태 설정
+    personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
+    personal_assignment.solved_num = 0
+    personal_assignment.save()
+
+    mock_extract_features.return_value = mock_features
+    mock_inference.return_value = mock_inference_result
+    mock_tail_gen.return_value = mock_tail_question_payload_pass
+
+    mock_audio_file.name = "test.wav"
+
+    data = {
+        "studentId": student.id,
+        "questionId": question.id,
+        "audioFile": mock_audio_file,
+    }
+
+    response = api_client.post(url, data, format="multipart")
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # solved_num이 증가하지 않았는지 확인 (PASS는 solved_num을 증가시키지 않음)
+    personal_assignment.refresh_from_db()
+    assert personal_assignment.solved_num == 0
+    # 상태는 여전히 IN_PROGRESS
+    assert personal_assignment.status == PersonalAssignment.Status.IN_PROGRESS
+
+
+@patch("submissions.views.generate_tail_question")
+@patch("submissions.views.run_inference")
+@patch("submissions.views.extract_all_features")
+def test_personal_assignment_status_from_not_started_to_submitted(
+    mock_extract_features,
+    mock_inference,
+    mock_tail_gen,
+    api_client,
+    student,
+    question,
+    personal_assignment,
+    mock_audio_file,
+    mock_features,
+    mock_inference_result,
+    mock_tail_question_payload_only_correct,
+):
+    """NOT_STARTED 상태에서 ONLY_CORRECT로 정답 제출 시 IN_PROGRESS를 거쳐 SUBMITTED로 변경되는지 테스트"""
+    url = reverse("answer")
+
+    # PersonalAssignment 초기 상태 설정
+    personal_assignment.status = PersonalAssignment.Status.NOT_STARTED
+    personal_assignment.solved_num = 0
+    personal_assignment.save()
+
+    mock_extract_features.return_value = mock_features
+    mock_inference.return_value = mock_inference_result
+    mock_tail_gen.return_value = mock_tail_question_payload_only_correct
+
+    mock_audio_file.name = "test.wav"
+
+    data = {
+        "studentId": student.id,
+        "questionId": question.id,
+        "audioFile": mock_audio_file,
+    }
+
+    response = api_client.post(url, data, format="multipart")
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # PersonalAssignment 상태가 SUBMITTED로 변경되었는지 확인
+    personal_assignment.refresh_from_db()
+    assert personal_assignment.status == PersonalAssignment.Status.SUBMITTED
+    assert personal_assignment.solved_num == 1
