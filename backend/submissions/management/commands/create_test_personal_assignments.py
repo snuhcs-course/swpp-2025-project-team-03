@@ -14,10 +14,10 @@ class Command(BaseCommand):
 
         # 상태 순서 정의
         status_cycle = [
-            PersonalAssignment.Status.NOT_STARTED,
-            PersonalAssignment.Status.IN_PROGRESS,
-            PersonalAssignment.Status.SUBMITTED,
             PersonalAssignment.Status.GRADED,
+            PersonalAssignment.Status.IN_PROGRESS,
+            PersonalAssignment.Status.NOT_STARTED,
+            PersonalAssignment.Status.SUBMITTED,
         ]
         status_index = 0  # 전체 과제 간 순환용 인덱스
 

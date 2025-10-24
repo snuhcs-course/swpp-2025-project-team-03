@@ -8,10 +8,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # 등록할 수강 정보
         enrollments_data = [
-            {"student_id": 1, "course_class_id": 1},  # 1번 학생 - 1번 수업
-            {"student_id": 2, "course_class_id": 1},  # 2번 학생 - 1번 수업
-            {"student_id": 1, "course_class_id": 2},  # 1번 학생 - 2번 수업
-            {"student_id": 2, "course_class_id": 3},  # 2번 학생 - 3번 수업
+            {"student_id": 2, "course_class_id": 1},  # 2번 학생 (이학생) - 1번 수업 (과학 기초)
+            {"student_id": 3, "course_class_id": 1},  # 3번 학생 (나굳건) - 1번 수업 (과학 기초)
+            {"student_id": 2, "course_class_id": 2},  # 2번 학생 (이학생)- 2번 수업 (초등 수학)
+            {"student_id": 3, "course_class_id": 3},  # 3번 학생 (나굳건) - 3번 수업 (영어 독해)
         ]
 
         created_count = 0
