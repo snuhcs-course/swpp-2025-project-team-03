@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "submissions",
     "feedbacks",
     "questions",
+    "reports",
     "rest_framework",
     "rest_framework_simplejwt",
 ]
