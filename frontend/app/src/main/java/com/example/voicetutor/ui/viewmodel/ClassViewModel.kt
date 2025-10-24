@@ -3,6 +3,7 @@ package com.example.voicetutor.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.data.repository.ClassRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

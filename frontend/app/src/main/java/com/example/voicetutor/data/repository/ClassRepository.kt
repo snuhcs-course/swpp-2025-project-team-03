@@ -2,6 +2,7 @@ package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.data.network.ApiService
+import com.example.voicetutor.data.network.CreateClassRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 

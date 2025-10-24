@@ -1,5 +1,7 @@
 package com.example.voicetutor.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
@@ -23,9 +26,11 @@ import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CreateClassScreen(
     onBackClick: () -> Unit = {},
+    teacherId: String? = null,
     classViewModel: ClassViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -36,16 +41,17 @@ fun CreateClassScreen(
     var selectedClass by remember { mutableStateOf("A반") }
     
     val grades = listOf("1학년", "2학년", "3학년")
-    val classes = listOf("A반", "B반", "C반", "D반")
+    val classOptions = listOf("A반", "B반", "C반", "D반")
     
     // ViewModel 상태 관찰
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
     val error by classViewModel.error.collectAsStateWithLifecycle()
+    val classes by classViewModel.classes.collectAsStateWithLifecycle()
     
     // 클래스 생성 성공 시 백으로 이동
-    LaunchedEffect(classViewModel.classes.collectAsStateWithLifecycle().value) {
-        if (classViewModel.classes.collectAsStateWithLifecycle().value.isNotEmpty()) {
+    LaunchedEffect(classes.size) {
+        if (classes.isNotEmpty()) {
             onBackClick()
         }
     }
@@ -213,17 +219,33 @@ fun CreateClassScreen(
                 val startDate = now.format(formatter)
                 val endDate = now.plusMonths(6).format(formatter) // 6개월 후
                 
-                // 클래스 생성 요청
-                val createClassRequest = CreateClassRequest(
-                    name = fullClassName,
-                    description = description,
-                    subject_name = subject,
-                    teacher_id = currentUser?.id ?: 0,
-                    start_date = startDate,
-                    end_date = endDate
-                )
+                // teacherId 사용 (파라미터로 받거나 currentUser.id 사용)
+                val actualTeacherId = teacherId ?: currentUser?.id?.toString()
                 
-                classViewModel.createClass(createClassRequest)
+                println("CreateClassScreen - teacherId: $teacherId")
+                println("CreateClassScreen - currentUser: $currentUser")
+                println("CreateClassScreen - currentUser.id: ${currentUser?.id}")
+                println("CreateClassScreen - actualTeacherId: $actualTeacherId")
+                
+                if (actualTeacherId != null) {
+                    // 클래스 생성 요청
+                    val createClassRequest = CreateClassRequest(
+                        name = fullClassName,
+                        description = description,
+                        subject_name = subject,
+                        teacher_id = actualTeacherId.toInt(),
+                        start_date = startDate,
+                        end_date = endDate
+                    )
+                    
+                    println("CreateClassScreen - createClassRequest: $createClassRequest")
+                    println("CreateClassScreen - teacher_id: $actualTeacherId")
+                    classViewModel.createClass(createClassRequest)
+                } else {
+                    println("CreateClassScreen - ERROR: teacherId is null!")
+                    println("CreateClassScreen - teacherId: $teacherId")
+                    println("CreateClassScreen - currentUser.id: ${currentUser?.id}")
+                }
             },
             fullWidth = true,
             enabled = !isLoading && (className.isNotBlank() || (selectedGrade.isNotBlank() && selectedClass.isNotBlank())),
