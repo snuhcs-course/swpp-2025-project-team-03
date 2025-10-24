@@ -89,7 +89,7 @@ fun TeacherClassDetailScreen(
         ClassAssignment(
             id = assignment.id,
             title = assignment.title,
-            subject = assignment.subject.name,
+                        subject = assignment.courseClass.subject.name,
             dueDate = assignment.dueAt,
             completionRate = 0.0f, // 임시로 0% 설정
             totalStudents = students.size,

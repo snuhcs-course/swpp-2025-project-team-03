@@ -66,11 +66,11 @@ fun TeacherAssignmentDetailScreen(
     val assignmentDetail = assignment?.let { a ->
         AssignmentDetail(
             title = a.title,
-            subject = a.subject.name,
-            className = a.`class`.name,
+                        subject = a.courseClass.subject.name,
+            className = a.courseClass.name,
             dueDate = a.dueAt,
             createdAt = a.createdAt ?: "",
-            status = a.status.name,
+            status = "IN_PROGRESS", // 기본값으로 설정
             type = "연속형", // type 속성이 없으므로 기본값
             description = a.description ?: "",
             totalStudents = a.totalQuestions,

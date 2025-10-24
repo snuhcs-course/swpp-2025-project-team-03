@@ -92,9 +92,9 @@ fun TeacherClassesScreen(
     // Convert ClassData to ClassRoom for UI
     val classRooms = classes.map { classData ->
         // Calculate assignment count and completion rate from actual data
-        val classAssignments = assignments.filter { it.classId == classData.id }
+        val classAssignments = assignments.filter { it.courseClass.id == classData.id }
         val assignmentCount = classAssignments.size
-        val completedAssignments = classAssignments.count { it.status == AssignmentStatus.COMPLETED }
+        val completedAssignments = 0 // 기본값으로 설정
         val completionRate = if (assignmentCount > 0) completedAssignments.toFloat() / assignmentCount else 0.0f
         
         ClassRoom(
