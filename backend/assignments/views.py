@@ -15,13 +15,8 @@ from rest_framework.views import APIView
 from submissions.models import PersonalAssignment
 
 from .models import Assignment, Material
-from .request_serializers import AssignmentCreateRequestSerializer
-from .serializers import (
-    AssignmentCreateSerializer,
-    AssignmentDetailSerializer,
-    AssignmentSerializer,
-    AssignmentUpdateSerializer,
-)
+from .request_serializers import AssignmentCreateRequestSerializer, AssignmentUpdateRequestSerializer
+from .serializers import AssignmentCreateSerializer, AssignmentDetailSerializer, AssignmentSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +36,8 @@ class AssignmentListView(APIView):  # GET /assignments
         try:
             # 기본 쿼리셋
             assignments = Assignment.objects.select_related(
-                "course_class", "course_class__subject", "course_class__teacher"
-            ).prefetch_related("materials")
+                "subject", "course_class", "course_class__subject", "course_class__teacher"
+            ).all()
 
             # 필터링
             teacher_id = request.query_params.get("teacherId")
@@ -74,7 +69,9 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
     )
     def get(self, request, id):
         try:
-            assignment = Assignment.objects.select_related("course_class").prefetch_related("materials").get(id=id)
+            assignment = (
+                Assignment.objects.select_related("subject", "course_class").prefetch_related("materials").get(id=id)
+            )
             serializer = AssignmentDetailSerializer(assignment)
             return create_api_response(data=serializer.data, message="과제 상세 조회 성공")
 
@@ -97,22 +94,39 @@ class AssignmentDetailView(APIView):  # GET, PUT, DELETE /assignments/{id}
     @swagger_auto_schema(
         operation_id="과제 수정",
         operation_description="특정 과제를 수정합니다.",
-        request_body=AssignmentUpdateSerializer,
+        request_body=AssignmentUpdateRequestSerializer,
         responses={200: "Assignment updated"},
     )
     def put(self, request, id):
         try:
             assignment = Assignment.objects.get(id=id)
-            serializer = AssignmentUpdateSerializer(assignment, data=request.data, partial=True)
+            serializer = AssignmentUpdateRequestSerializer(assignment, data=request.data, partial=True)
 
             if serializer.is_valid():
-                for field, value in serializer.validated_data.items():
+                validated_data = serializer.validated_data
+
+                # Subject를 별도로 처리
+                subject_data = validated_data.pop("subject", None)
+
+                # 일반 필드 업데이트
+                for field, value in validated_data.items():
                     if value is not None:
                         setattr(assignment, field, value)
+
+                # Subject 처리 (있다면)
+                if subject_data is not None:
+                    # Subject를 찾거나 생성
+                    subject, created = Subject.objects.get_or_create(
+                        name=subject_data.get("name"), defaults={"name": subject_data.get("name")}
+                    )
+                    assignment.subject = subject
+
                 assignment.save()
                 # 업데이트된 객체를 다시 조회하여 모든 관계를 포함한 데이터 반환
                 updated_assignment = (
-                    Assignment.objects.select_related("course_class", "course_class__subject", "course_class__teacher")
+                    Assignment.objects.select_related(
+                        "subject", "course_class", "course_class__subject", "course_class__teacher"
+                    )
                     .prefetch_related("materials")
                     .get(id=id)
                 )

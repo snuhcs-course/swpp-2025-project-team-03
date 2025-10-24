@@ -1,15 +1,9 @@
-from catalog.models import Subject
+from catalog.serializers import SubjectSerializer
 from courses.models import CourseClass, Enrollment
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 Account = get_user_model()
-
-
-class SubjectSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subject
-        fields = ["id", "name"]
 
 
 class StudentSerializer(serializers.ModelSerializer):

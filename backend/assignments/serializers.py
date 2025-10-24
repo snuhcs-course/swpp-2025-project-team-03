@@ -1,3 +1,4 @@
+from catalog.serializers import SubjectSerializer
 from courses.serializers import CourseClassSerializer
 from rest_framework import serializers
 
@@ -13,10 +14,10 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 
 class AssignmentSerializer(serializers.ModelSerializer):
-    """Assignment 기본 정보를 위한 serializer"""
+    """Assignment 기본 정보를 위한 serializer(materials 제외)"""
 
+    subject = SubjectSerializer(read_only=True)
     course_class = CourseClassSerializer(read_only=True)
-    materials = MaterialSerializer(many=True, read_only=True)
 
     class Meta:
         model = Assignment
@@ -29,7 +30,7 @@ class AssignmentSerializer(serializers.ModelSerializer):
             "visible_from",
             "due_at",
             "course_class",
-            "materials",
+            "subject",
             "grade",
         ]
 
@@ -37,6 +38,7 @@ class AssignmentSerializer(serializers.ModelSerializer):
 class AssignmentDetailSerializer(serializers.ModelSerializer):
     """Assignment 상세 정보를 위한 serializer"""
 
+    subject = SubjectSerializer(read_only=True)
     course_class = CourseClassSerializer(read_only=True)
     materials = MaterialSerializer(many=True, read_only=True)
 
@@ -51,17 +53,10 @@ class AssignmentDetailSerializer(serializers.ModelSerializer):
             "visible_from",
             "due_at",
             "course_class",
+            "subject",
             "materials",
             "grade",
         ]
-
-
-class AssignmentUpdateSerializer(serializers.ModelSerializer):
-    """Assignment 수정용 serializer"""
-
-    class Meta:
-        model = Assignment
-        fields = ["title", "description", "total_questions", "visible_from", "due_at", "grade"]
 
 
 class AssignmentCreateSerializer(serializers.Serializer):
