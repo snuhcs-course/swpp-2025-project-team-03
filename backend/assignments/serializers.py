@@ -10,7 +10,7 @@ class MaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Material
-        fields = ["id", "kind", "s3_key", "bytes", "created_at"]
+        fields = ["id", "kind", "s3_key", "bytes", "summary", "created_at"]
 
 
 class AssignmentSerializer(serializers.ModelSerializer):

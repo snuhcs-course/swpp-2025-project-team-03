@@ -7,6 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from submissions.models import PersonalAssignment
 
 from .models import Question
 from .request_serializers import QuestionCreateRequestSerializer
@@ -54,62 +55,71 @@ class QuestionCreateView(APIView):
         except Material.DoesNotExist:
             return Response({"error": "Invalid material_id"}, status=status.HTTP_404_NOT_FOUND)
 
-        s3_key = material.s3_key
-        s3 = boto3.client(
-            "s3",
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_REGION,
-        )
-
         try:
-            # --- PDF 다운로드 ---
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-                s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp)
-                tmp.flush()
-                local_pdf = tmp.name
+            if material.summary:
+                summarized_text = material.summary
+            else:
+                s3_key = material.s3_key
+                s3 = boto3.client(
+                    "s3",
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=settings.AWS_REGION,
+                )
 
-            # --- Vision summarization ---
-            summarized_text = summarize_pdf_from_s3(local_pdf)
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                    s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp)
+                    tmp.flush()
+                    local_pdf = tmp.name
 
-            # --- Text Material 생성 ---
-            text_material = Material.objects.create(
-                assignment=assignment,
-                kind=Material.Kind.TEXT,
-                s3_key=s3_key.replace(".pdf", "_summary.txt"),
-                bytes=len(summarized_text.encode("utf-8")),
-            )
+                summarized_text = summarize_pdf_from_s3(local_pdf)
+                material.summary = summarized_text
+                material.save()
 
-            # --- Quiz Generation ---
             quizzes = generate_base_quizzes(summarized_text, n=data["total_number"])
 
+            # 해당 assignment에 연결된 모든 personal assignment들 가져오기
+            personal_assignments = PersonalAssignment.objects.filter(assignment=assignment)
+
+            if not personal_assignments.exists():
+                return Response(
+                    {"error": "No personal assignments found for this assignment"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
             created_questions = []
-            for i, quiz in enumerate(quizzes, 1):
-                q = Question.objects.create(
-                    personal_assignment=None,  # 테스트 목적, 나중에 연동
-                    number=i,
-                    content=quiz.question,
-                    # topic=None,
-                    recalled_num=0,
-                    explanation=quiz.explanation,
-                    model_answer=quiz.model_answer,
-                    difficulty=quiz.difficulty.lower(),
-                )
-                created_questions.append(
-                    {
-                        "id": q.id,
-                        "number": q.number,
-                        "question": q.content,
-                        "answer": q.model_answer,
-                        "explanation": q.explanation,
-                        "difficulty": q.difficulty,
-                    }
-                )
+            total_questions_created = 0
+
+            # 각 personal assignment에 대해 질문 생성
+            for personal_assignment in personal_assignments:
+                for i, quiz in enumerate(quizzes, 1):
+                    q = Question.objects.create(
+                        personal_assignment=personal_assignment,
+                        number=i,
+                        content=quiz.question,
+                        recalled_num=0,
+                        explanation=quiz.explanation,
+                        model_answer=quiz.model_answer,
+                        difficulty=quiz.difficulty.lower(),
+                    )
+                    total_questions_created += 1
+
+                    # 첫 번째 personal assignment의 질문들만 응답에 포함
+                    if personal_assignment == personal_assignments.first():
+                        created_questions.append(
+                            {
+                                "id": q.id,
+                                "number": q.number,
+                                "question": q.content,
+                                "answer": q.model_answer,
+                                "explanation": q.explanation,
+                                "difficulty": q.difficulty,
+                            }
+                        )
 
             return Response(
                 {
                     "assignment_id": assignment.id,
-                    "material_summary_id": text_material.id,
+                    "material_id": material.id,
                     "summary_preview": summarized_text[:100],
                     "questions": created_questions,
                 },

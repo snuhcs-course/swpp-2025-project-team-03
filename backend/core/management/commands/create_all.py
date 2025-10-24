@@ -29,21 +29,21 @@ class Command(BaseCommand):
             self.stdout.write(self.style.HTTP_INFO("▶ 과제 정보 생성 중..."))
             call_command("create_test_assignments")
 
-            # (6) 개인별 과제 정보 생성
+            # (6) 자료 정보 생성
+            self.stdout.write(self.style.HTTP_INFO("▶ 자료 정보 생성 중..."))
+            call_command("create_test_materials")
+
+            # (7) 개인별 과제 정보 생성
             self.stdout.write(self.style.HTTP_INFO("▶ 개인별 과제 정보 생성 중..."))
             call_command("create_test_personal_assignments")
 
-            # (7) 질문 정보 생성
+            # (8) 질문 정보 생성
             self.stdout.write(self.style.HTTP_INFO("▶ 질문 정보 생성 중..."))
             call_command("create_test_questions")
 
-            # (8) 답안 정보 생성
+            # (9) 답안 정보 생성
             self.stdout.write(self.style.HTTP_INFO("▶ 답안 정보 생성 중..."))
             call_command("create_test_answers")
-
-            #
-            # self.stdout.write(self.style.HTTP_INFO("▶ seed_assignments 실행 중..."))
-            # call_command("seed_assignments")
 
             self.stdout.write(self.style.SUCCESS("\n모든 초기 데이터 생성 완료!"))
         except Exception as e:
