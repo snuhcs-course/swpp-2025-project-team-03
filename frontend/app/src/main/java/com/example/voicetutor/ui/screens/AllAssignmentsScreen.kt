@@ -71,7 +71,14 @@ fun AllAssignmentsScreen(
                 PersonalAssignmentFilter.ALL -> viewModel.loadPendingStudentAssignments(studentId)
                 PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
                 PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
-                PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
+                PersonalAssignmentFilter.SUBMITTED -> {
+                    // 이 화면에서는 제출된 과제를 보여주지 않음
+                    // 빈 리스트로 설정
+                }
+                PersonalAssignmentFilter.GRADED -> {
+                    // 이 화면에서는 완료된 과제를 보여주지 않음
+                    // 빈 리스트로 설정
+                }
             }
         }
     }
@@ -260,7 +267,8 @@ fun AssignmentCard(
                             when (personalStatus) {
                                 PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
                                 PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
-                                PersonalAssignmentStatus.SUBMITTED -> "완료"
+                                PersonalAssignmentStatus.SUBMITTED -> "제출됨"
+                                PersonalAssignmentStatus.GRADED -> "완료"
                             }
                         } ?: "알 수 없음"
                         

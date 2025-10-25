@@ -24,12 +24,13 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
 fun AssignmentDetailScreen(
-    assignmentId: Int? = null, // 실제 과제 ID 사용
+    assignmentId: Int? = null, // PersonalAssignment ID 사용
     assignmentTitle: String? = null, // 실제 과제 제목 사용
     onStartAssignment: () -> Unit = {}
 ) {
     val assignmentViewModel: AssignmentViewModel = hiltViewModel()
     val currentAssignment by assignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
+    val personalAssignmentStatistics by assignmentViewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
     val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
     
@@ -37,11 +38,25 @@ fun AssignmentDetailScreen(
     var showSaveDraftDialog by remember { mutableStateOf(false) }
     var draftContent by remember { mutableStateOf("") }
     
-    // Load assignment data
+    // Load assignment data and statistics
     LaunchedEffect(assignmentId) {
         assignmentId?.let { id ->
+            println("AssignmentDetailScreen - Loading assignment details for PersonalAssignment ID: $id")
             assignmentViewModel.loadAssignmentById(id)
+            assignmentViewModel.loadPersonalAssignmentStatistics(id)
         }
+    }
+    
+    // Debug statistics data
+    LaunchedEffect(personalAssignmentStatistics) {
+        println("AssignmentDetailScreen - PersonalAssignmentStatistics updated:")
+        println("  - progress: ${personalAssignmentStatistics?.progress}")
+        println("  - totalProblem: ${personalAssignmentStatistics?.totalProblem}")
+        println("  - solvedProblem: ${personalAssignmentStatistics?.solvedProblem}")
+        println("  - totalQuestions: ${personalAssignmentStatistics?.totalQuestions}")
+        println("  - answeredQuestions: ${personalAssignmentStatistics?.answeredQuestions}")
+        println("  - correctAnswers: ${personalAssignmentStatistics?.correctAnswers}")
+        println("  - accuracy: ${personalAssignmentStatistics?.accuracy}")
     }
     
     // Use actual assignment title or fallback
@@ -134,7 +149,7 @@ fun AssignmentDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "70%",
+                        text = "${personalAssignmentStatistics?.progress?.toInt() ?: 0}%",
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
@@ -155,7 +170,7 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 VTProgressBar(
-                    progress = 0.7f,
+                    progress = (personalAssignmentStatistics?.progress ?: 0f) / 100f,
                     showPercentage = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -163,7 +178,7 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "7개 중 5개 완료",
+                    text = "${personalAssignmentStatistics?.totalProblem ?: 0}개 중 ${personalAssignmentStatistics?.solvedProblem ?: 0}개 완료",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600
                 )

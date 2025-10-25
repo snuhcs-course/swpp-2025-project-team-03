@@ -72,9 +72,9 @@ fun StudentDashboardScreen(
     // Load student assignments and dashboard data on first composition
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
-            // 학생별 과제 조회
-            println("StudentDashboard - Loading assignments for student ID: ${user.id}")
-            viewModelAssignment.loadStudentAssignments(user.id)
+            // 학생별 해야 할 과제만 조회 (시작 안함 + 진행 중)
+            println("StudentDashboard - Loading pending assignments for student ID: ${user.id}")
+            viewModelAssignment.loadPendingStudentAssignments(user.id)
         }
     }
     
