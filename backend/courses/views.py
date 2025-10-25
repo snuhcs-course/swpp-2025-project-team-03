@@ -420,16 +420,16 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
 
     @swagger_auto_schema(
         operation_id="클래스에 학생 등록",
-        operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId, studentName, studentEmail 중 최소 하나를 제공해야 합니다.",
+        operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId, name, email 중 최소 하나를 제공해야 합니다.",
         manual_parameters=[
             openapi.Parameter(
                 "studentId", openapi.IN_QUERY, description="학생 ID", type=openapi.TYPE_STRING, required=False
             ),
             openapi.Parameter(
-                "studentName", openapi.IN_QUERY, description="학생 이름", type=openapi.TYPE_STRING, required=False
+                "name", openapi.IN_QUERY, description="학생 이름", type=openapi.TYPE_STRING, required=False
             ),
             openapi.Parameter(
-                "studentEmail", openapi.IN_QUERY, description="학생 이메일", type=openapi.TYPE_STRING, required=False
+                "email", openapi.IN_QUERY, description="학생 이메일", type=openapi.TYPE_STRING, required=False
             ),
         ],
         responses={200: "Student enrolled in class"},
