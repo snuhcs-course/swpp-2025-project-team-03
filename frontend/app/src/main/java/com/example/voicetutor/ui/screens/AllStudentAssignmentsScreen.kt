@@ -21,6 +21,7 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.ui.screens.CustomStatusBadge
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -60,6 +61,7 @@ fun AllStudentAssignmentsScreen(
             PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
             PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
             PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
+            PersonalAssignmentFilter.GRADED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.GRADED)
         }
     }
     
@@ -125,6 +127,12 @@ fun AllStudentAssignmentsScreen(
             FilterChip(
                 selected = selectedFilter == PersonalAssignmentFilter.SUBMITTED,
                 onClick = { selectedFilter = PersonalAssignmentFilter.SUBMITTED },
+                label = { Text("제출됨") }
+            )
+            
+            FilterChip(
+                selected = selectedFilter == PersonalAssignmentFilter.GRADED,
+                onClick = { selectedFilter = PersonalAssignmentFilter.GRADED },
                 label = { Text("완료") }
             )
         }
@@ -207,7 +215,8 @@ fun StudentAssignmentCard(
                             when (personalStatus) {
                                 PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
                                 PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
-                                PersonalAssignmentStatus.SUBMITTED -> "완료"
+                                PersonalAssignmentStatus.SUBMITTED -> "제출됨"
+                                PersonalAssignmentStatus.GRADED -> "완료"
                             }
                         } ?: "알 수 없음"
                         
@@ -287,12 +296,31 @@ fun StudentAssignmentCard(
                             modifier = Modifier.weight(1f)
                         )
                     }
+                } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.GRADED) {
+                    // 완료된 과제의 경우 결과 보기 버튼 표시
+                    VTButton(
+                        text = "결과 보기",
+                        onClick = { },
+                        variant = ButtonVariant.Outline,
+                        size = ButtonSize.Small,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED) {
+                    // 제출된 과제의 경우 대기 상태 표시
+                    VTButton(
+                        text = "채점 대기",
+                        onClick = { },
+                        variant = ButtonVariant.Outline,
+                        size = ButtonSize.Small,
+                        modifier = Modifier.weight(1f),
+                        enabled = false
+                    )
                 }
-                // 완료된 과제의 경우 버튼 없음
             }
         }
     }
 }
+
 
 
 @Preview(showBackground = true)

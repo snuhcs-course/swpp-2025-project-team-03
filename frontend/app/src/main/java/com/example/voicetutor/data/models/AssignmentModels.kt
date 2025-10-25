@@ -27,7 +27,9 @@ enum class PersonalAssignmentStatus {
     @SerializedName("IN_PROGRESS")
     IN_PROGRESS,
     @SerializedName("SUBMITTED")
-    SUBMITTED
+    SUBMITTED,
+    @SerializedName("GRADED")
+    GRADED
 }
 
 // Personal Assignment용 필터
@@ -35,7 +37,8 @@ enum class PersonalAssignmentFilter {
     ALL,           // 모든 과제
     NOT_STARTED,   // 시작 안함
     IN_PROGRESS,   // 진행 중
-    SUBMITTED      // 제출 완료
+    SUBMITTED,     // 제출 완료
+    GRADED         // 채점 완료
 }
 
 data class AssignmentData(
@@ -61,7 +64,8 @@ data class AssignmentData(
     val grade: String? = null,
     // Personal Assignment 관련 정보 (변환 시 추가)
     val personalAssignmentStatus: PersonalAssignmentStatus? = null,
-    val solvedNum: Int? = null
+    val solvedNum: Int? = null,
+    val personalAssignmentId: Int? = null  // PersonalAssignment ID 추가
 )
 
 data class CourseClass(
@@ -126,6 +130,8 @@ data class QuestionData(
 
 // Personal Assignment 데이터 모델
 data class PersonalAssignmentData(
+    @SerializedName("id")
+    val id: Int,
     @SerializedName("student")
     val student: StudentInfo,
     @SerializedName("assignment")

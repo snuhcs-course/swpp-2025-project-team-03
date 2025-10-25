@@ -114,6 +114,7 @@ class AssignmentViewModel @Inject constructor(
                     
                     // PersonalAssignmentData를 AssignmentData로 변환
                     val convertedAssignments: List<AssignmentData> = personalAssignments.map { personalAssignment: PersonalAssignmentData ->
+                        println("AssignmentViewModel - Converting PersonalAssignment: ID=${personalAssignment.id}, Assignment ID=${personalAssignment.assignment.id}, Title=${personalAssignment.assignment.title}")
                         AssignmentData(
                             id = personalAssignment.assignment.id,
                             title = personalAssignment.assignment.title,
@@ -141,7 +142,8 @@ class AssignmentViewModel @Inject constructor(
                             grade = personalAssignment.assignment.grade,
                             // Personal Assignment 정보 추가
                             personalAssignmentStatus = personalAssignment.status,
-                            solvedNum = personalAssignment.solvedNum
+                            solvedNum = personalAssignment.solvedNum,
+                            personalAssignmentId = personalAssignment.id  // PersonalAssignment ID 설정
                         )
                     }
                     
@@ -190,6 +192,7 @@ class AssignmentViewModel @Inject constructor(
                     
                     // PersonalAssignmentData를 AssignmentData로 변환
                     val convertedAssignments: List<AssignmentData> = filteredAssignments.map { personalAssignment: PersonalAssignmentData ->
+                        println("AssignmentViewModel - Converting Filtered PersonalAssignment: ID=${personalAssignment.id}, Assignment ID=${personalAssignment.assignment.id}, Title=${personalAssignment.assignment.title}")
                         AssignmentData(
                             id = personalAssignment.assignment.id,
                             title = personalAssignment.assignment.title,
@@ -217,7 +220,8 @@ class AssignmentViewModel @Inject constructor(
                             grade = personalAssignment.assignment.grade,
                             // Personal Assignment 정보 추가
                             personalAssignmentStatus = personalAssignment.status,
-                            solvedNum = personalAssignment.solvedNum
+                            solvedNum = personalAssignment.solvedNum,
+                            personalAssignmentId = personalAssignment.id  // PersonalAssignment ID 설정
                         )
                     }
                     
@@ -277,6 +281,13 @@ class AssignmentViewModel @Inject constructor(
                                 it.status == PersonalAssignmentStatus.SUBMITTED 
                             }
                             println("AssignmentViewModel - Filter: SUBMITTED - found ${filtered.size} assignments")
+                            filtered
+                        }
+                        PersonalAssignmentFilter.GRADED -> {
+                            val filtered = personalAssignments.filter { 
+                                it.status == PersonalAssignmentStatus.GRADED 
+                            }
+                            println("AssignmentViewModel - Filter: GRADED - found ${filtered.size} assignments")
                             filtered
                         }
                     }
@@ -351,6 +362,7 @@ class AssignmentViewModel @Inject constructor(
                     
                     // PersonalAssignmentData를 AssignmentData로 변환
                     val convertedAssignments: List<AssignmentData> = pendingAssignments.map { personalAssignment: PersonalAssignmentData ->
+                        println("AssignmentViewModel - Converting Pending PersonalAssignment: ID=${personalAssignment.id}, Assignment ID=${personalAssignment.assignment.id}, Title=${personalAssignment.assignment.title}")
                         AssignmentData(
                             id = personalAssignment.assignment.id,
                             title = personalAssignment.assignment.title,
@@ -378,7 +390,8 @@ class AssignmentViewModel @Inject constructor(
                             grade = personalAssignment.assignment.grade,
                             // Personal Assignment 정보 추가
                             personalAssignmentStatus = personalAssignment.status,
-                            solvedNum = personalAssignment.solvedNum
+                            solvedNum = personalAssignment.solvedNum,
+                            personalAssignmentId = personalAssignment.id  // PersonalAssignment ID 설정
                         )
                     }
                     
@@ -408,9 +421,9 @@ class AssignmentViewModel @Inject constructor(
                 .onSuccess { personalAssignments: List<PersonalAssignmentData> ->
                     println("AssignmentViewModel - Received ${personalAssignments.size} personal assignments")
                     
-                    // 완료된 과제만 필터링
+                    // 완료된 과제만 필터링 (GRADED 상태)
                     val completedAssignments = personalAssignments.filter { 
-                        it.status == PersonalAssignmentStatus.SUBMITTED 
+                        it.status == PersonalAssignmentStatus.GRADED 
                     }
                     
                     println("AssignmentViewModel - Found ${completedAssignments.size} completed assignments")
@@ -487,18 +500,25 @@ class AssignmentViewModel @Inject constructor(
     
     private fun calculateStudentStatsFromPersonalAssignments(personalAssignments: List<PersonalAssignmentData>) {
         val totalAssignments = personalAssignments.size
+        
+        // 해야 할 과제: 시작 안함 + 진행 중
+        val pendingAssignments = personalAssignments.count { personalAssignment: PersonalAssignmentData -> 
+            personalAssignment.status == PersonalAssignmentStatus.NOT_STARTED || 
+            personalAssignment.status == PersonalAssignmentStatus.IN_PROGRESS
+        }
+        
+        // 완료한 과제: 제출됨 + 완료
         val completedAssignments = personalAssignments.count { personalAssignment: PersonalAssignmentData -> 
-            personalAssignment.status == PersonalAssignmentStatus.SUBMITTED 
+            personalAssignment.status == PersonalAssignmentStatus.SUBMITTED || 
+            personalAssignment.status == PersonalAssignmentStatus.GRADED
         }
-        val inProgressAssignments = personalAssignments.count { personalAssignment: PersonalAssignmentData -> 
-            personalAssignment.status == PersonalAssignmentStatus.IN_PROGRESS 
-        }
+        
         val completionRate = if (totalAssignments > 0) completedAssignments.toFloat() / totalAssignments else 0f
         
         val stats = StudentStats(
-            totalAssignments = totalAssignments,
-            completedAssignments = completedAssignments,
-            inProgressAssignments = inProgressAssignments,
+            totalAssignments = pendingAssignments, // 해야 할 과제 개수
+            completedAssignments = completedAssignments, // 완료한 과제 개수
+            inProgressAssignments = personalAssignments.count { it.status == PersonalAssignmentStatus.IN_PROGRESS }, // 진행 중 과제 개수
             completionRate = completionRate
         )
         
@@ -726,11 +746,21 @@ class AssignmentViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             
+            println("AssignmentViewModel - Loading statistics for PersonalAssignment ID: $personalAssignmentId")
             assignmentRepository.getPersonalAssignmentStatistics(personalAssignmentId)
                 .onSuccess { statistics ->
+                    println("AssignmentViewModel - Statistics loaded successfully:")
+                    println("  - progress: ${statistics.progress}")
+                    println("  - totalProblem: ${statistics.totalProblem}")
+                    println("  - solvedProblem: ${statistics.solvedProblem}")
+                    println("  - totalQuestions: ${statistics.totalQuestions}")
+                    println("  - answeredQuestions: ${statistics.answeredQuestions}")
+                    println("  - correctAnswers: ${statistics.correctAnswers}")
+                    println("  - accuracy: ${statistics.accuracy}")
                     _personalAssignmentStatistics.value = statistics
                 }
                 .onFailure { exception ->
+                    println("AssignmentViewModel - Failed to load statistics: ${exception.message}")
                     _error.value = exception.message
                 }
             
