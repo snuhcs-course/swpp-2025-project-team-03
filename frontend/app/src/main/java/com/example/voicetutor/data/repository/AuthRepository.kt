@@ -23,7 +23,7 @@ class AuthRepository @Inject constructor(
             println("AuthRepository - Login response success: ${response.body()?.success}")
             
             if (response.isSuccessful && response.body()?.success == true) {
-                val user = response.body()?.user
+                val user = response.body()?.user  // 'data' 필드가 'user'로 매핑됨
                 println("AuthRepository - User: ${user?.email}")
                 println("AuthRepository - User.assignments: ${user?.assignments?.size}")
                 user?.assignments?.forEach { 

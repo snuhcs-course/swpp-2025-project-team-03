@@ -1,5 +1,7 @@
 package com.example.voicetutor.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,13 +15,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.viewmodel.ClassViewModel
+import com.example.voicetutor.ui.viewmodel.AuthViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CreateClassScreen(
     onBackClick: () -> Unit = {},
-    onCreateClass: (className: String, subject: String, description: String) -> Unit = { _, _, _ -> }
+    teacherId: String? = null,
+    classViewModel: ClassViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     var className by remember { mutableStateOf("") }
     var subject by remember { mutableStateOf("") }
@@ -28,7 +41,20 @@ fun CreateClassScreen(
     var selectedClass by remember { mutableStateOf("A반") }
     
     val grades = listOf("1학년", "2학년", "3학년")
-    val classes = listOf("A반", "B반", "C반", "D반")
+    val classOptions = listOf("A반", "B반", "C반", "D반")
+    
+    // ViewModel 상태 관찰
+    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by classViewModel.error.collectAsStateWithLifecycle()
+    val classes by classViewModel.classes.collectAsStateWithLifecycle()
+    
+    // 클래스 생성 성공 시 백으로 이동
+    LaunchedEffect(classes.size) {
+        if (classes.isNotEmpty()) {
+            onBackClick()
+        }
+    }
     
     Column(
         modifier = Modifier
@@ -179,19 +205,61 @@ fun CreateClassScreen(
         
         // Create button
         VTButton(
-            text = "클래스 만들기",
+            text = if (isLoading) "생성 중..." else "클래스 만들기",
             onClick = {
                 val fullClassName = if (className.isNotBlank()) {
                     className
                 } else {
                     "$selectedGrade $selectedClass"
                 }
-                onCreateClass(fullClassName, subject, description)
-                onBackClick()
+                
+                // 현재 시간을 ISO 형식으로 변환
+                val now = LocalDateTime.now()
+                val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                val startDate = now.format(formatter)
+                val endDate = now.plusMonths(6).format(formatter) // 6개월 후
+                
+                // teacherId 사용 (파라미터로 받거나 currentUser.id 사용)
+                val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+                
+                println("CreateClassScreen - teacherId: $teacherId")
+                println("CreateClassScreen - currentUser: $currentUser")
+                println("CreateClassScreen - currentUser.id: ${currentUser?.id}")
+                println("CreateClassScreen - actualTeacherId: $actualTeacherId")
+                
+                if (actualTeacherId != null) {
+                    // 클래스 생성 요청
+                    val createClassRequest = CreateClassRequest(
+                        name = fullClassName,
+                        description = description,
+                        subject_name = subject,
+                        teacher_id = actualTeacherId.toInt(),
+                        start_date = startDate,
+                        end_date = endDate
+                    )
+                    
+                    println("CreateClassScreen - createClassRequest: $createClassRequest")
+                    println("CreateClassScreen - teacher_id: $actualTeacherId")
+                    classViewModel.createClass(createClassRequest)
+                } else {
+                    println("CreateClassScreen - ERROR: teacherId is null!")
+                    println("CreateClassScreen - teacherId: $teacherId")
+                    println("CreateClassScreen - currentUser.id: ${currentUser?.id}")
+                }
             },
             fullWidth = true,
-            enabled = className.isNotBlank() || (selectedGrade.isNotBlank() && selectedClass.isNotBlank()),
+            enabled = !isLoading && (className.isNotBlank() || (selectedGrade.isNotBlank() && selectedClass.isNotBlank())),
             variant = ButtonVariant.Gradient
         )
+        
+        // 에러 메시지 표시
+        error?.let { errorMessage ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = errorMessage,
+                color = Error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
     }
 }

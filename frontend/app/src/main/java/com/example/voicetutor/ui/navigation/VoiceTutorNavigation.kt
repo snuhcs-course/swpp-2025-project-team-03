@@ -695,16 +695,16 @@ fun VoiceTutorNavigation(
         
         // Create class screen
         composable(VoiceTutorScreens.CreateClass.route) {
+            val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+            val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+            
             MainLayout(
                 navController = navController,
                 userRole = UserRole.TEACHER
             ) {
                 CreateClassScreen(
+                    teacherId = currentUser?.id?.toString(),
                     onBackClick = {
-                        navController.popBackStack()
-                    },
-                    onCreateClass = { className, subject, description ->
-                        // TODO: Create class via API
                         navController.popBackStack()
                     }
                 )

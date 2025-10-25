@@ -3,6 +3,7 @@ package com.example.voicetutor.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.data.repository.ClassRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,6 +81,28 @@ class ClassViewModel @Inject constructor(
             
             _isLoading.value = false
         }
+    }
+    
+    fun createClass(createClassRequest: CreateClassRequest) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            classRepository.createClass(createClassRequest)
+                .onSuccess { classData ->
+                    // 새로 생성된 클래스를 목록에 추가
+                    _classes.value = _classes.value + classData
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    fun refreshClasses(teacherId: String) {
+        loadClasses(teacherId)
     }
     
     fun clearError() {
