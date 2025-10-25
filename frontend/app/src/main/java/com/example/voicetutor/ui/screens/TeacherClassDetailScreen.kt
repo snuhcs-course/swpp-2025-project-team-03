@@ -63,8 +63,8 @@ fun TeacherClassDetailScreen(
     val dynamicSubject = currentClass?.subject?.name ?: subject
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
     
-    // Load data on first composition
-    LaunchedEffect(classId) {
+    // Load data on first composition and when screen becomes visible
+    LaunchedEffect(Unit) {
         classId?.let { id ->
             // Load assignments for this class
             println("TeacherClassDetail - Loading assignments for class ID: $id")
@@ -73,6 +73,14 @@ fun TeacherClassDetailScreen(
             studentViewModel.loadAllStudents(classId = id.toString())
             // Load class data
             classViewModel.loadClassById(id)
+        }
+    }
+    
+    // Refresh assignments when assignments list changes (e.g., after creating new assignment)
+    LaunchedEffect(assignments.size) {
+        classId?.let { id ->
+            println("TeacherClassDetail - Refreshing assignments due to size change: ${assignments.size}")
+            assignmentViewModel.loadAllAssignments(classId = id.toString())
         }
     }
     
@@ -89,7 +97,7 @@ fun TeacherClassDetailScreen(
         ClassAssignment(
             id = assignment.id,
             title = assignment.title,
-            subject = assignment.subject.name,
+                        subject = assignment.courseClass.subject.name,
             dueDate = assignment.dueAt,
             completionRate = 0.0f, // 임시로 0% 설정
             totalStudents = students.size,

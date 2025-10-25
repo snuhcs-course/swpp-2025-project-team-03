@@ -41,13 +41,11 @@ fun StudentDashboardScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
-    studentId: Int? = null, // 실제 사용자 ID 사용
-    onNavigateToQuiz: () -> Unit = {},
-    onNavigateToAllAssignments: () -> Unit = {},
+    onNavigateToAllAssignments: (Int) -> Unit = {},
+    onNavigateToCompletedAssignments: (Int) -> Unit = {},
+    onNavigateToAllStudentAssignments: (Int) -> Unit = {},
     onNavigateToProgressReport: () -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToSubjectDetail: (String) -> Unit = {},
-    onNavigateToAllDeadlines: () -> Unit = {}
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
     val viewModelAuth = authViewModel ?: hiltViewModel()
@@ -57,7 +55,7 @@ fun StudentDashboardScreen(
     val isLoading by viewModelAssignment.isLoading.collectAsStateWithLifecycle()
     val error by viewModelAssignment.error.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
-    val dashboardStats by viewModelDashboard.dashboardStats.collectAsStateWithLifecycle()
+    val studentStats by viewModelAssignment.studentStats.collectAsStateWithLifecycle()
     
     // 동적 사용자 이름 가져오기
     val studentName = currentUser?.name ?: "학생"
@@ -74,7 +72,7 @@ fun StudentDashboardScreen(
     // Load student assignments and dashboard data on first composition
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
-            // 학생 ID를 사용하여 학생 전용 과제 API 호출
+            // 학생별 과제 조회
             println("StudentDashboard - Loading assignments for student ID: ${user.id}")
             viewModelAssignment.loadStudentAssignments(user.id)
         }
@@ -109,51 +107,88 @@ fun StudentDashboardScreen(
                     )
                     .padding(24.dp)
             ) {
+                Column {
+                    Text(
+                        text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
+        }
+        
+        item {
+            // Progress overview
+            Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    Column {
                         Text(
-                            text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            text = "완료 현황",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
+                            text = "이번 주 과제 완료 현황을 확인해보세요",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray600
                         )
                     }
                     
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(
-                                color = Color.White.copy(alpha = 0.15f),
-                                shape = androidx.compose.foundation.shape.CircleShape
-                            )
-                            .shadow(
-                                elevation = 4.dp,
-                                shape = androidx.compose.foundation.shape.CircleShape,
-                                ambientColor = Color.Black.copy(alpha = 0.1f),
-                                spotColor = Color.Black.copy(alpha = 0.1f)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = currentUser?.initial ?: "장",
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    VTButton(
+                        text = "전체 보기",
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToAllStudentAssignments(studentId)
+                            }
+                        },
+                        variant = ButtonVariant.Ghost,
+                        size = ButtonSize.Small
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    VTStatsCard(
+                        title = "해야 할 과제",
+                        value = studentStats?.totalAssignments?.toString() ?: "0",
+                        icon = Icons.Filled.List,
+                        iconColor = PrimaryIndigo,
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToAllAssignments(studentId)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    VTStatsCard(
+                        title = "완료한 과제",
+                        value = studentStats?.completedAssignments?.toString() ?: "0",
+                        icon = Icons.Filled.Done,
+                        iconColor = Success,
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToCompletedAssignments(studentId)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -182,7 +217,11 @@ fun StudentDashboardScreen(
                     
                     VTButton(
                         text = "전체 보기",
-                        onClick = onNavigateToAllAssignments,
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToAllAssignments(studentId)
+                            }
+                        },
                         variant = ButtonVariant.Ghost,
                         size = ButtonSize.Small
                     )
@@ -224,221 +263,24 @@ fun StudentDashboardScreen(
                     }
                 } else {
                     assignments.forEachIndexed { index, assignment ->
+                        // Personal assignment의 진행률 계산
+                        val progress = if (assignment.totalQuestions > 0) {
+                            // TODO: 실제로는 PersonalAssignment의 solved_num을 사용해야 하지만,
+                            // 현재는 AssignmentData에 해당 정보가 없으므로 임시로 계산
+                            0.3f // 임시 진행률
+                        } else {
+                            0f
+                        }
+                        
                         StudentAssignmentCard(
                             title = assignment.title,
-                            subject = assignment.subject.name,
+                            subject = assignment.courseClass.subject.name,
                             dueDate = formatDueDate(assignment.dueAt),
-                            progress = 0.3f, // 임시로 진행률 설정
-                            isUrgent = assignment.dueAt.contains("오늘") || assignment.dueAt.contains("내일"),
+                            progress = progress,
                             onClick = { onNavigateToAssignmentDetail(assignment.title) }
                         )
                         
                         if (index < assignments.size - 1) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
-                }
-            }
-        }
-        
-        item {
-            // Quick actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                VTCard(
-                    variant = CardVariant.Elevated,
-                    onClick = onNavigateToQuiz,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Quiz,
-                            contentDescription = null,
-                            tint = PrimaryIndigo,
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "퀴즈 풀기",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "복습 퀴즈",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                }
-                
-                VTCard(
-                    variant = CardVariant.Elevated,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Lightbulb,
-                            contentDescription = null,
-                            tint = Warning,
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "학습 도우미",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "AI 학습 지원",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                }
-            }
-        }
-        
-        item {
-            // Progress overview
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "완료 현황",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "이번 주 과제 완료 현황을 확인해보세요",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                    
-                    VTButton(
-                        text = "전체 보기",
-                        onClick = onNavigateToProgressReport,
-                        variant = ButtonVariant.Ghost,
-                        size = ButtonSize.Small
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    VTStatsCard(
-                        title = "총 과제",
-                        value = dashboardStats?.totalAssignments?.toString() ?: "0",
-                        icon = Icons.Filled.List,
-                        iconColor = PrimaryIndigo,
-                        trend = TrendDirection.Up,
-                        trendValue = "+${dashboardStats?.inProgressAssignments ?: 0}",
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    VTStatsCard(
-                        title = "완료율",
-                        value = dashboardStats?.let { stats ->
-                            if (stats.totalAssignments > 0) {
-                                "${(stats.completedAssignments * 100 / stats.totalAssignments)}%"
-                            } else "0%"
-                        } ?: "0%",
-                        icon = Icons.Filled.Done,
-                        iconColor = Success,
-                        trend = TrendDirection.Up,
-                        trendValue = "+${dashboardStats?.completedAssignments ?: 0}",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-        
-        item {
-            // Upcoming deadlines
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "다가오는 마감일",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "놓치지 마세요!",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                    
-                    VTButton(
-                        text = "전체 보기",
-                        onClick = onNavigateToAllDeadlines,
-                        variant = ButtonVariant.Ghost,
-                        size = ButtonSize.Small
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // 동적 과제 목록 표시 (실제 데이터에서 가져오기)
-                assignments.take(2).forEachIndexed { index, assignment ->
-                    StudentDeadlineItem(
-                        subject = assignment.subject.name,
-                        assignmentName = assignment.title,
-                        dueDate = formatDueDate(assignment.dueAt ?: "마감일 없음"),
-                        progress = if (assignment.totalQuestions > 0) 0.toFloat() / assignment.totalQuestions else 0f,
-                        onClick = { onNavigateToSubjectDetail(assignment.subject.name) }
-                    )
-                    if (index < assignments.take(2).size - 1) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-                
-                // 과제가 없을 때 기본 표시
-                if (assignments.isEmpty()) {
-                    repeat(2) { index ->
-                        val subject = when (index) {
-                            0 -> "수학"
-                            else -> "영어"
-                        }
-                        StudentDeadlineItem(
-                            subject = subject,
-                            assignmentName = when (index) {
-                                0 -> "미적분 개념 정리"
-                                else -> "영문법 퀴즈"
-                            },
-                            dueDate = when (index) {
-                                0 -> "내일 18:00"
-                                else -> "모레 12:00"
-                            },
-                            progress = when (index) {
-                                0 -> 0.7f
-                                else -> 0.4f
-                            },
-                            onClick = { onNavigateToSubjectDetail(subject) }
-                        )
-                        if (index < 1) {
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
@@ -454,7 +296,6 @@ fun StudentAssignmentCard(
     subject: String,
     dueDate: String,
     progress: Float,
-    isUrgent: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     VTCard(
@@ -517,77 +358,6 @@ fun StudentAssignmentCard(
     }
 }
 
-@Composable
-fun StudentDeadlineItem(
-    subject: String,
-    assignmentName: String,
-    dueDate: String,
-    progress: Float,
-    onClick: () -> Unit
-) {
-    VTCard(
-        variant = CardVariant.Elevated,
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-                        .background(PrimaryIndigo.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = subject.first().toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Column {
-                    Text(
-                        text = assignmentName,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    Text(
-                        text = dueDate,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Warning,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-            
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                VTProgressBar(
-                    progress = progress,
-                    modifier = Modifier.width(60.dp)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "${(progress * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
-                )
-            }
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

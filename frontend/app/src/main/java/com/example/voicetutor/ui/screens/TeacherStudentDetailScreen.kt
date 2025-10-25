@@ -79,7 +79,7 @@ fun TeacherStudentDetailScreen(
     val recentAssignments = studentAssignments.map { assignment ->
         StudentAssignment(
             title = assignment.title,
-            subject = assignment.subject.name,
+                        subject = assignment.courseClass.subject.name,
             dueDate = assignment.dueAt,
             submittedDate = "", // AssignmentData 모델에 submittedDate 없음
             score = 0, // AssignmentData 모델에 score 없음
@@ -255,7 +255,6 @@ fun TeacherStudentDetailScreen(
                     subject = assignment.subject,
                     dueDate = assignment.dueDate,
                     progress = if (assignment.status == "완료") 1.0f else 0.3f,
-                    isUrgent = assignment.dueDate.contains("오늘") || assignment.dueDate.contains("내일"),
                     onClick = { onNavigateToAssignmentDetail(assignment.title) }
                 )
                 

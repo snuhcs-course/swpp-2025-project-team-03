@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,23 +29,29 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AIViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
+import com.example.voicetutor.utils.AudioRecorder
+import com.example.voicetutor.utils.PermissionUtils
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun AssignmentScreen(
     assignmentId: Int? = null, // 실제 과제 ID 사용
-    assignmentTitle: String? = null // 실제 과제 제목 사용
+    assignmentTitle: String? = null, // 실제 과제 제목 사용
+    authViewModel: AuthViewModel? = null // 전달받은 AuthViewModel 사용
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val aiViewModel: AIViewModel = hiltViewModel()
-    val authViewModel: AuthViewModel = hiltViewModel()
+    val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
     
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val aiResponse by aiViewModel.aiResponse.collectAsStateWithLifecycle()
     val voiceRecognitionResult by aiViewModel.voiceRecognitionResult.collectAsStateWithLifecycle()
-    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
     
@@ -69,7 +76,7 @@ fun AssignmentScreen(
             )
         }
     } else {
-        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제")
+        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth)
     }
 }
 
@@ -92,40 +99,68 @@ private val mockChemistryQuestions = listOf(
 @Composable
 fun AssignmentContinuousScreen(
     assignmentId: Int = 1,
-    assignmentTitle: String
+    assignmentTitle: String,
+    authViewModel: AuthViewModel? = null
 ) {
-    val authViewModel: AuthViewModel = hiltViewModel()
-    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val viewModel: AssignmentViewModel = hiltViewModel()
+    val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
+    val context = LocalContext.current
     
-    var timeLeft by remember { mutableStateOf(15 * 60) } // 15분
-    var isRecording by remember { mutableStateOf(false) }
-    var currentQuestionIndex by remember { mutableStateOf(0) }
-    var recordedAudio by remember { mutableStateOf(false) }
-    var recordingDuration by remember { mutableStateOf(0) }
+    val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
+    val personalAssignmentQuestions by viewModel.personalAssignmentQuestions.collectAsStateWithLifecycle()
+    val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsStateWithLifecycle()
+    val audioRecordingState by viewModel.audioRecordingState.collectAsStateWithLifecycle()
+    val answerSubmissionResponse by viewModel.answerSubmissionResponse.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
     
-    val currentQuestion = mockChemistryQuestions.getOrNull(currentQuestionIndex)
     val scope = rememberCoroutineScope()
+    val audioRecorder = remember { AudioRecorder(context) }
     
-    // Timer countdown effect
-    LaunchedEffect(timeLeft) {
-        if (timeLeft > 0) {
-            delay(1000)
-            timeLeft--
+    // 권한 요청 런처
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (allGranted) {
+            println("AssignmentScreen - All permissions granted")
+        } else {
+            println("AssignmentScreen - Some permissions denied")
         }
     }
     
-    // Recording duration effect
-    LaunchedEffect(isRecording) {
-        if (isRecording) {
-            recordingDuration = 0
-            while (isRecording) {
-                delay(1000)
-                recordingDuration++
+    // Personal Assignment ID를 사용하여 문제 로드 (assignmentId가 변경될 때만 실행)
+    LaunchedEffect(assignmentId) {
+        println("AssignmentScreen - Loading questions for assignment ID: $assignmentId")
+        viewModel.loadPersonalAssignmentQuestions(assignmentId)
+    }
+    
+    // 현재 문제 가져오기
+    val currentQuestion = viewModel.getCurrentQuestion()
+    
+    // 녹음 시간 업데이트
+    LaunchedEffect(audioRecordingState.isRecording) {
+        if (!audioRecordingState.isRecording) return@LaunchedEffect
+        
+        // 녹음이 시작되면 타이머 시작
+        while (audioRecordingState.isRecording) {
+            delay(1000)
+            if (audioRecordingState.isRecording) {
+                viewModel.updateRecordingDuration(audioRecordingState.recordingDuration + 1)
             }
         }
     }
 
-    if (currentQuestion == null) {
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = PrimaryIndigo
+            )
+        }
+    } else if (currentQuestion == null) {
         // 퀴즈 완료 화면
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -173,69 +208,12 @@ fun AssignmentContinuousScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
-                    )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
-            ) {
-                Column {
-                    Text(
-                        text = "화학 기초 퀴즈",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "문제 ${currentQuestionIndex + 1} / ${mockChemistryQuestions.size}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-            
-            // Timer and progress
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Timer
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Timer,
-                        contentDescription = null,
-                        tint = PrimaryIndigo,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = String.format("%02d:%02d", timeLeft / 60, timeLeft % 60),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (timeLeft < 300) Error else Gray800
-                    )
-                }
-                
-                // Progress
-                VTProgressBar(
-                    progress = (currentQuestionIndex + 1).toFloat() / mockChemistryQuestions.size.toFloat(),
-                    showPercentage = true,
-                    modifier = Modifier.weight(1f).padding(start = 16.dp)
-                )
-            }
+            // Progress
+            VTProgressBar(
+                progress = (currentQuestionIndex + 1).toFloat() / personalAssignmentQuestions.size.toFloat(),
+                showPercentage = true,
+                modifier = Modifier.fillMaxWidth()
+            )
             
             // Question card
             VTCard(
@@ -253,7 +231,7 @@ fun AssignmentContinuousScreen(
                 ) {
                     // Question number
                     Text(
-                        text = "질문 ${currentQuestion.questionNumber}",
+                        text = "질문 ${currentQuestion.number}",
                         style = MaterialTheme.typography.labelLarge,
                         color = PrimaryIndigo,
                         fontWeight = FontWeight.Bold
@@ -266,28 +244,6 @@ fun AssignmentContinuousScreen(
                         fontWeight = FontWeight.Bold,
                         color = Gray800
                     )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Hint card
-                    VTCard(variant = CardVariant.Outlined) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Lightbulb,
-                                contentDescription = null,
-                                tint = Warning,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "힌트: ${currentQuestion.hint}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Gray700
-                            )
-                        }
-                    }
                 }
             }
             
@@ -297,7 +253,7 @@ fun AssignmentContinuousScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Recording status
-                    if (isRecording) {
+                    if (audioRecordingState.isRecording) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center,
@@ -311,13 +267,13 @@ fun AssignmentContinuousScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "녹음 중... ${String.format("%02d:%02d", recordingDuration / 60, recordingDuration % 60)}",
+                                text = "녹음 중... ${String.format("%02d:%02d", audioRecordingState.recordingDuration / 60, audioRecordingState.recordingDuration % 60)}",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Error,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                    } else if (recordedAudio) {
+                    } else if (audioRecordingState.audioFilePath != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center,
@@ -331,7 +287,7 @@ fun AssignmentContinuousScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "녹음 완료 (${String.format("%02d:%02d", recordingDuration / 60, recordingDuration % 60)})",
+                                text = "녹음 완료 (${String.format("%02d:%02d", audioRecordingState.recordingDuration / 60, audioRecordingState.recordingDuration % 60)})",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Success,
                                 fontWeight = FontWeight.Bold
@@ -341,25 +297,42 @@ fun AssignmentContinuousScreen(
                     
                     // Voice recorder button
                     VTButton(
-                        text = if (isRecording) "녹음 중지" else "녹음 시작",
+                        text = if (audioRecordingState.isRecording) "녹음 중지" else "녹음 시작",
                         onClick = {
-                            if (isRecording) {
-                                // 녹음 중지
-                                isRecording = false
-                                recordedAudio = true
-                                println("음성 녹음 중지")
-                            } else {
-                                // 녹음 시작
-                                isRecording = true
-                                recordedAudio = false
-                                println("음성 녹음 시작")
+                            scope.launch {
+                                if (audioRecordingState.isRecording) {
+                                    // 녹음 중지 및 파일 저장
+                                    println("AssignmentScreen - Stopping recording")
+                                    val filePath = audioRecorder.stopRecording()
+                                    if (filePath != null) {
+                                        println("AssignmentScreen - Recording saved to: $filePath")
+                                        viewModel.stopRecording(filePath)
+                                    } else {
+                                        println("AssignmentScreen - Failed to save recording")
+                                        viewModel.stopRecording("")
+                                    }
+                                } else {
+                                    // 녹음 시작 전 권한 체크
+                                    if (!PermissionUtils.hasAudioPermission(context)) {
+                                        println("AssignmentScreen - Requesting audio permission")
+                                        permissionLauncher.launch(PermissionUtils.getRequiredPermissions())
+                                    } else {
+                                        println("AssignmentScreen - Starting recording")
+                                        val success = audioRecorder.startRecording()
+                                        if (success) {
+                                            viewModel.startRecording()
+                                        } else {
+                                            println("AssignmentScreen - Failed to start recording")
+                                        }
+                                    }
+                                }
                             }
                         },
-                        variant = if (isRecording) ButtonVariant.Outline else ButtonVariant.Gradient,
+                        variant = if (audioRecordingState.isRecording) ButtonVariant.Outline else ButtonVariant.Gradient,
                         fullWidth = true,
                         leadingIcon = {
                             Icon(
-                                imageVector = if (isRecording) Icons.Filled.Stop else Icons.Filled.Mic,
+                                imageVector = if (audioRecordingState.isRecording) Icons.Filled.Stop else Icons.Filled.Mic,
                                 contentDescription = null
                             )
                         }
@@ -367,26 +340,48 @@ fun AssignmentContinuousScreen(
                     
                     // Send button
                     VTButton(
-                        text = if (currentQuestionIndex < mockChemistryQuestions.size - 1) "전송 및 다음 문제" else "전송 및 완료",
+                        text = if (currentQuestionIndex < personalAssignmentQuestions.size - 1) "전송 및 다음 문제" else "전송 및 완료",
                         onClick = {
-                            if (recordedAudio) {
-                                // Mock: 답변 전송 및 다음 문제로 이동
-                                println("답변 전송: 문제 ${currentQuestionIndex + 1}")
+                            println("AssignmentScreen - Send button clicked")
+                            println("AssignmentScreen - audioFilePath: ${audioRecordingState.audioFilePath}")
+                            println("AssignmentScreen - isRecording: ${audioRecordingState.isRecording}")
+                            println("AssignmentScreen - isProcessing: ${audioRecordingState.isProcessing}")
+                            
+                            // 코루틴 스코프를 안전하게 처리
+                            val user = currentUser
+                            if (audioRecordingState.audioFilePath != null && user != null && currentQuestion != null) {
+                                println("AssignmentScreen - Sending answer for question ${currentQuestionIndex + 1}")
                                 
-                                // 다음 문제로 이동
-                                if (currentQuestionIndex < mockChemistryQuestions.size - 1) {
-                                    currentQuestionIndex++
-                                    recordedAudio = false
-                                    recordingDuration = 0
-                                } else {
-                                    // 모든 문제 완료
-                                    currentQuestionIndex++
+                                // API로 답변 전송
+                                val audioFile = File(audioRecordingState.audioFilePath)
+                                println("AssignmentScreen - Audio file exists: ${audioFile.exists()}")
+                                println("AssignmentScreen - Audio file size: ${audioFile.length()} bytes")
+                                
+                                try {
+                                    viewModel.submitAnswer(
+                                        studentId = user.id,
+                                        questionId = currentQuestion.id,
+                                        audioFile = audioFile
+                                    )
+                                    
+                                    println("AssignmentScreen - submitAnswer called successfully")
+                                    
+                                    // 녹음 상태 초기화 (ViewModel에서 이미 다음 문제로 이동함)
+                                    viewModel.resetAudioRecording()
+                                    println("AssignmentScreen - Recording state reset")
+                                } catch (e: Exception) {
+                                    println("AssignmentScreen - Error in submitAnswer: ${e.message}")
                                 }
+                            } else {
+                                println("AssignmentScreen - Cannot send: conditions not met")
+                                println("  - audioFilePath null: ${audioRecordingState.audioFilePath == null}")
+                                println("  - user null: ${user == null}")
+                                println("  - currentQuestion null: ${currentQuestion == null}")
                             }
                         },
                         variant = ButtonVariant.Gradient,
                         fullWidth = true,
-                        enabled = recordedAudio && !isRecording
+                        enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording && !audioRecordingState.isProcessing
                     )
                 }
             }
@@ -453,7 +448,7 @@ private fun AssignmentQuizScreenOld(
                 options = questionData.options ?: emptyList(),
                 correctAnswer = correctAnswerIndex,
                 explanation = questionData.explanation ?: "",
-                subject = currentAssignment?.subject?.name ?: "과목"
+                subject = currentAssignment?.courseClass?.subject?.name ?: "과목"
             )
         }
     }

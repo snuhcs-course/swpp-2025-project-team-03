@@ -1,6 +1,8 @@
 package com.example.voicetutor.data.network
 
 import com.example.voicetutor.data.models.*
+import com.google.gson.annotations.SerializedName
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -42,37 +44,61 @@ interface ApiService {
     @GET("assignments/{id}/results/")
     suspend fun getAssignmentResults(@Path("id") id: Int): Response<ApiResponse<List<StudentResult>>>
     
-    // Student APIs
-    @GET("students/")
+    // Student APIs (Backend: /api/courses/students/)
+    @GET("courses/students/")
     suspend fun getAllStudents(
         @Query("teacherId") teacherId: String? = null,
         @Query("classId") classId: String? = null
     ): Response<ApiResponse<List<Student>>>
     
-    @GET("students/{id}/")
+    @GET("courses/students/{id}/")
     suspend fun getStudentById(@Path("id") id: Int): Response<ApiResponse<Student>>
     
-    @GET("students/{id}/assignments/")
+    @GET("courses/students/{id}/assignments/")
     suspend fun getStudentAssignments(@Path("id") id: Int): Response<ApiResponse<List<AssignmentData>>>
     
-    @GET("students/{id}/progress/")
+    // Personal Assignment APIs (Backend: /api/personal_assignments/)
+    @GET("personal_assignments/")
+    suspend fun getPersonalAssignments(
+        @Query("student_id") studentId: Int? = null,
+        @Query("assignment_id") assignmentId: Int? = null
+    ): Response<ApiResponse<List<PersonalAssignmentData>>>
+    
+    @GET("personal_assignments/{id}/questions/")
+    suspend fun getPersonalAssignmentQuestions(@Path("id") id: Int): Response<ApiResponse<List<PersonalAssignmentQuestion>>>
+    
+    @GET("personal_assignments/{id}/statistics/")
+    suspend fun getPersonalAssignmentStatistics(@Path("id") id: Int): Response<ApiResponse<PersonalAssignmentStatistics>>
+    
+    @Multipart
+    @POST("personal_assignments/answer/")
+    suspend fun submitAnswer(
+        @Part studentId: MultipartBody.Part,
+        @Part questionId: MultipartBody.Part,
+        @Part audioFile: MultipartBody.Part
+    ): Response<ApiResponse<AnswerSubmissionResponse>>
+    
+    @GET("courses/students/{id}/progress/")
     suspend fun getStudentProgress(@Path("id") id: Int): Response<ApiResponse<StudentProgress>>
     
-    // Class APIs
-    @GET("classes/")
+    // Class APIs (Backend: /api/courses/classes/)
+    @GET("courses/classes/")
     suspend fun getClasses(@Query("teacherId") teacherId: String): Response<ApiResponse<List<ClassData>>>
     
-    @GET("classes/{id}/")
+    @POST("courses/classes/")
+    suspend fun createClass(@Body request: CreateClassRequest): Response<ApiResponse<ClassData>>
+    
+    @GET("courses/classes/{id}/")
     suspend fun getClassById(@Path("id") id: Int): Response<ApiResponse<ClassData>>
     
-    @GET("classes/{id}/students/")
+    @GET("courses/classes/{id}/students/")
     suspend fun getClassStudents(@Path("id") id: Int): Response<ApiResponse<List<Student>>>
     
-    // Message APIs
-    @POST("messages/send/")
+    // Message APIs (Backend: /api/feedbacks/messages/)
+    @POST("feedbacks/messages/send/")
     suspend fun sendMessage(@Body request: SendMessageRequest): Response<ApiResponse<SendMessageResponse>>
     
-    @GET("messages/{classId}/")
+    @GET("feedbacks/messages/{classId}/")
     suspend fun getClassMessages(@Path("classId") classId: Int): Response<ApiResponse<List<MessageData>>>
     
     // Progress Report APIs
@@ -93,8 +119,8 @@ interface ApiService {
     @GET("assignments/{id}/questions/")
     suspend fun getAssignmentQuestions(@Path("id") id: Int): Response<ApiResponse<List<QuestionData>>>
     
-    // Dashboard APIs
-    @GET("dashboard/stats/")
+    // Dashboard APIs (Backend: /api/feedbacks/dashboard/stats/)
+    @GET("feedbacks/dashboard/stats/")
     suspend fun getDashboardStats(
         @Query("teacherId") teacherId: String
     ): Response<ApiResponse<com.example.voicetutor.data.models.DashboardStats>>
@@ -149,11 +175,21 @@ data class ApiResponse<T>(
 data class CreateAssignmentRequest(
     val title: String,
     val subject: String,
-    val classId: Int,
-    val dueDate: String,
+    @SerializedName("class_id") val class_id: Int,
+    @SerializedName("due_at") val due_at: String,
+    val grade: String?,
     val type: String,
     val description: String?,
     val questions: List<QuestionData>?
+)
+
+data class CreateClassRequest(
+    val name: String,
+    val description: String?,
+    val subject_name: String,
+    val teacher_id: Int,
+    val start_date: String,
+    val end_date: String
 )
 
 data class UpdateAssignmentRequest(
