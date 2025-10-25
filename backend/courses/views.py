@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth import get_user_model
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
@@ -14,9 +15,11 @@ from .request_serializers import (
 )
 from .serializers import (
     CourseClassSerializer,
+    EnrollmentSerializer,
     StudentDetailSerializer,
     StudentEditResponseSerializer,
     StudentSerializer,
+    StudentStatisticsSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -186,24 +189,48 @@ class StudentDetailView(APIView):  # GET /students/{id}
             )
 
 
-class StudentAssignmentsView(APIView):  # GET /students/{id}/assignments
+class StudentStatisticsView(APIView):  # GET /students/{id}/statistics
     @swagger_auto_schema(
-        operation_id="학생 과제 조회",
-        operation_description="특정 학생의 과제 목록을 조회합니다.",
-        responses={200: "Student assignments"},
-    )
-    def get(self, request, id):
-        return Response({"message": "학생 과제 조회"}, status=status.HTTP_200_OK)
-
-
-class StudentProgressView(APIView):  # GET /students/{id}/progress
-    @swagger_auto_schema(
-        operation_id="학생 진도 조회",
+        operation_id="학생 진도 통계량 조회",
         operation_description="특정 학생의 진도 현황을 조회합니다.",
         responses={200: "Student progress"},
     )
     def get(self, request, id):
-        return Response({"message": "학생 진도 조회"}, status=status.HTTP_200_OK)
+        try:
+            student = Account.objects.get(id=id, is_student=True)
+            personal_assignments = student.personal_assignments.all()
+
+            total_assignments_num = personal_assignments.count()
+            submitted_assignments_num = personal_assignments.filter(status="SUBMITTED").count()
+            in_progress_assignments_num = personal_assignments.filter(status="IN_PROGRESS").count()
+            not_started_assignments_num = personal_assignments.filter(status="NOT_STARTED").count()
+
+            student_progress_statistics = {
+                "total_assignments": total_assignments_num,
+                "submitted_assignments": submitted_assignments_num,
+                "in_progress_assignments": in_progress_assignments_num,
+                "not_started_assignments": not_started_assignments_num,
+            }
+
+            serializer = StudentStatisticsSerializer(student_progress_statistics)
+            return create_api_response(
+                data=serializer.data, message="학생 진도 통계량 조회 성공", status_code=status.HTTP_200_OK
+            )
+        except Account.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Student not found",
+                message="해당 학생을 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[StudentStatisticsView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="학생 진도 통계량 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ClassListView(APIView):  # GET, POST /classes
@@ -388,5 +415,96 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
                 success=False,
                 error=str(e),
                 message="클래스 학생 목록 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @swagger_auto_schema(
+        operation_id="클래스에 학생 등록",
+        operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId, studentName, studentEmail 중 최소 하나를 제공해야 합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                "studentId", openapi.IN_QUERY, description="학생 ID", type=openapi.TYPE_STRING, required=False
+            ),
+            openapi.Parameter(
+                "studentName", openapi.IN_QUERY, description="학생 이름", type=openapi.TYPE_STRING, required=False
+            ),
+            openapi.Parameter(
+                "studentEmail", openapi.IN_QUERY, description="학생 이메일", type=openapi.TYPE_STRING, required=False
+            ),
+        ],
+        responses={200: "Student enrolled in class"},
+    )
+    def put(self, request, id):
+        try:
+            course_class = CourseClass.objects.get(id=id)
+            student_id = request.query_params.get("studentId")
+            student_display_name = request.query_params.get("name")
+            student_email = request.query_params.get("email")
+
+            # 모든 파라미터가 없으면 에러
+            if not student_id and not student_display_name and not student_email:
+                return create_api_response(
+                    success=False,
+                    message="At least one of studentId, name, or email must be provided",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # id, display_name, email을 이용해서 Account 찾기
+            query_filter = {}
+            if student_id:
+                query_filter["id"] = student_id
+            if student_display_name:
+                query_filter["display_name"] = student_display_name
+            if student_email:
+                query_filter["email"] = student_email
+
+            try:
+                student = Account.objects.get(**query_filter, is_student=True)
+            except Account.DoesNotExist:
+                return create_api_response(
+                    success=False,
+                    error="Student not found",
+                    message="해당 조건에 맞는 학생을 찾을 수 없습니다.",
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+            except Account.MultipleObjectsReturned:
+                return create_api_response(
+                    success=False,
+                    error="Multiple students found",
+                    message="조건에 맞는 학생이 여러 명입니다. 더 구체적인 정보를 제공해주세요.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 중복 등록 방지
+            enrollment, created = Enrollment.objects.get_or_create(
+                student=student,
+                course_class=course_class,
+                defaults={"status": Enrollment.Status.ENROLLED},
+            )
+            if not created:
+                enrollment.status = Enrollment.Status.ENROLLED
+                enrollment.save()
+
+            serializer = EnrollmentSerializer(enrollment)
+
+            return create_api_response(
+                data=serializer.data,
+                message="학생이 클래스에 성공적으로 등록되었습니다.",
+                status_code=status.HTTP_200_OK,
+            )
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassStudentsView PUT] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="학생 등록 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

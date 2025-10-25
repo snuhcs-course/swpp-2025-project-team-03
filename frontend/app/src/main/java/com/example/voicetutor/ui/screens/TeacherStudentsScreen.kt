@@ -316,7 +316,7 @@ fun StudentCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = student.name.first().toString(),
+                            text = student.name?.takeIf { it.isNotBlank() }?.firstOrNull()?.toString() ?: "?",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryIndigo
@@ -330,14 +330,14 @@ fun StudentCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = student.name,
+                                text = student.name ?: "이름 없음",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Gray800
                             )
                         }
                         Text(
-                            text = student.email,
+                            text = student.email ?: "이메일 없음",
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray600
                         )

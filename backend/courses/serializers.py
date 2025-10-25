@@ -80,3 +80,28 @@ class CourseClassSerializer(serializers.ModelSerializer):
 
     def get_student_count(self, obj):
         return obj.enrollments.filter(status=Enrollment.Status.ENROLLED).count()
+
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    """등록 정보를 위한 serializer"""
+
+    student_name = serializers.CharField(source="student.display_name", read_only=True)
+    class_name = serializers.CharField(source="course_class.name", read_only=True)
+
+    class Meta:
+        model = Enrollment
+        fields = [
+            "id",
+            "student_name",
+            "class_name",
+            "status",
+        ]
+
+
+class StudentStatisticsSerializer(serializers.Serializer):
+    """학생 진도 통계량을 위한 serializer"""
+
+    total_assignments = serializers.IntegerField()  # 총 과제 수
+    submitted_assignments = serializers.IntegerField()  # 완료된 과제 수
+    in_progress_assignments = serializers.IntegerField()  # 진행 중인 과제 수
+    not_started_assignments = serializers.IntegerField()  # 시작하지 않은 과제 수

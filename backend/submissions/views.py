@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Answer, PersonalAssignment
-from .serializers import PersonalAssignmentSerializer
+from .serializers import PersonalAssignmentSerializer, PersonalAssignmentStatisticsSerializer
 from .utils.feature_extractor.extract_all_features import extract_all_features
 from .utils.inference import run_inference
 from .utils.tail_question_generator.generate_questions_routed import generate_tail_question
@@ -442,5 +442,70 @@ class AnswerSubmitView(APIView):
                 success=False,
                 error=str(e),
                 message="답안 제출 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class PersonalAssignmentStatisticsView(APIView):
+    @swagger_auto_schema(
+        operation_id="개인 과제 통계 조회",
+        operation_description="학생 개인 과제의 통계 정보를 조회합니다.",
+        responses={200: "통계 정보"},
+    )
+    def get(self, request, id):
+        """
+        개인 과제 통계 조회
+
+        Path Parameters:
+            - id: PersonalAssignment ID
+        """
+        try:
+            # PersonalAssignment 조회
+            personal_assignment = PersonalAssignment.objects.get(id=id)
+
+            # 통계 정보 계산
+            total_questions = personal_assignment.questions.count()
+            answered_questions = Answer.objects.filter(
+                question__in=personal_assignment.questions.all(), student=personal_assignment.student
+            ).count()
+            correct_answers = Answer.objects.filter(
+                question__in=personal_assignment.questions.all(),
+                student=personal_assignment.student,
+                state=Answer.State.CORRECT,
+            ).count()
+
+            total_problem = personal_assignment.assignment.total_questions
+            solved_problem = personal_assignment.solved_num
+
+            statistics = {
+                "total_questions": total_questions,
+                "answered_questions": answered_questions,
+                "correct_answers": correct_answers,
+                "accuracy": (correct_answers / answered_questions * 100) if answered_questions > 0 else 0,
+                "total_problem": total_problem,
+                "solved_problem": solved_problem,
+                "progress": (solved_problem / total_problem * 100) if total_problem > 0 else 0,
+            }
+
+            serializer = PersonalAssignmentStatisticsSerializer(data=statistics)
+            serializer.is_valid(raise_exception=True)
+
+            return create_api_response(
+                data=serializer.data, message="개인 과제 통계 조회 성공", status_code=status.HTTP_200_OK
+            )
+
+        except PersonalAssignment.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="PersonalAssignment not found",
+                message="해당 개인 과제를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[PersonalAssignmentStatisticsView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="개인 과제 통계 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

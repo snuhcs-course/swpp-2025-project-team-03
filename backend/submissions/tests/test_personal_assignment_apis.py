@@ -315,3 +315,296 @@ class TestPersonalAssignmentQuestionsView:
         assert question_data["answer"] == original_question.model_answer  # model_answer -> answer
         assert question_data["explanation"] == original_question.explanation
         assert question_data["difficulty"] == original_question.difficulty
+
+
+# ============================================================================
+# 3. PersonalAssignmentStatisticsView 테스트
+# ============================================================================
+
+
+class TestPersonalAssignmentStatisticsView:
+    """개인 과제 통계 조회 API 테스트"""
+
+    @pytest.fixture
+    def questions(self, personal_assignment1):
+        """테스트용 질문 3개 생성"""
+        return [
+            Question.objects.create(
+                personal_assignment=personal_assignment1,
+                number=i,
+                content=f"테스트 질문 {i}",
+                model_answer=f"테스트 정답 {i}",
+                explanation=f"테스트 설명 {i}",
+                difficulty=Question.Difficulty.MEDIUM,
+                recalled_num=0,
+            )
+            for i in range(1, 4)
+        ]
+
+    @pytest.fixture
+    def answers(self, student1, questions):
+        """테스트용 답변 생성 (3문제 중 2문제 답변, 1문제는 정답)"""
+        from submissions.models import Answer
+
+        return [
+            Answer.objects.create(
+                question=questions[0],
+                student=student1,
+                text_answer="학생 답변 1",
+                state=Answer.State.CORRECT,
+                eval_grade=0.95,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            ),
+            Answer.objects.create(
+                question=questions[1],
+                student=student1,
+                text_answer="학생 답변 2",
+                state=Answer.State.INCORRECT,
+                eval_grade=0.55,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            ),
+        ]
+
+    def test_get_statistics_success(self, api_client, personal_assignment1, questions, answers):
+        """통계 조회 성공 테스트"""
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["success"] is True
+        data = response.data["data"]
+
+        # 필수 필드 확인
+        assert "total_questions" in data
+        assert "answered_questions" in data
+        assert "correct_answers" in data
+        assert "accuracy" in data
+        assert "total_problem" in data
+        assert "solved_problem" in data
+        assert "progress" in data
+
+    def test_get_statistics_correct_counts(self, api_client, personal_assignment1, questions, answers, assignment):
+        """통계 수치가 정확한지 테스트"""
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        # 총 문제 수: 3개 (질문 3개)
+        assert data["total_questions"] == 3
+
+        # 답변한 문제 수: 2개
+        assert data["answered_questions"] == 2
+
+        # 정답 수: 1개
+        assert data["correct_answers"] == 1
+
+        # 정확도: 1/2 * 100 = 50%
+        assert data["accuracy"] == 50.0
+
+        # 총 문제 수 (assignment의 total_questions)
+        assert data["total_problem"] == assignment.total_questions
+
+        # 해결한 문제 수 (personal_assignment의 solved_num)
+        assert data["solved_problem"] == personal_assignment1.solved_num
+
+    def test_get_statistics_accuracy_calculation(self, api_client, personal_assignment1, questions, answers):
+        """정확도 계산이 올바른지 테스트"""
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        # accuracy = (correct_answers / answered_questions) * 100
+        expected_accuracy = (1 / 2) * 100
+        assert data["accuracy"] == expected_accuracy
+
+    def test_get_statistics_progress_calculation(self, api_client, personal_assignment1, questions, assignment):
+        """진행률 계산이 올바른지 테스트"""
+        # solved_num을 2로 설정
+        personal_assignment1.solved_num = 2
+        personal_assignment1.save()
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        # progress = (solved_problem / total_problem) * 100
+        # assignment.total_questions = 3, solved_num = 2
+        expected_progress = (2 / 3) * 100
+        assert abs(data["progress"] - expected_progress) < 0.01  # 부동소수점 오차 허용
+
+    def test_get_statistics_no_answers(self, api_client, personal_assignment1, questions):
+        """답변이 없을 때 통계 조회 테스트"""
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        assert data["total_questions"] == 3
+        assert data["answered_questions"] == 0
+        assert data["correct_answers"] == 0
+        assert data["accuracy"] == 0  # 답변이 없으면 0%
+
+    def test_get_statistics_all_correct(self, api_client, personal_assignment1, questions, student1):
+        """모든 답변이 정답일 때 테스트"""
+        from submissions.models import Answer
+
+        # 3개 문제 모두 정답으로 답변
+        for question in questions:
+            Answer.objects.create(
+                question=question,
+                student=student1,
+                text_answer="정답",
+                state=Answer.State.CORRECT,
+                eval_grade=0.95,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        assert data["answered_questions"] == 3
+        assert data["correct_answers"] == 3
+        assert data["accuracy"] == 100.0
+
+    def test_get_statistics_all_incorrect(self, api_client, personal_assignment1, questions, student1):
+        """모든 답변이 오답일 때 테스트"""
+        from submissions.models import Answer
+
+        # 3개 문제 모두 오답으로 답변
+        for question in questions:
+            Answer.objects.create(
+                question=question,
+                student=student1,
+                text_answer="오답",
+                state=Answer.State.INCORRECT,
+                eval_grade=0.45,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        assert data["answered_questions"] == 3
+        assert data["correct_answers"] == 0
+        assert data["accuracy"] == 0.0
+
+    def test_get_statistics_not_found(self, api_client):
+        """존재하지 않는 PersonalAssignment ID로 조회 시 404 에러"""
+        url = reverse("personal-assignment-statistics", kwargs={"id": 99999})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["success"] is False
+        assert "찾을 수 없습니다" in response.data["message"]
+
+    def test_get_statistics_with_tail_questions(self, api_client, personal_assignment1, questions, student1):
+        """꼬리 질문이 있을 때 통계에 포함되는지 테스트"""
+        from submissions.models import Answer
+
+        # 기본 질문에 답변
+        Answer.objects.create(
+            question=questions[0],
+            student=student1,
+            text_answer="답변",
+            state=Answer.State.INCORRECT,
+            eval_grade=0.55,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # 꼬리 질문 생성 (recalled_num > 0)
+        tail_question = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=4,
+            content="꼬리 질문",
+            model_answer="꼬리 정답",
+            explanation="꼬리 설명",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=1,
+            base_question=questions[0],
+        )
+
+        # 꼬리 질문에도 답변
+        Answer.objects.create(
+            question=tail_question,
+            student=student1,
+            text_answer="꼬리 답변",
+            state=Answer.State.CORRECT,
+            eval_grade=0.85,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        # 총 문제 수에 꼬리 질문도 포함: 3 + 1 = 4
+        assert data["total_questions"] == 4
+
+        # 답변한 문제 수: 2개 (기본 1개 + 꼬리 1개)
+        assert data["answered_questions"] == 2
+
+        # 정답 수: 1개 (꼬리 질문만 정답)
+        assert data["correct_answers"] == 1
+
+    def test_get_statistics_zero_total_problem(self, api_client, personal_assignment1, assignment):
+        """total_questions가 0일 때 progress 계산 테스트"""
+        # assignment의 total_questions를 0으로 설정
+        assignment.total_questions = 0
+        assignment.save()
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        # total_problem이 0이면 progress는 0이어야 함
+        assert data["total_problem"] == 0
+        assert data["progress"] == 0
+
+    def test_get_statistics_serializer_validation(self, api_client, personal_assignment1, questions, answers):
+        """응답 데이터가 serializer 검증을 통과하는지 테스트"""
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+
+        # 모든 필드가 숫자 타입인지 확인
+        assert isinstance(data["total_questions"], int)
+        assert isinstance(data["answered_questions"], int)
+        assert isinstance(data["correct_answers"], int)
+        assert isinstance(data["accuracy"], (int, float))
+        assert isinstance(data["total_problem"], int)
+        assert isinstance(data["solved_problem"], int)
+        assert isinstance(data["progress"], (int, float))
+
+        # 범위 검증
+        assert data["total_questions"] >= 0
+        assert data["answered_questions"] >= 0
+        assert data["correct_answers"] >= 0
+        assert 0 <= data["accuracy"] <= 100
+        assert data["total_problem"] >= 0
+        assert data["solved_problem"] >= 0
+        assert 0 <= data["progress"] <= 100

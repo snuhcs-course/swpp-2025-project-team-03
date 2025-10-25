@@ -1,6 +1,7 @@
 package com.example.voicetutor.data.network
 
 import com.example.voicetutor.data.models.*
+import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -159,8 +160,9 @@ data class ApiResponse<T>(
 data class CreateAssignmentRequest(
     val title: String,
     val subject: String,
-    val classId: Int,
-    val dueDate: String,
+    @SerializedName("class_id") val class_id: Int,
+    @SerializedName("due_at") val due_at: String,
+    val grade: String?,
     val type: String,
     val description: String?,
     val questions: List<QuestionData>?
