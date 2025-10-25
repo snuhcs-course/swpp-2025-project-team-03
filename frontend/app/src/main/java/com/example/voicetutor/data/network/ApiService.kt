@@ -2,6 +2,7 @@ package com.example.voicetutor.data.network
 
 import com.example.voicetutor.data.models.*
 import com.google.gson.annotations.SerializedName
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -62,6 +63,20 @@ interface ApiService {
         @Query("student_id") studentId: Int? = null,
         @Query("assignment_id") assignmentId: Int? = null
     ): Response<ApiResponse<List<PersonalAssignmentData>>>
+    
+    @GET("personal_assignments/{id}/questions/")
+    suspend fun getPersonalAssignmentQuestions(@Path("id") id: Int): Response<ApiResponse<List<PersonalAssignmentQuestion>>>
+    
+    @GET("personal_assignments/{id}/statistics/")
+    suspend fun getPersonalAssignmentStatistics(@Path("id") id: Int): Response<ApiResponse<PersonalAssignmentStatistics>>
+    
+    @Multipart
+    @POST("personal_assignments/answer/")
+    suspend fun submitAnswer(
+        @Part studentId: MultipartBody.Part,
+        @Part questionId: MultipartBody.Part,
+        @Part audioFile: MultipartBody.Part
+    ): Response<ApiResponse<AnswerSubmissionResponse>>
     
     @GET("courses/students/{id}/progress/")
     suspend fun getStudentProgress(@Path("id") id: Int): Response<ApiResponse<StudentProgress>>

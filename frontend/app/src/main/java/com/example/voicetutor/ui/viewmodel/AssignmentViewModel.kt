@@ -12,6 +12,11 @@ import com.example.voicetutor.data.models.PersonalAssignmentData
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
 import com.example.voicetutor.data.models.CourseClass
 import com.example.voicetutor.data.models.Subject
+import com.example.voicetutor.data.models.PersonalAssignmentQuestion
+import com.example.voicetutor.data.models.PersonalAssignmentStatistics
+import com.example.voicetutor.data.models.AnswerSubmissionResponse
+import com.example.voicetutor.data.models.AudioRecordingState
+import java.io.File
 import com.example.voicetutor.ui.navigation.RecentAssignment
 import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.AssignmentSubmissionResult
@@ -62,6 +67,22 @@ class AssignmentViewModel @Inject constructor(
     // 학생별 통계
     private val _studentStats = MutableStateFlow<StudentStats?>(null)
     val studentStats: StateFlow<StudentStats?> = _studentStats.asStateFlow()
+    
+    // Personal Assignment 관련 상태들
+    private val _personalAssignmentQuestions = MutableStateFlow<List<PersonalAssignmentQuestion>>(emptyList())
+    val personalAssignmentQuestions: StateFlow<List<PersonalAssignmentQuestion>> = _personalAssignmentQuestions.asStateFlow()
+    
+    private val _personalAssignmentStatistics = MutableStateFlow<PersonalAssignmentStatistics?>(null)
+    val personalAssignmentStatistics: StateFlow<PersonalAssignmentStatistics?> = _personalAssignmentStatistics.asStateFlow()
+    
+    private val _currentQuestionIndex = MutableStateFlow(0)
+    val currentQuestionIndex: StateFlow<Int> = _currentQuestionIndex.asStateFlow()
+    
+    private val _audioRecordingState = MutableStateFlow(AudioRecordingState())
+    val audioRecordingState: StateFlow<AudioRecordingState> = _audioRecordingState.asStateFlow()
+    
+    private val _answerSubmissionResponse = MutableStateFlow<AnswerSubmissionResponse?>(null)
+    val answerSubmissionResponse: StateFlow<AnswerSubmissionResponse?> = _answerSubmissionResponse.asStateFlow()
     
     fun loadAllAssignments(teacherId: String? = null, classId: String? = null, status: AssignmentStatus? = null) {
         viewModelScope.launch {
@@ -287,12 +308,148 @@ class AssignmentViewModel @Inject constructor(
                                 createdAt = ""
                             ),
                             materials = null,
-                            grade = personalAssignment.assignment.grade
+                            grade = personalAssignment.assignment.grade,
+                            // Personal Assignment 정보 추가
+                            personalAssignmentStatus = personalAssignment.status,
+                            solvedNum = personalAssignment.solvedNum
                         )
                     }
                     
                     _assignments.value = convertedAssignments
                     println("AssignmentViewModel - Personal filter applied, showing ${convertedAssignments.size} assignments")
+                    
+                    // 학생별 통계 계산 (전체 personal assignment 기반)
+                    calculateStudentStatsFromPersonalAssignments(personalAssignments)
+                }
+                .onFailure { exception ->
+                    println("AssignmentViewModel - Error: ${exception.message}")
+                    _error.value = exception.message
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    // 해야 할 과제 (시작 안함 + 진행 중)만 로드하는 메서드
+    fun loadPendingStudentAssignments(studentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            println("AssignmentViewModel - Loading pending assignments for student ID: $studentId")
+            assignmentRepository.getPersonalAssignments(studentId)
+                .onSuccess { personalAssignments: List<PersonalAssignmentData> ->
+                    println("AssignmentViewModel - Received ${personalAssignments.size} personal assignments")
+                    
+                    // 해야 할 과제만 필터링 (시작 안함 + 진행 중)
+                    val pendingAssignments = personalAssignments.filter { 
+                        it.status == PersonalAssignmentStatus.NOT_STARTED || 
+                        it.status == PersonalAssignmentStatus.IN_PROGRESS 
+                    }
+                    
+                    println("AssignmentViewModel - Found ${pendingAssignments.size} pending assignments")
+                    
+                    // PersonalAssignmentData를 AssignmentData로 변환
+                    val convertedAssignments: List<AssignmentData> = pendingAssignments.map { personalAssignment: PersonalAssignmentData ->
+                        AssignmentData(
+                            id = personalAssignment.assignment.id,
+                            title = personalAssignment.assignment.title,
+                            description = personalAssignment.assignment.description,
+                            totalQuestions = personalAssignment.assignment.totalQuestions,
+                            createdAt = null,
+                            visibleFrom = personalAssignment.assignment.visibleFrom,
+                            dueAt = personalAssignment.assignment.dueAt,
+                            courseClass = CourseClass(
+                                id = 0,
+                                name = "개인 과제",
+                                description = null,
+                                subject = Subject(
+                                    id = 0,
+                                    name = "개인 과제",
+                                    code = null
+                                ),
+                                teacherName = "시스템",
+                                startDate = "",
+                                endDate = "",
+                                studentCount = 1,
+                                createdAt = ""
+                            ),
+                            materials = null,
+                            grade = personalAssignment.assignment.grade,
+                            // Personal Assignment 정보 추가
+                            personalAssignmentStatus = personalAssignment.status,
+                            solvedNum = personalAssignment.solvedNum
+                        )
+                    }
+                    
+                    _assignments.value = convertedAssignments
+                    println("AssignmentViewModel - Pending assignments loaded, showing ${convertedAssignments.size} assignments")
+                    
+                    // 학생별 통계 계산 (전체 personal assignment 기반)
+                    calculateStudentStatsFromPersonalAssignments(personalAssignments)
+                }
+                .onFailure { exception ->
+                    println("AssignmentViewModel - Error: ${exception.message}")
+                    _error.value = exception.message
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    // 완료된 과제만 로드하는 메서드
+    fun loadCompletedStudentAssignments(studentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            println("AssignmentViewModel - Loading completed assignments for student ID: $studentId")
+            assignmentRepository.getPersonalAssignments(studentId)
+                .onSuccess { personalAssignments: List<PersonalAssignmentData> ->
+                    println("AssignmentViewModel - Received ${personalAssignments.size} personal assignments")
+                    
+                    // 완료된 과제만 필터링
+                    val completedAssignments = personalAssignments.filter { 
+                        it.status == PersonalAssignmentStatus.SUBMITTED 
+                    }
+                    
+                    println("AssignmentViewModel - Found ${completedAssignments.size} completed assignments")
+                    
+                    // PersonalAssignmentData를 AssignmentData로 변환
+                    val convertedAssignments: List<AssignmentData> = completedAssignments.map { personalAssignment: PersonalAssignmentData ->
+                        AssignmentData(
+                            id = personalAssignment.assignment.id,
+                            title = personalAssignment.assignment.title,
+                            description = personalAssignment.assignment.description,
+                            totalQuestions = personalAssignment.assignment.totalQuestions,
+                            createdAt = null,
+                            visibleFrom = personalAssignment.assignment.visibleFrom,
+                            dueAt = personalAssignment.assignment.dueAt,
+                            courseClass = CourseClass(
+                                id = 0,
+                                name = "개인 과제",
+                                description = null,
+                                subject = Subject(
+                                    id = 0,
+                                    name = "개인 과제",
+                                    code = null
+                                ),
+                                teacherName = "시스템",
+                                startDate = "",
+                                endDate = "",
+                                studentCount = 1,
+                                createdAt = ""
+                            ),
+                            materials = null,
+                            grade = personalAssignment.assignment.grade,
+                            // Personal Assignment 정보 추가
+                            personalAssignmentStatus = personalAssignment.status,
+                            solvedNum = personalAssignment.solvedNum
+                        )
+                    }
+                    
+                    _assignments.value = convertedAssignments
+                    println("AssignmentViewModel - Completed assignments loaded, showing ${convertedAssignments.size} assignments")
                     
                     // 학생별 통계 계산 (전체 personal assignment 기반)
                     calculateStudentStatsFromPersonalAssignments(personalAssignments)
@@ -526,5 +683,152 @@ class AssignmentViewModel @Inject constructor(
     
     fun setInitialAssignments(assignments: List<AssignmentData>) {
         _assignments.value = assignments
+    }
+    
+    // Personal Assignment API 메서드들
+    private var lastLoadedPersonalAssignmentId: Int? = null
+    
+    fun loadPersonalAssignmentQuestions(personalAssignmentId: Int) {
+        viewModelScope.launch {
+            // 이미 같은 ID로 로딩했거나, 로딩 중이면 중복 호출 방지
+            if (lastLoadedPersonalAssignmentId == personalAssignmentId && _personalAssignmentQuestions.value.isNotEmpty()) {
+                println("AssignmentViewModel - Questions already loaded for personal assignment $personalAssignmentId")
+                return@launch
+            }
+            
+            if (_isLoading.value) {
+                println("AssignmentViewModel - Already loading questions")
+                return@launch
+            }
+            
+            println("AssignmentViewModel - Loading questions for personal assignment $personalAssignmentId")
+            _isLoading.value = true
+            _error.value = null
+            
+            assignmentRepository.getPersonalAssignmentQuestions(personalAssignmentId)
+                .onSuccess { questions ->
+                    _personalAssignmentQuestions.value = questions
+                    _currentQuestionIndex.value = 0 // 첫 번째 문제부터 시작
+                    lastLoadedPersonalAssignmentId = personalAssignmentId
+                    println("AssignmentViewModel - Successfully loaded ${questions.size} questions")
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                    println("AssignmentViewModel - Failed to load questions: ${exception.message}")
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    fun loadPersonalAssignmentStatistics(personalAssignmentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            assignmentRepository.getPersonalAssignmentStatistics(personalAssignmentId)
+                .onSuccess { statistics ->
+                    _personalAssignmentStatistics.value = statistics
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    fun submitAnswer(studentId: Int, questionId: Int, audioFile: File) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            // 오디오 녹음 상태를 처리 중으로 설정
+            _audioRecordingState.value = _audioRecordingState.value.copy(isProcessing = true)
+            
+            assignmentRepository.submitAnswer(studentId, questionId, audioFile)
+                .onSuccess { response ->
+                    _answerSubmissionResponse.value = response
+                    
+                    println("AssignmentViewModel - Answer submitted successfully")
+                    
+                    // 답변 전송 성공 후 항상 다음 문제로 이동
+                    val totalQuestions = _personalAssignmentQuestions.value.size
+                    val currentIndex = _currentQuestionIndex.value
+                    
+                    if (currentIndex < totalQuestions - 1) {
+                        // 아직 풀어야 할 문제가 있으면 다음 문제로 이동
+                        _currentQuestionIndex.value = currentIndex + 1
+                        println("AssignmentViewModel - Moved to next question: ${_currentQuestionIndex.value}/${totalQuestions}")
+                    } else {
+                        // 모든 문제를 완료한 경우
+                        println("AssignmentViewModel - All questions completed")
+                    }
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                    println("AssignmentViewModel - Failed to submit answer: ${exception.message}")
+                }
+            
+            _isLoading.value = false
+            _audioRecordingState.value = _audioRecordingState.value.copy(isProcessing = false)
+        }
+    }
+    
+    fun startRecording() {
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            isRecording = true,
+            recordingDuration = 0,
+            audioFilePath = null
+        )
+    }
+    
+    fun stopRecording(audioFilePath: String) {
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            isRecording = false,
+            audioFilePath = audioFilePath
+        )
+    }
+    
+    fun updateRecordingDuration(duration: Int) {
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            recordingDuration = duration
+        )
+    }
+    
+    fun nextQuestion() {
+        val currentIndex = _currentQuestionIndex.value
+        val totalQuestions = _personalAssignmentQuestions.value.size
+        
+        if (currentIndex < totalQuestions - 1) {
+            _currentQuestionIndex.value = currentIndex + 1
+        }
+    }
+    
+    fun previousQuestion() {
+        val currentIndex = _currentQuestionIndex.value
+        
+        if (currentIndex > 0) {
+            _currentQuestionIndex.value = currentIndex - 1
+        }
+    }
+    
+    fun getCurrentQuestion(): PersonalAssignmentQuestion? {
+        val currentIndex = _currentQuestionIndex.value
+        val questions = _personalAssignmentQuestions.value
+        
+        return if (currentIndex < questions.size) {
+            questions[currentIndex]
+        } else {
+            null
+        }
+    }
+    
+    fun resetAudioRecording() {
+        _audioRecordingState.value = AudioRecordingState()
+    }
+    
+    fun clearAnswerSubmissionResponse() {
+        _answerSubmissionResponse.value = null
     }
 }

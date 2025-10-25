@@ -37,8 +37,8 @@ private fun formatDueDate(dueDate: String): String {
 
 @Composable
 fun CompletedAssignmentsScreen(
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onBackClick: () -> Unit = {}
+    studentId: Int? = null,
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -47,7 +47,13 @@ fun CompletedAssignmentsScreen(
     
     // Load completed assignments on first composition
     LaunchedEffect(Unit) {
-        viewModel.loadAllAssignments(status = AssignmentStatus.COMPLETED)
+        if (studentId != null) {
+            // 학생의 완료한 과제만 로드
+            viewModel.loadCompletedStudentAssignments(studentId)
+        } else {
+            // 교사용: 완료된 과제 로드
+            viewModel.loadAllAssignments(status = AssignmentStatus.COMPLETED)
+        }
     }
     
     // Handle error
@@ -64,57 +70,60 @@ fun CompletedAssignmentsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        VTHeader(
-            title = "완료한 과제",
-            onBackClick = onBackClick
-        )
+        Column {
+            Text(
+                text = "완료한 과제",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Gray800
+            )
+            Text(
+                text = "총 ${assignments.size}개의 완료한 과제",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Gray600
+            )
+        }
         
-        // Content
+        // Loading indicator
         if (isLoading) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
                     color = PrimaryIndigo
                 )
             }
-        } else if (completedAssignments.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Assignment,
-                        contentDescription = null,
-                        tint = Gray400,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "완료한 과제가 없습니다",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "과제를 완료하면 여기에 표시됩니다",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray500
-                    )
-                }
-            }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(completedAssignments) { assignment ->
+            // Assignment list
+            if (completedAssignments.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Assignment,
+                            contentDescription = null,
+                            tint = Gray400,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "완료한 과제가 없습니다",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Gray600
+                        )
+                    }
+                }
+            } else {
+                completedAssignments.forEach { assignment ->
                     CompletedAssignmentCard(
                         assignment = assignment,
                         onClick = { onNavigateToAssignmentDetail(assignment.title) }

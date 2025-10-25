@@ -40,7 +40,8 @@ fun AllAssignmentsScreen(
     studentId: Int? = null,
     onNavigateToAssignmentResults: (String) -> Unit = {},
     onNavigateToEditAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (String) -> Unit = {},
+    onNavigateToAssignment: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -53,8 +54,8 @@ fun AllAssignmentsScreen(
     // Load assignments on first composition
     LaunchedEffect(Unit) {
         if (studentId != null) {
-            // 학생의 개인 과제를 필터링 없이 로드 (ALL 필터와 동일)
-            viewModel.loadStudentAssignments(studentId)
+            // 학생의 해야 할 과제만 로드 (시작 안함 + 진행 중)
+            viewModel.loadPendingStudentAssignments(studentId)
         } else {
             // 모든 과제 로드 (교사용)
             viewModel.loadAllAssignments()
@@ -66,7 +67,12 @@ fun AllAssignmentsScreen(
         if (studentId != null) {
             println("AllAssignmentsScreen - Filter changed to: $selectedPersonalFilter for student: $studentId")
             // 학생의 개인 과제는 personal assignment 상태로 필터링
-            viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, selectedPersonalFilter)
+            when (selectedPersonalFilter) {
+                PersonalAssignmentFilter.ALL -> viewModel.loadPendingStudentAssignments(studentId)
+                PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
+                PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
+                PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
+            }
         }
     }
     
@@ -143,12 +149,6 @@ fun AllAssignmentsScreen(
                     onClick = { selectedPersonalFilter = PersonalAssignmentFilter.IN_PROGRESS },
                     label = { Text("진행 중") }
                 )
-                
-                FilterChip(
-                    selected = selectedPersonalFilter == PersonalAssignmentFilter.SUBMITTED,
-                    onClick = { selectedPersonalFilter = PersonalAssignmentFilter.SUBMITTED },
-                    label = { Text("제출 완료") }
-                )
             } else {
                 // 교사용 필터링 버튼 (기존 AssignmentFilter 사용)
                 FilterChip(
@@ -216,10 +216,12 @@ fun AllAssignmentsScreen(
                 assignments.forEach { assignment ->
                     AssignmentCard(
                         assignment = assignment,
-                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        onAssignmentClick = { onNavigateToAssignmentDetail(assignment.id.toString()) },
                         onEditClick = { onNavigateToEditAssignment("${assignment.courseClass.subject.name} - ${assignment.title}") },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
-                        onViewResults = { onNavigateToAssignmentResults("${assignment.courseClass.subject.name} - ${assignment.title}") }
+                        onViewResults = { onNavigateToAssignmentResults("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        onNavigateToAssignment = onNavigateToAssignment,
+                        onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
                     )
                 }
             }
@@ -233,7 +235,9 @@ fun AssignmentCard(
     onAssignmentClick: (String) -> Unit,
     onEditClick: (String) -> Unit,
     onDeleteClick: (Int) -> Unit,
-    onViewResults: () -> Unit
+    onViewResults: () -> Unit,
+    onNavigateToAssignment: (String) -> Unit = {},
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     VTCard(
         variant = CardVariant.Elevated,
@@ -251,23 +255,14 @@ fun AssignmentCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Personal Assignment 상태에 따른 StatusBadge 표시
-                        val statusToShow = assignment.personalAssignmentStatus?.let { personalStatus ->
-                            when (personalStatus) {
-                                PersonalAssignmentStatus.NOT_STARTED -> AssignmentStatus.IN_PROGRESS // "시작 안함"을 "진행중"으로 표시
-                                PersonalAssignmentStatus.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
-                                PersonalAssignmentStatus.SUBMITTED -> AssignmentStatus.COMPLETED
-                            }
-                        } ?: AssignmentStatus.IN_PROGRESS // 기본값
-                        
-                        // 커스텀 상태 표시
+                        // Personal Assignment 상태에 따른 커스텀 상태 표시
                         val statusText = assignment.personalAssignmentStatus?.let { personalStatus ->
                             when (personalStatus) {
                                 PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
                                 PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
                                 PersonalAssignmentStatus.SUBMITTED -> "완료"
                             }
-                        } ?: "진행 중"
+                        } ?: "알 수 없음"
                         
                         CustomStatusBadge(text = statusText)
                     }
@@ -322,31 +317,57 @@ fun AssignmentCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                VTButton(
-                    text = "결과 보기",
-                    onClick = onViewResults,
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
-                )
-                
-                VTButton(
-                    text = "편집",
-                    onClick = { onEditClick("${assignment.courseClass.subject.name} - ${assignment.title}") },
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
-                )
-                
-                IconButton(
-                    onClick = { onDeleteClick(assignment.id) }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "삭제",
-                        tint = Error,
-                        modifier = Modifier.size(20.dp)
+                // 시작 안함이나 진행 중인 경우 과제 시작과 과제 상세 버튼 표시
+                if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED || 
+                    assignment.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        VTButton(
+                            text = "과제 시작",
+                            onClick = { onNavigateToAssignment(assignment.id.toString()) },
+                            variant = ButtonVariant.Primary,
+                            size = ButtonSize.Small,
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        VTButton(
+                            text = "과제 상세",
+                            onClick = { onNavigateToAssignmentDetail(assignment.id.toString()) },
+                            variant = ButtonVariant.Outline,
+                            size = ButtonSize.Small,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    // 완료된 과제의 경우 기존 버튼들 표시
+                    VTButton(
+                        text = "결과 보기",
+                        onClick = onViewResults,
+                        variant = ButtonVariant.Outline,
+                        size = ButtonSize.Small,
+                        modifier = Modifier.weight(1f)
                     )
+                    
+                    VTButton(
+                        text = "편집",
+                        onClick = { onEditClick("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        variant = ButtonVariant.Outline,
+                        size = ButtonSize.Small,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    IconButton(
+                        onClick = { onDeleteClick(assignment.id) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "삭제",
+                            tint = Error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
@@ -355,23 +376,23 @@ fun AssignmentCard(
 
 @Composable
 fun CustomStatusBadge(text: String) {
-    val (color) = when (text) {
-        "시작 안함" -> PrimaryIndigo
-        "진행 중" -> Warning
-        "완료" -> Success
-        else -> Gray500
+    val (textColor, backgroundColor) = when (text) {
+        "시작 안함" -> PrimaryIndigo to Color(0xFFE3F2FD) // PrimaryIndigo의 연한 버전
+        "진행 중" -> Warning to Color(0xFFFFF3E0) // Warning의 연한 버전
+        "완료" -> Success to Color(0xFFE8F5E8) // Success의 연한 버전
+        else -> Gray500 to Color(0xFFF5F5F5) // Gray500의 연한 버전
     }
     
     Box(
         modifier = Modifier
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-            .background(color.copy(alpha = 0.1f))
+            .background(backgroundColor)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = color,
+            color = textColor,
             fontWeight = FontWeight.Medium
         )
     }

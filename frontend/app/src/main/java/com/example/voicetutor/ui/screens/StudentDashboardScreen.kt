@@ -42,6 +42,8 @@ fun StudentDashboardScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
     onNavigateToAllAssignments: (Int) -> Unit = {},
+    onNavigateToCompletedAssignments: (Int) -> Unit = {},
+    onNavigateToAllStudentAssignments: (Int) -> Unit = {},
     onNavigateToProgressReport: () -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
@@ -146,7 +148,11 @@ fun StudentDashboardScreen(
                     
                     VTButton(
                         text = "전체 보기",
-                        onClick = onNavigateToProgressReport,
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToAllStudentAssignments(studentId)
+                            }
+                        },
                         variant = ButtonVariant.Ghost,
                         size = ButtonSize.Small
                     )
@@ -159,7 +165,7 @@ fun StudentDashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     VTStatsCard(
-                        title = "총 과제",
+                        title = "해야 할 과제",
                         value = studentStats?.totalAssignments?.toString() ?: "0",
                         icon = Icons.Filled.List,
                         iconColor = PrimaryIndigo,
@@ -176,7 +182,11 @@ fun StudentDashboardScreen(
                         value = studentStats?.completedAssignments?.toString() ?: "0",
                         icon = Icons.Filled.Done,
                         iconColor = Success,
-                        onClick = onNavigateToProgressReport,
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToCompletedAssignments(studentId)
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }
