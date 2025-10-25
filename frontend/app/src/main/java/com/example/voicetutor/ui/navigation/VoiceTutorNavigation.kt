@@ -277,8 +277,8 @@ fun VoiceTutorNavigation(
                 TeacherClassesScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    onNavigateToClassDetail = { className ->
-                        navController.navigate(VoiceTutorScreens.TeacherClassDetail.createRoute(className))
+                    onNavigateToClassDetail = { className, classId ->
+                        navController.navigate(VoiceTutorScreens.TeacherClassDetail.createRoute(className, classId))
                     },
                     onNavigateToCreateClass = {
                         navController.navigate(VoiceTutorScreens.CreateClass.route)
@@ -570,15 +570,20 @@ fun VoiceTutorNavigation(
             arguments = listOf(
                 navArgument("className") {
                     type = NavType.StringType
+                },
+                navArgument("classId") {
+                    type = NavType.IntType
                 }
             )
         ) { backStackEntry ->
             val className = backStackEntry.arguments?.getString("className") ?: "반"
+            val classId = backStackEntry.arguments?.getInt("classId") ?: 0
             MainLayout(
                 navController = navController,
                 userRole = UserRole.TEACHER
             ) {
                 TeacherClassDetailScreen(
+                    classId = classId,
                     className = className,
                     onNavigateToClassMessage = {
                         navController.navigate(VoiceTutorScreens.ClassMessage.createRoute(className))
@@ -817,8 +822,8 @@ sealed class VoiceTutorScreens(val route: String) {
     object TeacherMessage : VoiceTutorScreens("teacher_message/{studentName}") {
         fun createRoute(studentName: String) = "teacher_message/$studentName"
     }
-    object TeacherClassDetail : VoiceTutorScreens("teacher_class_detail/{className}") {
-        fun createRoute(className: String) = "teacher_class_detail/$className"
+    object TeacherClassDetail : VoiceTutorScreens("teacher_class_detail/{className}/{classId}") {
+        fun createRoute(className: String, classId: Int) = "teacher_class_detail/$className/$classId"
     }
     object ClassMessage : VoiceTutorScreens("class_message/{className}") {
         fun createRoute(className: String) = "class_message/$className"

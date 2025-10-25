@@ -40,7 +40,7 @@ fun TeacherClassesScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null, // 파라미터로 받거나 현재 로그인한 사용자 ID 사용
-    onNavigateToClassDetail: (String) -> Unit = {},
+    onNavigateToClassDetail: (String, Int) -> Unit = { _, _ -> },
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToCreateAssignment: () -> Unit = {},
     onNavigateToStudents: (Int) -> Unit = {}
@@ -233,7 +233,7 @@ fun TeacherClassesScreen(
                 classRooms.forEach { classRoom ->
                     ClassCard(
                         classRoom = classRoom,
-                        onClassClick = { onNavigateToClassDetail(classRoom.name) },
+                        onClassClick = { onNavigateToClassDetail(classRoom.name, classRoom.id) },
                         onCreateAssignment = { onNavigateToCreateAssignment() },
                         onViewStudents = { onNavigateToStudents(classRoom.id) }
                     )
