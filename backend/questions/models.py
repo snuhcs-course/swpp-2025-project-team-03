@@ -32,7 +32,7 @@ class Question(models.Model):
     )
 
     class Meta:
-        unique_together = ("personal_assignment", "number")
+        unique_together = ("personal_assignment", "number", "recalled_num")
         ordering = ["personal_assignment_id", "number"]
         indexes = [models.Index(fields=["personal_assignment", "number"])]
 

@@ -4,7 +4,6 @@ import tempfile
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -160,6 +159,140 @@ class PersonalAssignmentQuestionsView(APIView):
 # 답안 제출
 class AnswerSubmitView(APIView):
     parser_classes = [MultiPartParser, FormParser]
+
+    @swagger_auto_schema(
+        operation_id="다음 풀이할 문제 조회",
+        operation_description="개인 과제에서 다음으로 풀이할 문제를 조회합니다. number와 recalled_num 순으로 정렬하여 아직 풀이되지 않은 문제를 반환합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                name="personal_assignment_id",
+                in_=openapi.IN_QUERY,
+                description="개인 과제 ID",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+        ],
+        responses={200: "다음 문제", 404: "문제를 찾을 수 없음"},
+    )
+    def get(self, request):
+        """
+        다음 풀이할 문제 조회
+
+        Query Parameters:
+            - personal_assignment_id: 개인 과제 ID
+
+        Logic:
+            1. personal_assignment에 연결된 모든 question 조회
+            2. number, recalled_num 순으로 정렬
+            3. number가 같은 그룹 중 recalled_num이 가장 큰 것이 3 미만이면 반환
+            4. recalled_num 최대값이 3이면 다음 number로 넘어감
+        """
+        try:
+            personal_assignment_id = request.query_params.get("personal_assignment_id")
+
+            if not personal_assignment_id:
+                return create_api_response(
+                    success=False,
+                    error="Missing personal_assignment_id",
+                    message="personal_assignment_id는 필수 파라미터입니다.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # PersonalAssignment 조회
+            try:
+                personal_assignment = PersonalAssignment.objects.get(id=personal_assignment_id)
+            except PersonalAssignment.DoesNotExist:
+                return create_api_response(
+                    success=False,
+                    error="PersonalAssignment not found",
+                    message=f"ID가 {personal_assignment_id}인 개인 과제를 찾을 수 없습니다.",
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            # 모든 question 조회 (number, recalled_num 순으로 정렬)
+            questions = personal_assignment.questions.order_by("number", "recalled_num")
+
+            if not questions.exists():
+                return create_api_response(
+                    success=False,
+                    error="No questions found",
+                    message="해당 개인 과제에 문제가 없습니다.",
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            # 최적화: 한 번의 쿼리로 모든 답변 정보 가져오기
+            answered_question_ids = set(
+                Answer.objects.filter(question__in=questions, student=personal_assignment.student).values_list(
+                    "question_id", flat=True
+                )
+            )
+
+            # number별로 그룹화하여 처리
+            current_number = None
+            max_recalled_num = -1
+            candidate_question = None
+
+            for question in questions:
+                # 새로운 number 그룹 시작
+                if current_number != question.number:
+                    # 이전 그룹에서 후보를 찾았다면 반환
+                    if candidate_question:
+                        break
+
+                    # 새 그룹 초기화
+                    current_number = question.number
+                    max_recalled_num = question.recalled_num
+
+                    # 이 질문이 아직 답변되지 않았는지 확인 (메모리에서 체크)
+                    if question.id not in answered_question_ids:
+                        candidate_question = question
+                else:
+                    # 같은 number 그룹 내에서
+                    max_recalled_num = max(max_recalled_num, question.recalled_num)
+
+                    # 아직 답변되지 않은 질문 찾기 (메모리에서 체크)
+                    if question.id not in answered_question_ids:
+                        candidate_question = question
+
+            # 마지막 그룹의 후보 확인
+            if candidate_question:
+                # recalled_num이 3 미만인지 확인
+                if candidate_question.recalled_num < 3:
+                    if candidate_question.recalled_num == 0:
+                        number_str = f"{candidate_question.number}"
+                    else:
+                        number_str = f"{candidate_question.number}-{candidate_question.recalled_num}"
+                    question_data = {
+                        "id": candidate_question.id,
+                        "number": number_str,
+                        "question": candidate_question.content,
+                        "answer": candidate_question.model_answer,
+                        "explanation": candidate_question.explanation,
+                        "difficulty": candidate_question.difficulty,
+                    }
+
+                    return create_api_response(
+                        data=question_data,
+                        message="다음 문제 조회 성공",
+                        status_code=status.HTTP_200_OK,
+                    )
+
+            # 모든 문제를 다 풀었거나 recalled_num이 3에 도달한 경우
+            return create_api_response(
+                success=False,
+                error="No more questions",
+                message="모든 문제를 완료했습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        except Exception as e:
+            logger.error(f"[AnswerSubmitView GET] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="다음 문제 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @swagger_auto_schema(
         operation_id="답안 제출",
@@ -376,7 +509,7 @@ class AnswerSubmitView(APIView):
                 tail_question_obj = None
                 plan = tail_payload.get("plan")
 
-                if plan == "ASK":
+                if plan == "ASK" and tail_payload.get("recalled_time") < 4:
                     tail_question_data = tail_payload.get("tail_question", {})
 
                     if not tail_question_data:
@@ -385,19 +518,10 @@ class AnswerSubmitView(APIView):
                         logger.info("[AnswerSubmitView] Tail Question 객체 생성 시작")
 
                         try:
-                            # 다음 문제 번호 계산
-                            max_number = (
-                                Question.objects.filter(personal_assignment=personal_assignment).aggregate(
-                                    models.Max("number")
-                                )["number__max"]
-                                or 1
-                            )
-                            next_number = max_number + 1
-
                             # Tail Question 생성
                             tail_question_obj = Question.objects.create(
                                 personal_assignment=personal_assignment,
-                                number=next_number,
+                                number=question.number,  # 원본 질문과 동일한 번호 사용 (base question number)
                                 content=tail_question_data.get("question", ""),
                                 model_answer=tail_question_data.get("model_answer", ""),
                                 explanation=tail_question_data.get("explanation", ""),
@@ -414,7 +538,20 @@ class AnswerSubmitView(APIView):
                             # 이 경우 에러를 반환하지 않고 계속 진행 (tail question 없이)
                             tail_question_obj = None
                 else:
-                    logger.info(f"[AnswerSubmitView] Plan이 '{plan}'이므로 Tail Question 생성하지 않음")
+                    logger.info(
+                        f"[AnswerSubmitView] Plan이 '{plan}'이므로 Tail Question 생성하지 않고 다음 base 문제로 이동"
+                    )
+                    try:
+                        tail_question_obj = Question.objects.get(
+                            personal_assignment=personal_assignment,
+                            number=question.number + 1,
+                            recalled_num=0,
+                        )
+                    except Question.DoesNotExist:
+                        logger.info(
+                            f"[AnswerSubmitView] 다음 base Question이 존재하지 않음 - PersonalAssignment ID: {personal_assignment.id}, Number: {question.number + 1}"
+                        )
+                        tail_question_obj = None
 
                 # Step 6: 응답 데이터 준비
                 # TailQuestionSerializer 사용
