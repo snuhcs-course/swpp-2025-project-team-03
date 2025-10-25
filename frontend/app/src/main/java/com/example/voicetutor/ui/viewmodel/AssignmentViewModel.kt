@@ -10,8 +10,11 @@ import com.example.voicetutor.ui.navigation.RecentAssignment
 import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.AssignmentSubmissionResult
 import com.example.voicetutor.data.network.CreateAssignmentRequest
+import com.example.voicetutor.data.network.CreateAssignmentResponse
+import com.example.voicetutor.data.network.S3UploadStatus
 import com.example.voicetutor.data.network.UpdateAssignmentRequest
 import com.example.voicetutor.data.repository.AssignmentRepository
+import java.io.File
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,6 +55,20 @@ class AssignmentViewModel @Inject constructor(
     
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+    
+    // PDF 업로드 관련 상태
+    private val _uploadProgress = MutableStateFlow(0f)
+    val uploadProgress: StateFlow<Float> = _uploadProgress.asStateFlow()
+    
+    private val _isUploading = MutableStateFlow(false)
+    val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
+    
+    private val _uploadSuccess = MutableStateFlow(false)
+    val uploadSuccess: StateFlow<Boolean> = _uploadSuccess.asStateFlow()
+    
+    // S3 업로드 상태
+    private val _s3UploadStatus = MutableStateFlow<S3UploadStatus?>(null)
+    val s3UploadStatus: StateFlow<S3UploadStatus?> = _s3UploadStatus.asStateFlow()
     
     // 학생별 통계
     private val _studentStats = MutableStateFlow<StudentStats?>(null)
@@ -150,14 +167,73 @@ class AssignmentViewModel @Inject constructor(
             _error.value = null
             
             assignmentRepository.createAssignment(assignment)
-                .onSuccess { newAssignment ->
-                    _currentAssignment.value = newAssignment
+                .onSuccess { createResponse ->
+                    // CreateAssignmentResponse를 받았으므로 AssignmentData로 변환 필요
+                    // TODO: 실제로는 createResponse에서 AssignmentData를 생성해야 함
                     // Refresh assignments list
                     loadAllAssignments()
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
                 }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File) {
+        println("=== AssignmentViewModel.createAssignmentWithPdf 시작 ===")
+        println("PDF 파일: ${pdfFile.name}")
+        println("파일 크기: ${pdfFile.length()} bytes")
+        println("파일 존재: ${pdfFile.exists()}")
+        
+        viewModelScope.launch {
+            _isLoading.value = true
+            _isUploading.value = true
+            _error.value = null
+            _uploadProgress.value = 0f
+            _uploadSuccess.value = false
+            
+            try {
+                println("1단계: 과제 생성 요청 시작")
+                // 1. 과제 생성 (S3 업로드 URL 받기)
+                assignmentRepository.createAssignment(assignment)
+                    .onSuccess { createResponse ->
+                        println("✅ 과제 생성 성공")
+                        println("과제 ID: ${createResponse.assignment_id}")
+                        println("자료 ID: ${createResponse.material_id}")
+                        println("S3 키: ${createResponse.s3_key}")
+                        println("업로드 URL: ${createResponse.upload_url}")
+                        _uploadProgress.value = 0.3f
+                        
+                        println("2단계: S3 업로드 시작")
+                        // 2. PDF 파일을 S3에 업로드
+                        assignmentRepository.uploadPdfToS3(createResponse.upload_url, pdfFile)
+                            .onSuccess {
+                                println("✅ S3 업로드 성공")
+                                _uploadProgress.value = 1f
+                                _uploadSuccess.value = true
+                                _isUploading.value = false
+                                
+                                // Refresh assignments list
+                                loadAllAssignments()
+                            }
+                            .onFailure { uploadException ->
+                                println("❌ S3 업로드 실패: ${uploadException.message}")
+                                _error.value = "PDF 업로드 실패: ${uploadException.message}"
+                                _isUploading.value = false
+                            }
+                    }
+                    .onFailure { createException ->
+                        println("❌ 과제 생성 실패: ${createException.message}")
+                        _error.value = "과제 생성 실패: ${createException.message}"
+                        _isUploading.value = false
+                    }
+            } catch (e: Exception) {
+                println("❌ 예상치 못한 오류: ${e.message}")
+                _error.value = "예상치 못한 오류: ${e.message}"
+                _isUploading.value = false
+            }
             
             _isLoading.value = false
         }
@@ -304,5 +380,39 @@ class AssignmentViewModel @Inject constructor(
     
     fun setInitialAssignments(assignments: List<AssignmentData>) {
         _assignments.value = assignments
+    }
+    
+    fun resetUploadState() {
+        _uploadProgress.value = 0f
+        _isUploading.value = false
+        _uploadSuccess.value = false
+    }
+    
+    fun checkS3UploadStatus(assignmentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            assignmentRepository.checkS3Upload(assignmentId)
+                .onSuccess { status ->
+                    _s3UploadStatus.value = status
+                    println("=== S3 업로드 상태 확인 ===")
+                    println("과제 ID: ${status.assignment_id}")
+                    println("자료 ID: ${status.material_id}")
+                    println("S3 키: ${status.s3_key}")
+                    println("파일 존재: ${status.file_exists}")
+                    if (status.file_exists) {
+                        println("파일 크기: ${status.file_size} bytes")
+                        println("Content-Type: ${status.content_type}")
+                        println("마지막 수정: ${status.last_modified}")
+                    }
+                    println("버킷: ${status.bucket}")
+                }
+                .onFailure { exception ->
+                    _error.value = "S3 확인 실패: ${exception.message}"
+                }
+            
+            _isLoading.value = false
+        }
     }
 }

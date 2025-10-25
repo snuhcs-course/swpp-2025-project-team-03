@@ -29,7 +29,7 @@ interface ApiService {
     suspend fun getAssignmentById(@Path("id") id: Int): Response<ApiResponse<AssignmentData>>
   
     @POST("assignments/create/")
-    suspend fun createAssignment(@Body assignment: CreateAssignmentRequest): Response<ApiResponse<AssignmentData>>
+    suspend fun createAssignment(@Body assignment: CreateAssignmentRequest): Response<ApiResponse<CreateAssignmentResponse>>
     
     @PUT("assignments/{id}/")
     suspend fun updateAssignment(@Path("id") id: Int, @Body assignment: UpdateAssignmentRequest): Response<ApiResponse<AssignmentData>>
@@ -97,6 +97,9 @@ interface ApiService {
     @GET("assignments/{id}/questions/")
     suspend fun getAssignmentQuestions(@Path("id") id: Int): Response<ApiResponse<List<QuestionData>>>
     
+    @GET("assignments/{assignment_id}/s3-check/")
+    suspend fun checkS3Upload(@Path("assignment_id") assignmentId: Int): Response<ApiResponse<S3UploadStatus>>
+    
     // Dashboard APIs (Backend: /api/feedbacks/dashboard/stats/)
     @GET("feedbacks/dashboard/stats/")
     suspend fun getDashboardStats(
@@ -159,6 +162,24 @@ data class CreateAssignmentRequest(
     val type: String,
     val description: String?,
     val questions: List<QuestionData>?
+)
+
+data class CreateAssignmentResponse(
+    @SerializedName("assignment_id") val assignment_id: Int,
+    @SerializedName("material_id") val material_id: Int,
+    @SerializedName("s3_key") val s3_key: String,
+    @SerializedName("upload_url") val upload_url: String
+)
+
+data class S3UploadStatus(
+    @SerializedName("assignment_id") val assignment_id: Int,
+    @SerializedName("material_id") val material_id: Int,
+    @SerializedName("s3_key") val s3_key: String,
+    @SerializedName("file_exists") val file_exists: Boolean,
+    @SerializedName("file_size") val file_size: Long?,
+    @SerializedName("content_type") val content_type: String?,
+    @SerializedName("last_modified") val last_modified: String?,
+    @SerializedName("bucket") val bucket: String
 )
 
 data class CreateClassRequest(
