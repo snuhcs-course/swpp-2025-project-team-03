@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from questions.models import Question
 from questions.serializers import TailQuestionSerializer
@@ -34,6 +35,22 @@ class PersonalAssignmentListView(APIView):
     @swagger_auto_schema(
         operation_id="개인 과제 목록 조회",
         operation_description="학생 개인 과제 목록을 조회합니다. assignment_id 또는 student_id로 필터링 가능합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                name="assignment_id",
+                in_=openapi.IN_QUERY,
+                description="과제 ID",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                name="student_id",
+                in_=openapi.IN_QUERY,
+                description="학생 ID",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+        ],
         responses={200: PersonalAssignmentSerializer(many=True)},
     )
     def get(self, request):

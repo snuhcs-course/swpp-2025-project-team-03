@@ -35,6 +35,18 @@ class StudentListView(APIView):  # GET /students
     @swagger_auto_schema(
         operation_id="학생 목록 조회",
         operation_description="전체 학생 목록을 조회합니다. teacherId, classId로 필터링 가능합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                name="teacherId",
+                in_=openapi.IN_QUERY,
+                description="선생님 ID",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                name="classId", in_=openapi.IN_QUERY, description="클래스 ID", type=openapi.TYPE_STRING, required=False
+            ),
+        ],
         responses={200: "Student list"},
     )
     def get(self, request):
@@ -237,6 +249,15 @@ class ClassListView(APIView):  # GET, POST /classes
     @swagger_auto_schema(
         operation_id="클래스 목록 조회",
         operation_description="전체 클래스 목록을 조회합니다. teacherId로 필터링 가능합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                name="teacherId",
+                in_=openapi.IN_QUERY,
+                description="선생님 ID",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
         responses={200: "Class list"},
     )
     def get(self, request):
