@@ -4,18 +4,16 @@ from .views import (
     ClassDetailView,
     ClassListView,
     ClassStudentsView,
-    StudentAssignmentsView,
     StudentDetailView,
     StudentListView,
-    StudentProgressView,
+    StudentStatisticsView,
 )
 
 urlpatterns = [
     # Student APIs
     path("students/", StudentListView.as_view(), name="student-list"),
     path("students/<int:id>/", StudentDetailView.as_view(), name="student-detail"),
-    path("students/<int:id>/assignments/", StudentAssignmentsView.as_view(), name="student-assignments"),
-    path("students/<int:id>/progress/", StudentProgressView.as_view(), name="student-progress"),
+    path("students/<int:id>/statistics/", StudentStatisticsView.as_view(), name="student-statistics"),
     # Class APIs
     path("classes/", ClassListView.as_view(), name="class-list"),
     path("classes/<int:id>/", ClassDetailView.as_view(), name="class-detail"),
