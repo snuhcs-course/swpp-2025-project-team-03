@@ -226,7 +226,7 @@ fun CreateAssignmentScreen(
                             onDismissRequest = { classSelectionExpanded = false }
                         ) {
                             classes.forEachIndexed { index, classData ->
-                                val className = "${classData.name} - ${classData.subject}"
+                                val className = "${classData.name} - ${classData.subject.name}"
                                 DropdownMenuItem(
                                     text = { 
                                         Text(
@@ -834,8 +834,9 @@ fun CreateAssignmentScreen(
                     val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest(
                         title = assignmentTitle,
                         subject = selectedSubject,
-                        classId = selectedClassId!!,
-                        dueDate = dueDate,
+                        class_id = selectedClassId!!,
+                        due_at = dueDate,
+                        grade = selectedGrade,
                         type = "Quiz",  // PDF 과제는 항상 Quiz 타입
                         description = assignmentDescription,
                         questions = sampleQuestions
