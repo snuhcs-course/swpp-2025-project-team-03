@@ -8,6 +8,7 @@ from courses.models import CourseClass, Enrollment
 from dateutil import parser
 from django.conf import settings
 from django.utils import timezone
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
@@ -30,6 +31,20 @@ class AssignmentListView(APIView):  # GET /assignments
     @swagger_auto_schema(
         operation_id="과제 목록 조회",
         operation_description="모든 과제를 조회합니다. teacherId, classId로 필터링 가능합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                name="teacherId",
+                in_=openapi.IN_QUERY,
+                description="필터링할 교사 ID",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                name="classId",
+                in_=openapi.IN_QUERY,
+                description="필터링할 클래스 ID",
+                type=openapi.TYPE_INTEGER,
+            ),
+        ],
         responses={200: "Assignment list"},
     )
     def get(self, request):
