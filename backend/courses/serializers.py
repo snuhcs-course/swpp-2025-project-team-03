@@ -80,3 +80,19 @@ class CourseClassSerializer(serializers.ModelSerializer):
 
     def get_student_count(self, obj):
         return obj.enrollments.filter(status=Enrollment.Status.ENROLLED).count()
+
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    """등록 정보를 위한 serializer"""
+
+    student_name = serializers.CharField(source="student.display_name", read_only=True)
+    class_name = serializers.CharField(source="course_class.name", read_only=True)
+
+    class Meta:
+        model = Enrollment
+        fields = [
+            "id",
+            "student_name",
+            "class_name",
+            "status",
+        ]

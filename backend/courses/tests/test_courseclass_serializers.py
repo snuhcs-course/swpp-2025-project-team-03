@@ -253,3 +253,79 @@ class TestCourseClassSerializerValidation:
 
         # subject가 None이어야 함
         assert data["subject"] is None
+
+
+class TestEnrollmentSerializer:
+    """Enrollment Serializer 테스트"""
+
+    @pytest.fixture
+    def enrollment(self, student, course_class):
+        return EnrollmentFactory(student=student, course_class=course_class)
+
+    def test_serialize_enrollment(self, enrollment):
+        """Enrollment 직렬화 테스트"""
+        from courses.serializers import EnrollmentSerializer
+
+        serializer = EnrollmentSerializer(enrollment)
+        data = serializer.data
+
+        assert data["id"] == enrollment.id
+        assert data["student_name"] == enrollment.student.display_name
+        assert data["class_name"] == enrollment.course_class.name
+        assert data["status"] == enrollment.status
+
+    def test_serialize_enrollment_read_only_fields(self, enrollment):
+        """Enrollment의 read_only 필드 테스트"""
+        from courses.serializers import EnrollmentSerializer
+
+        serializer = EnrollmentSerializer(enrollment)
+        data = serializer.data
+
+        # student_name과 class_name은 read_only
+        assert data["student_name"] == enrollment.student.display_name
+        assert data["class_name"] == enrollment.course_class.name
+
+    def test_serialize_multiple_enrollments(self, student, course_class):
+        """여러 Enrollment 직렬화 테스트"""
+        from courses.serializers import EnrollmentSerializer
+
+        enrollment1 = EnrollmentFactory(student=student, course_class=course_class)
+        enrollment2 = EnrollmentFactory(
+            student=StudentFactory(),
+            course_class=CourseClassFactory(teacher=TeacherFactory(), subject=SubjectFactory()),
+        )
+
+        enrollments = [enrollment1, enrollment2]
+        serializer = EnrollmentSerializer(enrollments, many=True)
+        data = serializer.data
+
+        assert len(data) == 2
+        assert data[0]["id"] == enrollment1.id
+        assert data[1]["id"] == enrollment2.id
+
+    def test_enrollment_status_choices(self, enrollment):
+        """Enrollment status가 올바른 값인지 테스트"""
+        from courses.serializers import EnrollmentSerializer
+
+        serializer = EnrollmentSerializer(enrollment)
+        data = serializer.data
+
+        # status가 Enrollment.Status에 정의된 값 중 하나여야 함
+        assert data["status"] in [status.value for status in Enrollment.Status]
+
+    def test_enrollment_with_different_statuses(self, student, course_class):
+        """다양한 status를 가진 Enrollment 직렬화 테스트"""
+        from courses.serializers import EnrollmentSerializer
+
+        enrollment_enrolled = EnrollmentFactory(
+            student=student, course_class=course_class, status=Enrollment.Status.ENROLLED
+        )
+        enrollment_dropped = EnrollmentFactory(
+            student=StudentFactory(), course_class=course_class, status=Enrollment.Status.DROPPED
+        )
+
+        serializer_enrolled = EnrollmentSerializer(enrollment_enrolled)
+        serializer_dropped = EnrollmentSerializer(enrollment_dropped)
+
+        assert serializer_enrolled.data["status"] == Enrollment.Status.ENROLLED
+        assert serializer_dropped.data["status"] == Enrollment.Status.DROPPED
