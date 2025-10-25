@@ -25,8 +25,16 @@ class TailQuestionSerializer(serializers.Serializer):
     """생성된 개별 문항 정보 (Tail Question)"""
 
     is_correct = serializers.BooleanField(help_text="학생의 답변이 정답인지 여부")
+    number_str = serializers.SerializerMethodField(help_text="문항 번호 문자열 (예: '3' 또는 '3-1')")
+
     tail_question = QuestionSerializer(
         help_text="Tail Question 정보. 꼬리 질문이 없으면 null일 수 있습니다.",
         required=False,  # 필수가 아님
         allow_null=True,  # null 값 허용
     )
+
+    def get_number_str(self, obj):
+        if obj.recalled_num == 0:
+            return f"{obj.number}"
+        else:
+            return f"{obj.number}-{obj.recalled_num}"
