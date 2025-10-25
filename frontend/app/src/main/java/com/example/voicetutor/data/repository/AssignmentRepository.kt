@@ -4,6 +4,7 @@ import com.example.voicetutor.data.models.AssignmentData
 import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.data.models.QuestionData
 import com.example.voicetutor.data.models.StudentResult
+import com.example.voicetutor.data.models.PersonalAssignmentData
 import com.example.voicetutor.data.network.ApiService
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -60,6 +61,25 @@ class AssignmentRepository @Inject constructor(
             }
         } catch (e: Exception) {
             println("AssignmentRepository - Exception: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getPersonalAssignments(studentId: Int): Result<List<PersonalAssignmentData>> {
+        return try {
+            println("AssignmentRepository - Calling personal assignments API for student $studentId")
+            val response = apiService.getPersonalAssignments(studentId = studentId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val personalAssignments = response.body()?.data ?: emptyList()
+                println("AssignmentRepository - Personal assignments API returned ${personalAssignments.size} assignments")
+                Result.success(personalAssignments)
+            } else {
+                println("AssignmentRepository - Personal assignments API error: ${response.body()?.error}")
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            println("AssignmentRepository - Personal assignments Exception: ${e.message}")
             Result.failure(e)
         }
     }

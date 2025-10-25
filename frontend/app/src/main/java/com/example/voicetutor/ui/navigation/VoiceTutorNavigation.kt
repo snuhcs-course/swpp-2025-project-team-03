@@ -138,8 +138,8 @@ fun VoiceTutorNavigation(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
                     dashboardViewModel = dashboardViewModel,
-                    onNavigateToAllAssignments = {
-                        navController.navigate(VoiceTutorScreens.AllAssignments.route)
+                    onNavigateToAllAssignments = { studentId ->
+                        navController.navigate(VoiceTutorScreens.AllAssignments.createRoute(studentId))
                     },
                     onNavigateToProgressReport = {
                         navController.navigate(VoiceTutorScreens.Progress.route)
@@ -311,12 +311,21 @@ fun VoiceTutorNavigation(
             }
         }
         
-        composable(VoiceTutorScreens.AllAssignments.route) {
+        composable(
+            route = VoiceTutorScreens.AllAssignments.route,
+            arguments = listOf(
+                navArgument("studentId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val studentId = backStackEntry.arguments?.getInt("studentId")
             MainLayout(
                 navController = navController,
                 userRole = UserRole.STUDENT
             ) {
                 AllAssignmentsScreen(
+                    studentId = studentId,
                     onNavigateToAssignmentResults = { assignmentTitle ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentTitle))
                     },
@@ -796,7 +805,9 @@ sealed class VoiceTutorScreens(val route: String) {
     object TeacherStudents : VoiceTutorScreens("teacher_students/{classId}") {
         fun createRoute(classId: String) = "teacher_students/$classId"
     }
-    object AllAssignments : VoiceTutorScreens("all_assignments")
+    object AllAssignments : VoiceTutorScreens("all_assignments/{studentId}") {
+        fun createRoute(studentId: Int) = "all_assignments/$studentId"
+    }
     object AllStudents : VoiceTutorScreens("all_students")
     object CreateAssignment : VoiceTutorScreens("create_assignment")
     object EditAssignment : VoiceTutorScreens("edit_assignment/{title}") {

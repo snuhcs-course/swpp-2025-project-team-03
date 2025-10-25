@@ -41,7 +41,7 @@ fun StudentDashboardScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
-    onNavigateToAllAssignments: () -> Unit = {},
+    onNavigateToAllAssignments: (Int) -> Unit = {},
     onNavigateToProgressReport: () -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
@@ -163,7 +163,11 @@ fun StudentDashboardScreen(
                         value = studentStats?.totalAssignments?.toString() ?: "0",
                         icon = Icons.Filled.List,
                         iconColor = PrimaryIndigo,
-                        onClick = onNavigateToAllAssignments,
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToAllAssignments(studentId)
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     )
                     
@@ -203,7 +207,11 @@ fun StudentDashboardScreen(
                     
                     VTButton(
                         text = "전체 보기",
-                        onClick = onNavigateToAllAssignments,
+                        onClick = { 
+                            currentUser?.id?.let { studentId ->
+                                onNavigateToAllAssignments(studentId)
+                            }
+                        },
                         variant = ButtonVariant.Ghost,
                         size = ButtonSize.Small
                     )
@@ -245,11 +253,20 @@ fun StudentDashboardScreen(
                     }
                 } else {
                     assignments.forEachIndexed { index, assignment ->
+                        // Personal assignment의 진행률 계산
+                        val progress = if (assignment.totalQuestions > 0) {
+                            // TODO: 실제로는 PersonalAssignment의 solved_num을 사용해야 하지만,
+                            // 현재는 AssignmentData에 해당 정보가 없으므로 임시로 계산
+                            0.3f // 임시 진행률
+                        } else {
+                            0f
+                        }
+                        
                         StudentAssignmentCard(
                             title = assignment.title,
                             subject = assignment.courseClass.subject.name,
                             dueDate = formatDueDate(assignment.dueAt),
-                            progress = 0.3f, // 임시로 진행률 설정
+                            progress = progress,
                             onClick = { onNavigateToAssignmentDetail(assignment.title) }
                         )
                         

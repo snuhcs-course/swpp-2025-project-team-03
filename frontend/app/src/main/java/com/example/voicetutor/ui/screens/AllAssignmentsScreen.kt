@@ -21,9 +21,23 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
+// 날짜 포맷 유틸 함수
+private fun formatDueDate(dueDate: String): String {
+    return try {
+        val zonedDateTime = ZonedDateTime.parse(dueDate)
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        zonedDateTime.format(formatter)
+    } catch (e: Exception) {
+        dueDate
+    }
+}
 
 @Composable
 fun AllAssignmentsScreen(
+    studentId: Int? = null,
     onNavigateToAssignmentResults: (String) -> Unit = {},
     onNavigateToEditAssignment: (String) -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {}
@@ -34,20 +48,39 @@ fun AllAssignmentsScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
+    var selectedPersonalFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
     
     // Load assignments on first composition
     LaunchedEffect(Unit) {
-        viewModel.loadAllAssignments()
+        if (studentId != null) {
+            // 학생의 개인 과제를 필터링 없이 로드 (ALL 필터와 동일)
+            viewModel.loadStudentAssignments(studentId)
+        } else {
+            // 모든 과제 로드 (교사용)
+            viewModel.loadAllAssignments()
+        }
     }
     
-    // Handle filter changes
-    LaunchedEffect(selectedFilter) {
-        val status = when (selectedFilter) {
-            AssignmentFilter.ALL -> null
-            AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
-            AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
+    // Handle filter changes for students
+    LaunchedEffect(selectedPersonalFilter) {
+        if (studentId != null) {
+            println("AllAssignmentsScreen - Filter changed to: $selectedPersonalFilter for student: $studentId")
+            // 학생의 개인 과제는 personal assignment 상태로 필터링
+            viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, selectedPersonalFilter)
         }
-        viewModel.loadAllAssignments(status = status)
+    }
+    
+    // Handle filter changes for teachers
+    LaunchedEffect(selectedFilter) {
+        if (studentId == null) {
+            // 교사용: 상태별 필터링
+            val status = when (selectedFilter) {
+                AssignmentFilter.ALL -> null
+                AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
+                AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
+            }
+            viewModel.loadAllAssignments(status = status)
+        }
     }
     
     // Handle error
@@ -84,30 +117,65 @@ fun AllAssignmentsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            FilterChip(
-                selected = selectedFilter == AssignmentFilter.ALL,
-                onClick = { selectedFilter = AssignmentFilter.ALL },
-                label = { Text("전체") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.List,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
-            
-            FilterChip(
-                selected = selectedFilter == AssignmentFilter.IN_PROGRESS,
-                onClick = { selectedFilter = AssignmentFilter.IN_PROGRESS },
-                label = { Text("진행중") }
-            )
-            
-            FilterChip(
-                selected = selectedFilter == AssignmentFilter.COMPLETED,
-                onClick = { selectedFilter = AssignmentFilter.COMPLETED },
-                label = { Text("완료") }
-            )
+            if (studentId != null) {
+                // 학생용 필터링 버튼 (Personal Assignment 상태 기반)
+                FilterChip(
+                    selected = selectedPersonalFilter == PersonalAssignmentFilter.ALL,
+                    onClick = { selectedPersonalFilter = PersonalAssignmentFilter.ALL },
+                    label = { Text("전체") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.List,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
+                
+                FilterChip(
+                    selected = selectedPersonalFilter == PersonalAssignmentFilter.NOT_STARTED,
+                    onClick = { selectedPersonalFilter = PersonalAssignmentFilter.NOT_STARTED },
+                    label = { Text("시작 안함") }
+                )
+                
+                FilterChip(
+                    selected = selectedPersonalFilter == PersonalAssignmentFilter.IN_PROGRESS,
+                    onClick = { selectedPersonalFilter = PersonalAssignmentFilter.IN_PROGRESS },
+                    label = { Text("진행 중") }
+                )
+                
+                FilterChip(
+                    selected = selectedPersonalFilter == PersonalAssignmentFilter.SUBMITTED,
+                    onClick = { selectedPersonalFilter = PersonalAssignmentFilter.SUBMITTED },
+                    label = { Text("제출 완료") }
+                )
+            } else {
+                // 교사용 필터링 버튼 (기존 AssignmentFilter 사용)
+                FilterChip(
+                    selected = selectedFilter == AssignmentFilter.ALL,
+                    onClick = { selectedFilter = AssignmentFilter.ALL },
+                    label = { Text("전체") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.List,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
+                
+                FilterChip(
+                    selected = selectedFilter == AssignmentFilter.IN_PROGRESS,
+                    onClick = { selectedFilter = AssignmentFilter.IN_PROGRESS },
+                    label = { Text("진행중") }
+                )
+                
+                FilterChip(
+                    selected = selectedFilter == AssignmentFilter.COMPLETED,
+                    onClick = { selectedFilter = AssignmentFilter.COMPLETED },
+                    label = { Text("완료") }
+                )
+            }
         }
         
         // Loading indicator
@@ -183,9 +251,25 @@ fun AssignmentCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        StatusBadge(status = AssignmentStatus.IN_PROGRESS) // 기본값으로 설정
-                        Spacer(modifier = Modifier.width(8.dp))
-                        TypeBadge(type = "Quiz") // 기본값으로 설정
+                        // Personal Assignment 상태에 따른 StatusBadge 표시
+                        val statusToShow = assignment.personalAssignmentStatus?.let { personalStatus ->
+                            when (personalStatus) {
+                                PersonalAssignmentStatus.NOT_STARTED -> AssignmentStatus.IN_PROGRESS // "시작 안함"을 "진행중"으로 표시
+                                PersonalAssignmentStatus.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
+                                PersonalAssignmentStatus.SUBMITTED -> AssignmentStatus.COMPLETED
+                            }
+                        } ?: AssignmentStatus.IN_PROGRESS // 기본값
+                        
+                        // 커스텀 상태 표시
+                        val statusText = assignment.personalAssignmentStatus?.let { personalStatus ->
+                            when (personalStatus) {
+                                PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
+                                PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
+                                PersonalAssignmentStatus.SUBMITTED -> "완료"
+                            }
+                        } ?: "진행 중"
+                        
+                        CustomStatusBadge(text = statusText)
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -198,13 +282,7 @@ fun AssignmentCard(
                     )
                     
                     Text(
-                        text = "${assignment.courseClass.subject.name} • ${assignment.courseClass.name}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-                    
-                    Text(
-                        text = "마감: ${assignment.dueAt}",
+                        text = "마감: ${formatDueDate(assignment.dueAt)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray500
                     )
@@ -272,6 +350,30 @@ fun AssignmentCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CustomStatusBadge(text: String) {
+    val (color) = when (text) {
+        "시작 안함" -> PrimaryIndigo
+        "진행 중" -> Warning
+        "완료" -> Success
+        else -> Gray500
+    }
+    
+    Box(
+        modifier = Modifier
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+            .background(color.copy(alpha = 0.1f))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = color,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 

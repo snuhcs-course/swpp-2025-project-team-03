@@ -55,6 +55,13 @@ interface ApiService {
     @GET("courses/students/{id}/assignments/")
     suspend fun getStudentAssignments(@Path("id") id: Int): Response<ApiResponse<List<AssignmentData>>>
     
+    // Personal Assignment APIs (Backend: /api/personal_assignments/)
+    @GET("personal_assignments/")
+    suspend fun getPersonalAssignments(
+        @Query("student_id") studentId: Int? = null,
+        @Query("assignment_id") assignmentId: Int? = null
+    ): Response<ApiResponse<List<PersonalAssignmentData>>>
+    
     @GET("courses/students/{id}/progress/")
     suspend fun getStudentProgress(@Path("id") id: Int): Response<ApiResponse<StudentProgress>>
     

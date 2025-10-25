@@ -20,6 +20,14 @@ enum class AssignmentFilter {
     COMPLETED
 }
 
+// Personal Assignment용 필터
+enum class PersonalAssignmentFilter {
+    ALL,           // 모든 과제
+    NOT_STARTED,   // 시작 안함
+    IN_PROGRESS,   // 진행 중
+    SUBMITTED      // 제출 완료
+}
+
 data class AssignmentData(
     @SerializedName("id")
     val id: Int,
@@ -40,7 +48,10 @@ data class AssignmentData(
     @SerializedName("materials")
     val materials: List<Material>? = null,
     @SerializedName("grade")
-    val grade: String? = null
+    val grade: String? = null,
+    // Personal Assignment 관련 정보 (변환 시 추가)
+    val personalAssignmentStatus: PersonalAssignmentStatus? = null,
+    val solvedNum: Int? = null
 )
 
 data class CourseClass(
@@ -137,4 +148,55 @@ data class DetailedAnswer(
     val confidenceScore: Int,
     @SerializedName("responseTime")
     val responseTime: String
+)
+
+// Personal Assignment Models
+enum class PersonalAssignmentStatus {
+    @SerializedName("NOT_STARTED")
+    NOT_STARTED,
+    @SerializedName("IN_PROGRESS")
+    IN_PROGRESS,
+    @SerializedName("SUBMITTED")
+    SUBMITTED
+}
+
+data class PersonalAssignmentData(
+    @SerializedName("student")
+    val student: StudentInfo,
+    @SerializedName("assignment")
+    val assignment: PersonalAssignmentInfo,
+    @SerializedName("status")
+    val status: PersonalAssignmentStatus,
+    @SerializedName("solved_num")
+    val solvedNum: Int,
+    @SerializedName("started_at")
+    val startedAt: String? = null,
+    @SerializedName("submitted_at")
+    val submittedAt: String? = null
+)
+
+data class StudentInfo(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("email")
+    val email: String
+)
+
+data class PersonalAssignmentInfo(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("title")
+    val title: String,
+    @SerializedName("description")
+    val description: String? = null,
+    @SerializedName("total_questions")
+    val totalQuestions: Int,
+    @SerializedName("visible_from")
+    val visibleFrom: String? = null,
+    @SerializedName("due_at")
+    val dueAt: String,
+    @SerializedName("grade")
+    val grade: String? = null
 )
