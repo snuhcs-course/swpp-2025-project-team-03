@@ -781,19 +781,7 @@ class AssignmentViewModel @Inject constructor(
                     _answerSubmissionResponse.value = response
                     
                     println("AssignmentViewModel - Answer submitted successfully")
-                    
-                    // 답변 전송 성공 후 항상 다음 문제로 이동
-                    val totalQuestions = _personalAssignmentQuestions.value.size
-                    val currentIndex = _currentQuestionIndex.value
-                    
-                    if (currentIndex < totalQuestions - 1) {
-                        // 아직 풀어야 할 문제가 있으면 다음 문제로 이동
-                        _currentQuestionIndex.value = currentIndex + 1
-                        println("AssignmentViewModel - Moved to next question: ${_currentQuestionIndex.value}/${totalQuestions}")
-                    } else {
-                        // 모든 문제를 완료한 경우
-                        println("AssignmentViewModel - All questions completed")
-                    }
+                    println("AssignmentViewModel - isCorrect: ${response.isCorrect}, numberStr: ${response.numberStr}")
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
