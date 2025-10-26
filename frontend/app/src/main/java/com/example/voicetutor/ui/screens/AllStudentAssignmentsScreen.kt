@@ -48,20 +48,24 @@ fun AllStudentAssignmentsScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
+    var isInitialized by remember { mutableStateOf(false) }
     
-    // Load all student assignments on first composition
+    // Load all assignments on first composition
     LaunchedEffect(Unit) {
         viewModel.loadStudentAssignments(studentId)
+        isInitialized = true
     }
     
-    // Handle filter changes
+    // Load assignments based on filter changes (skip initial load)
     LaunchedEffect(selectedFilter) {
-        when (selectedFilter) {
-            PersonalAssignmentFilter.ALL -> viewModel.loadStudentAssignments(studentId)
-            PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
-            PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
-            PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
-            PersonalAssignmentFilter.GRADED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.GRADED)
+        if (isInitialized) {
+            when (selectedFilter) {
+                PersonalAssignmentFilter.ALL -> viewModel.loadStudentAssignments(studentId)
+                PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
+                PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
+                PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
+                PersonalAssignmentFilter.GRADED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.GRADED)
+            }
         }
     }
     
@@ -207,24 +211,24 @@ fun StudentAssignmentCard(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    // Subject badge
+                    Box(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                            .background(PrimaryIndigo.copy(alpha = 0.1f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        // Personal Assignment 상태에 따른 커스텀 상태 표시
-                        val statusText = assignment.personalAssignmentStatus?.let { personalStatus ->
-                            when (personalStatus) {
-                                PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
-                                PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
-                                PersonalAssignmentStatus.SUBMITTED -> "제출됨"
-                                PersonalAssignmentStatus.GRADED -> "완료"
-                            }
-                        } ?: "알 수 없음"
-                        
-                        CustomStatusBadge(text = statusText)
+                        Text(
+                            text = assignment.courseClass.subject.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = PrimaryIndigo,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
+                    // Assignment title
                     Text(
                         text = assignment.title,
                         style = MaterialTheme.typography.titleMedium,
@@ -232,6 +236,16 @@ fun StudentAssignmentCard(
                         color = Gray800
                     )
                     
+                    // Class info
+                    Text(
+                        text = assignment.courseClass.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Due date
                     Text(
                         text = "마감: ${formatDueDate(assignment.dueAt)}",
                         style = MaterialTheme.typography.bodySmall,
@@ -242,6 +256,67 @@ fun StudentAssignmentCard(
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
+                    // Status badge
+                    Box(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                            .background(
+                                when (assignment.personalAssignmentStatus) {
+                                    PersonalAssignmentStatus.NOT_STARTED -> Gray400.copy(alpha = 0.1f)
+                                    PersonalAssignmentStatus.IN_PROGRESS -> PrimaryIndigo.copy(alpha = 0.1f)
+                                    PersonalAssignmentStatus.SUBMITTED -> Warning.copy(alpha = 0.1f)
+                                    PersonalAssignmentStatus.GRADED -> Success.copy(alpha = 0.1f)
+                                    null -> Gray400.copy(alpha = 0.1f)
+                                }
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = when (assignment.personalAssignmentStatus) {
+                                    PersonalAssignmentStatus.NOT_STARTED -> Icons.Filled.Schedule
+                                    PersonalAssignmentStatus.IN_PROGRESS -> Icons.Filled.PlayArrow
+                                    PersonalAssignmentStatus.SUBMITTED -> Icons.Filled.Upload
+                                    PersonalAssignmentStatus.GRADED -> Icons.Filled.CheckCircle
+                                    null -> Icons.Filled.Help
+                                },
+                                contentDescription = null,
+                                tint = when (assignment.personalAssignmentStatus) {
+                                    PersonalAssignmentStatus.NOT_STARTED -> Gray400
+                                    PersonalAssignmentStatus.IN_PROGRESS -> PrimaryIndigo
+                                    PersonalAssignmentStatus.SUBMITTED -> Warning
+                                    PersonalAssignmentStatus.GRADED -> Success
+                                    null -> Gray400
+                                },
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = when (assignment.personalAssignmentStatus) {
+                                    PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
+                                    PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
+                                    PersonalAssignmentStatus.SUBMITTED -> "제출됨"
+                                    PersonalAssignmentStatus.GRADED -> "완료"
+                                    null -> "알 수 없음"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = when (assignment.personalAssignmentStatus) {
+                                    PersonalAssignmentStatus.NOT_STARTED -> Gray400
+                                    PersonalAssignmentStatus.IN_PROGRESS -> PrimaryIndigo
+                                    PersonalAssignmentStatus.SUBMITTED -> Warning
+                                    PersonalAssignmentStatus.GRADED -> Success
+                                    null -> Gray400
+                                },
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Question count
                     Text(
                         text = "${assignment.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,

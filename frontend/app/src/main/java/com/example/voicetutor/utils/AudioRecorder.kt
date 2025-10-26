@@ -1,12 +1,14 @@
 package com.example.voicetutor.utils
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Environment
+import android.provider.MediaStore
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.*
 import java.io.File
@@ -55,18 +57,32 @@ class AudioRecorder(private val context: Context) {
         try {
             println("AudioRecorder - Creating AudioRecord instance")
             audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION, // 더 적합한 오디오 소스 사용
                 sampleRate,
                 channelConfig,
                 audioFormat,
-                bufferSize
+                bufferSize * 2 // 버퍼 크기 증가
             )
             
             println("AudioRecorder - AudioRecord state: ${audioRecord?.state}")
             
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                println("AudioRecorder - AudioRecord not initialized properly")
-                return false
+                println("AudioRecorder - AudioRecord not initialized properly, trying MIC source")
+                audioRecord?.release()
+                
+                // 대체 오디오 소스 시도
+                audioRecord = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    channelConfig,
+                    audioFormat,
+                    bufferSize * 2
+                )
+                
+                if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+                    println("AudioRecorder - Failed to initialize AudioRecord")
+                    return false
+                }
             }
             
             println("AudioRecorder - Starting recording")
@@ -79,17 +95,19 @@ class AudioRecorder(private val context: Context) {
             println("AudioRecorder - Starting recording job")
             // 녹음 시작
             recordingJob = CoroutineScope(Dispatchers.IO).launch {
-                val buffer = ByteArray(bufferSize)
+                val buffer = ByteArray(bufferSize * 2)
                 var duration = 0
                 
                 while (isRecording && audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                    val bytesRead = audioRecord?.read(buffer, 0, bufferSize) ?: 0
+                    val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (bytesRead > 0) {
                         audioData.add(buffer.copyOf(bytesRead))
                         duration += (bytesRead * 1000) / (sampleRate * 2) // 대략적인 시간 계산
                         onDurationChanged?.invoke(duration / 1000) // 초 단위로 전달
                     }
                 }
+                
+                println("AudioRecorder - Recording finished. Total audio data chunks: ${audioData.size}, Total bytes: ${audioData.sumOf { it.size }}")
             }
             
             println("AudioRecorder - Recording started successfully")
@@ -131,10 +149,30 @@ class AudioRecorder(private val context: Context) {
             }
             
             outputStream.close()
+            
+            // MediaStore에 추가하여 일반 파일 관리자에서 접근 가능하게 함
+            addToMediaStore(audioFile)
+            
             audioFile.absolutePath
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+    
+    private fun addToMediaStore(audioFile: File) {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Audio.Media.DISPLAY_NAME, audioFile.name)
+            put(MediaStore.Audio.Media.MIME_TYPE, "audio/wav")
+            put(MediaStore.Audio.Media.RELATIVE_PATH, Environment.DIRECTORY_MUSIC + "/VoiceTutor")
+        }
+        
+        context.contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues)?.let { uri ->
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                audioFile.inputStream().use { inputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
         }
     }
     

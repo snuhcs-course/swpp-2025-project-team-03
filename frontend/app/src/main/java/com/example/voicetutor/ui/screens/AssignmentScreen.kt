@@ -121,6 +121,9 @@ fun AssignmentContinuousScreen(
     var showResult by remember { mutableStateOf(false) }
     var isAnswerCorrect by remember { mutableStateOf(false) }
     var currentQuestionAnswer by remember { mutableStateOf("") }
+    var currentTailQuestionNumber by remember { mutableStateOf<String?>(null) }
+    var lastProcessedQuestionIndex by remember { mutableStateOf(-1) }
+    var savedTailQuestion by remember { mutableStateOf<com.example.voicetutor.data.models.TailQuestion?>(null) }
     
     // 권한 요청 런처
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -134,23 +137,24 @@ fun AssignmentContinuousScreen(
         }
     }
     
+    // 현재 문제 가져오기
+    val currentQuestion = viewModel.getCurrentQuestion()
+    
     // Personal Assignment ID를 사용하여 문제 로드 (assignmentId가 변경될 때만 실행)
     LaunchedEffect(assignmentId) {
         println("AssignmentScreen - Loading questions for assignment ID: $assignmentId")
         viewModel.loadPersonalAssignmentQuestions(assignmentId)
     }
     
-    // 현재 문제 가져오기
-    val currentQuestion = viewModel.getCurrentQuestion()
-    
-    // 현재 질문이 변경될 때마다 정답 저장 및 응답 결과 초기화
-    LaunchedEffect(currentQuestionIndex) {
+    // 초기 질문의 정답 설정
+    LaunchedEffect(currentQuestion) {
         currentQuestion?.let {
-            currentQuestionAnswer = it.answer
-            showResult = false
-            viewModel.clearAnswerSubmissionResponse()
+            if (currentTailQuestionNumber == null) {
+                currentQuestionAnswer = it.answer
+            }
         }
     }
+    
     
     // 응답 결과 처리 - 한 번만 실행되도록 함
     LaunchedEffect(answerSubmissionResponse) {
@@ -159,7 +163,25 @@ fun AssignmentContinuousScreen(
             if (!showResult) {
                 isAnswerCorrect = response.isCorrect
                 showResult = true
+                
+                // numberStr이 하이픈을 포함하면 꼬리 질문, 아니면 다음 기본 질문
+                val isTailQuestion = response.numberStr?.contains("-") == true
+                
+                if (isTailQuestion) {
+                    // 꼬리 질문인 경우
+                    currentTailQuestionNumber = response.numberStr
+                    savedTailQuestion = response.tailQuestion
+                    println("AssignmentScreen - This is a tail question: ${response.numberStr}")
+                } else {
+                    // 다음 기본 질문인 경우 (꼬리 질문에서 정답을 맞춘 경우)
+                    currentTailQuestionNumber = null
+                    savedTailQuestion = null
+                    println("AssignmentScreen - Moving to next base question: ${response.numberStr}")
+                }
+                
                 println("AssignmentScreen - Answer result: isCorrect=${response.isCorrect}, numberStr=${response.numberStr}")
+                println("AssignmentScreen - isTailQuestion: $isTailQuestion")
+                println("AssignmentScreen - Saved tail question: ${response.tailQuestion?.question}")
             }
         }
     }
@@ -235,14 +257,13 @@ fun AssignmentContinuousScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Progress - base question만 카운트 (꼬리 질문은 진행률에 포함하지 않음)
-            val baseQuestionNumber = answerSubmissionResponse?.numberStr?.let { numberStr ->
-                if (numberStr.contains("-")) {
-                    // "1-1" -> 1 추출
-                    numberStr.split("-")[0].toIntOrNull() ?: currentQuestionIndex + 1
-                } else {
-                    numberStr.toIntOrNull() ?: currentQuestionIndex + 1
-                }
-            } ?: (currentQuestionIndex + 1)
+            val baseQuestionNumber = if (currentTailQuestionNumber != null) {
+                // 꼬리 질문이 있으면 기본 질문 번호 사용 (진행률 증가 없음)
+                currentQuestionIndex + 1
+            } else {
+                // 일반 질문이면 현재 질문 번호 사용
+                currentQuestionIndex + 1
+            }
             
             VTProgressBar(
                 progress = baseQuestionNumber.toFloat() / personalAssignmentQuestions.size.toFloat(),
@@ -264,29 +285,59 @@ fun AssignmentContinuousScreen(
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Question number - 응답 결과가 있으면 numberStr을 우선 사용
-                    val questionNumber = answerSubmissionResponse?.let { response ->
-                        response.numberStr?.let { numberStr ->
-                            if (numberStr.contains("-")) "꼬리 질문 $numberStr" else "질문 $numberStr"
+                    // Question number - showResult가 false일 때만 질문 번호 표시
+                    if (!showResult) {
+                        val questionNumber = currentTailQuestionNumber?.let { tailNumber ->
+                            if (tailNumber.contains("-")) "꼬리 질문 $tailNumber" else "질문 $tailNumber"
                         } ?: "질문 ${currentQuestion.number}"
-                    } ?: "질문 ${currentQuestion.number}"
+                        
+                        println("AssignmentScreen - Displaying question number: $questionNumber")
+                        println("AssignmentScreen - currentTailQuestionNumber: $currentTailQuestionNumber")
+                        println("AssignmentScreen - currentQuestion.number: ${currentQuestion.number}")
+                        
+                        Text(
+                            text = questionNumber,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = PrimaryIndigo,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     
-                    Text(
-                        text = questionNumber,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = PrimaryIndigo,
-                        fontWeight = FontWeight.Bold
-                    )
+                    // Question text - showResult가 false일 때만 질문 표시
+                    val response = answerSubmissionResponse
+                    val questionText = when {
+                        // 결과 화면이 아니라면
+                        !showResult -> {
+                            // 꼬리 질문 번호가 설정되어 있는 경우 (꼬리 질문으로 넘어간 상태)
+                            when {
+                                currentTailQuestionNumber != null -> {
+                                    // 저장된 꼬리 질문이나 응답의 꼬리 질문 표시
+                                    response?.tailQuestion?.question ?: savedTailQuestion?.question ?: currentQuestion.question
+                                }
+                                // 기본 질문 표시
+                                else -> currentQuestion.question
+                            }
+                        }
+                        // 결과 화면에서는 질문 표시하지 않음
+                        else -> ""
+                    }
                     
-                    // Question text - 꼬리 질문이 있으면 꼬리 질문 표시, 없으면 기본 질문 표시
-                    val questionText = answerSubmissionResponse?.tailQuestion?.question ?: currentQuestion.question
+                    println("AssignmentScreen - Displaying question text: $questionText")
+                    println("AssignmentScreen - showResult: $showResult")
+                    println("AssignmentScreen - currentTailQuestionNumber: $currentTailQuestionNumber")
+                    println("AssignmentScreen - tailQuestion exists: ${response?.tailQuestion != null}")
+                    println("AssignmentScreen - savedTailQuestion exists: ${savedTailQuestion != null}")
+                    println("AssignmentScreen - savedTailQuestion text: ${savedTailQuestion?.question}")
                     
-                    Text(
-                        text = questionText,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray800
-                    )
+                    // 질문 텍스트는 showResult가 false일 때만 표시
+                    if (!showResult && questionText.isNotEmpty()) {
+                        Text(
+                            text = questionText,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Gray800
+                        )
+                    }
                     
                     // 응답 결과 표시
                     if (showResult) {
@@ -298,8 +349,9 @@ fun AssignmentContinuousScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -309,33 +361,14 @@ fun AssignmentContinuousScreen(
                                         imageVector = if (isAnswerCorrect) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
                                         contentDescription = null,
                                         tint = if (isAnswerCorrect) Success else Error,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(32.dp)
                                     )
                                     Text(
                                         text = if (isAnswerCorrect) "정답입니다!" else "틀렸습니다",
-                                        style = MaterialTheme.typography.titleMedium,
+                                        style = MaterialTheme.typography.headlineSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isAnswerCorrect) Success else Error
                                     )
-                                }
-                                
-                                // 틀렸을 때 정답 표시 - 꼬리 질문이 있으면 꼬리 질문의 정답 표시
-                                if (!isAnswerCorrect) {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = "정답:",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Gray600
-                                        )
-                                        Text(
-                                            text = answerSubmissionResponse?.tailQuestion?.answer ?: currentQuestionAnswer,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = Gray800
-                                        )
-                                    }
                                 }
                             }
                         }
@@ -437,25 +470,54 @@ fun AssignmentContinuousScreen(
                         )
                     }
                     
-                    // Send button - 응답 결과가 있으면 "다음 문제" 버튼, 없으면 "전송" 버튼
+                    // Send button - 응답 결과에 따라 다른 버튼 표시
                     if (showResult) {
-                        // 다음 문제로 넘어가는 버튼
-                        VTButton(
-                            text = if (currentQuestionIndex < personalAssignmentQuestions.size - 1) "다음 문제" else "완료",
-                            onClick = {
-                                // 다음 문제로 이동 (마지막 문제가 아니면)
-                                if (currentQuestionIndex < personalAssignmentQuestions.size - 1) {
-                                    // 응답 결과 초기화
-                                    viewModel.clearAnswerSubmissionResponse()
+                        // 응답 결과가 있을 때
+                        // numberStr이 하이픈을 포함하는지 확인
+                        val response = answerSubmissionResponse
+                        val isTailQuestionNum = response?.numberStr?.contains("-") == true
+                        
+                        if (isAnswerCorrect || !isTailQuestionNum) {
+                            // 정답이거나, 오답이지만 다음 기본 질문으로 넘어가는 경우
+                            VTButton(
+                                text = if (currentQuestionIndex < personalAssignmentQuestions.size - 1) "다음 문제" else "완료",
+                                onClick = {
+                                    if (currentQuestionIndex < personalAssignmentQuestions.size - 1) {
+                                        // 다음 문제로 이동
+                                        viewModel.clearAnswerSubmissionResponse()
+                                        showResult = false
+                                        currentTailQuestionNumber = null
+                                        savedTailQuestion = null
+                                        lastProcessedQuestionIndex = -1
+                                        
+                                        // 다음 문제의 정답 설정
+                                        val nextQuestion = personalAssignmentQuestions[currentQuestionIndex + 1]
+                                        currentQuestionAnswer = nextQuestion.answer
+                                        
+                                        println("AssignmentScreen - Moving to next question")
+                                        viewModel.nextQuestion()
+                                    }
+                                },
+                                variant = ButtonVariant.Gradient,
+                                fullWidth = true
+                            )
+                        } else {
+                            // 오답이고 꼬리 질문인 경우
+                            VTButton(
+                                text = "꼬리질문으로 넘어가기",
+                                onClick = {
+                                    // 꼬리 질문 상태로 전환
+                                    // clearAnswerSubmissionResponse는 호출하지 않음 (tailQuestion 정보 유지)
                                     showResult = false
+                                    // currentTailQuestionNumber와 savedTailQuestion은 유지 (이미 설정됨)
                                     
-                                    // 다음 문제로 이동
-                                    viewModel.nextQuestion()
-                                }
-                            },
-                            variant = ButtonVariant.Gradient,
-                            fullWidth = true
-                        )
+                                    println("AssignmentScreen - Moving to tail question: $currentTailQuestionNumber")
+                                    println("AssignmentScreen - Saved tail question: ${savedTailQuestion?.question}")
+                                },
+                                variant = ButtonVariant.Gradient,
+                                fullWidth = true
+                            )
+                        }
                     } else {
                         // 전송 버튼
                         VTButton(
@@ -475,11 +537,24 @@ fun AssignmentContinuousScreen(
                                     val audioFile = File(audioRecordingState.audioFilePath)
                                     println("AssignmentScreen - Audio file exists: ${audioFile.exists()}")
                                     println("AssignmentScreen - Audio file size: ${audioFile.length()} bytes")
+                                    println("AssignmentScreen - Recording duration: ${audioRecordingState.recordingDuration} seconds")
                                     
                                     try {
+                                        // 꼬리 질문이면 꼬리 질문의 ID를, 아니면 현재 질문의 ID를 사용
+                                        val questionIdToSubmit = if (currentTailQuestionNumber != null && savedTailQuestion != null) {
+                                            savedTailQuestion!!.id
+                                        } else {
+                                            currentQuestion.id
+                                        }
+                                        
+                                        println("AssignmentScreen - Submitting answer with questionId: $questionIdToSubmit")
+                                        if (currentTailQuestionNumber != null) {
+                                            println("AssignmentScreen - This is a tail question submission: $currentTailQuestionNumber")
+                                        }
+                                        
                                         viewModel.submitAnswer(
                                             studentId = user.id,
-                                            questionId = currentQuestion.id,
+                                            questionId = questionIdToSubmit,
                                             audioFile = audioFile
                                         )
                                         

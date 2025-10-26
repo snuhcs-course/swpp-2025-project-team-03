@@ -34,7 +34,11 @@ class TailQuestionSerializer(serializers.Serializer):
     )
 
     def get_number_str(self, obj):
-        if obj.recalled_num == 0:
-            return f"{obj.number}"
+        # obj가 dict인 경우와 object인 경우 모두 처리
+        recalled_num = obj.get("recalled_num") if isinstance(obj, dict) else obj.recalled_num
+        number = obj.get("number") if isinstance(obj, dict) else obj.number
+
+        if recalled_num == 0:
+            return f"{number}"
         else:
-            return f"{obj.number}-{obj.recalled_num}"
+            return f"{number}-{recalled_num}"

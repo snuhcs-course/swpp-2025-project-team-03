@@ -518,21 +518,36 @@ class AnswerSubmitView(APIView):
                         logger.info("[AnswerSubmitView] Tail Question 객체 생성 시작")
 
                         try:
-                            # Tail Question 생성
-                            tail_question_obj = Question.objects.create(
-                                personal_assignment=personal_assignment,
-                                number=question.number,  # 원본 질문과 동일한 번호 사용 (base question number)
-                                content=tail_question_data.get("question", ""),
-                                model_answer=tail_question_data.get("model_answer", ""),
-                                explanation=tail_question_data.get("explanation", ""),
-                                difficulty=tail_question_data.get("difficulty", Question.Difficulty.MEDIUM),
-                                recalled_num=tail_payload.get("recalled_time", question.recalled_num + 1),
-                                base_question=question,  # 원본 질문 연결
-                            )
+                            recalled_time = tail_payload.get("recalled_time", question.recalled_num + 1)
 
-                            logger.info(
-                                f"[AnswerSubmitView] Tail Question 객체 생성 완료 - Question ID: {tail_question_obj.id}"
-                            )
+                            # 먼저 동일한 조합의 Question이 이미 존재하는지 확인
+                            existing_tail_question = Question.objects.filter(
+                                personal_assignment=personal_assignment,
+                                number=question.number,
+                                recalled_num=recalled_time,
+                            ).first()
+
+                            if existing_tail_question:
+                                logger.info(
+                                    f"[AnswerSubmitView] 동일한 Tail Question이 이미 존재함 - Question ID: {existing_tail_question.id}"
+                                )
+                                tail_question_obj = existing_tail_question
+                            else:
+                                # Tail Question 생성
+                                tail_question_obj = Question.objects.create(
+                                    personal_assignment=personal_assignment,
+                                    number=question.number,  # 원본 질문과 동일한 번호 사용 (base question number)
+                                    content=tail_question_data.get("question", ""),
+                                    model_answer=tail_question_data.get("model_answer", ""),
+                                    explanation=tail_question_data.get("explanation", ""),
+                                    difficulty=tail_question_data.get("difficulty", Question.Difficulty.MEDIUM),
+                                    recalled_num=recalled_time,
+                                    base_question=question,  # 원본 질문 연결
+                                )
+
+                                logger.info(
+                                    f"[AnswerSubmitView] Tail Question 객체 생성 완료 - Question ID: {tail_question_obj.id}"
+                                )
                         except Exception as tq_error:
                             logger.error(f"[AnswerSubmitView] Tail Question 객체 생성 실패: {tq_error}", exc_info=True)
                             # 이 경우 에러를 반환하지 않고 계속 진행 (tail question 없이)
@@ -566,8 +581,14 @@ class AnswerSubmitView(APIView):
                         "difficulty": tail_question_obj.difficulty,
                     }
 
+                    # TailQuestionSerializer에 전달할 데이터에는 recalled_num과 number가 필요
                     tail_serializer = TailQuestionSerializer(
-                        {"tail_question": tail_question_data, "is_correct": is_correct}
+                        {
+                            "tail_question": tail_question_data,
+                            "is_correct": is_correct,
+                            "number": tail_question_obj.number,
+                            "recalled_num": tail_question_obj.recalled_num,
+                        }
                     )
                     response_data = tail_serializer.data
                 else:
