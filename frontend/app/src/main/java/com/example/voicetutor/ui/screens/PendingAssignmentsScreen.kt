@@ -2,10 +2,6 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,7 +19,6 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import com.example.voicetutor.ui.screens.CustomStatusBadge
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -31,7 +26,7 @@ import java.time.format.DateTimeFormatter
 private fun formatDueDate(dueDate: String): String {
     return try {
         val zonedDateTime = ZonedDateTime.parse(dueDate)
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         zonedDateTime.format(formatter)
     } catch (e: Exception) {
         dueDate
@@ -39,10 +34,10 @@ private fun formatDueDate(dueDate: String): String {
 }
 
 @Composable
-fun AllStudentAssignmentsScreen(
+fun PendingAssignmentsScreen(
     studentId: Int,
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToAssignment: (String) -> Unit = {}
+    onNavigateToAssignment: (String) -> Unit = {},
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -50,24 +45,19 @@ fun AllStudentAssignmentsScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
-    var isInitialized by remember { mutableStateOf(false) }
     
-    // Load all assignments on first composition
+    // Load pending assignments on first composition
     LaunchedEffect(Unit) {
-        viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.ALL)
-        isInitialized = true
+        viewModel.loadPendingStudentAssignments(studentId)
     }
     
-    // Load assignments based on filter changes (skip initial load)
+    // Handle filter changes
     LaunchedEffect(selectedFilter) {
-        if (isInitialized) {
-            when (selectedFilter) {
-                PersonalAssignmentFilter.ALL -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.ALL)
-                PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
-                PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
-                PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
-                PersonalAssignmentFilter.GRADED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.GRADED)
-            }
+        when (selectedFilter) {
+            PersonalAssignmentFilter.ALL -> viewModel.loadPendingStudentAssignments(studentId)
+            PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
+            PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
+            else -> {} // SUBMITTED and GRADED not shown in pending
         }
     }
     
@@ -88,7 +78,7 @@ fun AllStudentAssignmentsScreen(
         // Header
         Column {
             Text(
-                text = "전체 과제",
+                text = "해야 할 과제",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Gray800
@@ -100,34 +90,35 @@ fun AllStudentAssignmentsScreen(
             )
         }
         
-        // Filter tabs - 스크롤 가능한 LazyRow 사용
-        LazyRow(
+        // Filter tabs
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 0.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(listOf(
-                PersonalAssignmentFilter.ALL to "전체",
-                PersonalAssignmentFilter.NOT_STARTED to "시작 안함", 
-                PersonalAssignmentFilter.IN_PROGRESS to "진행 중",
-                PersonalAssignmentFilter.SUBMITTED to "제출됨",
-                PersonalAssignmentFilter.GRADED to "완료"
-            )) { (filter, label) ->
-                FilterChip(
-                    selected = selectedFilter == filter,
-                    onClick = { selectedFilter = filter },
-                    label = { Text(label) },
-                    leadingIcon = if (filter == PersonalAssignmentFilter.ALL) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.List,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    } else null
-                )
-            }
+            FilterChip(
+                selected = selectedFilter == PersonalAssignmentFilter.ALL,
+                onClick = { selectedFilter = PersonalAssignmentFilter.ALL },
+                label = { Text("전체") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.List,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
+            
+            FilterChip(
+                selected = selectedFilter == PersonalAssignmentFilter.NOT_STARTED,
+                onClick = { selectedFilter = PersonalAssignmentFilter.NOT_STARTED },
+                label = { Text("시작 안함") }
+            )
+            
+            FilterChip(
+                selected = selectedFilter == PersonalAssignmentFilter.IN_PROGRESS,
+                onClick = { selectedFilter = PersonalAssignmentFilter.IN_PROGRESS },
+                label = { Text("진행 중") }
+            )
         }
         
         // Loading indicator
@@ -158,7 +149,7 @@ fun AllStudentAssignmentsScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "과제가 없습니다",
+                            text = "할 과제가 없습니다",
                             style = MaterialTheme.typography.bodyLarge,
                             color = Gray600
                         )
@@ -166,18 +157,14 @@ fun AllStudentAssignmentsScreen(
                 }
             } else {
                 assignments.forEach { assignment ->
-                    StudentAssignmentCard(
+                    PendingAssignmentCard(
                         assignment = assignment,
-                        onClick = { 
-                            // Assignment ID를 사용하여 과제 상세
-                            onNavigateToAssignmentDetail(assignment.id.toString()) 
-                        },
-                        onNavigateToAssignmentDetail = onNavigateToAssignmentDetail,
                         onNavigateToAssignment = { assignmentId ->
                             // personalAssignmentId를 사용하여 과제 시작
                             val personalId = assignment.personalAssignmentId ?: assignment.id
                             onNavigateToAssignment(personalId.toString())
-                        }
+                        },
+                        onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
                     )
                 }
             }
@@ -186,15 +173,14 @@ fun AllStudentAssignmentsScreen(
 }
 
 @Composable
-fun StudentAssignmentCard(
+fun PendingAssignmentCard(
     assignment: AssignmentData,
-    onClick: () -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToAssignment: (String) -> Unit = {}
+    onNavigateToAssignment: (String) -> Unit = {},
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = onClick
+        onClick = { onNavigateToAssignmentDetail(assignment.id.toString()) }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -237,8 +223,6 @@ fun StudentAssignmentCard(
                                             when (assignment.personalAssignmentStatus) {
                                                 PersonalAssignmentStatus.NOT_STARTED -> Gray400.copy(alpha = 0.1f)
                                                 PersonalAssignmentStatus.IN_PROGRESS -> Warning.copy(alpha = 0.15f)
-                                                PersonalAssignmentStatus.SUBMITTED -> Warning.copy(alpha = 0.1f)
-                                                PersonalAssignmentStatus.GRADED -> Success.copy(alpha = 0.1f)
                                                 else -> Gray400.copy(alpha = 0.1f)
                                             }
                                         )
@@ -248,16 +232,12 @@ fun StudentAssignmentCard(
                                         text = when (assignment.personalAssignmentStatus) {
                                             PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
                                             PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
-                                            PersonalAssignmentStatus.SUBMITTED -> "제출됨"
-                                            PersonalAssignmentStatus.GRADED -> "완료"
                                             else -> ""
                                         },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = when (assignment.personalAssignmentStatus) {
                                             PersonalAssignmentStatus.NOT_STARTED -> Gray400
                                             PersonalAssignmentStatus.IN_PROGRESS -> Warning
-                                            PersonalAssignmentStatus.SUBMITTED -> Warning
-                                            PersonalAssignmentStatus.GRADED -> Success
                                             else -> Gray400
                                         },
                                         fontWeight = FontWeight.Medium
@@ -279,8 +259,6 @@ fun StudentAssignmentCard(
                                         when (assignment.personalAssignmentStatus) {
                                             PersonalAssignmentStatus.NOT_STARTED -> Gray400.copy(alpha = 0.1f)
                                             PersonalAssignmentStatus.IN_PROGRESS -> Warning.copy(alpha = 0.15f)
-                                            PersonalAssignmentStatus.SUBMITTED -> Warning.copy(alpha = 0.1f)
-                                            PersonalAssignmentStatus.GRADED -> Success.copy(alpha = 0.1f)
                                             else -> Gray400.copy(alpha = 0.1f)
                                         }
                                     )
@@ -290,16 +268,12 @@ fun StudentAssignmentCard(
                                     text = when (assignment.personalAssignmentStatus) {
                                         PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
                                         PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
-                                        PersonalAssignmentStatus.SUBMITTED -> "제출됨"
-                                        PersonalAssignmentStatus.GRADED -> "완료"
                                         else -> ""
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = when (assignment.personalAssignmentStatus) {
                                         PersonalAssignmentStatus.NOT_STARTED -> Gray400
                                         PersonalAssignmentStatus.IN_PROGRESS -> Warning
-                                        PersonalAssignmentStatus.SUBMITTED -> Warning
-                                        PersonalAssignmentStatus.GRADED -> Success
                                         else -> Gray400
                                     },
                                     fontWeight = FontWeight.Medium
@@ -307,6 +281,7 @@ fun StudentAssignmentCard(
                             }
                         }
                     }
+                    
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     // Assignment title
@@ -319,7 +294,7 @@ fun StudentAssignmentCard(
                     
                     Spacer(modifier = Modifier.height(4.dp))
                     
-                    // Class info - 빈 문자열이면 표시하지 않음
+                    // Class info and due date
                     if (assignment.courseClass.name.isNotEmpty()) {
                         Text(
                             text = assignment.courseClass.name,
@@ -328,7 +303,6 @@ fun StudentAssignmentCard(
                         )
                     }
                     
-                    // Due date
                     Text(
                         text = "마감: ${formatDueDate(assignment.dueAt)}",
                         style = MaterialTheme.typography.bodySmall,
@@ -368,71 +342,41 @@ fun StudentAssignmentCard(
             }
             
             // Action buttons
-            if (assignment.personalAssignmentStatus != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // 시작 안함이나 진행 중인 경우 과제 시작과 과제 상세 버튼 표시
-                    if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED || 
-                        assignment.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS) {
-                        VTButton(
-                            text = "과제 시작",
-                            onClick = { 
-                                // personalAssignmentId를 사용하여 과제 시작
-                                val personalId = assignment.personalAssignmentId ?: assignment.id
-                                onNavigateToAssignment(personalId.toString()) 
-                            },
-                            variant = ButtonVariant.Primary,
-                            size = ButtonSize.Small,
-                            modifier = Modifier.weight(1f)
-                        )
-                        
-                        VTButton(
-                            text = "과제 상세",
-                            onClick = { 
-                                // Assignment ID를 사용하여 과제 상세
-                                onNavigateToAssignmentDetail(assignment.id.toString()) 
-                            },
-                            variant = ButtonVariant.Outline,
-                            size = ButtonSize.Small,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.GRADED) {
-                        // 완료된 과제의 경우 리포트 보기 버튼 표시 (CompletedAssignmentsScreen 스타일)
-                        VTButton(
-                            text = "리포트 보기",
-                            onClick = { 
-                                // Assignment ID를 사용하여 과제 상세
-                                onNavigateToAssignmentDetail(assignment.id.toString()) 
-                            },
-                            variant = ButtonVariant.Primary,
-                            size = ButtonSize.Medium,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED) {
-                        // 제출된 과제의 경우 대기 상태 표시
-                        VTButton(
-                            text = "채점 대기",
-                            onClick = { },
-                            variant = ButtonVariant.Outline,
-                            size = ButtonSize.Small,
-                            modifier = Modifier.weight(1f),
-                            enabled = false
-                        )
-                    }
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                VTButton(
+                    text = "과제 시작",
+                    onClick = { 
+                        // personalAssignmentId를 사용하여 과제 시작
+                        val personalId = assignment.personalAssignmentId ?: assignment.id
+                        onNavigateToAssignment(personalId.toString()) 
+                    },
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                VTButton(
+                    text = "과제 상세",
+                    onClick = { 
+                        // Assignment ID를 사용하여 과제 상세
+                        onNavigateToAssignmentDetail(assignment.id.toString()) 
+                    },
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
 }
 
-
-
 @Preview(showBackground = true)
 @Composable
-fun AllStudentAssignmentsScreenPreview() {
+fun PendingAssignmentsScreenPreview() {
     VoiceTutorTheme {
-        AllStudentAssignmentsScreen(studentId = 1)
+        PendingAssignmentsScreen(studentId = 1)
     }
 }

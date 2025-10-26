@@ -272,17 +272,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "", // 빈 문자열로 변경
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "", // 빈 문자열로 변경
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
@@ -373,17 +373,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "",
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "",
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
@@ -442,17 +442,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "",
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "",
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
@@ -509,17 +509,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "",
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "",
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
