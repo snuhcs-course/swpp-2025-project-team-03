@@ -21,7 +21,7 @@ class PersonalAssignmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PersonalAssignment
-        fields = ["student", "assignment", "status", "solved_num", "started_at", "submitted_at"]
+        fields = ["id", "student", "assignment", "status", "solved_num", "started_at", "submitted_at"]
 
 
 class PersonalAssignmentStatisticsSerializer(serializers.Serializer):

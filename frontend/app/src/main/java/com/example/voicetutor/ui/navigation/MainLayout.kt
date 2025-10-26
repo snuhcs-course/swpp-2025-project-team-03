@@ -42,6 +42,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         VoiceTutorScreens.Assignment.route -> "과제"
         VoiceTutorScreens.AssignmentDetail.route -> "과제 상세"
         VoiceTutorScreens.StudentAssignmentDetail.route -> "과제 결과"
+        VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 상세 결과"
         VoiceTutorScreens.Quiz.route -> "퀴즈"
         VoiceTutorScreens.Progress.route -> "진도 리포트"
         VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
@@ -72,6 +73,8 @@ fun MainLayout(
         VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
         VoiceTutorScreens.Assignment.route -> "assignment"
         VoiceTutorScreens.Progress.route -> "progress"
+        VoiceTutorScreens.StudentAssignmentDetail.route -> "progress" // 리포트 탭 유지
+        VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
         else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"

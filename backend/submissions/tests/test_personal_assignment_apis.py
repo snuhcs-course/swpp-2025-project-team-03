@@ -208,7 +208,8 @@ class TestPersonalAssignmentListView:
         assert response.status_code == status.HTTP_200_OK
         data = response.data["data"][0]
 
-        # PersonalAssignment 필드 확인
+        # PersonalAssignment 필드 확인 (id 포함)
+        assert "id" in data
         assert "status" in data
         assert "solved_num" in data
         assert "started_at" in data
@@ -223,6 +224,19 @@ class TestPersonalAssignmentListView:
         assert "assignment" in data
         assert "id" in data["assignment"]
         assert "title" in data["assignment"]
+
+    def test_list_personal_assignment_id_field(self, api_client, personal_assignment1):
+        """PersonalAssignment의 id 필드가 올바르게 반환되는지 테스트"""
+        url = reverse("personal-assignment-list")
+        response = api_client.get(url, {"assignment_id": personal_assignment1.assignment.id})
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"][0]
+
+        # PersonalAssignment의 id가 포함되어야 함
+        assert "id" in data
+        assert data["id"] == personal_assignment1.id
+        assert isinstance(data["id"], int)
 
 
 class TestPersonalAssignmentQuestionsView:
