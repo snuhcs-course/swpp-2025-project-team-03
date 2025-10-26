@@ -9,5 +9,11 @@
         <domain includeSubdomains="true">192.168.35.202</domain>
         <domain includeSubdomains="true">192.168.1.100</domain>
     </domain-config>
+    
+    <!-- S3 업로드를 위한 HTTPS 통신 허용 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">s3.ap-northeast-2.amazonaws.com</domain>
+        <domain includeSubdomains="true">s3.amazonaws.com</domain>
+    </domain-config>
 </network-security-config>
 

@@ -341,14 +341,15 @@ class AssignmentCreateView(APIView):  # POST /assignments
         )
 
         # Response 반환
-        return Response(
-            {
+        return create_api_response(
+            data={
                 "assignment_id": assignment.id,
                 "material_id": material.id,
                 "s3_key": s3_key,
                 "upload_url": presigned_url,
             },
-            status=status.HTTP_201_CREATED,
+            message="과제 생성 성공",
+            status_code=status.HTTP_201_CREATED,
         )
 
 
@@ -380,3 +381,86 @@ class AssignmentQuestionsView(APIView):  # GET /assignments/{id}/questions
     )
     def get(self, request, id):
         return Response({"message": "과제 문제 목록 조회"}, status=status.HTTP_200_OK)
+
+
+class S3UploadCheckView(APIView):
+    """S3 업로드 확인 API"""
+
+    @swagger_auto_schema(
+        operation_id="S3 업로드 확인",
+        operation_description="특정 과제의 PDF 파일이 S3에 업로드되었는지 확인합니다.",
+        responses={200: "Upload status checked", 404: "Assignment or Material not found", 500: "S3 check failed"},
+    )
+    def get(self, request, assignment_id):
+        try:
+            # 과제 조회
+            assignment = Assignment.objects.get(id=assignment_id)
+
+            # Material 조회
+            material = Material.objects.filter(assignment=assignment, kind=Material.Kind.PDF).first()
+            if not material:
+                return create_api_response(
+                    success=False,
+                    error="PDF Material not found",
+                    message="해당 과제에 PDF 자료가 없습니다.",
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            # S3 클라이언트 생성
+            s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_REGION,
+                endpoint_url=f"https://s3.{settings.AWS_REGION}.amazonaws.com",
+            )
+
+            # S3에서 파일 존재 여부 확인
+            try:
+                response = s3_client.head_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=material.s3_key)
+
+                return create_api_response(
+                    success=True,
+                    data={
+                        "assignment_id": assignment.id,
+                        "material_id": material.id,
+                        "s3_key": material.s3_key,
+                        "file_exists": True,
+                        "file_size": response["ContentLength"],
+                        "content_type": response.get("ContentType", "application/pdf"),
+                        "last_modified": (
+                            response.get("LastModified").isoformat() if response.get("LastModified") else None
+                        ),
+                        "bucket": settings.AWS_STORAGE_BUCKET_NAME,
+                    },
+                    message="S3 파일 확인 완료",
+                )
+
+            except s3_client.exceptions.NoSuchKey:
+                return create_api_response(
+                    success=True,
+                    data={
+                        "assignment_id": assignment.id,
+                        "material_id": material.id,
+                        "s3_key": material.s3_key,
+                        "file_exists": False,
+                        "bucket": settings.AWS_STORAGE_BUCKET_NAME,
+                    },
+                    message="S3에 파일이 존재하지 않습니다.",
+                )
+
+        except Assignment.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Assignment not found",
+                message="과제를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[S3UploadCheckView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="S3 확인 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

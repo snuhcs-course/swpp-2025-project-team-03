@@ -38,6 +38,7 @@ import com.example.voicetutor.file.FileManager
 import com.example.voicetutor.file.FileType
 import com.example.voicetutor.file.FileInfo
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +61,9 @@ fun CreateAssignmentScreen(
     val isLoading by actualAssignmentViewModel.isLoading.collectAsStateWithLifecycle()
     val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
     val currentAssignment by actualAssignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
+    val isUploading by actualAssignmentViewModel.isUploading.collectAsStateWithLifecycle()
+    val uploadProgress by actualAssignmentViewModel.uploadProgress.collectAsStateWithLifecycle()
+    val uploadSuccess by actualAssignmentViewModel.uploadSuccess.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
     val fileManager = remember { FileManager(context) }
@@ -70,24 +74,46 @@ fun CreateAssignmentScreen(
     
     // 파일 선택 상태
     var selectedFiles by remember { mutableStateOf<List<FileInfo>>(emptyList()) }
+    var selectedPdfFile by remember { mutableStateOf<File?>(null) }
     
     // PDF 파일 피커
     val pdfPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris: List<Uri> ->
-        if (uris.isNotEmpty()) {
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            println("=== PDF 파일 선택 디버그 ===")
+            println("선택된 URI: $uri")
+            println("URI 스키마: ${uri.scheme}")
+            println("URI 호스트: ${uri.host}")
+            println("URI 경로: ${uri.path}")
+            println("URI 쿼리: ${uri.query}")
+            
+            // URI에서 파일명 추출 시도
+            try {
+                val fileName = uri.lastPathSegment
+                println("URI에서 추출한 파일명: $fileName")
+            } catch (e: Exception) {
+                println("URI에서 파일명 추출 실패: ${e.message}")
+            }
+            
             coroutineScope.launch {
-                val newFiles = mutableListOf<FileInfo>()
-                uris.forEach { uri ->
-                    fileManager.saveFile(uri, fileType = FileType.DOCUMENT)
-                        .onSuccess { fileInfo ->
-                            newFiles.add(fileInfo)
-                        }
-                        .onFailure { exception ->
-                            // TODO: Show error message
-                        }
-                }
-                selectedFiles = newFiles
+                fileManager.saveFile(uri, fileType = FileType.DOCUMENT)
+                    .onSuccess { fileInfo ->
+                        println("✅ 파일 저장 성공")
+                        println("원본 파일명: ${fileInfo.name}")
+                        println("파일 경로: ${fileInfo.path}")
+                        println("파일 크기: ${fileInfo.size} bytes")
+                        println("파일 타입: ${fileInfo.type}")
+                        println("파일 확장자: ${fileInfo.name.substringAfterLast('.', "")}")
+                        
+                        selectedFiles = listOf(fileInfo)
+                        selectedPdfFile = File(fileInfo.path)
+                        println("selectedPdfFile 설정됨: ${selectedPdfFile?.name}")
+                        println("selectedPdfFile 절대 경로: ${selectedPdfFile?.absolutePath}")
+                    }
+                    .onFailure { exception ->
+                        println("❌ 파일 저장 실패: ${exception.message}")
+                    }
             }
         }
     }
@@ -116,11 +142,15 @@ fun CreateAssignmentScreen(
     }
     
     // Navigate to assignment detail when creation succeeds
-    LaunchedEffect(currentAssignment, assignmentCreated) {
-        if (assignmentCreated && currentAssignment != null) {
+    LaunchedEffect(currentAssignment, assignmentCreated, uploadSuccess) {
+        if (assignmentCreated && (currentAssignment != null || uploadSuccess)) {
             println("Assignment created successfully: ${currentAssignment?.title}")
             currentAssignment?.let { assignment ->
                 onCreateAssignment(assignment.title)
+            }
+            // 업로드 성공 시 상태 리셋
+            if (uploadSuccess) {
+                actualAssignmentViewModel.resetUploadState()
             }
         }
     }
@@ -449,6 +479,61 @@ fun CreateAssignmentScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
+                    
+                    // PDF 업로드 진행률 표시
+                    if (isUploading) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Column {
+                            Text(
+                                text = "PDF 업로드 중...",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Gray800
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LinearProgressIndicator(
+                                progress = uploadProgress,
+                                modifier = Modifier.fillMaxWidth(),
+                                color = PrimaryIndigo,
+                                trackColor = Gray300
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "${(uploadProgress * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Gray600
+                            )
+                        }
+                    }
+                    
+                    // 업로드 성공 표시
+                    if (uploadSuccess) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Success.copy(alpha = 0.1f),
+                                    shape = MaterialTheme.shapes.small
+                                )
+                                .padding(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.CheckCircle,
+                                contentDescription = null,
+                                tint = Success,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "PDF 업로드 완료!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Success,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                     
                     // 선택된 파일 목록 표시
                     if (selectedFiles.isNotEmpty()) {
@@ -842,12 +927,29 @@ fun CreateAssignmentScreen(
                         questions = sampleQuestions
                     )
                     
+                    println("=== 과제 생성 디버그 ===")
                     println("Creating assignment: $createRequest")
                     println("Grade: $selectedGrade, Subject: $selectedSubject")
                     println("PDF files: ${selectedFiles.map { it.name }}")
                     println("Sample questions: ${sampleQuestions.size}개 생성")
+                    println("selectedPdfFile: ${selectedPdfFile?.name}")
+                    println("selectedPdfFile != null: ${selectedPdfFile != null}")
+                    println("selectedFiles.size: ${selectedFiles.size}")
+                    
+                    // PDF 파일이 선택된 경우 PDF 업로드와 함께 과제 생성
+                    val pdfFile = selectedPdfFile
+                    if (pdfFile != null) {
+                        println("✅ PDF 업로드와 함께 과제 생성")
+                        println("PDF 파일: ${pdfFile.name}")
+                        println("파일 크기: ${pdfFile.length()} bytes")
+                        actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile)
+                    } else {
+                        // PDF 파일이 없는 경우 일반 과제 생성
+                        println("❌ PDF 파일이 없음 - 일반 과제 생성")
+                        actualAssignmentViewModel.createAssignment(createRequest)
+                    }
+                    
                     assignmentCreated = true  // 플래그 설정
-                    actualAssignmentViewModel.createAssignment(createRequest)
                 }
             },
             variant = ButtonVariant.Gradient,
