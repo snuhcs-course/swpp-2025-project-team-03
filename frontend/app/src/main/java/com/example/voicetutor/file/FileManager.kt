@@ -207,7 +207,8 @@ class FileManager(private val context: Context) {
      */
     private fun getFileExtension(uri: Uri): String? {
         val fileName = uri.lastPathSegment
-        return fileName?.substringAfterLast('.', "")
+        val extension = fileName?.substringAfterLast('.', "")
+        return if (extension.isNullOrBlank()) null else extension
     }
     
     /**
@@ -217,7 +218,7 @@ class FileManager(private val context: Context) {
         return when (fileType) {
             FileType.AUDIO -> "wav"
             FileType.IMAGE -> "jpg"
-            FileType.DOCUMENT -> "txt"
+            FileType.DOCUMENT -> "pdf"  // PDF 파일의 기본 확장자를 pdf로 변경
             FileType.OTHER -> "bin"
         }
     }
