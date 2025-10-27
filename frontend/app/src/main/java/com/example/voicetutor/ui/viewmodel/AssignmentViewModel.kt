@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import java.io.File
 
 // 학생별 통계 데이터 클래스
 data class StudentStats(
@@ -271,17 +272,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "", // 빈 문자열로 변경
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "", // 빈 문자열로 변경
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
@@ -372,17 +373,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "",
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "",
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
@@ -441,17 +442,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "",
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "",
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
@@ -508,17 +509,17 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "개인 과제",
+                                name = "",
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "개인 과제",
+                                    name = "",
                                     code = null
                                 ),
-                                teacherName = "시스템",
+                                teacherName = "",
                                 startDate = "",
                                 endDate = "",
-                                studentCount = 1,
+                                studentCount = 0,
                                 createdAt = ""
                             ),
                             materials = null,
@@ -856,19 +857,7 @@ class AssignmentViewModel @Inject constructor(
                     _answerSubmissionResponse.value = response
                     
                     println("AssignmentViewModel - Answer submitted successfully")
-                    
-                    // 답변 전송 성공 후 항상 다음 문제로 이동
-                    val totalQuestions = _personalAssignmentQuestions.value.size
-                    val currentIndex = _currentQuestionIndex.value
-                    
-                    if (currentIndex < totalQuestions - 1) {
-                        // 아직 풀어야 할 문제가 있으면 다음 문제로 이동
-                        _currentQuestionIndex.value = currentIndex + 1
-                        println("AssignmentViewModel - Moved to next question: ${_currentQuestionIndex.value}/${totalQuestions}")
-                    } else {
-                        // 모든 문제를 완료한 경우
-                        println("AssignmentViewModel - All questions completed")
-                    }
+                    println("AssignmentViewModel - isCorrect: ${response.isCorrect}, numberStr: ${response.numberStr}")
                 }
                 .onFailure { exception ->
                     _error.value = exception.message

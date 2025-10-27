@@ -259,6 +259,8 @@ data class TailQuestion(
 data class AnswerSubmissionResponse(
     @SerializedName("is_correct")
     val isCorrect: Boolean,
+    @SerializedName("number_str")
+    val numberStr: String? = null,
     @SerializedName("tail_question")
     val tailQuestion: TailQuestion?
 )

@@ -40,53 +40,26 @@ fun AssignmentDetailedResultsScreen(
     assignmentTitle: String = "과제 상세 결과",
     onBackClick: () -> Unit = {}
 ) {
-    // 더미 데이터 생성
+    // 더미 데이터 생성 - 함수의 개념 단원
     val detailedResults = remember {
         listOf(
             DetailedQuestionResult(
                 questionNumber = 1,
-                question = "다음 중 한국의 수도는 어디인가요?",
-                questionType = QuestionType.MULTIPLE_CHOICE,
-                myAnswer = "서울",
-                correctAnswer = "서울",
-                isCorrect = true,
-                explanation = "서울은 대한민국의 수도이자 최대 도시입니다."
+                question = "함수의 정의는 무엇인가요?",
+                questionType = QuestionType.VOICE_RESPONSE,
+                myAnswer = "그래프",
+                correctAnswer = "정의역의 각 원소에 대해 공역의 원소가 단 하나만 대응되는 대응관계",
+                isCorrect = false,
+                explanation = "함수는 정의역의 각 원소에 대해 공역의 원소가 단 하나만 대응되는 대응관계입니다."
             ),
             DetailedQuestionResult(
                 questionNumber = 2,
-                question = "1+1은 얼마인가요?",
+                question = "f(x) = 2x + 3에서 f(5)의 값은?",
                 questionType = QuestionType.SHORT_ANSWER,
-                myAnswer = "3",
-                correctAnswer = "2",
+                myAnswer = "10",
+                correctAnswer = "13",
                 isCorrect = false,
-                explanation = "1+1은 2입니다. 기본적인 덧셈 연산입니다."
-            ),
-            DetailedQuestionResult(
-                questionNumber = 3,
-                question = "오늘 날씨에 대해 음성으로 설명해주세요.",
-                questionType = QuestionType.VOICE_RESPONSE,
-                myAnswer = "맑음",
-                correctAnswer = "맑음",
-                isCorrect = true,
-                explanation = "정확한 음성 인식으로 답변하셨습니다."
-            ),
-            DetailedQuestionResult(
-                questionNumber = 4,
-                question = "지구는 태양계의 몇 번째 행성인가요?",
-                questionType = QuestionType.MULTIPLE_CHOICE,
-                myAnswer = "2번째",
-                correctAnswer = "3번째",
-                isCorrect = false,
-                explanation = "지구는 태양에서 세 번째로 가까운 행성입니다."
-            ),
-            DetailedQuestionResult(
-                questionNumber = 5,
-                question = "한국의 전통 음식 중 하나를 말해주세요.",
-                questionType = QuestionType.SHORT_ANSWER,
-                myAnswer = "김치",
-                correctAnswer = "김치",
-                isCorrect = true,
-                explanation = "김치는 한국의 대표적인 전통 음식입니다."
+                explanation = "f(5) = 2(5) + 3 = 10 + 3 = 13입니다. x에 5를 대입하여 계산해야 합니다."
             )
         )
     }

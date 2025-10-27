@@ -150,6 +150,7 @@ fun StudentDashboardScreen(
                         text = "전체 보기",
                         onClick = { 
                             currentUser?.id?.let { studentId ->
+                                // 전체 과제 보기 (AllStudentAssignments)
                                 onNavigateToAllStudentAssignments(studentId)
                             }
                         },
@@ -171,6 +172,7 @@ fun StudentDashboardScreen(
                         iconColor = PrimaryIndigo,
                         onClick = { 
                             currentUser?.id?.let { studentId ->
+                                // PendingAssignmentsScreen으로 네비게이트
                                 onNavigateToAllAssignments(studentId)
                             }
                         },
@@ -219,6 +221,7 @@ fun StudentDashboardScreen(
                         text = "전체 보기",
                         onClick = { 
                             currentUser?.id?.let { studentId ->
+                                // 전체 과제 보기 (PendingAssignments - 해야 할 과제)
                                 onNavigateToAllAssignments(studentId)
                             }
                         },

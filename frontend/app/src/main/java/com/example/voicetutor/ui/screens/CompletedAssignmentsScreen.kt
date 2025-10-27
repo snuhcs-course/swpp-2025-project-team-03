@@ -38,7 +38,7 @@ private fun formatDueDate(dueDate: String): String {
 @Composable
 fun CompletedAssignmentsScreen(
     studentId: Int? = null,
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -126,7 +126,9 @@ fun CompletedAssignmentsScreen(
                 completedAssignments.forEach { assignment ->
                     CompletedAssignmentCard(
                         assignment = assignment,
-                        onClick = { onNavigateToAssignmentDetail(assignment.title) }
+                        onClick = { 
+                            onNavigateToAssignmentDetail(assignment.id)
+                        }
                     )
                 }
             }
@@ -154,22 +156,24 @@ fun CompletedAssignmentCard(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Subject badge
-                    Box(
-                        modifier = Modifier
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-                            .background(PrimaryIndigo.copy(alpha = 0.1f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = assignment.courseClass.subject.name,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = PrimaryIndigo,
-                            fontWeight = FontWeight.Medium
-                        )
+                    // Subject badge - 빈 문자열이면 표시하지 않음
+                    if (assignment.courseClass.subject.name.isNotEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                .background(PrimaryIndigo.copy(alpha = 0.1f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = assignment.courseClass.subject.name,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = PrimaryIndigo,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
                     
                     // Assignment title
                     Text(
@@ -179,83 +183,34 @@ fun CompletedAssignmentCard(
                         color = Gray800
                     )
                     
-                    // Class info
-                    Text(
-                        text = assignment.courseClass.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
+                    // Class info - 빈 문자열이면 표시하지 않음
+                    if (assignment.courseClass.name.isNotEmpty()) {
+                        Text(
+                            text = assignment.courseClass.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
+                        )
+                    }
                 }
                 
-                // Completion status
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                            .background(Success.copy(alpha = 0.1f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.CheckCircle,
-                                contentDescription = null,
-                                tint = Success,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "완료",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Success,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = "완료일: ${formatDueDate(assignment.dueAt)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
-                    )
-                }
+                // Due date
+                Text(
+                    text = formatDueDate(assignment.dueAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Gray500
+                )
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Progress bar (100% 완료)
-            VTProgressBar(
-                progress = 1.0f,
-                color = Success,
+            // 리포트 보기 버튼
+            VTButton(
+                text = "리포트 보기",
+                onClick = onClick,
+                variant = ButtonVariant.Primary,
+                size = ButtonSize.Medium,
                 modifier = Modifier.fillMaxWidth()
             )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "100% 완료",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Success,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Text(
-                    text = "리포트 보기",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = PrimaryIndigo,
-                    fontWeight = FontWeight.Medium
-                )
-            }
         }
     }
 }

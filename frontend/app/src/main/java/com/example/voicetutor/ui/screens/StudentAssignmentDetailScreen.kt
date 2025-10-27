@@ -26,9 +26,9 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
 fun StudentAssignmentDetailScreen(
-    assignmentId: Int = 1, // 임시로 기본값 설정
-    studentId: Int = 1, // 임시로 기본값 설정
-    assignmentTitle: String = "과제", // TODO: 실제 과제 제목으로 동적 설정
+    assignmentId: Int? = null,
+    studentId: Int? = null,
+    assignmentTitle: String = "과제",
     onBackClick: () -> Unit = {},
     onNavigateToDetailedResults: () -> Unit = {}
 ) {
@@ -44,9 +44,12 @@ fun StudentAssignmentDetailScreen(
     
     // Load assignment data and personal assignment statistics on first composition
     LaunchedEffect(assignmentId) {
-        viewModel.loadAssignmentById(assignmentId)
-        // 개인 과제 통계 로드 (personalAssignmentId 사용)
-        viewModel.loadPersonalAssignmentStatistics(assignmentId)
+        if (assignmentId != null) {
+            println("StudentAssignmentDetail - Loading assignment: $assignmentId")
+            viewModel.loadAssignmentById(assignmentId)
+            // 개인 과제 통계 로드 (personalAssignmentId 사용)
+            viewModel.loadPersonalAssignmentStatistics(assignmentId)
+        }
     }
     
     // Handle error
@@ -66,7 +69,27 @@ fun StudentAssignmentDetailScreen(
     val correctAnswers = stats?.correctAnswers ?: 0
     val accuracy = stats?.accuracy ?: 0f
     val progress = stats?.progress ?: 0f
-    val totalScore = (accuracy * 100).toInt()
+    
+    // 정답률 계산: 정답 수 / 응답한 문제 수 * 100
+    // API에서 받은 accuracy 값이 이상하면 직접 계산
+    val calculatedAccuracy = if (answeredQuestions > 0) {
+        (correctAnswers.toFloat() / answeredQuestions.toFloat() * 100f).toInt()
+    } else {
+        0
+    }
+    
+    // totalScore는 0~100 사이로 제한
+    val totalScore = if (calculatedAccuracy > 100) 100 else calculatedAccuracy
+    
+    // 진행률 계산: 답변한 문제 / 총 문제 수 * 100
+    val calculatedProgress = if (totalQuestions > 0) {
+        (answeredQuestions.toFloat() / totalQuestions.toFloat() * 100f).toInt()
+    } else {
+        0
+    }
+    
+    // 진행률을 0~100 사이로 제한
+    val displayProgress = if (calculatedProgress > 100) 100 else calculatedProgress
     val averageConfidence = 0f // API에서 제공하지 않으므로 0으로 설정
     
     Column(
@@ -155,9 +178,9 @@ fun StudentAssignmentDetailScreen(
                 
                 VTStatsCard(
                     title = "진행률",
-                    value = "${(progress * 100).toInt()}%",
+                    value = "${displayProgress}%",
                     icon = Icons.Filled.CheckCircle,
-                    iconColor = if (progress >= 0.8f) Success else Warning,
+                    iconColor = if (displayProgress >= 80) Success else Warning,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Gradient
                 )
@@ -277,9 +300,9 @@ fun StudentAssignmentDetailScreen(
                         
                         // Progress bar
                         VTProgressBar(
-                            progress = progress,
+                            progress = displayProgress / 100f,
                             showPercentage = true,
-                            color = if (progress >= 0.8f) Success else if (progress >= 0.6f) Warning else PrimaryIndigo
+                            color = if (displayProgress >= 80) Success else if (displayProgress >= 60) Warning else PrimaryIndigo
                         )
                     }
                 }
