@@ -78,20 +78,12 @@ class AssignmentListView(APIView):  # GET /assignments
                 # UTC 시간으로 현재 시간 가져오기
                 now = timezone.now()
 
-                print(f"[AssignmentListView] Filtering by status: {status}")
-                print(f"[AssignmentListView] Current time (UTC): {now}")
-                print(
-                    f"[AssignmentListView] Assignment due_at: {assignments.first().due_at if assignments.exists() else 'No assignments'}"
-                )
-
                 if status == "IN_PROGRESS":
                     # 진행중: 마감일이 아직 지나지 않은 과제
                     assignments = assignments.filter(due_at__gt=now)
-                    print(f"[AssignmentListView] IN_PROGRESS filter applied, found {assignments.count()} assignments")
                 elif status == "COMPLETED":
                     # 완료: 마감일이 지난 과제
                     assignments = assignments.filter(due_at__lte=now)
-                    print(f"[AssignmentListView] COMPLETED filter applied, found {assignments.count()} assignments")
 
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
