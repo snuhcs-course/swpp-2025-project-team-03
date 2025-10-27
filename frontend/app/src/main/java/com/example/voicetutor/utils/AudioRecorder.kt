@@ -30,6 +30,11 @@ class AudioRecorder(private val context: Context) {
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
     private val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
     
+    // 추가 변수들
+    private var outputStream: FileOutputStream? = null
+    private var currentAudioFile: File? = null
+    private var totalBytesWritten: Long = 0
+    
     private var onRecordingStateChanged: ((Boolean) -> Unit)? = null
     private var onDurationChanged: ((Int) -> Unit)? = null
     
@@ -55,13 +60,17 @@ class AudioRecorder(private val context: Context) {
         }
         
         try {
+            // 버퍼 크기를 더 크게 설정 (21초 분량의 데이터를 담을 수 있도록)
+            val largeBufferSize = bufferSize * 32 // 기본 버퍼의 32배로 설정
+            println("AudioRecorder - 확장된 버퍼 크기: $largeBufferSize bytes (기본의 32배)")
+            
             println("AudioRecorder - Creating AudioRecord instance")
             audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_RECOGNITION, // 더 적합한 오디오 소스 사용
+                MediaRecorder.AudioSource.VOICE_RECOGNITION,
                 sampleRate,
                 channelConfig,
                 audioFormat,
-                bufferSize * 2 // 버퍼 크기 증가
+                largeBufferSize
             )
             
             println("AudioRecorder - AudioRecord state: ${audioRecord?.state}")
@@ -76,7 +85,7 @@ class AudioRecorder(private val context: Context) {
                     sampleRate,
                     channelConfig,
                     audioFormat,
-                    bufferSize * 2
+                    largeBufferSize
                 )
                 
                 if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
@@ -85,29 +94,93 @@ class AudioRecorder(private val context: Context) {
                 }
             }
             
+            // 오디오 파일 생성
+            val audioFile = createAudioFile()
+            if (audioFile == null) {
+                println("AudioRecorder - Failed to create audio file")
+                return false
+            }
+            
+            println("AudioRecorder - 오디오 파일 생성 완료: ${audioFile.absolutePath}")
+            
+            // 녹음 관련 변수 초기화
+            currentAudioFile = audioFile
+            totalBytesWritten = 0
+            audioData.clear()
+            
             println("AudioRecorder - Starting recording")
             audioRecord?.startRecording()
             isRecording = true
-            audioData.clear()
             
             onRecordingStateChanged?.invoke(true)
             
             println("AudioRecorder - Starting recording job")
             // 녹음 시작
             recordingJob = CoroutineScope(Dispatchers.IO).launch {
-                val buffer = ByteArray(bufferSize * 2)
+                val buffer = ShortArray(bufferSize)
+                outputStream = FileOutputStream(audioFile.absolutePath)
                 var duration = 0
+                var loopCount = 0
                 
                 while (isRecording && audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                    val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                    if (bytesRead > 0) {
-                        audioData.add(buffer.copyOf(bytesRead))
-                        duration += (bytesRead * 1000) / (sampleRate * 2) // 대략적인 시간 계산
-                        onDurationChanged?.invoke(duration / 1000) // 초 단위로 전달
+                    val readSize = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                    if (readSize > 0) {
+                        // PCM 데이터를 바이트 배열로 변환
+                        val byteArray = ByteArray(readSize * 2)
+                        for (i in 0 until readSize) {
+                            val sample = buffer[i]
+                            byteArray[i * 2] = (sample.toInt() and 0xFF).toByte()
+                            byteArray[i * 2 + 1] = ((sample.toInt() shr 8) and 0xFF).toByte()
+                        }
+                        
+                        outputStream?.write(byteArray)
+                        totalBytesWritten += byteArray.size
+                        audioData.add(byteArray)
+                        
+                        duration += (readSize * 1000) / (sampleRate * 2)
+                        onDurationChanged?.invoke(duration / 1000)
+                        
+                        loopCount++
+                        if (loopCount % 100 == 0) {
+                            val currentDurationSeconds = totalBytesWritten / (sampleRate * 2)
+                            println("AudioRecorder - 녹음 루프 #$loopCount: $readSize samples (${byteArray.size} bytes), 총 바이트: $totalBytesWritten, 현재 길이: ${currentDurationSeconds}초")
+                        }
                     }
                 }
                 
-                println("AudioRecorder - Recording finished. Total audio data chunks: ${audioData.size}, Total bytes: ${audioData.sumOf { it.size }}")
+                println("AudioRecorder - 녹음 루프 종료 - 총 루프 수: $loopCount, 총 바이트: $totalBytesWritten")
+                
+                // 녹음 루프가 종료된 후 마지막 버퍼 처리 (ANR 방지)
+                println("AudioRecorder - 마지막 버퍼 처리 시작")
+                var finalBytesRead = 0L
+                repeat(10) { // 50번에서 10번으로 감소
+                    val finalReadSize = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                    if (finalReadSize > 0) {
+                        val byteArray = ByteArray(finalReadSize * 2)
+                        for (i in 0 until finalReadSize) {
+                            val sample = buffer[i]
+                            byteArray[i * 2] = (sample.toInt() and 0xFF).toByte()
+                            byteArray[i * 2 + 1] = ((sample.toInt() shr 8) and 0xFF).toByte()
+                        }
+                        outputStream?.write(byteArray)
+                        totalBytesWritten += byteArray.size
+                        finalBytesRead += byteArray.size
+                        println("AudioRecorder - 마지막 읽기 #${it + 1}: $finalReadSize samples (${byteArray.size} bytes)")
+                    } else {
+                        println("AudioRecorder - 마지막 읽기 #${it + 1}: 더 이상 읽을 데이터 없음")
+                        return@repeat
+                    }
+                }
+                
+                val finalDurationSeconds = totalBytesWritten / (sampleRate * 2)
+                println("AudioRecorder - 마지막 버퍼에서 읽은 총 바이트: $finalBytesRead")
+                println("AudioRecorder - 최종 총 바이트: $totalBytesWritten, 현재 길이: ${finalDurationSeconds}초")
+                
+                // 파일 쓰기 완료 보장
+                outputStream?.flush()
+                println("AudioRecorder - 파일 스트림 flush() 완료")
+                
+                println("AudioRecorder - Recording finished. Total audio data chunks: ${audioData.size}, Total bytes: $totalBytesWritten")
             }
             
             println("AudioRecorder - Recording started successfully")
@@ -122,70 +195,127 @@ class AudioRecorder(private val context: Context) {
     fun stopRecording(): String? {
         if (!isRecording) return null
         
-        isRecording = false
-        audioRecord?.stop()
-        audioRecord?.release()
-        audioRecord = null
+        println("AudioRecorder - stopRecording() called")
+        println("AudioRecorder - 현재까지 기록된 바이트: $totalBytesWritten")
         
-        recordingJob?.cancel()
-        recordingJob = null
+        isRecording = false
+        
+        // 녹음 작업 완료 대기
+        recordingJob?.let { job ->
+            println("AudioRecorder - 녹음 작업 완료 대기 중...")
+            runBlocking {
+                job.join()
+            }
+            println("AudioRecorder - 녹음 작업 완료")
+        }
+        
+        // 백그라운드에서 내부 버퍼 비우기 (ANR 방지)
+        val stopJob = CoroutineScope(Dispatchers.IO).launch {
+            // AudioRecord의 내부 버퍼 완전히 비우기
+            audioRecord?.let { record ->
+                if (record.state == AudioRecord.STATE_INITIALIZED) {
+                    println("AudioRecorder - AudioRecord 내부 버퍼 비우기 시작")
+                    val buffer = ShortArray(bufferSize)
+                    
+                    var additionalBytesRead = 0L
+                    // 더 적은 횟수로 읽어서 내부 버퍼 비우기 (ANR 방지)
+                    repeat(20) { // 100번에서 20번으로 감소
+                        val readSize = record.read(buffer, 0, buffer.size)
+                        if (readSize > 0) {
+                            val byteArray = ByteArray(readSize * 2)
+                            for (i in 0 until readSize) {
+                                val sample = buffer[i]
+                                byteArray[i * 2] = (sample.toInt() and 0xFF).toByte()
+                                byteArray[i * 2 + 1] = ((sample.toInt() shr 8) and 0xFF).toByte()
+                            }
+                            outputStream?.write(byteArray)
+                            totalBytesWritten += byteArray.size
+                            additionalBytesRead += byteArray.size
+                            println("AudioRecorder - 추가 읽기 #${it + 1}: $readSize samples (${byteArray.size} bytes)")
+                        } else {
+                            println("AudioRecorder - 추가 읽기 #${it + 1}: 더 이상 읽을 데이터 없음")
+                            return@repeat
+                        }
+                    }
+                    
+                    println("AudioRecorder - 추가로 읽은 총 바이트: $additionalBytesRead")
+                    val additionalDurationSeconds = totalBytesWritten / (sampleRate * 2)
+                    println("AudioRecorder - 최종 총 바이트: $totalBytesWritten, 현재 길이: ${additionalDurationSeconds}초")
+                    
+                    record.stop()
+                    println("AudioRecorder - AudioRecord.stop() 호출 완료")
+                }
+                record.release()
+                println("AudioRecorder - AudioRecord.release() 호출 완료")
+            }
+            audioRecord = null
+            
+            // 파일 스트림 정리
+            try {
+                outputStream?.flush()
+                println("AudioRecorder - 파일 스트림 flush() 완료")
+                outputStream?.close()
+                println("AudioRecorder - 파일 스트림 close() 완료")
+            } catch (e: Exception) {
+                println("AudioRecorder - 파일 스트림 닫기 중 오류: ${e.message}")
+            }
+            outputStream = null
+            
+        }
+        
+        // 백그라운드 작업 완료 대기 (짧은 시간만)
+        runBlocking {
+            withTimeout(2000) { // 2초 타임아웃
+                stopJob.join()
+            }
+        }
         
         onRecordingStateChanged?.invoke(false)
         
-        return saveAudioToFile()
+        // WAV 파일로 변환
+        val result = convertToWavFile()
+        
+        // 녹음 길이 계산 및 로그
+        val durationSeconds = totalBytesWritten / (sampleRate * 2) // 2 bytes per sample (16-bit)
+        val durationMinutes = durationSeconds / 60
+        val remainingSeconds = durationSeconds % 60
+        
+        println("AudioRecorder - 녹음 길이: ${durationMinutes}분 ${remainingSeconds}초 (총 ${durationSeconds}초)")
+        println("AudioRecorder - 녹음 중지 완료! 총 바이트: $totalBytesWritten, 파일: $result")
+        
+        return result
     }
     
-    private fun saveAudioToFile(): String? {
+    private fun convertToWavFile(): String? {
         return try {
-            val audioFile = createAudioFile()
-            val outputStream = FileOutputStream(audioFile)
+            val audioFile = currentAudioFile ?: return null
+            val wavFile = File(audioFile.parent, audioFile.nameWithoutExtension + ".wav")
+            
+            val outputStream = FileOutputStream(wavFile.absolutePath)
             
             // WAV 헤더 작성
-            writeWavHeader(outputStream, audioData.size * bufferSize)
+            writeWavHeader(outputStream, totalBytesWritten.toInt())
             
-            // 오디오 데이터 작성
-            audioData.forEach { data ->
-                outputStream.write(data)
-            }
+            // PCM 데이터를 WAV 파일에 쓰기
+            val inputStream = audioFile.inputStream()
+            inputStream.copyTo(outputStream)
+            inputStream.close()
             
             outputStream.close()
             
-            // MediaStore에 추가하여 일반 파일 관리자에서 접근 가능하게 함
-            addToMediaStore(audioFile)
+            // 원본 PCM 파일 삭제
+            audioFile.delete()
             
-            audioFile.absolutePath
+            // MediaStore에 추가
+            addToMediaStore(wavFile)
+            
+            println("AudioRecorder - WAV 파일 변환 완료: ${wavFile.absolutePath}")
+            wavFile.absolutePath
         } catch (e: Exception) {
+            println("AudioRecorder - WAV 파일 변환 중 오류: ${e.message}")
             e.printStackTrace()
             null
         }
-    }
-    
-    private fun addToMediaStore(audioFile: File) {
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Audio.Media.DISPLAY_NAME, audioFile.name)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/wav")
-            put(MediaStore.Audio.Media.RELATIVE_PATH, Environment.DIRECTORY_MUSIC + "/VoiceTutor")
-        }
-        
-        context.contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues)?.let { uri ->
-            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                audioFile.inputStream().use { inputStream ->
-                    inputStream.copyTo(outputStream)
-                }
-            }
-        }
-    }
-    
-    private fun createAudioFile(): File {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val fileName = "recording_$timeStamp.wav"
-        val storageDir = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "VoiceTutor")
-        
-        if (!storageDir.exists()) {
-            storageDir.mkdirs()
-        }
-        
-        return File(storageDir, fileName)
     }
     
     private fun writeWavHeader(outputStream: FileOutputStream, dataSize: Int) {
@@ -228,6 +358,34 @@ class AudioRecorder(private val context: Context) {
         )
     }
     
+    private fun createAudioFile(): File {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "recording_$timeStamp.pcm"
+        val storageDir = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "VoiceTutor")
+        
+        if (!storageDir.exists()) {
+            storageDir.mkdirs()
+        }
+        
+        return File(storageDir, fileName)
+    }
+    
+    private fun addToMediaStore(audioFile: File) {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Audio.Media.DISPLAY_NAME, audioFile.name)
+            put(MediaStore.Audio.Media.MIME_TYPE, "audio/wav")
+            put(MediaStore.Audio.Media.RELATIVE_PATH, Environment.DIRECTORY_MUSIC + "/VoiceTutor")
+        }
+        
+        context.contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues)?.let { uri ->
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                audioFile.inputStream().use { inputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+        }
+    }
+    
     private fun checkPermissions(): Boolean {
         val hasPermission = ActivityCompat.checkSelfPermission(
             context,
@@ -245,5 +403,10 @@ class AudioRecorder(private val context: Context) {
         }
         audioRecord?.release()
         audioRecord = null
+        
+        // 추가 변수들 정리
+        currentAudioFile = null
+        totalBytesWritten = 0
+        outputStream = null
     }
 }
