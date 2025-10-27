@@ -440,11 +440,16 @@ fun VoiceTutorNavigation(
         }
         
         composable(VoiceTutorScreens.AllAssignments.route) {
+            // Use graph-scoped ViewModels to get current user
+            val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+            val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+            
             MainLayout(
                 navController = navController,
                 userRole = UserRole.TEACHER
             ) {
                 AllAssignmentsScreen(
+                    teacherId = currentUser?.id?.toString(),
                     onNavigateToAssignmentResults = { assignmentTitle ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentTitle))
                     },
@@ -462,11 +467,16 @@ fun VoiceTutorNavigation(
         }
         
         composable(VoiceTutorScreens.AllStudents.route) {
+            // Use graph-scoped ViewModels to get current user
+            val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+            val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+            
             MainLayout(
                 navController = navController,
                 userRole = UserRole.TEACHER
             ) {
                 AllStudentsScreen(
+                    teacherId = currentUser?.id?.toString() ?: "1",
                     onNavigateToStudentDetail = { studentName ->
                         navController.navigate(VoiceTutorScreens.TeacherStudentDetail.createRoute(studentName))
                     },
@@ -681,7 +691,7 @@ fun VoiceTutorNavigation(
                 }
             )
         ) { backStackEntry ->
-            val studentName = backStackEntry.arguments?.getString("studentName") ?: "학생"
+            val unusedStudentName = backStackEntry.arguments?.getString("studentName") ?: "학생"
             MainLayout(
                 navController = navController,
                 userRole = UserRole.TEACHER

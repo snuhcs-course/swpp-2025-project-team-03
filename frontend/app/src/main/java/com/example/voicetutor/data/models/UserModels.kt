@@ -100,14 +100,16 @@ data class SignupRequest(
 
 // 대시보드 통계 데이터
 data class DashboardStats(
-    @SerializedName("totalAssignments")
+    @SerializedName("total_assignments")
     val totalAssignments: Int,
-    @SerializedName("totalStudents")
+    @SerializedName("total_students")
     val totalStudents: Int,
+    @SerializedName("total_classes")
+    val totalClasses: Int,
     @SerializedName("completedAssignments")
-    val completedAssignments: Int,
+    val completedAssignments: Int = 0,
     @SerializedName("inProgressAssignments")
-    val inProgressAssignments: Int
+    val inProgressAssignments: Int = 0
 )
 
 // 최근 활동 데이터

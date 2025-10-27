@@ -7,6 +7,7 @@ from .views import (
     StudentDetailView,
     StudentListView,
     StudentStatisticsView,
+    TeacherDashboardStatsView,
 )
 
 urlpatterns = [
@@ -18,4 +19,6 @@ urlpatterns = [
     path("classes/", ClassListView.as_view(), name="class-list"),
     path("classes/<int:id>/", ClassDetailView.as_view(), name="class-detail"),
     path("classes/<int:id>/students/", ClassStudentsView.as_view(), name="class-students"),
+    # Teacher Dashboard APIs
+    path("teacher-dashboard-stats/", TeacherDashboardStatsView.as_view(), name="teacher-dashboard-stats"),
 ]

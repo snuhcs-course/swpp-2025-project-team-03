@@ -5,8 +5,8 @@ import com.google.gson.annotations.SerializedName
 data class Student(
     @SerializedName("id")
     val id: Int,
-    @SerializedName("name")
-    val name: String,
+    @SerializedName("display_name")
+    val name: String?,
     @SerializedName("email")
     val email: String,
     @SerializedName("role")

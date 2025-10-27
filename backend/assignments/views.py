@@ -30,7 +30,7 @@ def create_api_response(success=True, data=None, message="성공", error=None, s
 class AssignmentListView(APIView):  # GET /assignments
     @swagger_auto_schema(
         operation_id="과제 목록 조회",
-        operation_description="모든 과제를 조회합니다. teacherId, classId로 필터링 가능합니다.",
+        operation_description="모든 과제를 조회합니다. teacherId, classId, status로 필터링 가능합니다.",
         manual_parameters=[
             openapi.Parameter(
                 name="teacherId",
@@ -43,6 +43,12 @@ class AssignmentListView(APIView):  # GET /assignments
                 in_=openapi.IN_QUERY,
                 description="필터링할 클래스 ID",
                 type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                name="status",
+                in_=openapi.IN_QUERY,
+                description="과제 상태 (ALL, IN_PROGRESS, COMPLETED)",
+                type=openapi.TYPE_STRING,
             ),
         ],
         responses={200: "Assignment list"},
@@ -57,12 +63,35 @@ class AssignmentListView(APIView):  # GET /assignments
             # 필터링
             teacher_id = request.query_params.get("teacherId")
             class_id = request.query_params.get("classId")
+            status = request.query_params.get("status")
 
             if teacher_id:
                 assignments = assignments.filter(course_class__teacher_id=teacher_id)
 
             if class_id:
                 assignments = assignments.filter(course_class_id=class_id)
+
+            # 상태별 필터링 (현재는 due_at 기준으로 진행중/완료 구분)
+            if status:
+                from django.utils import timezone
+
+                # UTC 시간으로 현재 시간 가져오기
+                now = timezone.now()
+
+                print(f"[AssignmentListView] Filtering by status: {status}")
+                print(f"[AssignmentListView] Current time (UTC): {now}")
+                print(
+                    f"[AssignmentListView] Assignment due_at: {assignments.first().due_at if assignments.exists() else 'No assignments'}"
+                )
+
+                if status == "IN_PROGRESS":
+                    # 진행중: 마감일이 아직 지나지 않은 과제
+                    assignments = assignments.filter(due_at__gt=now)
+                    print(f"[AssignmentListView] IN_PROGRESS filter applied, found {assignments.count()} assignments")
+                elif status == "COMPLETED":
+                    # 완료: 마감일이 지난 과제
+                    assignments = assignments.filter(due_at__lte=now)
+                    print(f"[AssignmentListView] COMPLETED filter applied, found {assignments.count()} assignments")
 
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
