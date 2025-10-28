@@ -4,6 +4,8 @@ import boto3
 from assignments.models import Assignment, Material
 from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema
+from httpx import NetworkError, TimeoutException
+from openai import OpenAIError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -72,7 +74,17 @@ class QuestionCreateView(APIView):
                     tmp.flush()
                     local_pdf = tmp.name
 
-                summarized_text = summarize_pdf_from_s3(local_pdf)
+                try:
+                    summarized_text = summarize_pdf_from_s3(local_pdf)
+                except TimeoutException:
+                    return Response({"error": "OpenAI API timeout 발생"}, status=500)
+                except OpenAIError as e:
+                    return Response({"error": f"OpenAI API 오류: {e}"}, status=500)
+                except NetworkError as e:
+                    return Response({"error": f"네트워크 오류: {e}"}, status=500)
+                except Exception as e:
+                    return Response({"error": f"예상치 못한 오류: {e}"}, status=500)
+
                 material.summary = summarized_text
                 material.save()
 
