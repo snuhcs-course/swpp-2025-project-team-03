@@ -26,7 +26,6 @@ def extract_all_features(wav_path: str, model_name: str = None) -> dict:
         wav_path: WAV 파일 경로
         model_name: SentenceTransformer 모델 경로. None이면 로컬 모델 사용.
     """
-
     if not os.path.exists(wav_path):
         raise FileNotFoundError(f"WAV 파일을 찾을 수 없습니다: {wav_path}")
 
@@ -35,24 +34,48 @@ def extract_all_features(wav_path: str, model_name: str = None) -> dict:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         model_name = os.path.join(current_dir, "..", "KR_SBERT_local")
 
-    print("1. speech to text...")
-    script = wave_to_text.speech_to_text(wav_path)
+    try:
+        script = wave_to_text.speech_to_text(wav_path)
 
-    print("2. extract acoustic features...")
-    acoustic_feats = extract_acoustic_features(wav_path)
+        # STT 결과가 비어있으면 기본값 설정
+        if not script or script.strip() == "":
+            script = "음성 인식 결과 없음"
+    except Exception as e:
+        # STT 실패 시에도 기본값으로 계속 진행
+        script = "음성 인식 실패"
+
+    try:
+        acoustic_feats = extract_acoustic_features(wav_path)
+    except Exception as e:
+        raise
 
     # below stores integrated features
     features_dict = {"script": script, **acoustic_feats}
 
-    print("3. extract features from script...")
     # load SBERT model once
-    model = SentenceTransformer(model_name)
-    script_feats = extract_features_from_script(features_dict, shared_model=model)
+    try:
+        model = SentenceTransformer(model_name)
+
+        # JSON 파일 경로 추가
+        json_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "json", "stt-project-473514-83b71dceac84.json"
+        )
+
+        # JSON 파일이 존재하는지 확인
+        if os.path.exists(json_path):
+            # JSON 파일 경로를 features_dict에 추가
+            features_dict["json_path"] = json_path
+
+        script_feats = extract_features_from_script(features_dict, shared_model=model)
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        # 기본값으로 빈 딕셔너리 반환
+        script_feats = {}
 
     # below stores integrated features
     features_dict.update(script_feats)
-
-    print("num features extracted:", len(features_dict))
 
     return features_dict
 

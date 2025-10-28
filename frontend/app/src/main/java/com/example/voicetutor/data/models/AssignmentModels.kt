@@ -213,7 +213,7 @@ data class PersonalAssignmentQuestion(
     @SerializedName("id")
     val id: Int,
     @SerializedName("number")
-    val number: Int,
+    val number: String, // Int에서 String으로 변경 (예: "2-2")
     @SerializedName("question")
     val question: String,
     @SerializedName("answer")

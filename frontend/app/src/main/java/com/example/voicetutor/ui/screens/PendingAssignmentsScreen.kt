@@ -162,6 +162,11 @@ fun PendingAssignmentsScreen(
                         onNavigateToAssignment = { assignmentId ->
                             // personalAssignmentId를 사용하여 과제 시작
                             val personalId = assignment.personalAssignmentId ?: assignment.id
+                            println("PendingAssignmentsScreen - Navigating to assignment")
+                            println("PendingAssignmentsScreen - Assignment title: ${assignment.title}")
+                            println("PendingAssignmentsScreen - Assignment ID: ${assignment.id}")
+                            println("PendingAssignmentsScreen - Personal Assignment ID: ${assignment.personalAssignmentId}")
+                            println("PendingAssignmentsScreen - Using personalId: $personalId")
                             onNavigateToAssignment(personalId.toString())
                         },
                         onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
@@ -351,6 +356,11 @@ fun PendingAssignmentCard(
                     onClick = { 
                         // personalAssignmentId를 사용하여 과제 시작
                         val personalId = assignment.personalAssignmentId ?: assignment.id
+                        println("PendingAssignmentCard - Starting assignment")
+                        println("PendingAssignmentCard - Assignment title: ${assignment.title}")
+                        println("PendingAssignmentCard - Assignment ID: ${assignment.id}")
+                        println("PendingAssignmentCard - Personal Assignment ID: ${assignment.personalAssignmentId}")
+                        println("PendingAssignmentCard - Using personalId: $personalId")
                         onNavigateToAssignment(personalId.toString()) 
                     },
                     variant = ButtonVariant.Primary,
