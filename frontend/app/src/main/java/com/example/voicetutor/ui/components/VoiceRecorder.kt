@@ -81,9 +81,6 @@ fun VoiceRecorder(
     // 녹음 완료 상태 감지
     LaunchedEffect(recordingState.isRecordingComplete) {
         if (recordingState.isRecordingComplete && recordingState.audioFilePath != null) {
-            // 녹음이 완전히 완료된 후 파일 준비 상태 확인 (12초 분량 고려)
-            delay(3000) // 1500ms에서 3000ms로 증가
-            
             // 파일이 업로드 준비되었는지 확인
             if (audioRecorder.isRecordingReadyForUpload()) {
                 // 여기서 파일 업로드 로직을 호출할 수 있습니다
