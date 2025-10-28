@@ -1028,6 +1028,34 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
+    // 서버 응답의 number_str을 기반으로 올바른 질문으로 이동
+    fun moveToQuestionByNumber(questionNumber: String, personalAssignmentId: Int) {
+        println("AssignmentViewModel - moveToQuestionByNumber called with: $questionNumber")
+        
+        // 하이픈이 포함된 경우 (꼬리 질문)는 별도 처리
+        if (questionNumber.contains("-")) {
+            println("AssignmentViewModel - This is a tail question: $questionNumber")
+            return
+        }
+        
+        // 기본 질문 번호로 변환
+        val targetNumber = questionNumber.toIntOrNull() ?: return
+        println("AssignmentViewModel - Target question number: $targetNumber")
+        
+        // 현재 질문 리스트에서 해당 번호의 질문 찾기
+        val questions = _personalAssignmentQuestions.value
+        val targetIndex = questions.indexOfFirst { it.number == questionNumber }
+        
+        if (targetIndex != -1) {
+            println("AssignmentViewModel - Found question at index: $targetIndex")
+            _currentQuestionIndex.value = targetIndex
+        } else {
+            println("AssignmentViewModel - Question $questionNumber not found in current list, loading from server")
+            // 현재 리스트에 없는 경우 서버에서 다음 질문을 로드
+            loadNextQuestion(personalAssignmentId)
+        }
+    }
+    
     fun previousQuestion() {
         val currentIndex = _currentQuestionIndex.value
         
@@ -1053,6 +1081,14 @@ class AssignmentViewModel @Inject constructor(
     
     fun clearAnswerSubmissionResponse() {
         _answerSubmissionResponse.value = null
+    }
+    
+    fun setAssignmentCompleted(completed: Boolean) {
+        _isAssignmentCompleted.value = completed
+    }
+    
+    fun updatePersonalAssignmentQuestions(questions: List<PersonalAssignmentQuestion>) {
+        _personalAssignmentQuestions.value = questions
     }
     
     fun completeAssignment(personalAssignmentId: Int) {
