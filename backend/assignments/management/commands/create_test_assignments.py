@@ -16,6 +16,7 @@ class Command(BaseCommand):
                 "subject_id": 4,  # 과학
                 "title": "호흡과 배설 단원 과제",
                 "description": "호흡 운동의 원리와 배설의 과정의 이해도를 평가하는 과제입니다.",
+                "total_questions": 3,
                 "visible_from": timezone.now(),
                 "due_at": timezone.now() + timedelta(days=2),
                 "grade": "중학교 2학년",
@@ -25,6 +26,7 @@ class Command(BaseCommand):
                 "subject_id": 3,  # 수학
                 "title": "함수의 개념 복습 과제",
                 "description": "함수의 정의를 복습하는 과제입니다.",
+                "total_questions": 3,
                 "visible_from": timezone.now(),
                 "due_at": timezone.now() + timedelta(days=10),
                 "grade": "초등학교 6학년",
@@ -34,6 +36,7 @@ class Command(BaseCommand):
                 "subject_id": 2,  # 영어
                 "title": "Reading Practice 1-A",
                 "description": "영어 독해 훈련 과제입니다.",
+                "total_questions": 3,
                 "visible_from": timezone.now(),
                 "due_at": timezone.now() + timedelta(days=5),
                 "grade": "중학교 3학년",
@@ -50,6 +53,7 @@ class Command(BaseCommand):
                 course_class_id=data["course_class"],
                 subject_id=data["subject_id"],
                 title=data["title"],
+                total_questions=data["total_questions"],
                 grade=data["grade"],
                 defaults={
                     "description": data["description"],
