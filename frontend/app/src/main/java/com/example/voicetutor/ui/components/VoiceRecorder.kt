@@ -78,6 +78,23 @@ fun VoiceRecorder(
         }
     }
     
+    // 녹음 완료 상태 감지
+    LaunchedEffect(recordingState.isRecordingComplete) {
+        if (recordingState.isRecordingComplete && recordingState.audioFilePath != null) {
+            // 파일이 업로드 준비되었는지 확인
+            if (audioRecorder.isRecordingReadyForUpload()) {
+                // 여기서 파일 업로드 로직을 호출할 수 있습니다
+                // 예: uploadAudioFile(recordingState.audioFilePath)
+            } else {
+                // 파일이 아직 준비되지 않았으면 추가 지연
+                delay(2000) // 1000ms에서 2000ms로 증가
+                if (audioRecorder.isRecordingReadyForUpload()) {
+                    // 업로드 로직 호출
+                }
+            }
+        }
+    }
+    
     // 컴포넌트 해제 시 정리
     DisposableEffect(Unit) {
         onDispose {
