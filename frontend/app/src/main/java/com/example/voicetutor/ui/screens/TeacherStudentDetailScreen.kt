@@ -61,7 +61,7 @@ fun TeacherStudentDetailScreen(
     // Convert Student to StudentDetail for UI
     val studentDetail = student?.let { s ->
         StudentDetail(
-            name = s.name,
+            name = s.name ?: "이름 없음",
             email = s.email,
             studentId = s.id.toString(),
             className = "학생",

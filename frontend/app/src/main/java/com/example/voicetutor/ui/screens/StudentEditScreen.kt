@@ -62,7 +62,7 @@ fun StudentEditScreen(
     // Update form when student data is loaded
     LaunchedEffect(currentStudent) {
         currentStudent?.let { student ->
-            name = student.name
+            name = student.name ?: ""
             email = student.email
             // isActive property not available in Student model
         }

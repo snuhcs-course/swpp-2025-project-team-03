@@ -37,32 +37,47 @@ private fun formatDueDate(dueDate: String): String {
 
 @Composable
 fun AllAssignmentsScreen(
+    teacherId: String? = null,
     onNavigateToAssignmentResults: (String) -> Unit = {},
     onNavigateToEditAssignment: (String) -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {},
     onNavigateToAssignment: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
+    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
-    // Load all assignments on first composition (Teacher only)
-    LaunchedEffect(Unit) {
-        viewModel.loadAllAssignments()
+    // Compute actual teacher ID
+    val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+    
+    // Load assignments for the specific teacher
+    LaunchedEffect(actualTeacherId) {
+        if (actualTeacherId != null) {
+            println("AllAssignmentsScreen - Loading assignments for teacher ID: $actualTeacherId")
+            viewModel.loadAllAssignments(teacherId = actualTeacherId)
+        } else {
+            println("AllAssignmentsScreen - No teacher ID available, loading all assignments")
+            viewModel.loadAllAssignments()
+        }
     }
     
     // Handle filter changes for teachers
-    LaunchedEffect(selectedFilter) {
-        // 교사용: 상태별 필터링
-        val status = when (selectedFilter) {
-            AssignmentFilter.ALL -> null
-            AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
-            AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
+    LaunchedEffect(selectedFilter, actualTeacherId) {
+        if (actualTeacherId != null) {
+            // 교사용: 상태별 필터링
+            val status = when (selectedFilter) {
+                AssignmentFilter.ALL -> null
+                AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
+                AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
+            }
+            println("AllAssignmentsScreen - Filter changed: $selectedFilter, loading assignments for teacher ID: $actualTeacherId")
+            viewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
         }
-        viewModel.loadAllAssignments(status = status)
     }
     
     // Handle error
@@ -91,6 +106,11 @@ fun AllAssignmentsScreen(
                 text = "총 ${assignments.size}개의 과제",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Gray600
+            )
+            Text(
+                text = "교사 ID: $actualTeacherId",
+                style = MaterialTheme.typography.bodySmall,
+                color = Gray500
             )
         }
         
