@@ -122,8 +122,8 @@ interface ApiService {
     @GET("assignments/{assignment_id}/s3-check/")
     suspend fun checkS3Upload(@Path("assignment_id") assignmentId: Int): Response<ApiResponse<S3UploadStatus>>
     
-    // Dashboard APIs (Backend: /api/auth/teacher-dashboard-stats/)
-    @GET("auth/teacher-dashboard-stats/")
+    // Dashboard APIs (Backend: /api/assignments/teacher-dashboard-stats/)
+    @GET("assignments/teacher-dashboard-stats/")
     suspend fun getDashboardStats(
         @Query("teacherId") teacherId: String
     ): Response<ApiResponse<com.example.voicetutor.data.models.DashboardStats>>

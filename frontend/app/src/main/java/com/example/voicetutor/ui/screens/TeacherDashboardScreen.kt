@@ -424,41 +424,6 @@ fun TeacherDashboardScreen(
                 }
             }
         }
-        
-        // Recent activity
-        Column {
-            Text(
-                text = "최근 활동",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            Text(
-                text = "학생들의 최근 제출 내역을 확인하세요",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            VTCard(variant = CardVariant.Default) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Recent activities are not supported by current backend API
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "최근 활동 기능은 현재 지원되지 않습니다",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -588,65 +553,6 @@ fun TeacherAssignmentCard(
         }
     }
 }
-
-@Composable
-fun ActivityItem(
-    studentName: String,
-    action: String,
-    time: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconColor: Color,
-    onStudentClick: () -> Unit = {}
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(androidx.compose.foundation.shape.CircleShape)
-                .background(iconColor.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = studentName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = PrimaryIndigo,
-                    modifier = Modifier.clickable { onStudentClick() }
-                )
-                Text(
-                    text = " 님이 $action",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = Gray800
-                )
-            }
-            Text(
-                text = time,
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray500
-            )
-        }
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable
