@@ -8,6 +8,7 @@ from .views import (
     AssignmentResultsView,
     AssignmentSubmitView,
     S3UploadCheckView,
+    TeacherDashboardStatsView,
 )
 
 urlpatterns = [
@@ -18,4 +19,5 @@ urlpatterns = [
     path("<int:id>/results/", AssignmentResultsView.as_view(), name="assignment-results"),
     path("<int:id>/questions/", AssignmentQuestionsView.as_view(), name="assignment-questions"),
     path("<int:assignment_id>/s3-check/", S3UploadCheckView.as_view(), name="s3-upload-check"),
+    path("teacher-dashboard-stats/", TeacherDashboardStatsView.as_view(), name="teacher-dashboard-stats"),
 ]
