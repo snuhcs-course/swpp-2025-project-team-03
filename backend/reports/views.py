@@ -15,7 +15,7 @@ class CurriculumAnalysisView(APIView):
     """성취기준 분석 및 통계량 조회 API"""
 
     @swagger_auto_schema(
-        operation_id="성취기준 분석",
+        operation_id="선생님 리포트",
         operation_description="특정 학생과 클래스의 성취기준을 분석하고 통계량을 반환합니다.",
         responses={
             200: CurriculumAnalysisSerializer,

@@ -23,7 +23,7 @@ repos:
     rev: 25.9.0 # black latest version
     hooks:
       - id: black
-        language_version: python3.10
+        language_version: python3
         args: [--line-length=120]
         files: ^(backend/|research/)
         exclude: (^|/)migrations/
