@@ -205,7 +205,7 @@ fun AnalyticsScreen(
                         .take(5)
                         .map { student ->
                             TopStudent(
-                                name = student.name,
+                                name = student.name ?: "이름 없음",
                                 score = 0, // averageScore 정보가 없으므로 0으로 설정
                                 improvement = "정보 없음"
                             )

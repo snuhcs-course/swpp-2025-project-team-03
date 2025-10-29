@@ -181,3 +181,5 @@ submissions/utils/KR_SBERT_local/
 
 # Google Cloud STT credentials
 submissions/json/stt-tutor-474416-e99142c7677c.json
+staticfiles/
+nohup.out

@@ -67,7 +67,7 @@ class AssignmentViewModel @Inject constructor(
     val error: StateFlow<String?> = _error.asStateFlow()
     
     // PDF 업로드 관련 상태
-    private val _uploadProgress = MutableStateFlow(0f)
+    private val _uploadProgress = MutableStateFlow(0f.coerceIn(0f, 1f))
     val uploadProgress: StateFlow<Float> = _uploadProgress.asStateFlow()
     
     private val _isUploading = MutableStateFlow(false)
@@ -230,8 +230,29 @@ class AssignmentViewModel @Inject constructor(
             
             assignmentRepository.createAssignment(assignment)
                 .onSuccess { createResponse ->
-                    // CreateAssignmentResponse를 받았으므로 AssignmentData로 변환 필요
-                    // TODO: 실제로는 createResponse에서 AssignmentData를 생성해야 함
+                    // 생성된 과제 정보를 currentAssignment에 설정
+                    _currentAssignment.value = AssignmentData(
+                        id = createResponse.assignment_id,
+                        title = assignment.title,
+                        description = assignment.description,
+                        totalQuestions = assignment.questions?.size ?: 0,
+                        createdAt = "", // 서버에서 받아올 수 있음
+                        visibleFrom = "",
+                        dueAt = assignment.due_at,
+                        courseClass = CourseClass(
+                            id = assignment.class_id,
+                            name = "", // 서버에서 받아올 수 있음
+                            description = "",
+                            subject = Subject(id = 0, name = assignment.subject),
+                            teacherName = "",
+                            startDate = "",
+                            endDate = "",
+                            studentCount = 0,
+                            createdAt = ""
+                        ),
+                        grade = assignment.grade
+                    )
+                    
                     // Refresh assignments list
                     loadAllAssignments()
                 }
@@ -564,27 +585,53 @@ class AssignmentViewModel @Inject constructor(
             _isLoading.value = true
             _isUploading.value = true
             _error.value = null
-            _uploadProgress.value = 0f
+            _uploadProgress.value = 0f.coerceIn(0f, 1f)
+            println("DEBUG: uploadProgress set to 0f")
             _uploadSuccess.value = false
             
             try {
                 println("1단계: 과제 생성 요청 시작")
                 // 1. 과제 생성 (S3 업로드 URL 받기)
-                assignmentRepository.createAssignment(assignment)
+                        assignmentRepository.createAssignment(assignment)
                     .onSuccess { createResponse ->
                         println("✅ 과제 생성 성공")
                         println("과제 ID: ${createResponse.assignment_id}")
                         println("자료 ID: ${createResponse.material_id}")
                         println("S3 키: ${createResponse.s3_key}")
                         println("업로드 URL: ${createResponse.upload_url}")
-                        _uploadProgress.value = 0.3f
+                        _uploadProgress.value = 0.3f.coerceIn(0f, 1f)
+                        println("DEBUG: uploadProgress set to 0.3f")
+                        
+                        // 생성된 과제 정보를 currentAssignment에 설정
+                        _currentAssignment.value = AssignmentData(
+                            id = createResponse.assignment_id,
+                            title = assignment.title,
+                            description = assignment.description,
+                            totalQuestions = assignment.questions?.size ?: 0,
+                            createdAt = "", // 서버에서 받아올 수 있음
+                            visibleFrom = "",
+                            dueAt = assignment.due_at,
+                            courseClass = CourseClass(
+                                id = assignment.class_id,
+                                name = "", // 서버에서 받아올 수 있음
+                                description = "",
+                                subject = Subject(id = 0, name = assignment.subject),
+                                teacherName = "",
+                                startDate = "",
+                                endDate = "",
+                                studentCount = 0,
+                                createdAt = ""
+                            ),
+                            grade = assignment.grade
+                        )
                         
                         println("2단계: S3 업로드 시작")
                         // 2. PDF 파일을 S3에 업로드
                         assignmentRepository.uploadPdfToS3(createResponse.upload_url, pdfFile)
                             .onSuccess {
                                 println("✅ S3 업로드 성공")
-                                _uploadProgress.value = 1f
+                                _uploadProgress.value = 1f.coerceIn(0f, 1f)
+                                println("DEBUG: uploadProgress set to 1f")
                                 _uploadSuccess.value = true
                                 _isUploading.value = false
                                 
@@ -756,7 +803,8 @@ class AssignmentViewModel @Inject constructor(
     }
     
     fun resetUploadState() {
-        _uploadProgress.value = 0f
+        _uploadProgress.value = 0f.coerceIn(0f, 1f)
+        println("DEBUG: uploadProgress reset to 0f")
         _isUploading.value = false
         _uploadSuccess.value = false
     }

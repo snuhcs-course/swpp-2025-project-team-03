@@ -492,14 +492,14 @@ fun CreateAssignmentScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             LinearProgressIndicator(
-                                progress = uploadProgress,
+                                progress = uploadProgress.coerceIn(0f, 1f),
                                 modifier = Modifier.fillMaxWidth(),
                                 color = PrimaryIndigo,
                                 trackColor = Gray300
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "${(uploadProgress * 100).toInt()}%",
+                                text = "${(uploadProgress.coerceIn(0f, 1f) * 100).toInt()}%",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Gray600
                             )
@@ -686,7 +686,7 @@ fun CreateAssignmentScreen(
                                     checked = selectedStudents.size == studentNames.take(5).size && studentNames.take(5).isNotEmpty(),
                                     onCheckedChange = { isChecked ->
                                         selectedStudents = if (isChecked) {
-                                            studentNames.take(5).toSet()
+                                            studentNames.take(5).filterNotNull().toSet()
                                         } else {
                                             emptySet()
                                         }
@@ -707,10 +707,12 @@ fun CreateAssignmentScreen(
                                     Checkbox(
                                         checked = student in selectedStudents,
                                         onCheckedChange = { isChecked ->
-                                            selectedStudents = if (isChecked) {
-                                                selectedStudents + student
-                                            } else {
-                                                selectedStudents - student
+                                            if (student != null) {
+                                                selectedStudents = if (isChecked) {
+                                                    selectedStudents + student
+                                                } else {
+                                                    selectedStudents - student
+                                                }
                                             }
                                         }
                                     )
@@ -725,7 +727,7 @@ fun CreateAssignmentScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = student.first().toString(),
+                                            text = student?.first()?.toString() ?: "?",
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.Medium,
                                             color = PrimaryIndigo
@@ -733,7 +735,7 @@ fun CreateAssignmentScreen(
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = student,
+                                        text = student ?: "이름 없음",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Gray800
                                     )

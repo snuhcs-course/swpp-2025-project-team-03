@@ -2,7 +2,6 @@ alembic==1.17.0
 annotated-types==0.7.0
 anyio==4.11.0
 asgiref==3.10.0
-audioop-lts==0.2.2
 audioread==3.0.1
 blinker==1.9.0
 boto3==1.40.53
@@ -94,7 +93,6 @@ proto-plus==1.26.1
 protobuf==4.25.8
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
-PyAudio==0.2.14
 pycparser==2.23
 pydantic==2.12.2
 pydantic_core==2.41.4

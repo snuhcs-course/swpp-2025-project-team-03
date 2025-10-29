@@ -97,18 +97,18 @@ class TestAssignmentCreateView:
         response = api_client.post(url, data, format="json")
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert "assignment_id" in response.data
-        assert "material_id" in response.data
-        assert "s3_key" in response.data
-        assert "upload_url" in response.data
+        assert "assignment_id" in response.data["data"]
+        assert "material_id" in response.data["data"]
+        assert "s3_key" in response.data["data"]
+        assert "upload_url" in response.data["data"]
 
         # DB 확인
-        assignment = Assignment.objects.get(id=response.data["assignment_id"])
+        assignment = Assignment.objects.get(id=response.data["data"]["assignment_id"])
         assert assignment.title == "Midterm Exam"
         assert assignment.course_class == course_class
 
         # Material 확인
-        material = Material.objects.get(id=response.data["material_id"])
+        material = Material.objects.get(id=response.data["data"]["material_id"])
         assert material.assignment == assignment
         assert material.kind == Material.Kind.PDF
 
@@ -145,7 +145,7 @@ class TestAssignmentCreateView:
         assert response.status_code == status.HTTP_201_CREATED
 
         # 3명 모두에게 PersonalAssignment 생성되었는지 확인
-        assignment = Assignment.objects.get(id=response.data["assignment_id"])
+        assignment = Assignment.objects.get(id=response.data["data"]["assignment_id"])
         personal_assignments = PersonalAssignment.objects.filter(assignment=assignment)
         assert personal_assignments.count() == 3
 
@@ -173,7 +173,7 @@ class TestAssignmentCreateView:
         assert response.status_code == status.HTTP_201_CREATED
 
         # PersonalAssignment가 생성되지 않아야 함
-        assignment = Assignment.objects.get(id=response.data["assignment_id"])
+        assignment = Assignment.objects.get(id=response.data["data"]["assignment_id"])
         assert PersonalAssignment.objects.filter(assignment=assignment).count() == 0
 
     @patch("assignments.views.boto3.client")
@@ -209,7 +209,7 @@ class TestAssignmentCreateView:
         assert response.status_code == status.HTTP_201_CREATED
 
         # ENROLLED 학생만 PersonalAssignment 생성
-        assignment = Assignment.objects.get(id=response.data["assignment_id"])
+        assignment = Assignment.objects.get(id=response.data["data"]["assignment_id"])
         personal_assignments = PersonalAssignment.objects.filter(assignment=assignment)
         assert personal_assignments.count() == 1
         assert personal_assignments.first().student == enrolled_student
@@ -306,7 +306,7 @@ class TestAssignmentCreateView:
 
         assert response.status_code == status.HTTP_201_CREATED
 
-        assignment = Assignment.objects.get(id=response.data["assignment_id"])
+        assignment = Assignment.objects.get(id=response.data["data"]["assignment_id"])
         assert assignment.description == description
 
     @patch("assignments.views.boto3.client")
@@ -330,14 +330,14 @@ class TestAssignmentCreateView:
         assert response.status_code == status.HTTP_201_CREATED
 
         # 응답 필드 확인
-        assert "assignment_id" in response.data
-        assert "material_id" in response.data
-        assert "s3_key" in response.data
-        assert "upload_url" in response.data
+        assert "assignment_id" in response.data["data"]
+        assert "material_id" in response.data["data"]
+        assert "s3_key" in response.data["data"]
+        assert "upload_url" in response.data["data"]
 
         # 타입 확인
-        assert isinstance(response.data["assignment_id"], int)
-        assert isinstance(response.data["material_id"], int)
-        assert isinstance(response.data["s3_key"], str)
-        assert isinstance(response.data["upload_url"], str)
-        assert response.data["upload_url"].startswith("https://")
+        assert isinstance(response.data["data"]["assignment_id"], int)
+        assert isinstance(response.data["data"]["material_id"], int)
+        assert isinstance(response.data["data"]["s3_key"], str)
+        assert isinstance(response.data["data"]["upload_url"], str)
+        assert response.data["data"]["upload_url"].startswith("https://")

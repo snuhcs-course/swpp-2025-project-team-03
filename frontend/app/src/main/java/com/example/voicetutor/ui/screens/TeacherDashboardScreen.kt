@@ -60,8 +60,8 @@ fun TeacherDashboardScreen(
         kotlinx.coroutines.delay(100)
     }
     
-    LaunchedEffect(assignments.size) {
-        println("TeacherDashboard - Assignments changed: ${assignments.size}")
+    LaunchedEffect(assignments.size, selectedFilter) {
+        println("TeacherDashboard - Assignments changed: ${assignments.size}, filter: $selectedFilter")
         assignments.forEach { 
             println("  - ${it.title} (${it.courseClass.subject.name})")
         }
@@ -81,8 +81,8 @@ fun TeacherDashboardScreen(
         }
     }
     
-    // 초기 로드 (로그인 후 처음 진입 시)
-    LaunchedEffect(actualTeacherId, assignments.isEmpty()) {
+    // 초기 로드 (로그인 후 처음 진입 시) - 필터링으로 인한 빈 상태는 제외
+    LaunchedEffect(actualTeacherId) {
         // 이미 assignments가 있으면 API 호출하지 않음 (로그인 시 받은 데이터 사용)
         if (assignments.isNotEmpty()) {
             println("TeacherDashboard - Already have ${assignments.size} assignments from login")
@@ -93,9 +93,13 @@ fun TeacherDashboardScreen(
             println("TeacherDashboard - Waiting for user to be loaded...")
             return@LaunchedEffect
         }
-        println("TeacherDashboard - Initial loading data for teacher ID: $actualTeacherId")
-        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
-        dashboardViewModel.loadDashboardData(actualTeacherId)
+        
+        // 필터링으로 인한 빈 상태가 아닌 경우에만 초기 로드
+        if (selectedFilter == AssignmentFilter.ALL) {
+            println("TeacherDashboard - Initial loading data for teacher ID: $actualTeacherId")
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+            dashboardViewModel.loadDashboardData(actualTeacherId)
+        }
     }
     
     // Handle filter changes
@@ -103,7 +107,23 @@ fun TeacherDashboardScreen(
         if (actualTeacherId == null) return@LaunchedEffect
         
         println("TeacherDashboard - Loading assignments with filter: $selectedFilter, teacherId: $actualTeacherId")
-        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+        
+        // 상태별 필터링 적용
+        val status = when (selectedFilter) {
+            AssignmentFilter.ALL -> null
+            AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
+            AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
+        }
+        
+        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
+    }
+    
+    // 디버깅: assignments 상태 변화 추적
+    LaunchedEffect(assignments) {
+        println("TeacherDashboard - Assignments state updated: ${assignments.size} assignments")
+        assignments.forEach { 
+            println("  - ${it.title} (${it.courseClass.subject.name})")
+        }
     }
     
     // Handle error
@@ -114,7 +134,7 @@ fun TeacherDashboardScreen(
         }
     }
     
-    // 필터링된 과제 목록 (모든 과제 표시)
+    // 필터링된 과제 목록 (API에서 이미 필터링된 결과 사용)
     val filteredAssignments = assignments
     
     Column(
@@ -194,12 +214,12 @@ fun TeacherDashboardScreen(
         ) {
             VTStatsCard(
                 title = "총 과제",
-                value = (currentUser?.totalAssignments ?: assignments.size).toString(),
+                value = dashboardStats?.totalAssignments?.toString() ?: (currentUser?.totalAssignments ?: assignments.size).toString(),
                 icon = Icons.Filled.List,
                 iconColor = PrimaryIndigo,
                 variant = CardVariant.Elevated,
-                trend = TrendDirection.Up,
-                trendValue = "진행중 ${filteredAssignments.size}",
+                trend = TrendDirection.None,
+                trendValue = "",
                 onClick = { onNavigateToAllAssignments() },
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Horizontal
@@ -207,12 +227,12 @@ fun TeacherDashboardScreen(
             
             VTStatsCard(
                 title = "총 학생",
-                value = currentUser?.totalStudents?.toString() ?: "0",
+                value = dashboardStats?.totalStudents?.toString() ?: currentUser?.totalStudents?.toString() ?: "0",
                 icon = Icons.Filled.People,
                 iconColor = Success,
                 variant = CardVariant.Elevated,
                 trend = TrendDirection.None,
-                trendValue = "${currentUser?.totalClasses ?: 0}개 클래스",
+                trendValue = "${dashboardStats?.totalClasses ?: currentUser?.totalClasses ?: 0}개 클래스",
                 onClick = { onNavigateToAllStudents() },
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Horizontal
@@ -404,41 +424,6 @@ fun TeacherDashboardScreen(
                 }
             }
         }
-        
-        // Recent activity
-        Column {
-            Text(
-                text = "최근 활동",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            Text(
-                text = "학생들의 최근 제출 내역을 확인하세요",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            VTCard(variant = CardVariant.Default) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Recent activities are not supported by current backend API
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "최근 활동 기능은 현재 지원되지 않습니다",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -512,7 +497,7 @@ fun TeacherAssignmentCard(
                 )
                 
                 Text(
-                    text = "${(submittedCount.toFloat() / totalCount * 100).toInt()}%",
+                    text = "${if (totalCount > 0) (submittedCount.toFloat() / totalCount * 100).toInt() else 0}%",
                     style = MaterialTheme.typography.bodySmall,
                     color = PrimaryIndigo,
                     fontWeight = FontWeight.Bold
@@ -522,7 +507,7 @@ fun TeacherAssignmentCard(
             Spacer(modifier = Modifier.height(8.dp))
             
             VTProgressBar(
-                progress = submittedCount.toFloat() / totalCount,
+                progress = if (totalCount > 0) submittedCount.toFloat() / totalCount else 0f,
                 showPercentage = false,
                 color = PrimaryIndigo,
                 height = 6
@@ -568,65 +553,6 @@ fun TeacherAssignmentCard(
         }
     }
 }
-
-@Composable
-fun ActivityItem(
-    studentName: String,
-    action: String,
-    time: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconColor: Color,
-    onStudentClick: () -> Unit = {}
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(androidx.compose.foundation.shape.CircleShape)
-                .background(iconColor.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = studentName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = PrimaryIndigo,
-                    modifier = Modifier.clickable { onStudentClick() }
-                )
-                Text(
-                    text = " 님이 $action",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = Gray800
-                )
-            }
-            Text(
-                text = time,
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray500
-            )
-        }
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable

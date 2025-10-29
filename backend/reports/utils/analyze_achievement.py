@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from django.conf import settings
@@ -61,8 +62,8 @@ def parse_curriculum(student_id, class_id):
 
     print(f"Loaded {len(achievement_standards)} achievement standards from CSV")
 
-    # 3. 각 질문에 대해 성취기준 매핑
-    for question in questions:
+    # 3. 각 질문을 처리하는 헬퍼 함수
+    def process_question(question, achievement_standards):
         try:
             # 과목명과 학년 정보 추출
             subject_name = question.personal_assignment.assignment.subject.name
@@ -79,7 +80,7 @@ def parse_curriculum(student_id, class_id):
 
             if not school_level:
                 print(f"Warning: Could not determine school level from grade '{grade}' for question {question.id}")
-                continue
+                return
 
             # 해당 과목과 학교 단계에 맞는 성취기준 필터링
             relevant_standards = [
@@ -90,7 +91,7 @@ def parse_curriculum(student_id, class_id):
                 print(
                     f"Warning: No achievement standards found for subject '{subject_name}' and school '{school_level}' for question {question.id}"
                 )
-                continue
+                return
 
             print(f"\nProcessing Question {question.id}:")
             print(f"Subject: {subject_name}, School: {school_level}")
@@ -110,7 +111,16 @@ def parse_curriculum(student_id, class_id):
 
         except Exception as e:
             print(f"Error processing question {question.id}: {str(e)}")
-            continue
+
+    # 모든 질문을 병렬로 처리 (최대 10개 동시 처리)
+    questions_list = list(questions)
+    print(f"\nProcessing {len(questions_list)} questions in parallel...")
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_question, question, achievement_standards) for question in questions_list]
+        # 모든 작업 완료 대기
+        for future in as_completed(futures):
+            future.result()
 
     # 4. 통계량 계산 (GRADED 상태의 PersonalAssignment만 대상)
     statistics = calculate_statistics(student_id, class_id)

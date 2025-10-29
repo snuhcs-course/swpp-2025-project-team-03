@@ -25,16 +25,7 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
 
-data class AllStudentsStudent(
-    val id: Int,
-    val name: String,
-    val email: String,
-    val className: String,
-    val completedAssignments: Int,
-    val totalAssignments: Int,
-    val averageScore: Int,
-    val lastActive: String?
-)
+// AllStudentsStudent는 StudentModels.kt에서 정의된 것을 사용
 
 @Composable
 fun AllStudentsScreen(
@@ -51,6 +42,7 @@ fun AllStudentsScreen(
     
     // Load students on first composition
     LaunchedEffect(teacherId) {
+        println("AllStudentsScreen - Loading students for teacher ID: $teacherId")
         viewModel.loadAllStudents(teacherId = teacherId)
     }
     
@@ -66,7 +58,7 @@ fun AllStudentsScreen(
     val allStudents = apiStudents.map { student ->
         AllStudentsStudent(
             id = student.id,
-            name = student.name,
+            name = student.name ?: "이름 없음", // null 체크 추가
             email = student.email,
             role = student.role
         )
@@ -122,6 +114,11 @@ fun AllStudentsScreen(
                         text = "학생들의 학습 현황을 확인하고 관리하세요",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
+                    )
+                    Text(
+                        text = "총 ${totalStudents}명의 학생 (교사 ID: $teacherId)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.8f)
                     )
                 }
             }

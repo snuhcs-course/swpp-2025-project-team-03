@@ -7,6 +7,7 @@ from catalog.models import Subject
 from courses.models import CourseClass, Enrollment
 from dateutil import parser
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -20,6 +21,7 @@ from .request_serializers import AssignmentCreateRequestSerializer, AssignmentUp
 from .serializers import AssignmentCreateSerializer, AssignmentDetailSerializer, AssignmentSerializer
 
 logger = logging.getLogger(__name__)
+Account = get_user_model()
 
 
 def create_api_response(success=True, data=None, message="성공", error=None, status_code=status.HTTP_200_OK):
@@ -30,7 +32,7 @@ def create_api_response(success=True, data=None, message="성공", error=None, s
 class AssignmentListView(APIView):  # GET /assignments
     @swagger_auto_schema(
         operation_id="과제 목록 조회",
-        operation_description="모든 과제를 조회합니다. teacherId, classId로 필터링 가능합니다.",
+        operation_description="모든 과제를 조회합니다. teacherId, classId, status로 필터링 가능합니다.",
         manual_parameters=[
             openapi.Parameter(
                 name="teacherId",
@@ -43,6 +45,12 @@ class AssignmentListView(APIView):  # GET /assignments
                 in_=openapi.IN_QUERY,
                 description="필터링할 클래스 ID",
                 type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                name="status",
+                in_=openapi.IN_QUERY,
+                description="과제 상태 (ALL, IN_PROGRESS, COMPLETED)",
+                type=openapi.TYPE_STRING,
             ),
         ],
         responses={200: "Assignment list"},
@@ -57,12 +65,27 @@ class AssignmentListView(APIView):  # GET /assignments
             # 필터링
             teacher_id = request.query_params.get("teacherId")
             class_id = request.query_params.get("classId")
+            status_param = request.query_params.get("status")
 
             if teacher_id:
                 assignments = assignments.filter(course_class__teacher_id=teacher_id)
 
             if class_id:
                 assignments = assignments.filter(course_class_id=class_id)
+
+            # 상태별 필터링 (현재는 due_at 기준으로 진행중/완료 구분)
+            if status_param:
+                from django.utils import timezone
+
+                # UTC 시간으로 현재 시간 가져오기
+                now = timezone.now()
+
+                if status_param == "IN_PROGRESS":
+                    # 진행중: 마감일이 아직 지나지 않은 과제
+                    assignments = assignments.filter(due_at__gt=now)
+                elif status_param == "COMPLETED":
+                    # 완료: 마감일이 지난 과제
+                    assignments = assignments.filter(due_at__lte=now)
 
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
@@ -259,6 +282,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
             course_class=course_class,
             subject=subject,
             title=data["title"],
+            grade=data.get("grade", ""),
             description=data.get("description", ""),
             visible_from=datetime.now(),
             due_at=due_at,
@@ -463,4 +487,79 @@ class S3UploadCheckView(APIView):
                 error=str(e),
                 message="S3 확인 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class TeacherDashboardStatsView(APIView):
+    """교사 대시보드 통계 API"""
+
+    @swagger_auto_schema(
+        operation_id="교사 대시보드 통계",
+        operation_description="교사의 총 과제 수, 총 학생 수, 총 클래스 수를 조회합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                name="teacherId",
+                in_=openapi.IN_QUERY,
+                description="교사 ID",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+        ],
+        responses={
+            200: "Dashboard statistics",
+            400: "Invalid teacher ID",
+            404: "Teacher not found",
+        },
+    )
+    def get(self, request):
+        teacher_id = request.query_params.get("teacherId")
+
+        if not teacher_id:
+            return Response(
+                {"success": False, "message": "teacherId 파라미터가 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # 교사 존재 확인
+            teacher = Account.objects.get(id=teacher_id, is_student=False)
+
+            # 총 과제 수 계산 (해당 교사가 생성한 과제)
+            total_assignments = Assignment.objects.filter(course_class__teacher=teacher).count()
+
+            # 총 학생 수 계산 (해당 교사의 클래스에 등록된 학생들)
+            total_students = (
+                Enrollment.objects.filter(course_class__teacher=teacher, status=Enrollment.Status.ENROLLED)
+                .values("student")
+                .distinct()
+                .count()
+            )
+
+            # 총 클래스 수 계산
+            total_classes = CourseClass.objects.filter(teacher=teacher).count()
+
+            return Response(
+                {
+                    "success": True,
+                    "data": {
+                        "total_assignments": total_assignments,
+                        "total_students": total_students,
+                        "total_classes": total_classes,
+                    },
+                    "message": "대시보드 통계 조회 성공",
+                    "error": None,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Account.DoesNotExist:
+            return Response(
+                {"success": False, "message": "해당 교사를 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[TeacherDashboardStatsView] {e}", exc_info=True)
+            return Response(
+                {"success": False, "error": str(e), "message": "통계 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
