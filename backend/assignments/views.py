@@ -65,7 +65,7 @@ class AssignmentListView(APIView):  # GET /assignments
             # 필터링
             teacher_id = request.query_params.get("teacherId")
             class_id = request.query_params.get("classId")
-            status = request.query_params.get("status")
+            status_param = request.query_params.get("status")
 
             if teacher_id:
                 assignments = assignments.filter(course_class__teacher_id=teacher_id)
@@ -74,16 +74,16 @@ class AssignmentListView(APIView):  # GET /assignments
                 assignments = assignments.filter(course_class_id=class_id)
 
             # 상태별 필터링 (현재는 due_at 기준으로 진행중/완료 구분)
-            if status:
+            if status_param:
                 from django.utils import timezone
 
                 # UTC 시간으로 현재 시간 가져오기
                 now = timezone.now()
 
-                if status == "IN_PROGRESS":
+                if status_param == "IN_PROGRESS":
                     # 진행중: 마감일이 아직 지나지 않은 과제
                     assignments = assignments.filter(due_at__gt=now)
-                elif status == "COMPLETED":
+                elif status_param == "COMPLETED":
                     # 완료: 마감일이 지난 과제
                     assignments = assignments.filter(due_at__lte=now)
 
