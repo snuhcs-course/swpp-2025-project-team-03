@@ -113,6 +113,7 @@ fun AssignmentContinuousScreen(
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val personalAssignmentQuestions by viewModel.personalAssignmentQuestions.collectAsStateWithLifecycle()
     val totalBaseQuestions by viewModel.totalBaseQuestions.collectAsStateWithLifecycle()
+    val personalAssignmentStatistics by viewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsStateWithLifecycle()
     val audioRecordingState by viewModel.audioRecordingState.collectAsStateWithLifecycle()
     val answerSubmissionResponse by viewModel.answerSubmissionResponse.collectAsStateWithLifecycle()
@@ -162,6 +163,8 @@ fun AssignmentContinuousScreen(
             println("AssignmentScreen - Assignment title: $assignmentTitle")
             hasAttemptedLoad = true
             viewModel.loadAllQuestions(assignmentId)
+            // 통계도 함께 로드 (진행률 계산용)
+            viewModel.loadPersonalAssignmentStatistics(assignmentId)
         }
     }
     
@@ -223,6 +226,12 @@ fun AssignmentContinuousScreen(
                 currentTailQuestionNumber = null
                 savedTailQuestion = null
                 println("AssignmentScreen - Next base question available: ${response.numberStr}")
+                
+                // 기본 질문에 답변한 경우 통계 갱신
+                println("AssignmentScreen - Base question answered, refreshing statistics")
+                assignmentId?.let { id ->
+                    viewModel.loadPersonalAssignmentStatistics(id)
+                }
                 
                 // 서버에서 받은 numberStr이 현재 질문과 다르면 서버에서 해당 질문을 로드
                 val currentQuestionNumber = currentQuestion?.number
@@ -342,19 +351,28 @@ fun AssignmentContinuousScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Progress - 실제 진행률 계산 (전체 기본 문제 대비 완료된 문제)
-            val currentIndex = viewModel.currentQuestionIndex.value
-            val totalQuestions = viewModel.totalBaseQuestions.value
+            // Progress - API에서 받은 통계를 사용하여 진행률 계산
+            // 총 문제 수: PersonalAssignmentStatistics의 totalQuestions (기본 질문만)
+            // 푼 문제 수: 기본 질문(1, 2, 3) 중 답변한 개수 - 꼬리 질문 제외
+            val totalQuestions = personalAssignmentStatistics?.totalQuestions ?: totalBaseQuestions
+            // answeredQuestions가 기본 질문만 포함하는지 확인 필요
+            // 일단 totalQuestions가 기본 질문 개수이므로, answeredQuestions도 기본 질문만 포함한다고 가정
+            val answeredBaseQuestions = personalAssignmentStatistics?.answeredQuestions ?: 0
             val progress = if (totalQuestions > 0) {
-                // 현재 문제 번호를 기반으로 진행률 계산
-                val currentQuestion = viewModel.getCurrentQuestion()
-                val currentQuestionNumber = currentQuestion?.number?.toIntOrNull() ?: 1
-                currentQuestionNumber.toFloat() / totalQuestions.toFloat()
+                (answeredBaseQuestions.toFloat() / totalQuestions.toFloat()).coerceIn(0f, 1f)
             } else 0f
             
             VTProgressBar(
                 progress = progress,
                 showPercentage = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // 진행률 텍스트 표시 (선택사항)
+            Text(
+                text = "${answeredBaseQuestions} / ${totalQuestions}",
+                style = MaterialTheme.typography.bodySmall,
+                color = Gray600,
                 modifier = Modifier.fillMaxWidth()
             )
             
