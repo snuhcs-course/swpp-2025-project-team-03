@@ -128,6 +128,10 @@ class QuestionCreateView(APIView):
                             }
                         )
 
+            # 모든 작업이 성공적으로 완료된 후 assignment의 total_questions 업데이트
+            assignment.total_questions = data["total_number"]
+            assignment.save()
+
             return Response(
                 {
                     "assignment_id": assignment.id,

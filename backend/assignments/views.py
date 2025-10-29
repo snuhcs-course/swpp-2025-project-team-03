@@ -282,6 +282,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
             course_class=course_class,
             subject=subject,
             title=data["title"],
+            grade=data.get("grade", ""),
             description=data.get("description", ""),
             visible_from=datetime.now(),
             due_at=due_at,
