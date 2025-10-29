@@ -306,6 +306,29 @@ class AnswerSubmitView(APIView):
         - questionId (integer): 제출한 문제의 ID
         - audioFile (file): 음성 답변 파일 (.wav)
         """,
+        manual_parameters=[
+            openapi.Parameter(
+                "studentId",
+                openapi.IN_FORM,
+                description="제출하는 학생의 ID",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+            openapi.Parameter(
+                "questionId",
+                openapi.IN_FORM,
+                description="제출한 문제의 ID",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+            openapi.Parameter(
+                "audioFile",
+                openapi.IN_FORM,
+                description="음성 답변 파일 (.wav 형식)",
+                type=openapi.TYPE_FILE,
+                required=True,
+            ),
+        ],
         responses={
             201: "답안 제출 성공",
             400: "잘못된 요청",
