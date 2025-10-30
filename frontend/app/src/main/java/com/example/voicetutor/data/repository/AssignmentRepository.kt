@@ -303,6 +303,60 @@ class AssignmentRepository @Inject constructor(
         }
     }
     
+    suspend fun getNextQuestion(personalAssignmentId: Int): Result<PersonalAssignmentQuestion> {
+        return try {
+            println("AssignmentRepository - getNextQuestion CALLED for personalAssignmentId: $personalAssignmentId")
+            val response = apiService.getNextQuestion(personalAssignmentId)
+            println("AssignmentRepository - API response received: isSuccessful=${response.isSuccessful}")
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val question = response.body()?.data
+                if (question != null) {
+                    println("AssignmentRepository - Next question API returned question: ${question.question}")
+                    Result.success(question)
+                } else {
+                    println("AssignmentRepository - Next question API returned null data")
+                    Result.failure(Exception("No question data"))
+                }
+            } else {
+                val responseBody = response.body()
+                val errorBody = response.errorBody()
+                
+                // 404 응답에서는 response.body()가 null이므로 errorBody()를 사용
+                val errorMessage = if (responseBody != null) {
+                    responseBody.message ?: responseBody.error ?: "Unknown error"
+                } else if (errorBody != null) {
+                    // errorBody에서 JSON 파싱 시도
+                    try {
+                        val errorJson = errorBody.string()
+                        println("AssignmentRepository - Error body JSON: $errorJson")
+                        // JSON에서 message 필드 추출
+                        if (errorJson.contains("\"message\":\"모든 문제를 완료했습니다.\"")) {
+                            "모든 문제를 완료했습니다."
+                        } else {
+                            "Unknown error"
+                        }
+                    } catch (e: Exception) {
+                        println("AssignmentRepository - Failed to parse error body: ${e.message}")
+                        "Unknown error"
+                    }
+                } else {
+                    "Unknown error"
+                }
+                
+                println("AssignmentRepository - Next question API error: $errorMessage")
+                println("AssignmentRepository - Response body: $responseBody")
+                println("AssignmentRepository - Error body: $errorBody")
+                println("AssignmentRepository - Response code: ${response.code()}")
+                println("AssignmentRepository - Response message: ${response.message()}")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            println("AssignmentRepository - Next question Exception: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
     suspend fun getPersonalAssignmentStatistics(personalAssignmentId: Int): Result<PersonalAssignmentStatistics> {
         return try {
             println("AssignmentRepository - Getting statistics for personal assignment $personalAssignmentId")
@@ -363,6 +417,25 @@ class AssignmentRepository @Inject constructor(
             }
         } catch (e: Exception) {
             println("AssignmentRepository - Answer submission Exception: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun completePersonalAssignment(personalAssignmentId: Int): Result<Unit> {
+        return try {
+            println("AssignmentRepository - Completing personal assignment: $personalAssignmentId")
+            val response = apiService.completePersonalAssignment(personalAssignmentId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                println("AssignmentRepository - Personal assignment completed successfully")
+                Result.success(Unit)
+            } else {
+                val errorMessage = response.body()?.message ?: response.body()?.error ?: "Unknown error"
+                println("AssignmentRepository - Personal assignment completion error: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            println("AssignmentRepository - Personal assignment completion Exception: ${e.message}")
             Result.failure(e)
         }
     }

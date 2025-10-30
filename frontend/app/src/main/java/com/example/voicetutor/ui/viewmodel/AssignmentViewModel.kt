@@ -15,7 +15,7 @@ import com.example.voicetutor.data.models.Subject
 import com.example.voicetutor.data.models.PersonalAssignmentQuestion
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.AnswerSubmissionResponse
-import com.example.voicetutor.data.models.AudioRecordingState
+import com.example.voicetutor.audio.RecordingState
 import com.example.voicetutor.ui.navigation.RecentAssignment
 import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.AssignmentSubmissionResult
@@ -88,17 +88,25 @@ class AssignmentViewModel @Inject constructor(
     private val _personalAssignmentQuestions = MutableStateFlow<List<PersonalAssignmentQuestion>>(emptyList())
     val personalAssignmentQuestions: StateFlow<List<PersonalAssignmentQuestion>> = _personalAssignmentQuestions.asStateFlow()
     
+    // 전체 기본 문제 개수 (진행률 계산용)
+    private val _totalBaseQuestions = MutableStateFlow(0)
+    val totalBaseQuestions: StateFlow<Int> = _totalBaseQuestions.asStateFlow()
+    
     private val _personalAssignmentStatistics = MutableStateFlow<PersonalAssignmentStatistics?>(null)
     val personalAssignmentStatistics: StateFlow<PersonalAssignmentStatistics?> = _personalAssignmentStatistics.asStateFlow()
     
     private val _currentQuestionIndex = MutableStateFlow(0)
     val currentQuestionIndex: StateFlow<Int> = _currentQuestionIndex.asStateFlow()
     
-    private val _audioRecordingState = MutableStateFlow(AudioRecordingState())
-    val audioRecordingState: StateFlow<AudioRecordingState> = _audioRecordingState.asStateFlow()
+    private val _audioRecordingState = MutableStateFlow(RecordingState())
+    val audioRecordingState: StateFlow<RecordingState> = _audioRecordingState.asStateFlow()
     
     private val _answerSubmissionResponse = MutableStateFlow<AnswerSubmissionResponse?>(null)
     val answerSubmissionResponse: StateFlow<AnswerSubmissionResponse?> = _answerSubmissionResponse.asStateFlow()
+    
+    // 과제 완료 상태
+    private val _isAssignmentCompleted = MutableStateFlow(false)
+    val isAssignmentCompleted: StateFlow<Boolean> = _isAssignmentCompleted.asStateFlow()
     
     fun loadAllAssignments(teacherId: String? = null, classId: String? = null, status: AssignmentStatus? = null) {
         viewModelScope.launch {
@@ -511,9 +519,9 @@ class AssignmentViewModel @Inject constructor(
                 .onSuccess { personalAssignments: List<PersonalAssignmentData> ->
                     println("AssignmentViewModel - Received ${personalAssignments.size} personal assignments")
                     
-                    // 완료된 과제만 필터링 (GRADED 상태)
+                    // 완료된 과제만 필터링 (SUBMITTED 또는 GRADED 상태)
                     val completedAssignments = personalAssignments.filter { 
-                        it.status == PersonalAssignmentStatus.GRADED 
+                        it.status == PersonalAssignmentStatus.SUBMITTED || it.status == PersonalAssignmentStatus.GRADED
                     }
                     
                     println("AssignmentViewModel - Found ${completedAssignments.size} completed assignments")
@@ -865,6 +873,114 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
+    fun loadAllQuestions(personalAssignmentId: Int) {
+        viewModelScope.launch {
+            println("AssignmentViewModel - loadAllQuestions CALLED for personalAssignmentId: $personalAssignmentId")
+            
+            if (_isLoading.value) {
+                println("AssignmentViewModel - Already loading questions - RETURNING EARLY")
+                return@launch
+            }
+            
+            _isLoading.value = true
+            _error.value = null
+            
+            try {
+                // Step 1: 모든 기본 문제 로드 (진행률 계산용)
+                println("AssignmentViewModel - Loading all base questions for progress calculation")
+                assignmentRepository.getPersonalAssignmentQuestions(personalAssignmentId)
+                    .onSuccess { baseQuestions ->
+                        println("AssignmentViewModel - Loaded ${baseQuestions.size} base questions")
+                        _totalBaseQuestions.value = baseQuestions.size
+                        
+                        // Step 2: 다음 풀어야 할 문제 찾기
+                        println("AssignmentViewModel - Finding next question to solve")
+                        assignmentRepository.getNextQuestion(personalAssignmentId)
+                            .onSuccess { nextQuestion ->
+                                println("AssignmentViewModel - Found next question: ${nextQuestion.number}")
+                                
+                                // 다음 문제를 현재 문제로 설정
+                                _personalAssignmentQuestions.value = listOf(nextQuestion)
+                                _currentQuestionIndex.value = 0
+                                println("AssignmentViewModel - Set current question to next question")
+                            }
+                            .onFailure { exception ->
+                                println("AssignmentViewModel - No next question found: ${exception.message}")
+                                
+                                // "모든 문제를 완료했습니다" 메시지인지 확인
+                                val message = exception.message ?: ""
+                                if (message.contains("모든 문제를 완료했습니다") || 
+                                    message.contains("No more questions")) {
+                                    println("AssignmentViewModel - All questions completed! Message: $message")
+                                    _personalAssignmentQuestions.value = emptyList()
+                                    _currentQuestionIndex.value = 0
+                                    _error.value = null
+                                    
+                                    // 과제 완료 처리
+                                    completeAssignment(personalAssignmentId)
+                                } else {
+                                    println("AssignmentViewModel - Other error: $message")
+                                    _error.value = exception.message
+                                }
+                            }
+                    }
+                    .onFailure { exception ->
+                        println("AssignmentViewModel - Failed to load base questions: ${exception.message}")
+                        _error.value = exception.message
+                    }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    fun loadNextQuestion(personalAssignmentId: Int) {
+        viewModelScope.launch {
+            println("AssignmentViewModel - loadNextQuestion CALLED for personalAssignmentId: $personalAssignmentId")
+            println("AssignmentViewModel - Current isLoading state: ${_isLoading.value}")
+            
+            if (_isLoading.value) {
+                println("AssignmentViewModel - Already loading next question - RETURNING EARLY")
+                return@launch
+            }
+            
+            println("AssignmentViewModel - Setting isLoading to true")
+            _isLoading.value = true
+            _error.value = null
+            
+            try {
+                println("AssignmentViewModel - Calling assignmentRepository.getNextQuestion")
+                assignmentRepository.getNextQuestion(personalAssignmentId)
+                    .onSuccess { question ->
+                        println("AssignmentViewModel - SUCCESS: Received question: ${question.question}")
+                        // 단일 질문을 리스트로 변환하여 저장
+                        _personalAssignmentQuestions.value = listOf(question)
+                        _currentQuestionIndex.value = 0
+                        println("AssignmentViewModel - Successfully loaded next question: ${question.question}")
+                    }
+                    .onFailure { exception ->
+                        println("AssignmentViewModel - FAILURE: ${exception.message}")
+                        
+                        // "No more questions" 에러인지 확인
+                        if (exception.message?.contains("No more questions") == true || 
+                            exception.message?.contains("모든 문제를 완료했습니다") == true) {
+                            println("AssignmentViewModel - All questions completed - setting empty list")
+                            // 모든 문제가 완료된 경우 빈 리스트로 설정하여 UI가 완료 화면을 표시하도록 함
+                            _personalAssignmentQuestions.value = emptyList()
+                            _error.value = null // 에러를 클리어하여 완료 상태로 처리
+                        } else {
+                            _error.value = exception.message
+                            println("AssignmentViewModel - Failed to load next question: ${exception.message}")
+                        }
+                    }
+            } finally {
+                println("AssignmentViewModel - Setting isLoading to false")
+                _isLoading.value = false
+                println("AssignmentViewModel - loadNextQuestion COMPLETED")
+            }
+        }
+    }
+    
     fun loadPersonalAssignmentStatistics(personalAssignmentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -897,8 +1013,7 @@ class AssignmentViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             
-            // 오디오 녹음 상태를 처리 중으로 설정
-            _audioRecordingState.value = _audioRecordingState.value.copy(isProcessing = true)
+            // 오디오 녹음 상태를 처리 중으로 설정 (SimpleRecordingState에는 isProcessing 필드가 없음)
             
             assignmentRepository.submitAnswer(studentId, questionId, audioFile)
                 .onSuccess { response ->
@@ -913,14 +1028,13 @@ class AssignmentViewModel @Inject constructor(
                 }
             
             _isLoading.value = false
-            _audioRecordingState.value = _audioRecordingState.value.copy(isProcessing = false)
         }
     }
     
     fun startRecording() {
         _audioRecordingState.value = _audioRecordingState.value.copy(
             isRecording = true,
-            recordingDuration = 0,
+            recordingTime = 0,
             audioFilePath = null
         )
     }
@@ -932,9 +1046,24 @@ class AssignmentViewModel @Inject constructor(
         )
     }
     
+    fun stopRecordingImmediately() {
+        println("AssignmentViewModel - Stopping recording immediately")
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            isRecording = false
+        )
+    }
+    
+    fun stopRecordingWithFilePath(audioFilePath: String) {
+        println("AssignmentViewModel - Stopping recording with file path: $audioFilePath")
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            isRecording = false,
+            audioFilePath = audioFilePath
+        )
+    }
+    
     fun updateRecordingDuration(duration: Int) {
         _audioRecordingState.value = _audioRecordingState.value.copy(
-            recordingDuration = duration
+            recordingTime = duration
         )
     }
     
@@ -944,6 +1073,34 @@ class AssignmentViewModel @Inject constructor(
         
         if (currentIndex < totalQuestions - 1) {
             _currentQuestionIndex.value = currentIndex + 1
+        }
+    }
+    
+    // 서버 응답의 number_str을 기반으로 올바른 질문으로 이동
+    fun moveToQuestionByNumber(questionNumber: String, personalAssignmentId: Int) {
+        println("AssignmentViewModel - moveToQuestionByNumber called with: $questionNumber")
+        
+        // 하이픈이 포함된 경우 (꼬리 질문)는 별도 처리
+        if (questionNumber.contains("-")) {
+            println("AssignmentViewModel - This is a tail question: $questionNumber")
+            return
+        }
+        
+        // 기본 질문 번호로 변환
+        val targetNumber = questionNumber.toIntOrNull() ?: return
+        println("AssignmentViewModel - Target question number: $targetNumber")
+        
+        // 현재 질문 리스트에서 해당 번호의 질문 찾기
+        val questions = _personalAssignmentQuestions.value
+        val targetIndex = questions.indexOfFirst { it.number == questionNumber }
+        
+        if (targetIndex != -1) {
+            println("AssignmentViewModel - Found question at index: $targetIndex")
+            _currentQuestionIndex.value = targetIndex
+        } else {
+            println("AssignmentViewModel - Question $questionNumber not found in current list, loading from server")
+            // 현재 리스트에 없는 경우 서버에서 다음 질문을 로드
+            loadNextQuestion(personalAssignmentId)
         }
     }
     
@@ -967,10 +1124,43 @@ class AssignmentViewModel @Inject constructor(
     }
     
     fun resetAudioRecording() {
-        _audioRecordingState.value = AudioRecordingState()
+        _audioRecordingState.value = RecordingState()
     }
     
     fun clearAnswerSubmissionResponse() {
         _answerSubmissionResponse.value = null
+    }
+    
+    fun setAssignmentCompleted(completed: Boolean) {
+        _isAssignmentCompleted.value = completed
+    }
+    
+    fun updatePersonalAssignmentQuestions(questions: List<PersonalAssignmentQuestion>) {
+        _personalAssignmentQuestions.value = questions
+    }
+    
+    fun completeAssignment(personalAssignmentId: Int) {
+        viewModelScope.launch {
+            println("AssignmentViewModel - Completing assignment: $personalAssignmentId")
+            try {
+                // 백엔드에 과제 완료 API 호출
+                assignmentRepository.completePersonalAssignment(personalAssignmentId)
+                    .onSuccess {
+                        println("AssignmentViewModel - Assignment completed successfully")
+                        
+                        // 과제 완료 상태 설정
+                        _isAssignmentCompleted.value = true
+                        _personalAssignmentQuestions.value = emptyList()
+                        _currentQuestionIndex.value = 0
+                    }
+                    .onFailure { exception ->
+                        println("AssignmentViewModel - Error completing assignment: ${exception.message}")
+                        _error.value = exception.message
+                    }
+            } catch (e: Exception) {
+                println("AssignmentViewModel - Error completing assignment: ${e.message}")
+                _error.value = e.message
+            }
+        }
     }
 }

@@ -78,6 +78,14 @@ interface ApiService {
         @Part audioFile: MultipartBody.Part
     ): Response<ApiResponse<AnswerSubmissionResponse>>
     
+    @GET("personal_assignments/answer/")
+    suspend fun getNextQuestion(
+        @Query("personal_assignment_id") personalAssignmentId: Int
+    ): Response<ApiResponse<PersonalAssignmentQuestion>>
+    
+    @POST("personal_assignments/{id}/complete/")
+    suspend fun completePersonalAssignment(@Path("id") id: Int): Response<ApiResponse<Unit>>
+    
     @GET("courses/students/{id}/progress/")
     suspend fun getStudentProgress(@Path("id") id: Int): Response<ApiResponse<StudentProgress>>
     

@@ -404,8 +404,7 @@ class AnswerSubmitView(APIView):
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            # Step 1-3: 임시 파일로 저장 (extract_all_features 함수가 파일 경로를 요구함)
-            # 임시 파일 생성
+            # 임시 파일 생성 (extract_all_features 함수용)
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
                 # 업로드된 파일 내용을 임시 파일에 쓰기
                 for chunk in audio_file.chunks():
@@ -636,6 +635,7 @@ class AnswerSubmitView(APIView):
 
         except Exception as e:
             logger.error(f"[AnswerSubmitView] {e}", exc_info=True)
+
             return create_api_response(
                 success=False,
                 error=str(e),
@@ -705,5 +705,52 @@ class PersonalAssignmentStatisticsView(APIView):
                 success=False,
                 error=str(e),
                 message="개인 과제 통계 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+# 개인 과제 완료
+class PersonalAssignmentCompleteView(APIView):
+    @swagger_auto_schema(
+        operation_id="개인 과제 완료",
+        operation_description="개인 과제를 완료 상태로 변경합니다.",
+        responses={
+            200: openapi.Response(description="과제 완료 성공"),
+            404: openapi.Response(description="과제를 찾을 수 없음"),
+            500: openapi.Response(description="서버 오류"),
+        },
+    )
+    def post(self, request, id):
+        try:
+            personal_assignment = PersonalAssignment.objects.get(pk=id)
+
+            # 과제 상태를 SUBMITTED로 변경
+            personal_assignment.status = PersonalAssignment.Status.SUBMITTED
+            personal_assignment.submitted_at = timezone.now()
+            personal_assignment.save()
+
+            logger.info(f"[PersonalAssignmentCompleteView] Personal assignment {id} completed successfully")
+
+            return create_api_response(
+                success=True,
+                data=None,
+                message="과제가 성공적으로 완료되었습니다.",
+                status_code=status.HTTP_200_OK,
+            )
+
+        except PersonalAssignment.DoesNotExist:
+            logger.warning(f"[PersonalAssignmentCompleteView] Personal assignment {id} not found")
+            return create_api_response(
+                success=False,
+                error="PersonalAssignment not found",
+                message="해당 과제를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[PersonalAssignmentCompleteView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="과제 완료 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

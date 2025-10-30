@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,7 +30,7 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AIViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
-import com.example.voicetutor.utils.AudioRecorder
+import com.example.voicetutor.audio.AudioRecorder
 import com.example.voicetutor.utils.PermissionUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,9 +40,10 @@ import java.io.File
 
 @Composable
 fun AssignmentScreen(
-    assignmentId: Int? = null, // 실제 과제 ID 사용
+    assignmentId: Int? = null, // PersonalAssignment ID 사용 (PendingAssignmentsScreen에서 전달)
     assignmentTitle: String? = null, // 실제 과제 제목 사용
-    authViewModel: AuthViewModel? = null // 전달받은 AuthViewModel 사용
+    authViewModel: AuthViewModel? = null, // 전달받은 AuthViewModel 사용
+    onNavigateToHome: () -> Unit = {} // 홈으로 돌아가기 콜백
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val aiViewModel: AIViewModel = hiltViewModel()
@@ -49,6 +51,7 @@ fun AssignmentScreen(
     
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
     val aiResponse by aiViewModel.aiResponse.collectAsStateWithLifecycle()
     val voiceRecognitionResult by aiViewModel.voiceRecognitionResult.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
@@ -76,7 +79,7 @@ fun AssignmentScreen(
             )
         }
     } else {
-        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth)
+        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
     }
 }
 
@@ -98,9 +101,10 @@ private val mockChemistryQuestions = listOf(
 
 @Composable
 fun AssignmentContinuousScreen(
-    assignmentId: Int = 1,
+    assignmentId: Int = 1, // PersonalAssignment ID (PendingAssignmentsScreen에서 전달)
     assignmentTitle: String,
-    authViewModel: AuthViewModel? = null
+    authViewModel: AuthViewModel? = null,
+    onNavigateToHome: () -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
@@ -108,14 +112,19 @@ fun AssignmentContinuousScreen(
     
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val personalAssignmentQuestions by viewModel.personalAssignmentQuestions.collectAsStateWithLifecycle()
+    val totalBaseQuestions by viewModel.totalBaseQuestions.collectAsStateWithLifecycle()
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsStateWithLifecycle()
     val audioRecordingState by viewModel.audioRecordingState.collectAsStateWithLifecycle()
     val answerSubmissionResponse by viewModel.answerSubmissionResponse.collectAsStateWithLifecycle()
+    val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
     val audioRecorder = remember { AudioRecorder(context) }
+    
+    // AudioRecorder 상태 관찰
+    val audioRecorderState by audioRecorder.recordingState.collectAsStateWithLifecycle()
     
     // 응답 결과 표시를 위한 상태
     var showResult by remember { mutableStateOf(false) }
@@ -140,10 +149,27 @@ fun AssignmentContinuousScreen(
     // 현재 문제 가져오기
     val currentQuestion = viewModel.getCurrentQuestion()
     
-    // Personal Assignment ID를 사용하여 문제 로드 (assignmentId가 변경될 때만 실행)
-    LaunchedEffect(assignmentId) {
-        println("AssignmentScreen - Loading questions for assignment ID: $assignmentId")
-        viewModel.loadPersonalAssignmentQuestions(assignmentId)
+    // Personal Assignment ID를 사용하여 모든 기본 문제 로드
+    // 완료 상태를 추적하여 무한 루프 방지
+    var hasAttemptedLoad by remember { mutableStateOf(false) }
+    
+    // 과제 완료 상태 감지
+    if (isAssignmentCompleted) {
+        println("AssignmentScreen - Assignment completed, showing completion screen")
+    } else if (assignmentId != null && personalAssignmentQuestions.isEmpty() && !hasAttemptedLoad && !isLoading) {
+        LaunchedEffect(Unit) {
+            println("AssignmentScreen - Loading all questions for personalAssignmentId: $assignmentId")
+            println("AssignmentScreen - Assignment title: $assignmentTitle")
+            hasAttemptedLoad = true
+            viewModel.loadAllQuestions(assignmentId)
+        }
+    }
+    
+    // 무한 로딩 방지: 이미 시도했고 로딩 중이 아니면 다시 시도하지 않음
+    LaunchedEffect(hasAttemptedLoad, isLoading) {
+        if (hasAttemptedLoad && !isLoading && personalAssignmentQuestions.isEmpty()) {
+            println("AssignmentScreen - Prevented infinite loading: hasAttemptedLoad=$hasAttemptedLoad, isLoading=$isLoading, questionsEmpty=${personalAssignmentQuestions.isEmpty()}")
+        }
     }
     
     // 초기 질문의 정답 설정
@@ -156,47 +182,94 @@ fun AssignmentContinuousScreen(
     }
     
     
-    // 응답 결과 처리 - 한 번만 실행되도록 함
+    // 응답 결과 처리 - 새로운 응답이 올 때마다 처리
     LaunchedEffect(answerSubmissionResponse) {
         answerSubmissionResponse?.let { response ->
-            // 이미 처리된 응답이면 다시 처리하지 않음
-            if (!showResult) {
-                isAnswerCorrect = response.isCorrect
-                showResult = true
-                
-                // numberStr이 하이픈을 포함하면 꼬리 질문, 아니면 다음 기본 질문
-                val isTailQuestion = response.numberStr?.contains("-") == true
-                
-                if (isTailQuestion) {
-                    // 꼬리 질문인 경우
-                    currentTailQuestionNumber = response.numberStr
-                    savedTailQuestion = response.tailQuestion
-                    println("AssignmentScreen - This is a tail question: ${response.numberStr}")
-                } else {
-                    // 다음 기본 질문인 경우 (꼬리 질문에서 정답을 맞춘 경우)
-                    currentTailQuestionNumber = null
-                    savedTailQuestion = null
-                    println("AssignmentScreen - Moving to next base question: ${response.numberStr}")
-                }
-                
-                println("AssignmentScreen - Answer result: isCorrect=${response.isCorrect}, numberStr=${response.numberStr}")
-                println("AssignmentScreen - isTailQuestion: $isTailQuestion")
-                println("AssignmentScreen - Saved tail question: ${response.tailQuestion?.question}")
+            println("AssignmentScreen - Processing new response: ${response.numberStr}")
+            println("AssignmentScreen - Current tail question number: $currentTailQuestionNumber")
+            println("AssignmentScreen - Current saved tail question: ${savedTailQuestion?.question}")
+            
+            // 새로운 응답이면 항상 처리
+            isAnswerCorrect = response.isCorrect
+            showResult = true
+            
+            // tailQuestion이 null이면 완료 가능한 상태 (사용자가 완료 버튼을 눌러야 함)
+            if (response.tailQuestion == null) {
+                println("AssignmentScreen - No tail question, completion available")
+                // 완료 가능한 상태로 설정 (자동 완료하지 않음)
+                return@let
             }
+            
+            // numberStr이 null이면 과제 완료
+            if (response.numberStr == null) {
+                println("AssignmentScreen - Assignment completed (numberStr is null)")
+                // 과제 완료 상태로 설정
+                viewModel.setAssignmentCompleted(true)
+                return@let
+            }
+            
+            // numberStr이 하이픈을 포함하면 꼬리 질문, 아니면 다음 기본 질문
+            val isTailQuestion = response.numberStr?.contains("-") == true
+            
+            println("AssignmentScreen - Processing response: numberStr=${response.numberStr}, isTailQuestion=$isTailQuestion, tailQuestion=${response.tailQuestion?.question}")
+            
+            if (isTailQuestion) {
+                // 꼬리 질문인 경우
+                currentTailQuestionNumber = response.numberStr
+                savedTailQuestion = response.tailQuestion
+                println("AssignmentScreen - This is a tail question: ${response.numberStr}")
+            } else {
+                // 다음 기본 질문인 경우 (꼬리 질문에서 정답을 맞춘 경우)
+                currentTailQuestionNumber = null
+                savedTailQuestion = null
+                println("AssignmentScreen - Next base question available: ${response.numberStr}")
+                
+                // 서버에서 받은 numberStr이 현재 질문과 다르면 서버에서 해당 질문을 로드
+                val currentQuestionNumber = currentQuestion?.number
+                val serverQuestionNumber = response.numberStr
+                
+                if (currentQuestionNumber != serverQuestionNumber) {
+                    println("AssignmentScreen - Question number mismatch: current=$currentQuestionNumber, server=$serverQuestionNumber")
+                    println("AssignmentScreen - Loading question $serverQuestionNumber from server")
+                    // 서버에서 해당 질문을 로드
+                    assignmentId?.let { id ->
+                        viewModel.moveToQuestionByNumber(serverQuestionNumber, id)
+                    }
+                }
+                // 자동 이동하지 않고 사용자가 버튼을 눌러야 함
+            }
+            
+            println("AssignmentScreen - Answer result: isCorrect=${response.isCorrect}, numberStr=${response.numberStr}")
+            println("AssignmentScreen - isTailQuestion: $isTailQuestion")
+            println("AssignmentScreen - Saved tail question: ${response.tailQuestion?.question}")
         }
     }
     
-    // 녹음 시간 업데이트
+    // AudioRecorder 상태 변화 감지 및 ViewModel 동기화
+    LaunchedEffect(audioRecorderState.isRecordingComplete) {
+        if (audioRecorderState.isRecordingComplete && audioRecorderState.audioFilePath != null) {
+            println("AssignmentScreen - AudioRecorder completed, updating ViewModel with file path: ${audioRecorderState.audioFilePath}")
+            viewModel.stopRecordingWithFilePath(audioRecorderState.audioFilePath!!)
+        }
+    }
+    
+    // 녹음 시간 업데이트 - 개선된 로직
     LaunchedEffect(audioRecordingState.isRecording) {
         if (!audioRecordingState.isRecording) return@LaunchedEffect
         
+        println("AssignmentScreen - Starting recording timer")
         // 녹음이 시작되면 타이머 시작
         while (audioRecordingState.isRecording) {
             delay(1000)
+            // 상태를 다시 확인하여 녹음이 여전히 진행 중인지 체크
             if (audioRecordingState.isRecording) {
-                viewModel.updateRecordingDuration(audioRecordingState.recordingDuration + 1)
+                viewModel.updateRecordingDuration(audioRecordingState.recordingTime + 1)
+            } else {
+                println("AssignmentScreen - Recording stopped, timer exiting")
+                break
             }
         }
+        println("AssignmentScreen - Recording timer ended")
     }
 
     if (isLoading) {
@@ -208,42 +281,55 @@ fun AssignmentContinuousScreen(
                 color = PrimaryIndigo
             )
         }
-    } else if (currentQuestion == null) {
+    } else if (isAssignmentCompleted || currentQuestion == null || personalAssignmentQuestions.isEmpty()) {
         // 퀴즈 완료 화면
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
             VTCard(
                 variant = CardVariant.Elevated,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
                 Column(
+                    modifier = Modifier.padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
                         contentDescription = null,
                         tint = Success,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(80.dp)
                     )
                     Text(
                         text = "과제 완료!",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Gray800
-                    )
-                    Text(
-                        text = "모든 문제를 완료했습니다.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Gray600,
+                        color = Gray800,
                         textAlign = TextAlign.Center
                     )
+                    Text(
+                        text = "모든 문제를 완료했습니다.\n수고하셨습니다!",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Gray600,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 24.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
                     VTButton(
-                        text = "결과 확인",
-                        onClick = { /* TODO: Navigate to results */ },
-                        variant = ButtonVariant.Gradient
+                        text = "홈으로 돌아가기",
+                        onClick = {
+                            println("AssignmentScreen - Navigating to home")
+                            onNavigateToHome()
+                        },
+                        variant = ButtonVariant.Gradient,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -256,17 +342,18 @@ fun AssignmentContinuousScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Progress - base question만 카운트 (꼬리 질문은 진행률에 포함하지 않음)
-            val baseQuestionNumber = if (currentTailQuestionNumber != null) {
-                // 꼬리 질문이 있으면 기본 질문 번호 사용 (진행률 증가 없음)
-                currentQuestionIndex + 1
-            } else {
-                // 일반 질문이면 현재 질문 번호 사용
-                currentQuestionIndex + 1
-            }
+            // Progress - 실제 진행률 계산 (전체 기본 문제 대비 완료된 문제)
+            val currentIndex = viewModel.currentQuestionIndex.value
+            val totalQuestions = viewModel.totalBaseQuestions.value
+            val progress = if (totalQuestions > 0) {
+                // 현재 문제 번호를 기반으로 진행률 계산
+                val currentQuestion = viewModel.getCurrentQuestion()
+                val currentQuestionNumber = currentQuestion?.number?.toIntOrNull() ?: 1
+                currentQuestionNumber.toFloat() / totalQuestions.toFloat()
+            } else 0f
             
             VTProgressBar(
-                progress = baseQuestionNumber.toFloat() / personalAssignmentQuestions.size.toFloat(),
+                progress = progress,
                 showPercentage = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -289,11 +376,22 @@ fun AssignmentContinuousScreen(
                     if (!showResult) {
                         val questionNumber = currentTailQuestionNumber?.let { tailNumber ->
                             if (tailNumber.contains("-")) "꼬리 질문 $tailNumber" else "질문 $tailNumber"
-                        } ?: "질문 ${currentQuestion.number}"
+                        } ?: run {
+                            // 서버 응답이 있으면 서버 응답의 numberStr을 우선 사용
+                            val response = answerSubmissionResponse
+                            if (response?.numberStr != null && !response.numberStr.contains("-")) {
+                                "질문 ${response.numberStr}"
+                            } else if (currentQuestion.number.contains("-")) {
+                                "꼬리 질문 ${currentQuestion.number}"
+                            } else {
+                                "질문 ${currentQuestion.number}"
+                            }
+                        }
                         
                         println("AssignmentScreen - Displaying question number: $questionNumber")
                         println("AssignmentScreen - currentTailQuestionNumber: $currentTailQuestionNumber")
                         println("AssignmentScreen - currentQuestion.number: ${currentQuestion.number}")
+                        println("AssignmentScreen - answerSubmissionResponse.numberStr: ${answerSubmissionResponse?.numberStr}")
                         
                         Text(
                             text = questionNumber,
@@ -308,14 +406,18 @@ fun AssignmentContinuousScreen(
                     val questionText = when {
                         // 결과 화면이 아니라면
                         !showResult -> {
+                            // 새로운 응답이 있고 꼬리 질문인 경우
+                            if (response != null && response.numberStr?.contains("-") == true) {
+                                response.tailQuestion?.question ?: currentQuestion.question
+                            }
                             // 꼬리 질문 번호가 설정되어 있는 경우 (꼬리 질문으로 넘어간 상태)
-                            when {
-                                currentTailQuestionNumber != null -> {
-                                    // 저장된 꼬리 질문이나 응답의 꼬리 질문 표시
-                                    response?.tailQuestion?.question ?: savedTailQuestion?.question ?: currentQuestion.question
-                                }
-                                // 기본 질문 표시
-                                else -> currentQuestion.question
+                            else if (currentTailQuestionNumber != null) {
+                                // 저장된 꼬리 질문 표시 (새로운 응답이 오면 savedTailQuestion이 업데이트됨)
+                                savedTailQuestion?.question ?: currentQuestion.question
+                            }
+                            // 기본 질문 표시
+                            else {
+                                currentQuestion.question
                             }
                         }
                         // 결과 화면에서는 질문 표시하지 않음
@@ -398,7 +500,7 @@ fun AssignmentContinuousScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "녹음 중... ${String.format("%02d:%02d", audioRecordingState.recordingDuration / 60, audioRecordingState.recordingDuration % 60)}",
+                                    text = "녹음 중... ${String.format("%02d:%02d", audioRecordingState.recordingTime / 60, audioRecordingState.recordingTime % 60)}",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Error,
                                     fontWeight = FontWeight.Bold
@@ -418,7 +520,7 @@ fun AssignmentContinuousScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "녹음 완료 (${String.format("%02d:%02d", audioRecordingState.recordingDuration / 60, audioRecordingState.recordingDuration % 60)})",
+                                    text = "녹음 완료 (${String.format("%02d:%02d", audioRecordingState.recordingTime / 60, audioRecordingState.recordingTime % 60)})",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Success,
                                     fontWeight = FontWeight.Bold
@@ -428,42 +530,69 @@ fun AssignmentContinuousScreen(
                         
                         // Voice recorder button
                         VTButton(
-                            text = if (audioRecordingState.isRecording) "녹음 중지" else "녹음 시작",
+                            text = when {
+                                audioRecordingState.isRecording -> "녹음 중지"
+                                audioRecordingState.audioFilePath != null -> "다시 녹음하기"
+                                else -> "녹음 시작"
+                            },
                             onClick = {
-                                scope.launch {
-                                    if (audioRecordingState.isRecording) {
-                                        // 녹음 중지 및 파일 저장
-                                        println("AssignmentScreen - Stopping recording")
-                                        val filePath = audioRecorder.stopRecording()
-                                        if (filePath != null) {
-                                            println("AssignmentScreen - Recording saved to: $filePath")
-                                            viewModel.stopRecording(filePath)
-                                        } else {
-                                            println("AssignmentScreen - Failed to save recording")
-                                            viewModel.stopRecording("")
-                                        }
-                                    } else {
-                                        // 녹음 시작 전 권한 체크
-                                        if (!PermissionUtils.hasAudioPermission(context)) {
-                                            println("AssignmentScreen - Requesting audio permission")
-                                            permissionLauncher.launch(PermissionUtils.getRequiredPermissions())
-                                        } else {
-                                            println("AssignmentScreen - Starting recording")
-                                            val success = audioRecorder.startRecording()
-                                            if (success) {
-                                                viewModel.startRecording()
-                                            } else {
-                                                println("AssignmentScreen - Failed to start recording")
+                                if (audioRecordingState.isRecording) {
+                                    // 녹음 중지 - 간단하게 처리
+                                    println("AssignmentScreen - Stopping recording")
+                                    try {
+                                        // 먼저 ViewModel 상태를 즉시 중지로 변경
+                                        viewModel.stopRecordingImmediately()
+                                        
+                                        // 그 다음 AudioRecorder 중지 (비동기로 처리)
+                                        scope.launch {
+                                            try {
+                                                audioRecorder.stopRecording()
+                                                println("AssignmentScreen - AudioRecorder stopped successfully")
+                                            } catch (e: Exception) {
+                                                println("AssignmentScreen - Error in AudioRecorder.stopRecording(): ${e.message}")
                                             }
+                                        }
+                                    } catch (e: Exception) {
+                                        println("AssignmentScreen - Error stopping recording: ${e.message}")
+                                        // 에러가 발생해도 강제로 상태 초기화
+                                        viewModel.resetAudioRecording()
+                                    }
+                                } else {
+                                    // 녹음 시작 또는 다시 녹음하기
+                                    if (audioRecordingState.audioFilePath != null) {
+                                        // 기존 녹음이 있으면 초기화 후 새로 녹음
+                                        println("AssignmentScreen - Clearing existing recording and starting new one")
+                                        viewModel.resetAudioRecording()
+                                    }
+                                    
+                                    // 녹음 시작 전 권한 체크
+                                    if (!PermissionUtils.hasAudioPermission(context)) {
+                                        println("AssignmentScreen - Requesting audio permission")
+                                        permissionLauncher.launch(PermissionUtils.getRequiredPermissions())
+                                    } else {
+                                        println("AssignmentScreen - Starting recording")
+                                        val success = audioRecorder.startRecording()
+                                        if (success) {
+                                            viewModel.startRecording()
+                                        } else {
+                                            println("AssignmentScreen - Failed to start recording")
                                         }
                                     }
                                 }
                             },
-                            variant = if (audioRecordingState.isRecording) ButtonVariant.Outline else ButtonVariant.Gradient,
+                            variant = when {
+                                audioRecordingState.isRecording -> ButtonVariant.Outline
+                                else -> ButtonVariant.Gradient
+                            },
+                            enabled = true,
                             fullWidth = true,
                             leadingIcon = {
                                 Icon(
-                                    imageVector = if (audioRecordingState.isRecording) Icons.Filled.Stop else Icons.Filled.Mic,
+                                    imageVector = when {
+                                        audioRecordingState.isRecording -> Icons.Filled.Stop
+                                        audioRecordingState.audioFilePath != null -> Icons.Filled.Refresh
+                                        else -> Icons.Filled.Mic
+                                    },
                                     contentDescription = null
                                 )
                             }
@@ -477,32 +606,8 @@ fun AssignmentContinuousScreen(
                         val response = answerSubmissionResponse
                         val isTailQuestionNum = response?.numberStr?.contains("-") == true
                         
-                        if (isAnswerCorrect || !isTailQuestionNum) {
-                            // 정답이거나, 오답이지만 다음 기본 질문으로 넘어가는 경우
-                            VTButton(
-                                text = if (currentQuestionIndex < personalAssignmentQuestions.size - 1) "다음 문제" else "완료",
-                                onClick = {
-                                    if (currentQuestionIndex < personalAssignmentQuestions.size - 1) {
-                                        // 다음 문제로 이동
-                                        viewModel.clearAnswerSubmissionResponse()
-                                        showResult = false
-                                        currentTailQuestionNumber = null
-                                        savedTailQuestion = null
-                                        lastProcessedQuestionIndex = -1
-                                        
-                                        // 다음 문제의 정답 설정
-                                        val nextQuestion = personalAssignmentQuestions[currentQuestionIndex + 1]
-                                        currentQuestionAnswer = nextQuestion.answer
-                                        
-                                        println("AssignmentScreen - Moving to next question")
-                                        viewModel.nextQuestion()
-                                    }
-                                },
-                                variant = ButtonVariant.Gradient,
-                                fullWidth = true
-                            )
-                        } else {
-                            // 오답이고 꼬리 질문인 경우
+                        if (isTailQuestionNum) {
+                            // 꼬리 질문이 있는 경우 - 무조건 꼬리질문으로 넘어가기 버튼 표시
                             VTButton(
                                 text = "꼬리질문으로 넘어가기",
                                 onClick = {
@@ -517,6 +622,108 @@ fun AssignmentContinuousScreen(
                                 variant = ButtonVariant.Gradient,
                                 fullWidth = true
                             )
+                        } else {
+                            // 꼬리 질문이 없는 경우
+                            val response = answerSubmissionResponse
+                            val isTailQuestionNum = response?.numberStr?.contains("-") == true
+                            
+                            if (response?.tailQuestion == null) {
+                                // tailQuestion이 null인 경우 - 완료 버튼 표시
+                                VTButton(
+                                    text = "완료",
+                                    onClick = {
+                                        println("AssignmentScreen - Completion button pressed")
+                                        // 과제 완료 API 호출
+                                        assignmentId?.let { id ->
+                                            viewModel.completeAssignment(id)
+                                        }
+                                        // 홈으로 돌아가기
+                                        onNavigateToHome()
+                                    },
+                                    variant = ButtonVariant.Gradient,
+                                    fullWidth = true
+                                )
+                            } else if (response?.numberStr == null) {
+                                // 과제 완료인 경우 - 홈으로 돌아가기 버튼 표시
+                                VTButton(
+                                    text = "홈으로 돌아가기",
+                                    onClick = {
+                                        println("AssignmentScreen - Assignment completed, navigating to home")
+                                        onNavigateToHome()
+                                    },
+                                    variant = ButtonVariant.Gradient,
+                                    fullWidth = true
+                                )
+                            } else if (isTailQuestionNum) {
+                                // 꼬리 질문인 경우 - 꼬리질문으로 넘어가기 버튼 표시
+                                VTButton(
+                                    text = "꼬리질문으로 넘어가기",
+                                    onClick = {
+                                        // 꼬리 질문 상태로 전환
+                                        showResult = false
+                                        currentTailQuestionNumber = response.numberStr
+                                        savedTailQuestion = response.tailQuestion
+                                        
+                                        println("AssignmentScreen - Moving to tail question: ${response.numberStr}")
+                                        println("AssignmentScreen - Saved tail question: ${response.tailQuestion?.question}")
+                                    },
+                                    variant = ButtonVariant.Gradient,
+                                    fullWidth = true
+                                )
+                            } else {
+                                // 다음 기본 질문인 경우 - 다음 문제로 넘어가기 버튼 표시
+                                VTButton(
+                                    text = "다음 문제",
+                                    onClick = {
+                                        println("AssignmentScreen - Moving to next question")
+                                        viewModel.clearAnswerSubmissionResponse()
+                                        showResult = false
+                                        currentTailQuestionNumber = null
+                                        savedTailQuestion = null
+                                        
+                                        // 서버에서 받은 number_str을 기반으로 올바른 질문으로 이동
+                                        val numberStr = response?.numberStr
+                                        if (numberStr != null) {
+                                            println("AssignmentScreen - Moving to question number: $numberStr")
+                                            viewModel.moveToQuestionByNumber(numberStr, assignmentId)
+                                        } else {
+                                            // numberStr이 없는 경우 기존 로직 사용
+                                            val tailQuestion = response?.tailQuestion
+                                            if (tailQuestion != null) {
+                                                println("AssignmentScreen - Using tailQuestion as next question: ${tailQuestion.question}")
+                                                // tailQuestion을 PersonalAssignmentQuestion으로 변환하여 리스트에 추가
+                                                val nextQuestion = PersonalAssignmentQuestion(
+                                                    id = tailQuestion.id,
+                                                    number = tailQuestion.number.toString(),
+                                                    question = tailQuestion.question,
+                                                    answer = tailQuestion.answer,
+                                                    explanation = tailQuestion.explanation,
+                                                    difficulty = tailQuestion.difficulty
+                                                )
+                                                
+                                                // 현재 질문 리스트에 다음 질문 추가
+                                                val currentQuestions = viewModel.personalAssignmentQuestions.value.toMutableList()
+                                                currentQuestions.add(nextQuestion)
+                                                viewModel.updatePersonalAssignmentQuestions(currentQuestions)
+                                                
+                                                // 다음 질문으로 이동
+                                                scope.launch {
+                                                    delay(100)
+                                                    viewModel.nextQuestion()
+                                                }
+                                            } else {
+                                                // 로컬 리스트에서 다음 문제로 이동
+                                                scope.launch {
+                                                    delay(100)
+                                                    viewModel.nextQuestion()
+                                                }
+                                            }
+                                        }
+                                    },
+                                    variant = ButtonVariant.Gradient,
+                                    fullWidth = true
+                                )
+                            }
                         }
                     } else {
                         // 전송 버튼
@@ -526,7 +733,7 @@ fun AssignmentContinuousScreen(
                                 println("AssignmentScreen - Send button clicked")
                                 println("AssignmentScreen - audioFilePath: ${audioRecordingState.audioFilePath}")
                                 println("AssignmentScreen - isRecording: ${audioRecordingState.isRecording}")
-                                println("AssignmentScreen - isProcessing: ${audioRecordingState.isProcessing}")
+                                println("AssignmentScreen - isRecordingComplete: ${audioRecordingState.isRecordingComplete}")
                                 
                                 // 코루틴 스코프를 안전하게 처리
                                 val user = currentUser
@@ -537,9 +744,14 @@ fun AssignmentContinuousScreen(
                                     val audioFile = File(audioRecordingState.audioFilePath)
                                     println("AssignmentScreen - Audio file exists: ${audioFile.exists()}")
                                     println("AssignmentScreen - Audio file size: ${audioFile.length()} bytes")
-                                    println("AssignmentScreen - Recording duration: ${audioRecordingState.recordingDuration} seconds")
+                                    println("AssignmentScreen - Recording duration: ${audioRecordingState.recordingTime} seconds")
                                     
                                     try {
+                                        // SimpleAudioRecorder는 이미 3GP 형식으로 녹음하므로 변환 불필요
+                                        val finalAudioFile = audioFile
+                                        
+                                        println("AssignmentScreen - Using 3GP audio file: ${finalAudioFile.absolutePath}")
+                                        println("AssignmentScreen - File size: ${finalAudioFile.length()} bytes")
                                         // 꼬리 질문이면 꼬리 질문의 ID를, 아니면 현재 질문의 ID를 사용
                                         val questionIdToSubmit = if (currentTailQuestionNumber != null && savedTailQuestion != null) {
                                             savedTailQuestion!!.id
@@ -555,7 +767,7 @@ fun AssignmentContinuousScreen(
                                         viewModel.submitAnswer(
                                             studentId = user.id,
                                             questionId = questionIdToSubmit,
-                                            audioFile = audioFile
+                                            audioFile = finalAudioFile
                                         )
                                         
                                         println("AssignmentScreen - submitAnswer called successfully")
@@ -575,7 +787,7 @@ fun AssignmentContinuousScreen(
                             },
                             variant = ButtonVariant.Gradient,
                             fullWidth = true,
-                            enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording && !audioRecordingState.isProcessing
+                            enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording
                         )
                     }
                 }
@@ -587,12 +799,14 @@ fun AssignmentContinuousScreen(
 @Composable
 fun AssignmentQuizScreen(
     assignmentId: Int = 1,
-    assignmentTitle: String
+    assignmentTitle: String,
+    onNavigateToHome: () -> Unit = {}
 ) {
     // 모든 퀴즈는 음성 답변 + AI 대화형 꼬리 질문 형태로 진행
     AssignmentContinuousScreen(
         assignmentId = assignmentId,
-        assignmentTitle = assignmentTitle
+        assignmentTitle = assignmentTitle,
+        onNavigateToHome = onNavigateToHome
     )
 }
 
