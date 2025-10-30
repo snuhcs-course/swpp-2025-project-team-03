@@ -872,6 +872,7 @@ class PersonalAssignmentRecentView(APIView):
             # 다음 풀이할 문제 조회 (number, recalled_num 순으로 정렬하여 아직 풀이되지 않은 문제)
             questions = personal_assignment.questions.order_by("number", "recalled_num")
 
+            next_question = None
             for question in questions:
                 # 해당 question에 대한 답변이 존재하는지 확인
                 answered = Answer.objects.filter(question=question, student_id=student_id).exists()
