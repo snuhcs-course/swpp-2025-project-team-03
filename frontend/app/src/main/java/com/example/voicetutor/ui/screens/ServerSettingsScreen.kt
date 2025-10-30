@@ -33,9 +33,7 @@ fun ServerSettingsScreen(
 ) {
     var selectedServerType by remember { mutableStateOf("") }
     var customUrl by remember { mutableStateOf("") }
-    var ec2Ip by remember { mutableStateOf("") }
     var showCustomDialog by remember { mutableStateOf(false) }
-    var showEc2Dialog by remember { mutableStateOf(false) }
     
     val context = androidx.compose.ui.platform.LocalContext.current
     val apiConfig = remember { ApiConfig(context) }
@@ -128,10 +126,7 @@ fun ServerSettingsScreen(
                             ApiConfig.SERVER_TYPE_LOCALHOST -> {
                                 apiConfig.setLocalhostServer()
                             }
-                            ApiConfig.SERVER_TYPE_EC2 -> {
-                                showEc2Dialog = true
-                            }
-                            ApiConfig.SERVER_TYPE_CUSTOM -> {
+                            ApiConfig.SERVER_TYPE_PROD -> {
                                 showCustomDialog = true
                             }
                         }
@@ -154,50 +149,11 @@ fun ServerSettingsScreen(
         )
     }
     
-    // EC2 IP 입력 다이얼로그
-    if (showEc2Dialog) {
-        AlertDialog(
-            onDismissRequest = { showEc2Dialog = false },
-            title = { Text("EC2 서버 IP 입력") },
-            text = {
-                OutlinedTextField(
-                    value = ec2Ip,
-                    onValueChange = { ec2Ip = it },
-                    label = { Text("EC2 퍼블릭 IP") },
-                    placeholder = { Text("예: 13.124.123.456") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                VTButton(
-                    text = "확인",
-                    onClick = {
-                        if (ec2Ip.isNotBlank()) {
-                            apiConfig.setEc2Server(ec2Ip)
-                            showEc2Dialog = false
-                        }
-                    },
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small
-                )
-            },
-            dismissButton = {
-                VTButton(
-                    text = "취소",
-                    onClick = { showEc2Dialog = false },
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small
-                )
-            }
-        )
-    }
-    
     // 커스텀 URL 입력 다이얼로그
     if (showCustomDialog) {
         AlertDialog(
             onDismissRequest = { showCustomDialog = false },
-            title = { Text("커스텀 서버 URL 입력") },
+            title = { Text("Prod 서버 URL 입력") },
             text = {
                 OutlinedTextField(
                     value = customUrl,
@@ -212,7 +168,7 @@ fun ServerSettingsScreen(
                     text = "확인",
                     onClick = {
                         if (customUrl.isNotBlank()) {
-                            apiConfig.setCustomServer(customUrl)
+                            apiConfig.setProdServer(customUrl)
                             showCustomDialog = false
                         }
                     },
