@@ -238,6 +238,19 @@ class TestPersonalAssignmentListView:
         assert data["id"] == personal_assignment1.id
         assert isinstance(data["id"], int)
 
+    def test_list_unexpected_exception(self, api_client, personal_assignment1, monkeypatch):
+        """예상치 못한 예외 발생 시 500 에러"""
+
+        def mock_filter(*args, **kwargs):
+            raise Exception("Unexpected database error")
+
+        url = reverse("personal-assignment-list")
+        monkeypatch.setattr(PersonalAssignment.objects, "select_related", lambda *args: mock_filter())
+        response = api_client.get(url, {"assignment_id": personal_assignment1.assignment.id})
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert response.data["success"] is False
+
 
 class TestPersonalAssignmentQuestionsView:
     """PersonalAssignmentQuestionsView API 테스트"""
@@ -329,6 +342,19 @@ class TestPersonalAssignmentQuestionsView:
         assert question_data["answer"] == original_question.model_answer  # model_answer -> answer
         assert question_data["explanation"] == original_question.explanation
         assert question_data["difficulty"] == original_question.difficulty
+
+    def test_get_questions_unexpected_exception(self, api_client, personal_assignment1, monkeypatch):
+        """예상치 못한 예외 발생 시 500 에러"""
+
+        def mock_get(*args, **kwargs):
+            raise Exception("Unexpected error")
+
+        url = reverse("personal-assignment-questions", kwargs={"id": personal_assignment1.id})
+        monkeypatch.setattr(PersonalAssignment.objects, "get", mock_get)
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert response.data["success"] is False
 
 
 # ============================================================================
@@ -622,3 +648,16 @@ class TestPersonalAssignmentStatisticsView:
         assert data["total_problem"] >= 0
         assert data["solved_problem"] >= 0
         assert 0 <= data["progress"] <= 100
+
+    def test_get_statistics_unexpected_exception(self, api_client, personal_assignment1, monkeypatch):
+        """예상치 못한 예외 발생 시 500 에러"""
+
+        def mock_get(*args, **kwargs):
+            raise Exception("Database connection failed")
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        monkeypatch.setattr(PersonalAssignment.objects, "get", mock_get)
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert response.data["success"] is False
