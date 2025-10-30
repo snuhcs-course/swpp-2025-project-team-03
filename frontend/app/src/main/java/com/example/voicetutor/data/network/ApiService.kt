@@ -70,6 +70,12 @@ interface ApiService {
     @GET("personal_assignments/{id}/statistics/")
     suspend fun getPersonalAssignmentStatistics(@Path("id") id: Int): Response<ApiResponse<PersonalAssignmentStatistics>>
     
+    // Recent personal assignment for a student (used when entering assignment without id)
+    @GET("personal_assignments/recentanswer/")
+    suspend fun getRecentPersonalAssignment(
+        @Query("student_id") studentId: Int
+    ): Response<ApiResponse<RecentAnswerData>>
+
     @Multipart
     @POST("personal_assignments/answer/")
     suspend fun submitAnswer(
@@ -188,6 +194,13 @@ interface ApiService {
     @PUT("students/{studentId}/class/")
     suspend fun changeStudentClass(@Path("studentId") studentId: Int, @Body request: StudentClassChangeRequest): Response<ApiResponse<StudentClassChangeResponse>>
 }
+
+// Minimal response model for recent personal assignment lookup
+data class RecentAnswerData(
+    @SerializedName("personal_assignment_id") val personalAssignmentId: Int,
+    // Optional next question preview fields if backend returns them (safe to ignore if absent)
+    @SerializedName("next_question_id") val nextQuestionId: Int? = null
+)
 
 data class ApiResponse<T>(
     val success: Boolean,

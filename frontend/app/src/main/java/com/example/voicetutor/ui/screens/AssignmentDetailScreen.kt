@@ -25,25 +25,32 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 @Composable
 fun AssignmentDetailScreen(
     assignmentId: Int? = null, // PersonalAssignment ID 사용
-    assignmentTitle: String? = null, // 실제 과제 제목
-    onStartAssignment: () -> Unit = {}
+    assignmentTitle: String? = null, // 실제 과제 제목 사용
+    onStartAssignment: () -> Unit = {},
+    assignmentViewModelParam: com.example.voicetutor.ui.viewmodel.AssignmentViewModel? = null
 ) {
-    val assignmentViewModel: AssignmentViewModel = hiltViewModel()
+    val assignmentViewModel: AssignmentViewModel = assignmentViewModelParam ?: hiltViewModel()
     val currentAssignment by assignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
     val personalAssignmentStatistics by assignmentViewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
     val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
+    val selectedAssignmentId by assignmentViewModel.selectedAssignmentId.collectAsStateWithLifecycle()
+    val selectedPersonalAssignmentId by assignmentViewModel.selectedPersonalAssignmentId.collectAsStateWithLifecycle()
     
-    // 초안 저장 상태
-    var showSaveDraftDialog by remember { mutableStateOf(false) }
-    var draftContent by remember { mutableStateOf("") }
+    
     
     // Load assignment data and statistics
-    LaunchedEffect(assignmentId) {
-        assignmentId?.let { id ->
-            println("AssignmentDetailScreen - Loading assignment details for PersonalAssignment ID: $id")
-            assignmentViewModel.loadAssignmentById(id)
-            assignmentViewModel.loadPersonalAssignmentStatistics(id)
+    LaunchedEffect(assignmentId, selectedAssignmentId, selectedPersonalAssignmentId) {
+        // 우선순위: ViewModel에 저장된 선택값 → 네비게이션 파라미터
+        val personalId = selectedPersonalAssignmentId ?: assignmentId
+        val assignId = selectedAssignmentId
+        if (assignId != null) {
+            println("AssignmentDetailScreen - Loading assignment meta by assignment.id: $assignId")
+            assignmentViewModel.loadAssignmentById(assignId)
+        }
+        personalId?.let { pid ->
+            println("AssignmentDetailScreen - Loading statistics by personal_assignment.id: $pid")
+            assignmentViewModel.loadPersonalAssignmentStatistics(pid)
         }
     }
     
@@ -61,6 +68,13 @@ fun AssignmentDetailScreen(
     
     // Use actual assignment title or fallback
     val actualTitle = currentAssignment?.title ?: assignmentTitle ?: "과제"
+    // Format subject and due date from API instead of dummy text
+    fun formatDueDate(due: String?): String {
+        return try {
+            if (due == null) return ""
+            java.time.ZonedDateTime.parse(due).format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        } catch (e: Exception) { due ?: "" }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -125,11 +139,20 @@ fun AssignmentDetailScreen(
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "생물학 - 오늘 23:59 마감",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
+                    val subtitle = buildString {
+                        val subject = currentAssignment?.courseClass?.subject?.name
+                        val due = formatDueDate(currentAssignment?.dueAt)
+                        if (!subject.isNullOrBlank()) append(subject)
+                        if (!subject.isNullOrBlank() && due.isNotBlank()) append(" · ")
+                        if (due.isNotBlank()) append("마감: ").append(due)
+                    }
+                    if (subtitle.isNotBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
                 }
                 
                 Box(
@@ -204,12 +227,15 @@ fun AssignmentDetailScreen(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                Text(
-                    text = "세포분열 과정을 단계별로 설명하고, 각 단계에서 일어나는 주요 변화들을 정리해보세요. 또한 세포분열의 의의와 생물학적 중요성에 대해서도 서술해주세요.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray700,
-                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
-                )
+                val desc = currentAssignment?.description
+                if (!desc.isNullOrBlank()) {
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray700,
+                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
+                    )
+                }
             }
         }
         
@@ -245,87 +271,18 @@ fun AssignmentDetailScreen(
         
         // Action buttons
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             VTButton(
                 text = "과제 시작",
                 onClick = onStartAssignment,
                 variant = ButtonVariant.Gradient,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
-                    )
-                }
-            )
-            
-            VTButton(
-                text = "임시저장",
-                onClick = { showSaveDraftDialog = true },
-                variant = ButtonVariant.Outline,
-                modifier = Modifier.weight(1f),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Save,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            )
-        }
-        
-        // 초안 저장 다이얼로그
-        if (showSaveDraftDialog) {
-            AlertDialog(
-                onDismissRequest = { showSaveDraftDialog = false },
-                title = {
-                    Text(
-                        text = "초안 저장",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Column {
-                        Text(
-                            text = "현재까지 작성한 내용을 초안으로 저장하시겠습니까?",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = draftContent,
-                            onValueChange = { draftContent = it },
-                            label = { Text("초안 메모 (선택사항)") },
-                            placeholder = { Text("초안에 대한 간단한 메모를 입력하세요") },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 3
-                        )
-                    }
-                },
-                confirmButton = {
-                    VTButton(
-                        text = "저장",
-                        onClick = {
-                            // 실제 초안 저장 API 호출
-                            assignmentViewModel.saveAssignmentDraft(
-                                assignmentId = assignmentId ?: 1,
-                                draftContent = draftContent
-                            )
-                            showSaveDraftDialog = false
-                        },
-                        variant = ButtonVariant.Primary,
-                        size = ButtonSize.Small
-                    )
-                },
-                dismissButton = {
-                    VTButton(
-                        text = "취소",
-                        onClick = { showSaveDraftDialog = false },
-                        variant = ButtonVariant.Outline,
-                        size = ButtonSize.Small
                     )
                 }
             )

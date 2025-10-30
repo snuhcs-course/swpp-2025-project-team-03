@@ -99,37 +99,48 @@ fun CompletedAssignmentsScreen(
                 )
             }
         } else {
-            // Assignment list
-            if (completedAssignments.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Assignment,
-                            contentDescription = null,
-                            tint = Gray400,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "완료한 과제가 없습니다",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
-                        )
+            // Assignment list (scrollable)
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (completedAssignments.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Assignment,
+                                    contentDescription = null,
+                                    tint = Gray400,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "완료한 과제가 없습니다",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Gray600
+                                )
+                            }
+                        }
                     }
-                }
-            } else {
-                completedAssignments.forEach { assignment ->
+                } else {
+                    items(completedAssignments.size) { index ->
+                        val assignment = completedAssignments[index]
                     CompletedAssignmentCard(
                         assignment = assignment,
                         onClick = { 
-                            onNavigateToAssignmentDetail(assignment.id)
+                            val detailId = assignment.personalAssignmentId ?: assignment.id
+                            onNavigateToAssignmentDetail(detailId)
                         }
                     )
+                    }
                 }
             }
         }

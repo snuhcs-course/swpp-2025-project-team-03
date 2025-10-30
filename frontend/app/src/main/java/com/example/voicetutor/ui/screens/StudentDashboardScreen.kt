@@ -169,7 +169,7 @@ fun StudentDashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     VTStatsCard(
-                        title = "해야 할 과제",
+                        title = "해야\u00A0할\u00A0과제",
                         value = studentStats?.totalAssignments?.toString() ?: "0",
                         icon = Icons.Filled.List,
                         iconColor = PrimaryIndigo,
@@ -286,8 +286,13 @@ fun StudentDashboardScreen(
                             solvedNum = assignment.solvedNum ?: 0,
                             totalQuestions = assignment.totalQuestions,
                             onClick = { 
-                                // PendingAssignmentsScreen과 동일한 방식으로 assignment.id 사용
-                                onNavigateToAssignmentDetail(assignment.id.toString())
+                                // 두 ID를 모두 저장: assignment.id (6) 와 personalAssignmentId (16)
+                                viewModelAssignment.setSelectedAssignmentIds(
+                                    assignmentId = assignment.id,
+                                    personalAssignmentId = assignment.personalAssignmentId
+                                )
+                                val detailId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignmentDetail(detailId.toString())
                             }
                         )
                         

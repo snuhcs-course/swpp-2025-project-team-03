@@ -107,7 +107,9 @@ fun VTStatsCard(
                             text = title,
                             style = MaterialTheme.typography.bodyMedium,
                             color = Gray600,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         
                         Spacer(modifier = Modifier.height(8.dp))
@@ -202,7 +204,9 @@ fun VTStatsCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600,
                     fontWeight = FontWeight.Medium,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))

@@ -141,44 +141,58 @@ fun AllStudentAssignmentsScreen(
                 )
             }
         } else {
-            // Assignment list
-            if (assignments.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Assignment,
-                            contentDescription = null,
-                            tint = Gray400,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "과제가 없습니다",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
+            // Assignment list (scrollable)
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (assignments.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Assignment,
+                                    contentDescription = null,
+                                    tint = Gray400,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "과제가 없습니다",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Gray600
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    items(assignments.size) { index ->
+                        val assignment = assignments[index]
+                        StudentAssignmentCard(
+                            assignment = assignment,
+                            onClick = { 
+                                // Store both ids then navigate using personalAssignmentId if available
+                                viewModel.setSelectedAssignmentIds(
+                                    assignmentId = assignment.id,
+                                    personalAssignmentId = assignment.personalAssignmentId
+                                )
+                                val detailId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignmentDetail(detailId.toString()) 
+                            },
+                            onNavigateToAssignmentDetail = onNavigateToAssignmentDetail,
+                            onNavigateToAssignment = { assignmentId ->
+                                val personalId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignment(personalId.toString())
+                            }
                         )
                     }
-                }
-            } else {
-                assignments.forEach { assignment ->
-                    StudentAssignmentCard(
-                        assignment = assignment,
-                        onClick = { 
-                            // Assignment ID를 사용하여 과제 상세
-                            onNavigateToAssignmentDetail(assignment.id.toString()) 
-                        },
-                        onNavigateToAssignmentDetail = onNavigateToAssignmentDetail,
-                        onNavigateToAssignment = { assignmentId ->
-                            // personalAssignmentId를 사용하여 과제 시작
-                            val personalId = assignment.personalAssignmentId ?: assignment.id
-                            onNavigateToAssignment(personalId.toString())
-                        }
-                    )
                 }
             }
         }
@@ -390,10 +404,11 @@ fun StudentAssignmentCard(
                         
                         VTButton(
                             text = "과제 상세",
-                            onClick = { 
-                                // Assignment ID를 사용하여 과제 상세
-                                onNavigateToAssignmentDetail(assignment.id.toString()) 
-                            },
+                        onClick = { 
+                            // personalAssignmentId가 있으면 그것을 사용해 상세 화면으로 이동
+                            val detailId = assignment.personalAssignmentId ?: assignment.id
+                            onNavigateToAssignmentDetail(detailId.toString()) 
+                        },
                             variant = ButtonVariant.Outline,
                             size = ButtonSize.Small,
                             modifier = Modifier.weight(1f)

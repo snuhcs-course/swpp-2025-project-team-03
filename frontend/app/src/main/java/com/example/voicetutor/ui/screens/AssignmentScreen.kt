@@ -61,9 +61,21 @@ fun AssignmentScreen(
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle ?: "과제"
     
-    // Load assignment on first composition
-    LaunchedEffect(assignmentId) {
-        assignmentId?.let { id ->
+    // Resolve personal assignment id: if null, fetch recent by student id
+    val resolvedAssignmentIdState = remember { mutableStateOf<Int?>(assignmentId) }
+    val recentId by viewModel.recentPersonalAssignmentId.collectAsStateWithLifecycle()
+
+    LaunchedEffect(assignmentId, currentUser?.id, recentId) {
+        if (resolvedAssignmentIdState.value == null) {
+            // fetch recent when no id provided
+            currentUser?.id?.let { sid ->
+                viewModel.loadRecentPersonalAssignment(sid)
+            }
+            if (recentId != null) {
+                resolvedAssignmentIdState.value = recentId
+            }
+        }
+        resolvedAssignmentIdState.value?.let { id ->
             viewModel.loadAssignmentById(id)
         }
     }
@@ -79,7 +91,18 @@ fun AssignmentScreen(
             )
         }
     } else {
-        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
+        val effectiveId = resolvedAssignmentIdState.value
+        if (effectiveId != null) {
+            AssignmentContinuousScreen(assignmentId = effectiveId, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
+        } else {
+            // Still resolving recent assignment id
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryIndigo)
+            }
+        }
     }
 }
 

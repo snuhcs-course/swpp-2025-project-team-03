@@ -278,6 +278,7 @@ fun VoiceTutorNavigation(
                     navController = navController,
                     userRole = UserRole.STUDENT
                 ) {
+                    val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
                     PendingAssignmentsScreen(
                         studentId = studentId,
                         onNavigateToAssignment = { assignmentId ->
@@ -288,7 +289,8 @@ fun VoiceTutorNavigation(
                         onNavigateToAssignmentDetail = { assignmentId ->
                             // assignmentId는 Assignment ID
                             navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId, "과제"))
-                        }
+                        },
+                        assignmentViewModel = assignmentViewModel
                     )
                 }
             }
@@ -534,13 +536,16 @@ fun VoiceTutorNavigation(
                 navController = navController,
                 userRole = UserRole.STUDENT
             ) {
+                // Use graph-scoped ViewModel so selection persists across screens
+                val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
                 AssignmentDetailScreen(
                     assignmentId = assignmentId.toIntOrNull(),
                     assignmentTitle = assignmentTitle,
                     onStartAssignment = {
                         // Navigate to assignment execution screen
                         navController.navigate(VoiceTutorScreens.Assignment.createRoute("1", assignmentTitle))
-                    }
+                    },
+                    assignmentViewModelParam = assignmentViewModel
                 )
             }
         }

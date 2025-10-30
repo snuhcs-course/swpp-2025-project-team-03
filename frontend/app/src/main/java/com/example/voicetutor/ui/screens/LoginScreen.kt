@@ -216,7 +216,10 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         )
                     )
                     
@@ -253,7 +256,10 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         )
                     )
                     

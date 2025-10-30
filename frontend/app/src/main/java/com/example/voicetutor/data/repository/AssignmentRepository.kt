@@ -10,7 +10,6 @@ import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.AnswerSubmissionResponse
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.QuestionCreateRequest
-import com.example.voicetutor.data.network.CreateAssignmentResponse
 import com.example.voicetutor.data.network.S3UploadStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -421,6 +420,22 @@ class AssignmentRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+        // Recent personal assignment for a student
+        suspend fun getRecentPersonalAssignment(studentId: Int): Result<Int> {
+            return try {
+                println("AssignmentRepository - Getting recent personal assignment for student $studentId")
+                val response = apiService.getRecentPersonalAssignment(studentId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val id = response.body()?.data?.personalAssignmentId
+                    if (id != null) Result.success(id) else Result.failure(Exception("최근 개인 과제 ID를 찾을 수 없습니다"))
+                } else {
+                    Result.failure(Exception(response.body()?.message ?: "최근 개인 과제 조회 실패"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
     
     suspend fun submitAnswer(
         studentId: Int,
