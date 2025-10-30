@@ -43,3 +43,10 @@ class AnswerCorrectnessSerializer(serializers.Serializer):
     question_model_answer = serializers.CharField(help_text="모범 답안 텍스트")
     is_correct = serializers.BooleanField(help_text="학생의 답변이 정답인지 여부")
     answered_at = serializers.DateTimeField(help_text="답변한 시각")
+
+
+class PersonalAssignmentRecentSerializer(serializers.Serializer):
+    """최근 답변한 개인 과제 정보를 위한 serializer"""
+
+    personal_assignment_id = serializers.IntegerField(help_text="개인 과제 ID")
+    next_question_id = serializers.IntegerField(help_text="다음 질문 ID")
