@@ -230,6 +230,47 @@ class TestAnswerSubmitViewGET:
         assert resp.data["data"]["id"] == tail2.id
         assert resp.data["data"]["number"] == "3-2"
 
+    def test_get_unexpected_exception(self, api_client, personal_assignment, monkeypatch):
+        """GET 요청 중 예상치 못한 예외 발생 시 500 에러"""
+
+        def mock_get(*args, **kwargs):
+            raise Exception("Unexpected error")
+
+        url = reverse("answer")
+        monkeypatch.setattr(PersonalAssignment.objects, "get", mock_get)
+        resp = api_client.get(url, {"personal_assignment_id": personal_assignment.id})
+
+        assert resp.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert resp.data["success"] is False
+
+    def test_all_questions_recalled_num_three(self, api_client, personal_assignment, student):
+        """모든 질문이 recalled_num=3에 도달한 경우 404"""
+        # number=1에 recalled_num 0~3까지 모두 답변
+        for recalled in range(4):
+            q = Question.objects.create(
+                personal_assignment=personal_assignment,
+                number=1,
+                content=f"Q1-{recalled}",
+                model_answer="A",
+                explanation="E",
+                difficulty=Question.Difficulty.MEDIUM,
+                recalled_num=recalled,
+            )
+            Answer.objects.create(
+                question=q,
+                student=student,
+                text_answer="ans",
+                state=Answer.State.INCORRECT,
+                eval_grade=0.5,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            )
+
+        url = reverse("answer")
+        resp = api_client.get(url, {"personal_assignment_id": personal_assignment.id})
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert "모든 문제를 완료했습니다" in resp.data["message"]
+
 
 # -----------------------------
 # POST: 음성 답안 제출
@@ -513,3 +554,237 @@ class TestAnswerSubmitViewPOST:
         # submitted_at - started_at ~ 15.5 seconds
         delta = (ans.submitted_at - ans.started_at).total_seconds()
         assert 14.0 < delta < 17.0
+
+    @patch("submissions.views.generate_tail_question")
+    @patch("submissions.views.run_inference")
+    @patch("submissions.views.extract_all_features")
+    def test_plan_only_correct_updates_status(
+        self, mock_extract, mock_infer, mock_tail, api_client, student, personal_assignment, mock_audio_file
+    ):
+        """plan이 ONLY_CORRECT이고 is_correct=True일 때 solved_num 증가"""
+        q = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=1,
+            content="Q1",
+            model_answer="A1",
+            explanation="E1",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=0,
+        )
+        mock_extract.return_value = {"script": "correct answer", "total_length": 3.0}
+        mock_infer.return_value = {"pred_cont": 0.95}
+        mock_tail.return_value = {"is_correct": True, "plan": "ONLY_CORRECT", "recalled_time": 0}
+
+        url = reverse("answer")
+        resp = api_client.post(
+            url, {"studentId": student.id, "questionId": q.id, "audioFile": mock_audio_file}, format="multipart"
+        )
+
+        assert resp.status_code == status.HTTP_201_CREATED
+        personal_assignment.refresh_from_db()
+        assert personal_assignment.solved_num == 1
+
+    @patch("submissions.views.generate_tail_question")
+    @patch("submissions.views.run_inference")
+    @patch("submissions.views.extract_all_features")
+    def test_ask_plan_creates_tail_question(
+        self, mock_extract, mock_infer, mock_tail, api_client, student, personal_assignment, mock_audio_file
+    ):
+        """plan이 ASK이고 recalled_time < 4일 때 tail question 생성"""
+        q = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=5,
+            content="Q5",
+            model_answer="A5",
+            explanation="E5",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=0,
+        )
+        mock_extract.return_value = {"script": "partial answer", "total_length": 2.0}
+        mock_infer.return_value = {"pred_cont": 0.6}
+        mock_tail.return_value = {
+            "is_correct": False,
+            "plan": "ASK",
+            "recalled_time": 1,
+            "tail_question": {
+                "question": "Follow-up question?",
+                "model_answer": "Follow-up answer",
+                "explanation": "Follow-up explanation",
+                "difficulty": "MEDIUM",
+            },
+        }
+
+        url = reverse("answer")
+        resp = api_client.post(
+            url, {"studentId": student.id, "questionId": q.id, "audioFile": mock_audio_file}, format="multipart"
+        )
+
+        assert resp.status_code == status.HTTP_201_CREATED
+        # Tail question이 생성되었는지 확인
+        tail_q = Question.objects.filter(personal_assignment=personal_assignment, number=5, recalled_num=1).first()
+        assert tail_q is not None
+        assert tail_q.content == "Follow-up question?"
+
+    @patch("submissions.views.generate_tail_question")
+    @patch("submissions.views.run_inference")
+    @patch("submissions.views.extract_all_features")
+    def test_ask_plan_with_existing_tail_question(
+        self, mock_extract, mock_infer, mock_tail, api_client, student, personal_assignment, mock_audio_file
+    ):
+        """동일한 tail question이 이미 존재하면 재사용"""
+        q = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=6,
+            content="Q6",
+            model_answer="A6",
+            explanation="E6",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=0,
+        )
+        # 기존 tail question 생성
+        existing_tail = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=6,
+            content="Existing tail",
+            model_answer="Existing answer",
+            explanation="Existing explanation",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=1,
+            base_question=q,
+        )
+
+        mock_extract.return_value = {"script": "partial answer", "total_length": 2.0}
+        mock_infer.return_value = {"pred_cont": 0.6}
+        mock_tail.return_value = {
+            "is_correct": False,
+            "plan": "ASK",
+            "recalled_time": 1,
+            "tail_question": {
+                "question": "New tail question",
+                "model_answer": "New answer",
+                "explanation": "New explanation",
+                "difficulty": "MEDIUM",
+            },
+        }
+
+        url = reverse("answer")
+        resp = api_client.post(
+            url, {"studentId": student.id, "questionId": q.id, "audioFile": mock_audio_file}, format="multipart"
+        )
+
+        assert resp.status_code == status.HTTP_201_CREATED
+        # 기존 tail question이 재사용되었는지 확인 (새로 생성되지 않음)
+        tail_count = Question.objects.filter(personal_assignment=personal_assignment, number=6, recalled_num=1).count()
+        assert tail_count == 1
+        assert resp.data["data"]["tail_question"]["id"] == existing_tail.id
+
+    @patch("submissions.views.generate_tail_question")
+    @patch("submissions.views.run_inference")
+    @patch("submissions.views.extract_all_features")
+    def test_post_unexpected_exception_after_feature_extraction(
+        self, mock_extract, mock_infer, mock_tail, api_client, student, personal_assignment, mock_audio_file
+    ):
+        """Feature 추출 후 예외 발생 시 500 에러 (임시 파일은 정리됨)"""
+        q = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=11,
+            content="Q11",
+            model_answer="A11",
+            explanation="E11",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=0,
+        )
+        mock_extract.return_value = {"script": "answer", "total_length": 1.0}
+        mock_infer.return_value = {"pred_cont": 0.7}
+        mock_tail.side_effect = Exception("Unexpected tail generation error")
+
+        url = reverse("answer")
+        resp = api_client.post(
+            url, {"studentId": student.id, "questionId": q.id, "audioFile": mock_audio_file}, format="multipart"
+        )
+
+        assert resp.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert resp.data["success"] is False
+
+    @patch("submissions.views.generate_tail_question")
+    @patch("submissions.views.run_inference")
+    @patch("submissions.views.extract_all_features")
+    def test_ask_plan_no_tail_data(
+        self, mock_extract, mock_infer, mock_tail, api_client, student, personal_assignment, mock_audio_file
+    ):
+        """plan이 ASK지만 tail_question 데이터가 없는 경우"""
+        q = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=12,
+            content="Q12",
+            model_answer="A12",
+            explanation="E12",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=0,
+        )
+        mock_extract.return_value = {"script": "partial", "total_length": 1.0}
+        mock_infer.return_value = {"pred_cont": 0.6}
+        mock_tail.return_value = {
+            "is_correct": False,
+            "plan": "ASK",
+            "recalled_time": 1,
+            "tail_question": {},  # 빈 데이터
+        }
+
+        url = reverse("answer")
+        resp = api_client.post(
+            url, {"studentId": student.id, "questionId": q.id, "audioFile": mock_audio_file}, format="multipart"
+        )
+
+        # tail_question이 없어도 정상적으로 처리됨
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    @patch("submissions.views.generate_tail_question")
+    @patch("submissions.views.run_inference")
+    @patch("submissions.views.extract_all_features")
+    def test_tail_question_creation_exception(
+        self, mock_extract, mock_infer, mock_tail, api_client, student, personal_assignment, mock_audio_file
+    ):
+        """Tail question 생성 중 DB 에러가 발생해도 계속 진행"""
+        q = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=13,
+            content="Q13",
+            model_answer="A13",
+            explanation="E13",
+            difficulty=Question.Difficulty.MEDIUM,
+            recalled_num=0,
+        )
+        mock_extract.return_value = {"script": "answer", "total_length": 1.0}
+        mock_infer.return_value = {"pred_cont": 0.6}
+        mock_tail.return_value = {
+            "is_correct": False,
+            "plan": "ASK",
+            "recalled_time": 1,
+            "tail_question": {
+                "question": "Follow-up",
+                "model_answer": "Answer",
+                "explanation": "Explanation",
+                "difficulty": "MEDIUM",
+            },
+        }
+
+        # Question.objects.create를 mock하여 에러 발생시키기
+        original_create = Question.objects.create
+
+        def mock_create(*args, **kwargs):
+            if kwargs.get("recalled_num", 0) > 0:
+                raise Exception("DB error during tail question creation")
+            return original_create(*args, **kwargs)
+
+        import unittest.mock
+
+        with unittest.mock.patch.object(Question.objects, "create", side_effect=mock_create):
+            url = reverse("answer")
+            resp = api_client.post(
+                url, {"studentId": student.id, "questionId": q.id, "audioFile": mock_audio_file}, format="multipart"
+            )
+
+            # 에러가 발생해도 답변은 정상적으로 저장되고, tail_question은 None
+            assert resp.status_code == status.HTTP_201_CREATED
+            assert resp.data["data"]["tail_question"] is None

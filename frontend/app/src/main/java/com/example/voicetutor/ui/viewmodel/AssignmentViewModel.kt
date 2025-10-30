@@ -645,6 +645,22 @@ class AssignmentViewModel @Inject constructor(
                                 println("DEBUG: uploadProgress set to 1f")
                                 _uploadSuccess.value = true
                                 _isUploading.value = false
+
+                                // 3. 업로드 완료 직후 기본 문제 생성 트리거
+                                val totalNumber = assignment.questions?.size ?: 5
+                                println("3단계: 기본 문제 생성 트리거 - totalNumber=$totalNumber")
+                                viewModelScope.launch {
+                                    assignmentRepository.createQuestionsAfterUpload(
+                                        assignmentId = createResponse.assignment_id,
+                                        materialId = createResponse.material_id,
+                                        totalNumber = totalNumber
+                                    ).onSuccess {
+                                        println("✅ 기본 문제 생성 요청 성공")
+                                    }.onFailure { genErr ->
+                                        println("❌ 기본 문제 생성 요청 실패: ${genErr.message}")
+                                        // 실패해도 과제 생성 자체는 유지. 필요 시 사용자 알림 처리 가능
+                                    }
+                                }
                                 
                                 // Refresh assignments list
                                 loadAllAssignments()
@@ -1039,6 +1055,33 @@ class AssignmentViewModel @Inject constructor(
                 }
             
             _isLoading.value = false
+        }
+    }
+
+    // Helper: find personalAssignment by (studentId, assignmentId) and load its statistics
+    fun loadPersonalAssignmentStatisticsFor(studentId: Int, assignmentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId)
+                    .onSuccess { list ->
+                        val pa = list.firstOrNull()
+                        if (pa == null) {
+                            _error.value = "Personal assignment not found for student $studentId and assignment $assignmentId"
+                        } else {
+                            // then load statistics
+                            assignmentRepository.getPersonalAssignmentStatistics(pa.id)
+                                .onSuccess { statistics ->
+                                    _personalAssignmentStatistics.value = statistics
+                                }
+                                .onFailure { e -> _error.value = e.message }
+                        }
+                    }
+                    .onFailure { e -> _error.value = e.message }
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
     

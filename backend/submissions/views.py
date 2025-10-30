@@ -15,7 +15,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Answer, PersonalAssignment
-from .serializers import PersonalAssignmentSerializer, PersonalAssignmentStatisticsSerializer
+from .serializers import (
+    AnswerCorrectnessSerializer,
+    PersonalAssignmentSerializer,
+    PersonalAssignmentStatisticsSerializer,
+)
 from .utils.feature_extractor.extract_all_features import extract_all_features
 from .utils.inference import run_inference
 from .utils.tail_question_generator.generate_questions_routed import generate_tail_question
@@ -751,5 +755,54 @@ class PersonalAssignmentCompleteView(APIView):
                 success=False,
                 error=str(e),
                 message="과제 완료 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class AnswerCorrectnessView(APIView):
+    @swagger_auto_schema(
+        operation_id="답안 정답 여부 정보 조회",
+        operation_description="모든 답안의 정답 여부 정보를 조회합니다.",
+        responses={200: "답안 정답 여부 정보"},
+    )
+    def get(self, request, id):
+        """
+        답안 정답 여부 정보 조회
+        """
+        try:
+            # PersonalAssignment 조회
+            personal_assignment = PersonalAssignment.objects.get(pk=id)
+
+            questions = personal_assignment.questions.filter(recalled_num=0).order_by("number")
+
+            answer_correctness_list = []
+            for question in questions:
+                try:
+                    answer = Answer.objects.get(question=question, student=personal_assignment.student)
+                    is_correct = answer.state == Answer.State.CORRECT
+                except Answer.DoesNotExist:
+                    continue  # 답안이 없는 경우 건너뜀
+
+                answer_correctness_list.append(
+                    {
+                        "question_content": question.content,
+                        "question_model_answer": question.model_answer,
+                        "is_correct": is_correct,
+                        "answered_at": answer.submitted_at,
+                    }
+                )
+
+            serializer = AnswerCorrectnessSerializer(answer_correctness_list, many=True)
+
+            return create_api_response(
+                data=serializer.data, message="답안 정답 여부 정보 조회 성공", status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.error(f"[AnswerCorrectnessView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="답안 정답 여부 정보 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

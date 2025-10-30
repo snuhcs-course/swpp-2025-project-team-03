@@ -81,6 +81,8 @@ fun CreateAssignmentScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
+            // 새 파일 선택 시 이전 업로드 상태 초기화
+            actualAssignmentViewModel.resetUploadState()
             println("=== PDF 파일 선택 디버그 ===")
             println("선택된 URI: $uri")
             println("URI 스키마: ${uri.scheme}")
@@ -137,6 +139,8 @@ fun CreateAssignmentScreen(
     
     // Load data on first composition
     LaunchedEffect(actualTeacherId) {
+        // 화면 진입 시 업로드 상태 초기화 (이전 화면의 성공 배너가 남는 현상 방지)
+        actualAssignmentViewModel.resetUploadState()
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
