@@ -84,6 +84,22 @@ class AssignmentViewModelFlowTest {
     }
 
     @Test
+    fun loadAllAssignments_failure_setsError() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        whenever(assignmentRepository.getAllAssignments(null, null, null))
+            .thenReturn(Result.failure(Exception("boom")))
+
+        vm.error.test {
+            awaitItem() // initial null
+            vm.loadAllAssignments()
+            runCurrent()
+            val err = awaitItem()
+            assert(err?.contains("boom") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun completeAssignment_success_setsCompleted() = runTest {
         val pid = 123
         Mockito.`when`(assignmentRepository.completePersonalAssignment(pid))
@@ -325,6 +341,22 @@ class AssignmentViewModelFlowTest {
     }
 
     @Test
+    fun loadAssignmentById_failure_setsError() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        whenever(assignmentRepository.getAssignmentById(99))
+            .thenReturn(Result.failure(Exception("not found")))
+
+        vm.error.test {
+            awaitItem()
+            vm.loadAssignmentById(99)
+            advanceUntilIdle()
+            val err = awaitItem()
+            assert(err?.contains("not found") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun loadAllAssignments_withStatusCompleted_callsRepoWithStatus() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         Mockito.`when`(assignmentRepository.getAllAssignments(null, null, AssignmentStatus.COMPLETED))
@@ -384,6 +416,164 @@ class AssignmentViewModelFlowTest {
         }
 
         Mockito.verify(assignmentRepository, times(1)).submitAnswer(eq(studentId), eq(questionId), any())
+    }
+
+    @Test
+    fun submitAnswer_failure_setsError_andVerifiesRepoCall() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        val studentId = 7
+        val questionId = 21
+        val tmpFile = File.createTempFile("answer", ".3gp")
+        whenever(assignmentRepository.submitAnswer(eq(studentId), eq(questionId), any()))
+            .thenReturn(Result.failure(Exception("submit failed")))
+
+        vm.error.test {
+            awaitItem()
+            vm.submitAnswer(studentId, questionId, tmpFile)
+            advanceUntilIdle()
+            val err = awaitItem()
+            assert(err?.contains("submit failed") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        Mockito.verify(assignmentRepository, times(1)).submitAnswer(eq(studentId), eq(questionId), any())
+    }
+
+    @Test
+    fun createAssignmentWithPdf_success_progressSequence_andVerifyCreateQuestions() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
+            title = "T",
+            subject = "Subj",
+            class_id = 1,
+            due_at = "2025-01-01T00:00:00Z",
+            grade = "G",
+            type = "QUIZ",
+            description = "D",
+            questions = listOf(
+                com.example.voicetutor.data.models.QuestionData(
+                    id = 1,
+                    question = "Q1",
+                    type = "MULTIPLE",
+                    options = listOf("A","B","C","D"),
+                    correctAnswer = "A",
+                    points = 1,
+                    explanation = null
+                )
+            )
+        )
+        val tmpPdf = File.createTempFile("doc", ".pdf")
+        whenever(assignmentRepository.createAssignment(request))
+            .thenReturn(Result.success(com.example.voicetutor.data.network.CreateAssignmentResponse(assignment_id = 10, material_id = 20, s3_key = "k", upload_url = "http://u")))
+        whenever(assignmentRepository.uploadPdfToS3(any(), any()))
+            .thenReturn(Result.success(true))
+        whenever(assignmentRepository.createQuestionsAfterUpload(10, 20, 1))
+            .thenReturn(Result.success(Unit))
+        org.mockito.Mockito.lenient().`when`(assignmentRepository.getAllAssignments(null, null, null))
+            .thenReturn(Result.success(emptyList()))
+
+        vm.uploadProgress.test {
+            // initial 0f
+            awaitItem()
+            vm.createAssignmentWithPdf(request, tmpPdf)
+            // expect 0.3 then 1.0 in some order with scheduler advance
+            advanceUntilIdle()
+            val p1 = awaitItem(); val p2 = awaitItem()
+            assert(listOf(p1, p2).contains(0.3f) && listOf(p1, p2).contains(1.0f))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // end states
+        vm.isUploading.test { val v = awaitItem(); assert(v == false); cancelAndIgnoreRemainingEvents() }
+        vm.uploadSuccess.test { val v = awaitItem(); assert(v == true); cancelAndIgnoreRemainingEvents() }
+
+        Mockito.verify(assignmentRepository, times(1)).createQuestionsAfterUpload(10, 20, 1)
+        Mockito.verify(assignmentRepository, times(1)).getAllAssignments(null, null, null)
+    }
+
+    @Test
+    fun createAssignmentWithPdf_uploadFailure_setsError_andStopsUploading() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
+            title = "T",
+            subject = "Subj",
+            class_id = 1,
+            due_at = "2025-01-01T00:00:00Z",
+            grade = "G",
+            type = "QUIZ",
+            description = "D",
+            questions = null
+        )
+        val tmpPdf = File.createTempFile("doc", ".pdf")
+        whenever(assignmentRepository.createAssignment(request))
+            .thenReturn(Result.success(com.example.voicetutor.data.network.CreateAssignmentResponse(assignment_id = 10, material_id = 20, s3_key = "k", upload_url = "http://u")))
+        whenever(assignmentRepository.uploadPdfToS3(any(), any()))
+            .thenReturn(Result.failure(Exception("upload fail")))
+
+        vm.error.test {
+            awaitItem()
+            vm.createAssignmentWithPdf(request, tmpPdf)
+            advanceUntilIdle()
+            val err = awaitItem(); assert(err?.contains("PDF 업로드 실패") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.isUploading.test { val v = awaitItem(); assert(v == false); cancelAndIgnoreRemainingEvents() }
+    }
+
+    @Test
+    fun checkS3Upload_fileExists_true_setsS3UploadStatus() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        val status = com.example.voicetutor.data.network.S3UploadStatus(
+            assignment_id = 10, material_id = 20, s3_key = "k", file_exists = true, file_size = 100, content_type = "application/pdf", last_modified = "", bucket = "b"
+        )
+        whenever(assignmentRepository.checkS3Upload(10)).thenReturn(Result.success(status))
+
+        vm.s3UploadStatus.test {
+            awaitItem()
+            vm.checkS3UploadStatus(10)
+            advanceUntilIdle()
+            val next = awaitItem(); assert(next?.file_exists == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun checkS3Upload_failure_setsError() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        whenever(assignmentRepository.checkS3Upload(10)).thenReturn(Result.failure(Exception("s3 error")))
+        vm.error.test {
+            awaitItem()
+            vm.checkS3UploadStatus(10)
+            advanceUntilIdle()
+            val next = awaitItem(); assert(next?.contains("s3 error") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadPersonalAssignmentStatistics_failure_setsError() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        whenever(assignmentRepository.getPersonalAssignmentStatistics(5)).thenReturn(Result.failure(Exception("stats fail")))
+        vm.error.test {
+            awaitItem()
+            vm.loadPersonalAssignmentStatistics(5)
+            advanceUntilIdle()
+            val next = awaitItem(); assert(next?.contains("stats fail") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun moveToQuestionByNumber_tailFormat_doesNotCallRepo_andKeepsIndex() = runTest {
+        val vm = AssignmentViewModel(assignmentRepository)
+        vm.updatePersonalAssignmentQuestions(listOf(
+            PersonalAssignmentQuestion(1, "1", "Q1", "A1", "E1", "M"),
+            PersonalAssignmentQuestion(2, "2", "Q2", "A2", "E2", "M")
+        ))
+        // initial index 0
+        vm.moveToQuestionByNumber("2-1", personalAssignmentId = 99)
+        vm.currentQuestionIndex.test { val idx = awaitItem(); assert(idx == 0); cancelAndIgnoreRemainingEvents() }
+        Mockito.verify(assignmentRepository, never()).getNextQuestion(Mockito.anyInt())
     }
 }
 
