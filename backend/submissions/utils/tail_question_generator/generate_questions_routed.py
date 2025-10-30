@@ -462,8 +462,8 @@ Output Requirements:
 - Include a clear model answer and concise explanation.
 - The question should help the student **progress** from their current understanding state.
 
-# Few-shot examples (multiple):
-# {example}""",
+Few-shot examples (multiple):
+{example}""",
         ),
         ("user", "Original Question: {question}\nModel Answer: {model_answer}\nStudent Answer: {student_answer}\n}}"),
     ]
