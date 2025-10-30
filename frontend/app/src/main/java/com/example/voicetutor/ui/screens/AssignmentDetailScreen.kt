@@ -25,7 +25,7 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 @Composable
 fun AssignmentDetailScreen(
     assignmentId: Int? = null, // PersonalAssignment ID 사용
-    assignmentTitle: String? = null, // 실제 과제 제목 사용
+    assignmentTitle: String? = null, // 실제 과제 제목
     onStartAssignment: () -> Unit = {}
 ) {
     val assignmentViewModel: AssignmentViewModel = hiltViewModel()

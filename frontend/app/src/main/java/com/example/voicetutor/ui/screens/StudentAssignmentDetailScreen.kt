@@ -43,12 +43,17 @@ fun StudentAssignmentDetailScreen(
     val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
     
     // Load assignment data and personal assignment statistics on first composition
-    LaunchedEffect(assignmentId) {
+    LaunchedEffect(assignmentId, studentId) {
         if (assignmentId != null) {
-            println("StudentAssignmentDetail - Loading assignment: $assignmentId")
+            println("StudentAssignmentDetail - Loading assignment: $assignmentId for student: ${studentId}")
             viewModel.loadAssignmentById(assignmentId)
-            // 개인 과제 통계 로드 (personalAssignmentId 사용)
-            viewModel.loadPersonalAssignmentStatistics(assignmentId)
+            // 정확한 통계를 위해 studentId + assignmentId로 personalAssignment를 찾아 통계 조회
+            if (studentId != null) {
+                viewModel.loadPersonalAssignmentStatisticsFor(studentId, assignmentId)
+            } else {
+                // fallback (개발 중 호환)
+                viewModel.loadPersonalAssignmentStatistics(assignmentId)
+            }
         }
     }
     
