@@ -61,21 +61,14 @@ def extract_all_features(wav_path: str, model_name: str = None) -> dict:
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "json", "stt-project-473514-83b71dceac84.json"
         )
 
-        # JSON 파일이 존재하는지 확인
-        if os.path.exists(json_path):
-            # JSON 파일 경로를 features_dict에 추가
-            features_dict["json_path"] = json_path
-
         script_feats = extract_features_from_script(features_dict, shared_model=model)
+
     except Exception as e:
         import traceback
 
         traceback.print_exc()
         # 기본값으로 빈 딕셔너리 반환
         script_feats = {}
-
-    # below stores integrated features
-    features_dict.update(script_feats)
 
     return features_dict
 
