@@ -55,12 +55,6 @@ def extract_all_features(wav_path: str, model_name: str = None) -> dict:
     # load SBERT model once
     try:
         model = SentenceTransformer(model_name)
-
-        # JSON 파일 경로 추가
-        json_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "json", "stt-project-473514-83b71dceac84.json"
-        )
-
         script_feats = extract_features_from_script(features_dict, shared_model=model)
 
     except Exception as e:

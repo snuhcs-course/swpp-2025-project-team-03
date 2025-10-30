@@ -14,10 +14,6 @@ load_dotenv()
 def resample_to_16k_mono(filepath: str) -> bytes:
     """WAV 파일을 메모리 상에서 16kHz mono PCM16으로 변환"""
 
-    # 파일 존재 및 크기 확인
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(f"File not found: {filepath}")
-
     file_size = os.path.getsize(filepath)
 
     if file_size == 0:
@@ -26,20 +22,15 @@ def resample_to_16k_mono(filepath: str) -> bytes:
     try:
         data, samplerate = sf.read(filepath)
 
-        # 스테레오 → 모노
         if len(data.shape) > 1:
             data = np.mean(data, axis=1)
 
-        # 음성 신호 정규화 및 노이즈 제거
-        # 정규화 (0-1 범위로)
         if np.max(np.abs(data)) > 0:
             data = data / np.max(np.abs(data))
 
-        # 음성 신호 강화 (작은 값들을 제거하여 노이즈 감소)
-        threshold = 0.01  # 임계값 설정
+        threshold = 0.01
         data = np.where(np.abs(data) < threshold, 0, data)
 
-        # 샘플레이트 변경
         if samplerate != 16000:
             data = resampy.resample(data, samplerate, 16000)
             samplerate = 16000
@@ -60,59 +51,33 @@ def resample_to_16k_mono(filepath: str) -> bytes:
 def speech_to_text(filepath: str, language_code: str = "ko-KR") -> str:
     """Google Cloud STT 요청"""
 
-    # Google Cloud 인증 설정
-    import os
+    client = speech.SpeechClient()
 
-    from google.oauth2 import service_account
+    wav_bytes, sr = resample_to_16k_mono(filepath)
 
-    # JSON 파일 경로 설정
-    json_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "submissions",
-        "json",
-        "stt-project-473514-83b71dceac84.json",
+    audio = speech.RecognitionAudio(content=wav_bytes)
+
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+        language_code=language_code,
+        enable_automatic_punctuation=True,
+        enable_word_time_offsets=True,
+        enable_word_confidence=True,
+        model="latest_long",
+        sample_rate_hertz=16000,
+        audio_channel_count=1,
+        use_enhanced=True,
+        alternative_language_codes=["ko-KR", "en-US"],
     )
 
-    if os.path.exists(json_path):
-        credentials = service_account.Credentials.from_service_account_file(json_path)
-        client = speech.SpeechClient(credentials=credentials)
-    else:
-        # 환경 변수에서 인증 정보 사용
-        client = speech.SpeechClient()
+    response = client.recognize(config=config, audio=audio)
 
-    try:
-        wav_bytes, sr = resample_to_16k_mono(filepath)
+    if not response.results:
+        return ""
 
-        audio = speech.RecognitionAudio(content=wav_bytes)
+    transcript = " ".join(result.alternatives[0].transcript for result in response.results)
 
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            language_code=language_code,
-            enable_automatic_punctuation=True,
-            enable_word_time_offsets=True,
-            enable_word_confidence=True,
-            model="latest_long",
-            # 추가 설정으로 인식률 개선
-            sample_rate_hertz=16000,
-            audio_channel_count=1,
-            # 노이즈 필터링 및 음성 강화
-            use_enhanced=True,
-            # 한국어 특화 설정
-            alternative_language_codes=["ko-KR", "en-US"],
-        )
-
-        response = client.recognize(config=config, audio=audio)
-
-        if not response.results:
-            return ""
-
-        transcript = " ".join(result.alternatives[0].transcript for result in response.results)
-        transcript = transcript.strip()
-
-        return transcript
-
-    except Exception as e:
-        raise
+    return transcript.strip()
 
 
 def main():
