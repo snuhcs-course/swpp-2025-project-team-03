@@ -107,6 +107,10 @@ class AssignmentViewModel @Inject constructor(
     // 과제 완료 상태
     private val _isAssignmentCompleted = MutableStateFlow(false)
     val isAssignmentCompleted: StateFlow<Boolean> = _isAssignmentCompleted.asStateFlow()
+
+    // 최근 개인 과제 ID (탭에서 바로 진입할 때 사용)
+    private val _recentPersonalAssignmentId = MutableStateFlow<Int?>(null)
+    val recentPersonalAssignmentId: StateFlow<Int?> = _recentPersonalAssignmentId.asStateFlow()
     
     fun loadAllAssignments(teacherId: String? = null, classId: String? = null, status: AssignmentStatus? = null) {
         viewModelScope.launch {
@@ -728,6 +732,21 @@ class AssignmentViewModel @Inject constructor(
                     _error.value = exception.message
                 }
             
+            _isLoading.value = false
+        }
+    }
+
+    fun loadRecentPersonalAssignment(studentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            assignmentRepository.getRecentPersonalAssignment(studentId)
+                .onSuccess { id ->
+                    _recentPersonalAssignmentId.value = id
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                }
             _isLoading.value = false
         }
     }

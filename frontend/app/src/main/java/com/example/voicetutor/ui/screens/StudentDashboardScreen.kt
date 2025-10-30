@@ -286,8 +286,9 @@ fun StudentDashboardScreen(
                             solvedNum = assignment.solvedNum ?: 0,
                             totalQuestions = assignment.totalQuestions,
                             onClick = { 
-                                // PendingAssignmentsScreen과 동일한 방식으로 assignment.id 사용
-                                onNavigateToAssignmentDetail(assignment.id.toString())
+                                // 개인 과제 상세: personalAssignmentId 우선 사용
+                                val detailId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignmentDetail(detailId.toString())
                             }
                         )
                         

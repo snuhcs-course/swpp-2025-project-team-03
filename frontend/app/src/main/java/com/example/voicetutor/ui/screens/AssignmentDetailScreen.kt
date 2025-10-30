@@ -59,6 +59,13 @@ fun AssignmentDetailScreen(
     
     // Use actual assignment title or fallback
     val actualTitle = currentAssignment?.title ?: assignmentTitle ?: "과제"
+    // Format subject and due date from API instead of dummy text
+    fun formatDueDate(due: String?): String {
+        return try {
+            if (due == null) return ""
+            java.time.ZonedDateTime.parse(due).format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        } catch (e: Exception) { due ?: "" }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -123,11 +130,20 @@ fun AssignmentDetailScreen(
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "생물학 - 오늘 23:59 마감",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
+                    val subtitle = buildString {
+                        val subject = currentAssignment?.courseClass?.subject?.name
+                        val due = formatDueDate(currentAssignment?.dueAt)
+                        if (!subject.isNullOrBlank()) append(subject)
+                        if (!subject.isNullOrBlank() && due.isNotBlank()) append(" · ")
+                        if (due.isNotBlank()) append("마감: ").append(due)
+                    }
+                    if (subtitle.isNotBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
                 }
                 
                 Box(
@@ -202,12 +218,15 @@ fun AssignmentDetailScreen(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                Text(
-                    text = "세포분열 과정을 단계별로 설명하고, 각 단계에서 일어나는 주요 변화들을 정리해보세요. 또한 세포분열의 의의와 생물학적 중요성에 대해서도 서술해주세요.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray700,
-                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
-                )
+                val desc = currentAssignment?.description
+                if (!desc.isNullOrBlank()) {
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray700,
+                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
+                    )
+                }
             }
         }
         
