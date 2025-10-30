@@ -9,6 +9,7 @@ import com.example.voicetutor.data.models.PersonalAssignmentQuestion
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.AnswerSubmissionResponse
 import com.example.voicetutor.data.network.ApiService
+import com.example.voicetutor.data.network.QuestionCreateRequest
 import com.example.voicetutor.data.network.CreateAssignmentResponse
 import com.example.voicetutor.data.network.S3UploadStatus
 import kotlinx.coroutines.Dispatchers
@@ -94,6 +95,23 @@ class AssignmentRepository @Inject constructor(
             }
         } catch (e: Exception) {
             println("AssignmentRepository - Personal assignments Exception: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
+    // Filtered by student and assignment (student-side precise lookup)
+    suspend fun getPersonalAssignments(
+        studentId: Int? = null,
+        assignmentId: Int? = null
+    ): Result<List<PersonalAssignmentData>> {
+        return try {
+            val response = apiService.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()?.data ?: emptyList())
+            } else {
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
@@ -279,6 +297,34 @@ class AssignmentRepository @Inject constructor(
                 Result.failure(Exception(response.body()?.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun createQuestionsAfterUpload(
+        assignmentId: Int,
+        materialId: Int,
+        totalNumber: Int
+    ): Result<Unit> {
+        return try {
+            println("AssignmentRepository - Trigger question generation: assignment=$assignmentId material=$materialId total=$totalNumber")
+            val response = apiService.createQuestions(
+                QuestionCreateRequest(
+                    assignment_id = assignmentId,
+                    material_id = materialId,
+                    total_number = totalNumber
+                )
+            )
+            if (response.isSuccessful && response.body()?.success == true) {
+                println("AssignmentRepository - Question generation request accepted")
+                Result.success(Unit)
+            } else {
+                val err = response.body()?.error ?: "Unknown error"
+                println("AssignmentRepository - Question generation failed: $err")
+                Result.failure(Exception(err))
+            }
+        } catch (e: Exception) {
+            println("AssignmentRepository - Question generation exception: ${e.message}")
             Result.failure(e)
         }
     }

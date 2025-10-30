@@ -130,6 +130,10 @@ interface ApiService {
     @GET("assignments/{assignment_id}/s3-check/")
     suspend fun checkS3Upload(@Path("assignment_id") assignmentId: Int): Response<ApiResponse<S3UploadStatus>>
     
+    // Questions - generate base questions after PDF upload
+    @POST("questions/create/")
+    suspend fun createQuestions(@Body request: QuestionCreateRequest): Response<ApiResponse<Unit>>
+    
     // Dashboard APIs (Backend: /api/assignments/teacher-dashboard-stats/)
     @GET("assignments/teacher-dashboard-stats/")
     suspend fun getDashboardStats(
@@ -210,6 +214,13 @@ data class S3UploadStatus(
     @SerializedName("content_type") val content_type: String?,
     @SerializedName("last_modified") val last_modified: String?,
     @SerializedName("bucket") val bucket: String
+)
+
+// Request body to trigger question generation based on uploaded PDF
+data class QuestionCreateRequest(
+    @SerializedName("assignment_id") val assignment_id: Int,
+    @SerializedName("material_id") val material_id: Int,
+    @SerializedName("total_number") val total_number: Int
 )
 
 data class CreateClassRequest(
