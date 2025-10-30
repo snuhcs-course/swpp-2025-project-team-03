@@ -19,16 +19,15 @@ class ApiConfig @Inject constructor(
         // 기본 URL들
         const val LOCALHOST_URL = "http://10.0.2.2:8000/api/" // Android 에뮬레이터용 localhost
         const val LOCALHOST_URL_DEVICE = "http://192.168.35.202:8000/api/" // 실제 디바이스용 (PC의 Wi-Fi IP)
-        const val EC2_URL_TEMPLATE = "http://your-ec2-ip:8000/api/" // EC2 서버용
+        const val PROD_URL = "http://147.46.78.61:8003/api/" // 배포 서버
         
         // 서버 타입
         const val SERVER_TYPE_LOCALHOST = "localhost"
-        const val SERVER_TYPE_EC2 = "ec2"
-        const val SERVER_TYPE_CUSTOM = "custom"
+        const val SERVER_TYPE_PROD = "prod"
     }
     
     fun getBaseUrl(): String {
-        return prefs.getString(KEY_BASE_URL, LOCALHOST_URL) ?: LOCALHOST_URL
+        return prefs.getString(KEY_BASE_URL, PROD_URL) ?: PROD_URL
     }
     
     fun setBaseUrl(url: String) {
@@ -48,22 +47,16 @@ class ApiConfig @Inject constructor(
         setBaseUrl(LOCALHOST_URL)
     }
     
-    fun setEc2Server(ip: String) {
-        setServerType(SERVER_TYPE_EC2)
-        setBaseUrl("http://$ip:8080/api/")
-    }
-    
-    fun setCustomServer(url: String) {
-        setServerType(SERVER_TYPE_CUSTOM)
+    fun setProdServer(url: String) {
+        setServerType(SERVER_TYPE_PROD)
         setBaseUrl(url)
     }
     
     fun getAvailableServers(): List<ServerOption> {
         return listOf(
+            ServerOption("Production", PROD_URL, SERVER_TYPE_PROD),
             ServerOption("Localhost (에뮬레이터)", LOCALHOST_URL, SERVER_TYPE_LOCALHOST),
             ServerOption("Localhost (디바이스)", LOCALHOST_URL_DEVICE, SERVER_TYPE_LOCALHOST),
-            ServerOption("EC2 서버", EC2_URL_TEMPLATE, SERVER_TYPE_EC2),
-            ServerOption("커스텀 서버", "", SERVER_TYPE_CUSTOM)
         )
     }
 }

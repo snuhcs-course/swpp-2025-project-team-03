@@ -8,6 +8,8 @@
         <!-- 실제 디바이스용 로컬 IP -->
         <domain includeSubdomains="true">192.168.35.202</domain>
         <domain includeSubdomains="true">192.168.1.100</domain>
+        <!-- 배포 서버 IP -->
+        <domain includeSubdomains="true">147.46.78.61</domain>
     </domain-config>
     
     <!-- S3 업로드를 위한 HTTPS 통신 허용 -->

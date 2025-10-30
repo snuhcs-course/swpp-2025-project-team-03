@@ -66,6 +66,9 @@ fun StudentDashboardScreen(
         println("StudentDashboard - assignments from ViewModel: ${assignments.size}")
         assignments.forEach { 
             println("  - ${it.title}")
+            println("    - solvedNum: ${it.solvedNum}")
+            println("    - totalQuestions: ${it.totalQuestions}")
+            println("    - progress: ${if (it.totalQuestions > 0 && it.solvedNum != null) (it.solvedNum.toFloat() / it.totalQuestions.toFloat()) else 0f}")
         }
     }
     
@@ -266,21 +269,26 @@ fun StudentDashboardScreen(
                     }
                 } else {
                     assignments.forEachIndexed { index, assignment ->
-                        // Personal assignment의 진행률 계산
-                        val progress = if (assignment.totalQuestions > 0) {
-                            // TODO: 실제로는 PersonalAssignment의 solved_num을 사용해야 하지만,
-                            // 현재는 AssignmentData에 해당 정보가 없으므로 임시로 계산
-                            0.3f // 임시 진행률
+                        // Personal assignment의 진행률 계산: solvedNum / totalQuestions
+                        // solvedNum은 기본 질문에 답변한 개수 (꼬리 질문 제외)
+                        val progress = if (assignment.totalQuestions > 0 && assignment.solvedNum != null) {
+                            (assignment.solvedNum.toFloat() / assignment.totalQuestions.toFloat()).coerceIn(0f, 1f)
                         } else {
                             0f
                         }
                         
+                        // 진행률이 0이어도 표시되도록 함
                         StudentAssignmentCard(
                             title = assignment.title,
                             subject = assignment.courseClass.subject.name,
                             dueDate = formatDueDate(assignment.dueAt),
                             progress = progress,
-                            onClick = { onNavigateToAssignmentDetail(assignment.title) }
+                            solvedNum = assignment.solvedNum ?: 0,
+                            totalQuestions = assignment.totalQuestions,
+                            onClick = { 
+                                // PendingAssignmentsScreen과 동일한 방식으로 assignment.id 사용
+                                onNavigateToAssignmentDetail(assignment.id.toString())
+                            }
                         )
                         
                         if (index < assignments.size - 1) {
@@ -299,6 +307,8 @@ fun StudentAssignmentCard(
     subject: String,
     dueDate: String,
     progress: Float,
+    solvedNum: Int = 0,
+    totalQuestions: Int = 0,
     onClick: () -> Unit = {}
 ) {
     VTCard(
@@ -345,18 +355,27 @@ fun StudentAssignmentCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            VTProgressBar(
-                progress = progress,
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "${(progress * 100).toInt()}% 완료",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
+            // 진행률 표시 (0%일 때도 표시)
+            if (totalQuestions > 0) {
+                VTProgressBar(
+                    progress = progress,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "${solvedNum} / ${totalQuestions} 완료 (${(progress * 100).toInt()}%)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Gray600
+                )
+            } else {
+                Text(
+                    text = "진행률 정보 없음",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Gray500
+                )
+            }
         }
     }
 }

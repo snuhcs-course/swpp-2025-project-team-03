@@ -149,7 +149,11 @@ fun AssignmentDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "${personalAssignmentStatistics?.progress?.toInt() ?: 0}%",
+                        text = if (personalAssignmentStatistics?.totalQuestions ?: 0 > 0) {
+                            "${((personalAssignmentStatistics?.answeredQuestions ?: 0).toFloat() / (personalAssignmentStatistics?.totalQuestions ?: 1).toFloat() * 100f).toInt()}%"
+                        } else {
+                            "0%"
+                        },
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
@@ -170,7 +174,11 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 VTProgressBar(
-                    progress = (personalAssignmentStatistics?.progress ?: 0f) / 100f,
+                    progress = if (personalAssignmentStatistics?.totalQuestions ?: 0 > 0) {
+                        (personalAssignmentStatistics?.answeredQuestions ?: 0).toFloat() / (personalAssignmentStatistics?.totalQuestions ?: 1).toFloat()
+                    } else {
+                        0f
+                    },
                     showPercentage = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -178,7 +186,7 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "${personalAssignmentStatistics?.totalProblem ?: 0}개 중 ${personalAssignmentStatistics?.solvedProblem ?: 0}개 완료",
+                    text = "${personalAssignmentStatistics?.totalQuestions ?: 0}개 중 ${personalAssignmentStatistics?.answeredQuestions ?: 0}개 완료",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600
                 )
