@@ -843,19 +843,22 @@ class PersonalAssignmentRecentView(APIView):
                 )
 
             # 최근 답변 조회
-            recent_answer = Answer.objects.filter(student_id=student_id).order_by("-submitted_at").first()
-            if recent_answer:
-                # 해당 답변의 question에서 personal_assignment 가져오기
+            recent_answers = Answer.objects.filter(student_id=student_id).order_by("-submitted_at")
+            personal_assignment = None
+            recent_answer = None
+
+            # 가장 최근에 풀이된 문제중 personal_assignment.status가 SUBMITTED가 아닌 것을 찾음
+            while recent_answers:
+                recent_answer = recent_answers.first()
                 personal_assignment = recent_answer.question.personal_assignment
-                # personal_assignment의 student_id가 요청한 student_id와 일치하는지 확인
-                if personal_assignment.student_id != int(student_id):
-                    return create_api_response(
-                        success=False,
-                        error="Personal assignment student mismatch",
-                        message="최근 답변의 개인 과제 학생과 요청한 학생이 일치하지 않습니다.",
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
+
+                if personal_assignment.status != PersonalAssignment.Status.SUBMITTED:
+                    break
+                else:
+                    recent_answers = recent_answers.exclude(id=recent_answer.id)
+                    recent_answer = None
+
+            if not recent_answer:
                 # 최근 답변이 없는 경우, 가장 최근에 생성된 personal_assignment 조회
                 personal_assignment = PersonalAssignment.objects.filter(student_id=student_id).order_by("-id").first()
                 if not personal_assignment:
