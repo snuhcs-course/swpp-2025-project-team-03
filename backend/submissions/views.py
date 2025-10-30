@@ -499,7 +499,6 @@ class AnswerSubmitView(APIView):
 
                     if tail_payload.get("plan") == "ONLY_CORRECT":
                         personal_assignment.solved_num += 1
-                        personal_assignment.status = PersonalAssignment.Status.SUBMITTED
 
                     personal_assignment.save()
 
