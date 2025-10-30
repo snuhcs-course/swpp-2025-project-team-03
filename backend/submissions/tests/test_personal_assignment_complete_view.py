@@ -318,3 +318,16 @@ class TestPersonalAssignmentCompleteView:
 
         personal_assignment_in_progress.refresh_from_db()
         assert personal_assignment_in_progress.solved_num == original_solved_num
+
+    def test_complete_unexpected_exception(self, api_client, personal_assignment_in_progress, monkeypatch):
+        """완료 처리 중 예상치 못한 예외 발생 시 500 에러"""
+
+        def mock_save(*args, **kwargs):
+            raise Exception("Database save failed")
+
+        url = reverse("personal-assignment-complete", kwargs={"id": personal_assignment_in_progress.id})
+        monkeypatch.setattr(PersonalAssignment, "save", mock_save)
+        resp = api_client.post(url)
+
+        assert resp.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert resp.data["success"] is False

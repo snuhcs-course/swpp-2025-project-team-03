@@ -440,3 +440,16 @@ class TestAnswerCorrectnessView:
         assert isinstance(data["question_model_answer"], str)
         assert isinstance(data["is_correct"], bool)
         assert isinstance(data["answered_at"], str)  # ISO format string
+
+    def test_correctness_unexpected_exception(self, api_client, personal_assignment, monkeypatch):
+        """예상치 못한 예외 발생 시 500 에러"""
+
+        def mock_get(*args, **kwargs):
+            raise Exception("Database error")
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        monkeypatch.setattr(PersonalAssignment.objects, "get", mock_get)
+        resp = api_client.get(url)
+
+        assert resp.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert resp.data["success"] is False
