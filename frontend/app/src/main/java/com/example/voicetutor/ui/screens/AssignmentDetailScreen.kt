@@ -34,9 +34,7 @@ fun AssignmentDetailScreen(
     val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
     
-    // 초안 저장 상태
-    var showSaveDraftDialog by remember { mutableStateOf(false) }
-    var draftContent by remember { mutableStateOf("") }
+    
     
     // Load assignment data and statistics
     LaunchedEffect(assignmentId) {
@@ -245,87 +243,18 @@ fun AssignmentDetailScreen(
         
         // Action buttons
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             VTButton(
                 text = "과제 시작",
                 onClick = onStartAssignment,
                 variant = ButtonVariant.Gradient,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
-                    )
-                }
-            )
-            
-            VTButton(
-                text = "임시저장",
-                onClick = { showSaveDraftDialog = true },
-                variant = ButtonVariant.Outline,
-                modifier = Modifier.weight(1f),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Save,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            )
-        }
-        
-        // 초안 저장 다이얼로그
-        if (showSaveDraftDialog) {
-            AlertDialog(
-                onDismissRequest = { showSaveDraftDialog = false },
-                title = {
-                    Text(
-                        text = "초안 저장",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Column {
-                        Text(
-                            text = "현재까지 작성한 내용을 초안으로 저장하시겠습니까?",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = draftContent,
-                            onValueChange = { draftContent = it },
-                            label = { Text("초안 메모 (선택사항)") },
-                            placeholder = { Text("초안에 대한 간단한 메모를 입력하세요") },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 3
-                        )
-                    }
-                },
-                confirmButton = {
-                    VTButton(
-                        text = "저장",
-                        onClick = {
-                            // 실제 초안 저장 API 호출
-                            assignmentViewModel.saveAssignmentDraft(
-                                assignmentId = assignmentId ?: 1,
-                                draftContent = draftContent
-                            )
-                            showSaveDraftDialog = false
-                        },
-                        variant = ButtonVariant.Primary,
-                        size = ButtonSize.Small
-                    )
-                },
-                dismissButton = {
-                    VTButton(
-                        text = "취소",
-                        onClick = { showSaveDraftDialog = false },
-                        variant = ButtonVariant.Outline,
-                        size = ButtonSize.Small
                     )
                 }
             )

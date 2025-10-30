@@ -132,45 +132,54 @@ fun PendingAssignmentsScreen(
                 )
             }
         } else {
-            // Assignment list
-            if (assignments.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Assignment,
-                            contentDescription = null,
-                            tint = Gray400,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "할 과제가 없습니다",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
+            // Assignment list (scrollable)
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (assignments.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Assignment,
+                                    contentDescription = null,
+                                    tint = Gray400,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "할 과제가 없습니다",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Gray600
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    items(assignments.size) { index ->
+                        val assignment = assignments[index]
+                        PendingAssignmentCard(
+                            assignment = assignment,
+                            onNavigateToAssignment = { assignmentId ->
+                                val personalId = assignment.personalAssignmentId ?: assignment.id
+                                println("PendingAssignmentsScreen - Navigating to assignment")
+                                println("PendingAssignmentsScreen - Assignment title: ${assignment.title}")
+                                println("PendingAssignmentsScreen - Assignment ID: ${assignment.id}")
+                                println("PendingAssignmentsScreen - Personal Assignment ID: ${assignment.personalAssignmentId}")
+                                println("PendingAssignmentsScreen - Using personalId: $personalId")
+                                onNavigateToAssignment(personalId.toString())
+                            },
+                            onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
                         )
                     }
-                }
-            } else {
-                assignments.forEach { assignment ->
-                    PendingAssignmentCard(
-                        assignment = assignment,
-                        onNavigateToAssignment = { assignmentId ->
-                            // personalAssignmentId를 사용하여 과제 시작
-                            val personalId = assignment.personalAssignmentId ?: assignment.id
-                            println("PendingAssignmentsScreen - Navigating to assignment")
-                            println("PendingAssignmentsScreen - Assignment title: ${assignment.title}")
-                            println("PendingAssignmentsScreen - Assignment ID: ${assignment.id}")
-                            println("PendingAssignmentsScreen - Personal Assignment ID: ${assignment.personalAssignmentId}")
-                            println("PendingAssignmentsScreen - Using personalId: $personalId")
-                            onNavigateToAssignment(personalId.toString())
-                        },
-                        onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
-                    )
                 }
             }
         }
