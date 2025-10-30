@@ -26,7 +26,7 @@ class Command(BaseCommand):
                 "subject_id": 3,  # 수학
                 "title": "함수의 개념 복습 과제",
                 "description": "함수의 정의를 복습하는 과제입니다.",
-                "total_questions": 3,
+                "total_questions": 2,
                 "visible_from": timezone.now(),
                 "due_at": timezone.now() + timedelta(days=10),
                 "grade": "초등학교 6학년",
