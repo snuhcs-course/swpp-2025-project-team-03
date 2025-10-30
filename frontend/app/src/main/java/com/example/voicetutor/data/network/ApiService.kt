@@ -102,6 +102,15 @@ interface ApiService {
     @GET("courses/classes/{id}/students/")
     suspend fun getClassStudents(@Path("id") id: Int): Response<ApiResponse<List<Student>>>
     
+    // Enroll student to class (Backend: PUT /api/courses/classes/{id}/students/)
+    @PUT("courses/classes/{id}/students/")
+    suspend fun enrollStudentToClass(
+        @Path("id") id: Int,
+        @Query("studentId") studentId: Int? = null,
+        @Query("name") name: String? = null,
+        @Query("email") email: String? = null
+    ): Response<ApiResponse<EnrollmentData>>
+    
     // Message APIs (Backend: /api/feedbacks/messages/)
     @POST("feedbacks/messages/send/")
     suspend fun sendMessage(@Body request: SendMessageRequest): Response<ApiResponse<SendMessageResponse>>

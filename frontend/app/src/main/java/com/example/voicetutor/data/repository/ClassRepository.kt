@@ -66,4 +66,27 @@ class ClassRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun enrollStudentToClass(
+        classId: Int,
+        studentId: Int? = null,
+        name: String? = null,
+        email: String? = null
+    ): Result<EnrollmentData> {
+        return try {
+            val response = apiService.enrollStudentToClass(
+                id = classId,
+                studentId = studentId,
+                name = name,
+                email = email
+            )
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()?.data ?: throw Exception("No data"))
+            } else {
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
