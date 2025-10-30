@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from .models import Answer, PersonalAssignment
 from .serializers import (
     AnswerCorrectnessSerializer,
+    PersonalAssignmentRecentSerializer,
     PersonalAssignmentSerializer,
     PersonalAssignmentStatisticsSerializer,
 )
@@ -804,5 +805,108 @@ class AnswerCorrectnessView(APIView):
                 success=False,
                 error=str(e),
                 message="답안 정답 여부 정보 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class PersonalAssignmentRecentView(APIView):
+    @swagger_auto_schema(
+        operation_id="최근 개인 과제 조회",
+        operation_description="학생의 최근 개인 과제를 조회합니다.",
+        manual_parameters=[
+            openapi.Parameter(
+                name="student_id",
+                in_=openapi.IN_QUERY,
+                description="학생 ID",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+        ],
+        responses={200: "최근 개인 과제 정보"},
+    )
+    def get(self, request):
+        """
+        최근 개인 과제 조회
+
+        Query Parameters:
+            - student_id: 학생 ID
+        """
+        try:
+            student_id = request.query_params.get("student_id")
+
+            if not student_id:
+                return create_api_response(
+                    success=False,
+                    error="Missing student_id",
+                    message="student_id는 필수 파라미터입니다.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 최근 답변 조회
+            recent_answers = Answer.objects.filter(student_id=student_id).order_by("-submitted_at")
+            personal_assignment = None
+            recent_answer = None
+
+            # 가장 최근에 풀이된 문제중 personal_assignment.status가 SUBMITTED가 아닌 것을 찾음
+            while recent_answers:
+                recent_answer = recent_answers.first()
+                personal_assignment = recent_answer.question.personal_assignment
+
+                if (personal_assignment.status != PersonalAssignment.Status.SUBMITTED) and (
+                    personal_assignment.status != PersonalAssignment.Status.GRADED
+                ):
+                    break
+                else:
+                    recent_answers = recent_answers.exclude(id=recent_answer.id)
+                    recent_answer = None
+
+            if not recent_answer:
+                # 최근 답변이 없는 경우, 가장 최근에 생성된 personal_assignment 조회
+                personal_assignment = PersonalAssignment.objects.filter(student_id=student_id).order_by("-id").first()
+                if not personal_assignment:
+                    return create_api_response(
+                        success=False,
+                        error="No personal assignments found",
+                        message="해당 학생의 개인 과제가 없습니다.",
+                        status_code=status.HTTP_404_NOT_FOUND,
+                    )
+
+            # 다음 풀이할 문제 조회 (number, recalled_num 순으로 정렬하여 아직 풀이되지 않은 문제)
+            questions = personal_assignment.questions.order_by("number", "recalled_num")
+
+            next_question = None
+            for question in questions:
+                # 해당 question에 대한 답변이 존재하는지 확인
+                answered = Answer.objects.filter(question=question, student_id=student_id).exists()
+                if not answered:
+                    next_question = question
+                    break
+
+            if next_question:
+                # next_question
+                result = {
+                    "personal_assignment_id": personal_assignment.id,
+                    "next_question_id": next_question.id,
+                }
+            else:
+                return create_api_response(
+                    success=False,
+                    error="No personal assignments found",
+                    message="해당 학생의 개인 과제가 없습니다.",
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            serializer = PersonalAssignmentRecentSerializer(result)
+
+            return create_api_response(
+                data=serializer.data, message="최근 진행 과제 조회 성공", status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.error(f"[PersonalAssignmentRecentView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="최근 개인 과제 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
