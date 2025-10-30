@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import traceback
 import warnings
 from pprint import pprint
 
@@ -58,8 +59,6 @@ def extract_all_features(wav_path: str, model_name: str = None) -> dict:
         script_feats = extract_features_from_script(features_dict, shared_model=model)
 
     except Exception as e:
-        import traceback
-
         traceback.print_exc()
         # 기본값으로 빈 딕셔너리 반환
         script_feats = {}
