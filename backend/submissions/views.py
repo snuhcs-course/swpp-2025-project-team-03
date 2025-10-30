@@ -497,7 +497,7 @@ class AnswerSubmitView(APIView):
                     if personal_assignment.status == PersonalAssignment.Status.NOT_STARTED:
                         personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
 
-                    if tail_payload.get("plan") == "ONLY_CORRECT" and is_correct:
+                    if tail_payload.get("plan") == "ONLY_CORRECT":
                         personal_assignment.solved_num += 1
                         personal_assignment.status = PersonalAssignment.Status.SUBMITTED
 
