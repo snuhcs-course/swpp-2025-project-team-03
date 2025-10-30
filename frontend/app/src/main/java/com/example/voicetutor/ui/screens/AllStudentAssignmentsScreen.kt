@@ -178,7 +178,13 @@ fun AllStudentAssignmentsScreen(
                         StudentAssignmentCard(
                             assignment = assignment,
                             onClick = { 
-                                onNavigateToAssignmentDetail(assignment.id.toString()) 
+                                // Store both ids then navigate using personalAssignmentId if available
+                                viewModel.setSelectedAssignmentIds(
+                                    assignmentId = assignment.id,
+                                    personalAssignmentId = assignment.personalAssignmentId
+                                )
+                                val detailId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignmentDetail(detailId.toString()) 
                             },
                             onNavigateToAssignmentDetail = onNavigateToAssignmentDetail,
                             onNavigateToAssignment = { assignmentId ->

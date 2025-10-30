@@ -286,7 +286,11 @@ fun StudentDashboardScreen(
                             solvedNum = assignment.solvedNum ?: 0,
                             totalQuestions = assignment.totalQuestions,
                             onClick = { 
-                                // 개인 과제 상세: personalAssignmentId 우선 사용
+                                // 두 ID를 모두 저장: assignment.id (6) 와 personalAssignmentId (16)
+                                viewModelAssignment.setSelectedAssignmentIds(
+                                    assignmentId = assignment.id,
+                                    personalAssignmentId = assignment.personalAssignmentId
+                                )
                                 val detailId = assignment.personalAssignmentId ?: assignment.id
                                 onNavigateToAssignmentDetail(detailId.toString())
                             }

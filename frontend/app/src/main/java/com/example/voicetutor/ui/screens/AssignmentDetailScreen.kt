@@ -26,22 +26,31 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun AssignmentDetailScreen(
     assignmentId: Int? = null, // PersonalAssignment ID 사용
     assignmentTitle: String? = null, // 실제 과제 제목 사용
-    onStartAssignment: () -> Unit = {}
+    onStartAssignment: () -> Unit = {},
+    assignmentViewModelParam: com.example.voicetutor.ui.viewmodel.AssignmentViewModel? = null
 ) {
-    val assignmentViewModel: AssignmentViewModel = hiltViewModel()
+    val assignmentViewModel: AssignmentViewModel = assignmentViewModelParam ?: hiltViewModel()
     val currentAssignment by assignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
     val personalAssignmentStatistics by assignmentViewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
     val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
+    val selectedAssignmentId by assignmentViewModel.selectedAssignmentId.collectAsStateWithLifecycle()
+    val selectedPersonalAssignmentId by assignmentViewModel.selectedPersonalAssignmentId.collectAsStateWithLifecycle()
     
     
     
     // Load assignment data and statistics
-    LaunchedEffect(assignmentId) {
-        assignmentId?.let { id ->
-            println("AssignmentDetailScreen - Loading assignment details for PersonalAssignment ID: $id")
-            assignmentViewModel.loadAssignmentById(id)
-            assignmentViewModel.loadPersonalAssignmentStatistics(id)
+    LaunchedEffect(assignmentId, selectedAssignmentId, selectedPersonalAssignmentId) {
+        // 우선순위: ViewModel에 저장된 선택값 → 네비게이션 파라미터
+        val personalId = selectedPersonalAssignmentId ?: assignmentId
+        val assignId = selectedAssignmentId
+        if (assignId != null) {
+            println("AssignmentDetailScreen - Loading assignment meta by assignment.id: $assignId")
+            assignmentViewModel.loadAssignmentById(assignId)
+        }
+        personalId?.let { pid ->
+            println("AssignmentDetailScreen - Loading statistics by personal_assignment.id: $pid")
+            assignmentViewModel.loadPersonalAssignmentStatistics(pid)
         }
     }
     

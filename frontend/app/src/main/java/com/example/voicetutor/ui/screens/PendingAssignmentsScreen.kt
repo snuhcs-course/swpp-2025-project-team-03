@@ -37,9 +37,10 @@ private fun formatDueDate(dueDate: String): String {
 fun PendingAssignmentsScreen(
     studentId: Int,
     onNavigateToAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (String) -> Unit = {},
+    assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel? = null
 ) {
-    val viewModel: AssignmentViewModel = hiltViewModel()
+    val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
@@ -177,7 +178,15 @@ fun PendingAssignmentsScreen(
                                 println("PendingAssignmentsScreen - Using personalId: $personalId")
                                 onNavigateToAssignment(personalId.toString())
                             },
-                            onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
+                            onNavigateToAssignmentDetail = { _ ->
+                                // 상세 진입 전 assignment.id(메타)와 personalAssignmentId(통계) 모두 저장
+                                viewModel.setSelectedAssignmentIds(
+                                    assignmentId = assignment.id,
+                                    personalAssignmentId = assignment.personalAssignmentId
+                                )
+                                val detailId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignmentDetail(detailId.toString())
+                            }
                         )
                     }
                 }
