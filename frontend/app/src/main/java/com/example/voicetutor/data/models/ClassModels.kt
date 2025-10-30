@@ -23,6 +23,15 @@ data class ClassData(
     val endDate: String? = null
 )
 
+data class EnrollmentData(
+    @SerializedName("student")
+    val student: Student,
+    @SerializedName("course_class")
+    val courseClass: ClassData?,
+    @SerializedName("status")
+    val status: String
+)
+
 data class MessageData(
     @SerializedName("id")
     val id: Int,

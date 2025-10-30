@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ data class ClassAssignment(
     val averageScore: Int
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeacherClassDetailScreen(
     classId: Int? = null, // 실제 클래스 ID 사용
@@ -54,7 +56,8 @@ fun TeacherClassDetailScreen(
     val classViewModel: ClassViewModel = hiltViewModel()
     
     val assignments by assignmentViewModel.assignments.collectAsStateWithLifecycle()
-    val students by studentViewModel.students.collectAsStateWithLifecycle()
+    val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
+    val allStudents by studentViewModel.students.collectAsStateWithLifecycle()
     val currentClass by classViewModel.currentClass.collectAsStateWithLifecycle()
     val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
     
@@ -70,7 +73,7 @@ fun TeacherClassDetailScreen(
             println("TeacherClassDetail - Loading assignments for class ID: $id")
             assignmentViewModel.loadAllAssignments(classId = id.toString())
             // Load students for this class
-            studentViewModel.loadAllStudents(classId = id.toString())
+            classViewModel.loadClassStudents(id)
             // Load class data
             classViewModel.loadClassById(id)
         }
@@ -92,6 +95,10 @@ fun TeacherClassDetailScreen(
         }
     }
     
+    // 학생 등록 바텀시트 상태
+    var showEnrollSheet by remember { mutableStateOf(false) }
+    val selectedToEnroll = remember { mutableStateListOf<Int>() }
+    
     // Convert API data to ClassAssignment format
     val classAssignments = assignments.map { assignment ->
         ClassAssignment(
@@ -100,8 +107,8 @@ fun TeacherClassDetailScreen(
                         subject = assignment.courseClass.subject.name,
             dueDate = assignment.dueAt,
             completionRate = 0.0f, // 임시로 0% 설정
-            totalStudents = students.size,
-            completedStudents = students.count { student ->
+            totalStudents = classStudents.size,
+            completedStudents = classStudents.count { student ->
                 // 임시로 완료된 학생 수 계산
                 0 > 0
             },
@@ -155,7 +162,7 @@ fun TeacherClassDetailScreen(
             ) {
                 VTStatsCard(
                     title = "총 학생",
-                    value = "${students.size}명",
+                    value = "${classStudents.size}명",
                     icon = Icons.Filled.People,
                     iconColor = PrimaryIndigo,
                     modifier = Modifier.weight(1f),
@@ -210,6 +217,25 @@ fun TeacherClassDetailScreen(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                )
+
+                VTButton(
+                    text = "학생 등록하기",
+                    onClick = {
+                        // 전체 학생 목록 로드 후 시트 오픈
+                        studentViewModel.loadAllStudents()
+                        selectedToEnroll.clear()
+                        showEnrollSheet = true
+                    },
+                    variant = ButtonVariant.Primary,
+                    modifier = Modifier.weight(1f),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.PersonAdd,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )
@@ -284,6 +310,67 @@ fun TeacherClassDetailScreen(
                     assignment = assignment,
                     onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
                 )
+            }
+        }
+    }
+
+    // 학생 등록 바텀시트
+    if (showEnrollSheet) {
+        ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(12.dp))
+
+                // 이미 등록된 학생 제외 목록
+                val enrolledIds = classStudents.map { it.id }.toSet()
+                val candidates = allStudents.filter { it.id !in enrolledIds }
+
+                if (candidates.isEmpty()) {
+                    Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                } else {
+                    candidates.forEach { student ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                            }
+                            val checked = selectedToEnroll.contains(student.id)
+                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
+                            })
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    VTButton(
+                        text = "취소",
+                        onClick = { showEnrollSheet = false },
+                        variant = ButtonVariant.Outline,
+                        modifier = Modifier.weight(1f)
+                    )
+                    VTButton(
+                        text = "등록",
+                        onClick = {
+                            classId?.let { id ->
+                                selectedToEnroll.forEach { sid ->
+                                    classViewModel.enrollStudentToClass(classId = id, studentId = sid)
+                                }
+                                // 완료 후 갱신 및 닫기
+                                classViewModel.loadClassStudents(id)
+                            }
+                            showEnrollSheet = false
+                        },
+                        variant = ButtonVariant.Primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
