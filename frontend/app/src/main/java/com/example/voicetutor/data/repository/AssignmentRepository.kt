@@ -9,12 +9,7 @@ import com.example.voicetutor.data.models.PersonalAssignmentQuestion
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.AnswerSubmissionResponse
 import com.example.voicetutor.data.network.ApiService
-<<<<<<< HEAD
-import com.example.voicetutor.data.network.RecentAnswerData
-=======
 import com.example.voicetutor.data.network.QuestionCreateRequest
->>>>>>> 3874bef6d713ffe71d05e6379ba2894f76349b5f
-import com.example.voicetutor.data.network.CreateAssignmentResponse
 import com.example.voicetutor.data.network.S3UploadStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
