@@ -639,7 +639,7 @@ def enrich_json_file(
     return {"json_path": json_path, "saved_keys": [k for k in updated.keys() if k not in orig_data]}
 
 
-def main():
+if __name__ == "__main__":  # pragma: no cover
     ap = argparse.ArgumentParser(
         description="JSON(script/total_length)을 읽어 필러/near-dup/semantic-1D feature를 같은 파일에 저장"
     )
@@ -688,7 +688,3 @@ def main():
         sem_low_thr=args.sem_low_thr,
     )
     print(f"[DONE] {summary}")
-
-
-if __name__ == "__main__":
-    main()
