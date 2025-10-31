@@ -271,6 +271,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
             if due_at.tzinfo is None:
                 due_at = timezone.make_aware(due_at, timezone.get_current_timezone())
         except Exception:
+            logger.error(f"[AssignmentCreateView] Invalid due_at format: {data['due_at']}", exc_info=True)
             return create_api_response(
                 success=False,
                 error="Invalid due_at format (use ISO 8601)",
