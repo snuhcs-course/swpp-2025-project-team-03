@@ -91,11 +91,13 @@ class TestLoginSerializer:
 
     def test_validate_inactive_user(self):
         """비활성화된 유저 검증 테스트"""
-        Account.objects.create_user(
+        user = Account.objects.create_user(
             email="test@example.com",
             password="testpass123",
-            is_active=False,
+            is_active=True,
         )
+        user.is_active = False
+        user.save()
 
         data = {
             "email": "test@example.com",
