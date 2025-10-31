@@ -938,13 +938,17 @@ fun CreateAssignmentScreen(
                     println("selectedPdfFile != null: ${selectedPdfFile != null}")
                     println("selectedFiles.size: ${selectedFiles.size}")
                     
+                    // 문제 개수를 정수로 파싱 (기본값 5)
+                    val questionCountInt = questionCount.toIntOrNull() ?: 5
+                    println("문제 개수: $questionCountInt (입력값: $questionCount)")
+                    
                     // PDF 파일이 선택된 경우 PDF 업로드와 함께 과제 생성
                     val pdfFile = selectedPdfFile
                     if (pdfFile != null) {
                         println("✅ PDF 업로드와 함께 과제 생성")
                         println("PDF 파일: ${pdfFile.name}")
                         println("파일 크기: ${pdfFile.length()} bytes")
-                        actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile)
+                        actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile, totalNumber = questionCountInt)
                     } else {
                         // PDF 파일이 없는 경우 일반 과제 생성
                         println("❌ PDF 파일이 없음 - 일반 과제 생성")

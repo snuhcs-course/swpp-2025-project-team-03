@@ -358,15 +358,21 @@ class AssignmentViewModelFlowTest {
     }
 
     @Test
-    fun loadRecentPersonalAssignment_success_setsId() = runTest {
+    fun loadRecentAssignment_success_setsRecentAssignment() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(9))
-            .thenReturn(Result.success(123))
-        vm.recentPersonalAssignmentId.test {
-            awaitItem()
-            vm.loadRecentPersonalAssignment(9)
+        val assignments = listOf(
+            AssignmentData(6, "Title", "d", 1, null, "", "", course(), null, null)
+        )
+        Mockito.`when`(assignmentRepository.getAllAssignments())
+            .thenReturn(Result.success(assignments))
+        vm.recentAssignment.test {
+            awaitItem() // initial null
+            vm.loadRecentAssignment(9)
             advanceUntilIdle()
-            val next = awaitItem(); assert(next == 123)
+            val recent = awaitItem()
+            assert(recent != null)
+            assert(recent?.id == "6")
+            assert(recent?.title == "Title")
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -1430,48 +1436,54 @@ class AssignmentViewModelFlowTest {
     }
 
     @Test
-    fun loadRecentPersonalAssignment_success_updatesRecentId() = runTest {
+    fun loadRecentAssignment_success_updatesRecentAssignment() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 8
-        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
-            .thenReturn(Result.success(200))
+        val assignments = listOf(
+            AssignmentData(200, "Test Assignment", "Description", 1, null, "", "", course(), null, null)
+        )
+        Mockito.`when`(assignmentRepository.getAllAssignments())
+            .thenReturn(Result.success(assignments))
 
-        vm.recentPersonalAssignmentId.test {
+        vm.recentAssignment.test {
             assert(awaitItem() == null)
-            vm.loadRecentPersonalAssignment(studentId)
+            vm.loadRecentAssignment(studentId)
             advanceUntilIdle()
-            assert(awaitItem() == 200)
+            val recent = awaitItem()
+            assert(recent != null)
+            assert(recent?.id == "200")
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun loadRecentPersonalAssignment_noAssignment_doesNotSetError() = runTest {
+    fun loadRecentAssignment_noAssignments_doesNotSetError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 8
-        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
-            .thenReturn(Result.failure(Exception("해당 학생의 개인 과제가 없습니다")))
+        Mockito.`when`(assignmentRepository.getAllAssignments())
+            .thenReturn(Result.success(emptyList()))
 
         // 초기 상태 확인
         assert(vm.error.value == null)
         
-        vm.loadRecentPersonalAssignment(studentId)
+        vm.loadRecentAssignment(studentId)
         advanceUntilIdle()
         
-        // 특정 에러 메시지는 무시되므로 에러가 설정되지 않아야 함
+        // 과제가 없어도 에러가 설정되지 않아야 함 (null로 유지)
+        assert(vm.recentAssignment.value == null)
         assert(vm.error.value == null)
     }
 
     @Test
-    fun loadRecentPersonalAssignment_otherError_setsError() = runTest {
+    fun loadRecentAssignment_networkError_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 8
-        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
+        Mockito.`when`(assignmentRepository.getAllAssignments())
             .thenReturn(Result.failure(Exception("Network error")))
 
         vm.error.test {
             assert(awaitItem() == null)
-            vm.loadRecentPersonalAssignment(studentId)
+            vm.loadRecentAssignment(studentId)
             advanceUntilIdle()
             val error = awaitItem()
             assert(error?.contains("Network error") == true)

@@ -1,4 +1,7 @@
 import json
+import re
+import sys
+import time
 from typing import List
 
 from django.conf import settings
@@ -120,17 +123,62 @@ Return your output **only** as valid JSON with the following structure:
 
 def generate_base_quizzes(material_text: str, n: int = 3) -> List[Quiz]:
     """Generate N quizzes from summarized text."""
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5, api_key=settings.OPENAI_API_KEY)
-    few_shot_str = json.dumps(FEW_SHOT_EXAMPLES, ensure_ascii=False, indent=2)
-    prompt = multi_quiz_prompt.format(n=n, examples=few_shot_str, learning_material=material_text)
 
-    response = llm.invoke(prompt).content
-    parser = JsonOutputParser()
+    # Python 인터프리터가 종료 중인지 확인
+    if getattr(sys, "_exiting", False):
+        raise RuntimeError("Cannot generate quizzes: Python interpreter is shutting down")
 
-    try:
-        parsed = parser.parse(response)
-        return [Quiz(**item) for item in parsed.values()]
-    except Exception as e:
-        print("JSON parsing failed:", e)
-        print("Raw model output:\n", response)
-        raise
+    # 재시도 로직
+    max_retries = 3
+    retry_delay = 1.0  # 초
+
+    for attempt in range(max_retries):
+        try:
+            llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0.5,
+                api_key=settings.OPENAI_API_KEY,
+                timeout=60.0,  # 60초 타임아웃 설정
+            )
+            few_shot_str = json.dumps(FEW_SHOT_EXAMPLES, ensure_ascii=False, indent=2)
+            prompt = multi_quiz_prompt.format(n=n, examples=few_shot_str, learning_material=material_text)
+
+            # 동기적으로 처리
+            response = llm.invoke(prompt).content
+            parser = JsonOutputParser()
+
+            try:
+                # JSON 파싱 전에 LaTeX 백슬래시 이스케이프 문제 해결
+                # \( 와 \) 를 ( 와 ) 로 변환하여 유효한 JSON으로 만듦
+                cleaned_response = re.sub(r"\\([()])", r"\1", response)
+
+                parsed = parser.parse(cleaned_response)
+                result = [Quiz(**item) for item in parsed.values()]
+                return result
+            except Exception as e:
+                raise
+
+        except RuntimeError as e:
+            error_msg = str(e).lower()
+            if "interpreter shutdown" in error_msg or "cannot schedule" in error_msg:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # 지수 백오프
+                    continue
+                else:
+                    raise RuntimeError(f"Quiz generation interrupted after {max_retries} attempts: {e}")
+            raise
+        except Exception as e:
+            error_msg = str(e).lower()
+            # 일시적인 네트워크 오류인 경우 재시도
+            if (
+                "timeout" in error_msg or "connection" in error_msg or "network" in error_msg
+            ) and attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2
+                continue
+            else:
+                raise
+
+    # 이 지점에 도달하면 안 됨
+    raise RuntimeError("Failed to generate quizzes after all retries")

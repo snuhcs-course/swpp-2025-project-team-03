@@ -587,11 +587,12 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
-    fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File) {
+    fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File, totalNumber: Int = 5) {
         println("=== AssignmentViewModel.createAssignmentWithPdf 시작 ===")
         println("PDF 파일: ${pdfFile.name}")
         println("파일 크기: ${pdfFile.length()} bytes")
         println("파일 존재: ${pdfFile.exists()}")
+        println("문제 개수 (totalNumber): $totalNumber")
         
         viewModelScope.launch {
             _isLoading.value = true
@@ -619,7 +620,7 @@ class AssignmentViewModel @Inject constructor(
                             id = createResponse.assignment_id,
                             title = assignment.title,
                             description = assignment.description,
-                            totalQuestions = assignment.questions?.size ?: 0,
+                            totalQuestions = totalNumber,
                             createdAt = "", // 서버에서 받아올 수 있음
                             visibleFrom = "",
                             dueAt = assignment.due_at,
@@ -648,7 +649,7 @@ class AssignmentViewModel @Inject constructor(
                                 _isUploading.value = false
 
                                 // 3. 업로드 완료 직후 기본 문제 생성 트리거
-                                val totalNumber = assignment.questions?.size ?: 5
+                                // totalNumber 파라미터 사용 (사용자가 입력한 문제 개수)
                                 println("3단계: 기본 문제 생성 트리거 - totalNumber=$totalNumber")
                                 viewModelScope.launch {
                                     assignmentRepository.createQuestionsAfterUpload(
