@@ -230,18 +230,7 @@ class AssignmentViewModelFlowTest {
         vm.updatePersonalAssignmentQuestions(initialQuestions)
         Mockito.`when`(assignmentRepository.getNextQuestion(personalId))
             .thenReturn(Result.failure(Exception("No more questions")))
-        // loadNextQuestion에서 "No more questions" 발생 시 내부적으로 loadPersonalAssignmentStatistics를 호출하므로 스텁 필요
-        val statistics = PersonalAssignmentStatistics(
-            totalQuestions = 3,
-            answeredQuestions = 2,
-            correctAnswers = 1,
-            accuracy = 0.5f,
-            totalProblem = 3,
-            solvedProblem = 2,
-            progress = 0.67f
-        )
-        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(personalId))
-            .thenReturn(Result.success(statistics))
+        // loadNextQuestion에서 "No more questions" 발생 시 통계를 다시 로드하지 않음 (통계는 화면 진입 시 이미 로드됨)
 
         // 초기 리스트 상태 확인
         vm.personalAssignmentQuestions.test {

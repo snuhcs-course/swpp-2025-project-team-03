@@ -51,33 +51,14 @@ fun AssignmentScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
     
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle ?: "과제"
     
-    // Resolve personal assignment id: if null, fetch recent by student id
-    val resolvedAssignmentIdState = remember { mutableStateOf<Int?>(assignmentId) }
-    val recentId by viewModel.recentPersonalAssignmentId.collectAsStateWithLifecycle()
-    var hasAttemptedLoadRecent by remember { mutableStateOf(false) }
-
-    LaunchedEffect(assignmentId, currentUser?.id, recentId) {
-        if (resolvedAssignmentIdState.value == null && !hasAttemptedLoadRecent) {
-            // fetch recent when no id provided
-            currentUser?.id?.let { sid ->
-                hasAttemptedLoadRecent = true
-                viewModel.loadRecentPersonalAssignment(sid)
-            }
-            if (recentId != null) {
-                resolvedAssignmentIdState.value = recentId
-            }
-        }
-        resolvedAssignmentIdState.value?.let { id ->
-            viewModel.loadAssignmentById(id)
-        }
-    }
+    // Note: assignmentId는 PersonalAssignment ID이므로 loadAssignmentById를 호출하지 않음
+    // Assignment 정보가 필요한 경우 PersonalAssignment API 응답에서 assignment.id를 사용해야 함
     
     // 모든 과제는 음성 답변 + AI 대화형 꼬리 질문 형태로 진행
     if (isLoading) {
@@ -90,59 +71,7 @@ fun AssignmentScreen(
             )
         }
     } else {
-        val effectiveId = resolvedAssignmentIdState.value
-        // 과제가 없을 때 처리: assignmentId가 null이고 recentId도 null이고 로딩이 완료된 경우
-        if (effectiveId == null && assignmentId == null && hasAttemptedLoadRecent && !isLoading) {
-            // 과제가 없습니다 메시지 표시
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Assignment,
-                        contentDescription = null,
-                        tint = Gray400,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Text(
-                        text = "과제가 없습니다",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray800
-                    )
-                    Text(
-                        text = "진행 중인 과제가 없습니다.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    VTButton(
-                        text = "홈으로 돌아가기",
-                        onClick = {
-                            onNavigateToHome()
-                        },
-                        variant = ButtonVariant.Gradient,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        } else if (effectiveId != null) {
-            AssignmentContinuousScreen(assignmentId = effectiveId, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
-        } else {
-            // Still resolving recent assignment id (초기 상태)
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = PrimaryIndigo)
-            }
-        }
+        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
     }
 }
 
@@ -197,6 +126,7 @@ fun AssignmentContinuousScreen(
     var currentTailQuestionNumber by remember { mutableStateOf<String?>(null) }
     var lastProcessedQuestionIndex by remember { mutableStateOf(-1) }
     var savedTailQuestion by remember { mutableStateOf<com.example.voicetutor.data.models.TailQuestion?>(null) }
+    var lastProcessedResponseNumberStr by remember { mutableStateOf<String?>(null) }
     
     // 권한 요청 런처
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -220,37 +150,21 @@ fun AssignmentContinuousScreen(
     // 과제 완료 상태 감지
     if (isAssignmentCompleted) {
         println("AssignmentScreen - Assignment completed, showing completion screen")
-    } else {
-        // totalProblem이 0이면 과제에 문제가 없으므로 로드하지 않음
-        val totalProblems = personalAssignmentStatistics?.totalProblem ?: -1
-        if (totalProblems == 0) {
-            // 통계만 로드해서 확인 (이미 완료 상태일 수 있음)
-            LaunchedEffect(Unit) {
-                assignmentId?.let { id ->
-                    viewModel.loadPersonalAssignmentStatistics(id)
-                }
-            }
-        } else if (assignmentId != null && personalAssignmentQuestions.isEmpty() && !hasAttemptedLoad && !isLoading && totalProblems > 0) {
-            // 한 번만 로드 시도 (무한 반복 방지)
-            LaunchedEffect(assignmentId) {
-                // assignmentId가 변경될 때만 실행 (초기 로드 시)
-                println("AssignmentScreen - Loading all questions for personalAssignmentId: $assignmentId")
-                println("AssignmentScreen - Assignment title: $assignmentTitle")
-                hasAttemptedLoad = true
-                assignmentId?.let { id ->
-                    viewModel.loadAllQuestions(id)
-                    // 통계도 함께 로드 (진행률 계산용)
-                    viewModel.loadPersonalAssignmentStatistics(id)
-                }
-            }
+    } else if (personalAssignmentQuestions.isEmpty() && !hasAttemptedLoad && !isLoading) {
+        LaunchedEffect(Unit) {
+            println("AssignmentScreen - Loading all questions for personalAssignmentId: $assignmentId")
+            println("AssignmentScreen - Assignment title: $assignmentTitle")
+            hasAttemptedLoad = true
+            viewModel.loadAllQuestions(assignmentId)
+            // 통계도 함께 로드 (진행률 계산용)
+            viewModel.loadPersonalAssignmentStatistics(assignmentId)
         }
     }
     
     // 무한 로딩 방지: 이미 시도했고 로딩 중이 아니면 다시 시도하지 않음
-    LaunchedEffect(hasAttemptedLoad, isLoading, personalAssignmentQuestions.size) {
+    LaunchedEffect(hasAttemptedLoad, isLoading) {
         if (hasAttemptedLoad && !isLoading && personalAssignmentQuestions.isEmpty()) {
             println("AssignmentScreen - Prevented infinite loading: hasAttemptedLoad=$hasAttemptedLoad, isLoading=$isLoading, questionsEmpty=${personalAssignmentQuestions.isEmpty()}")
-            println("AssignmentScreen - Total problems: ${personalAssignmentStatistics?.totalProblem}, Solved: ${personalAssignmentStatistics?.solvedProblem}")
         }
     }
     
@@ -267,15 +181,21 @@ fun AssignmentContinuousScreen(
     // 응답 결과 처리 - 새로운 응답이 올 때마다 처리
     LaunchedEffect(answerSubmissionResponse) {
         answerSubmissionResponse?.let { response ->
-            println("AssignmentScreen - Processing new response: ${response.numberStr}")
+            val responseNumberStr = response.numberStr
+            
+            // 동일한 응답을 이미 처리했는지 확인
+            if (responseNumberStr != null && lastProcessedResponseNumberStr == responseNumberStr) {
+                println("AssignmentScreen - Already processed this response: $responseNumberStr, skipping")
+                return@let
+            }
+            
+            println("AssignmentScreen - Processing new response: $responseNumberStr")
             println("AssignmentScreen - Current tail question number: $currentTailQuestionNumber")
             println("AssignmentScreen - Current saved tail question: ${savedTailQuestion?.question}")
             
-            // 새로운 응답이면 항상 처리
-            println("AssignmentScreen - Setting isAnswerCorrect from response.isCorrect: ${response.isCorrect}")
-            println("AssignmentScreen - Raw response data - is_correct field: ${response.isCorrect}")
+            // 응답 처리 표시
+            lastProcessedResponseNumberStr = responseNumberStr
             isAnswerCorrect = response.isCorrect
-            println("AssignmentScreen - isAnswerCorrect set to: $isAnswerCorrect")
             showResult = true
             
             // tailQuestion이 null이면 완료 가능한 상태 (사용자가 완료 버튼을 눌러야 함)
@@ -285,15 +205,11 @@ fun AssignmentContinuousScreen(
                 return@let
             }
             
-            // numberStr이 null이면 통계를 확인하여 실제로 모든 문제를 풀었는지 검증
+            // numberStr이 null이면 과제 완료
             if (response.numberStr == null) {
-                println("AssignmentScreen - numberStr is null, checking if all problems are solved")
-                // 통계를 먼저 갱신
-                assignmentId?.let { id ->
-                    viewModel.loadPersonalAssignmentStatistics(id)
-                    // 통계 갱신 후 완료 여부 확인 (LaunchedEffect에서 처리)
-                }
-                // 여기서는 완료 상태로 설정하지 않음 (통계 확인 후 결정)
+                println("AssignmentScreen - Assignment completed (numberStr is null)")
+                // 과제 완료 상태로 설정
+                viewModel.setAssignmentCompleted(true)
                 return@let
             }
             
@@ -317,24 +233,22 @@ fun AssignmentContinuousScreen(
                 val currentQuestionNumber = currentQuestion?.number
                 val serverQuestionNumber = response.numberStr
                 
-                if (currentQuestionNumber != serverQuestionNumber) {
+                if (currentQuestionNumber != serverQuestionNumber && serverQuestionNumber != null) {
                     println("AssignmentScreen - Question number mismatch: current=$currentQuestionNumber, server=$serverQuestionNumber")
                     println("AssignmentScreen - Loading question $serverQuestionNumber from server")
-                    // 서버에서 해당 질문을 로드
+                    
+                    // 통계는 submitAnswer 후에 이미 갱신되었으므로, 바로 moveToQuestionByNumber 호출
+                    // moveToQuestionByNumber 내부에서 isLoading 체크를 하므로 여기서는 바로 호출
                     assignmentId?.let { id ->
-                        viewModel.moveToQuestionByNumber(serverQuestionNumber, id)
-                        // 통계는 백그라운드에서 갱신 (질문 로딩과 별도로 처리)
-                        println("AssignmentScreen - Base question answered, refreshing statistics in background")
-                        viewModel.loadPersonalAssignmentStatistics(id)
-                    }
-                } else {
-                    // 질문 번호가 같으면 통계만 갱신
-                    assignmentId?.let { id ->
-                        println("AssignmentScreen - Base question answered, refreshing statistics in background")
-                        viewModel.loadPersonalAssignmentStatistics(id)
+                        scope.launch {
+                            // submitAnswer 및 통계 갱신이 완료될 때까지 짧게 대기
+                            delay(300)
+                            
+                            println("AssignmentScreen - Calling moveToQuestionByNumber: $serverQuestionNumber, personalAssignmentId: $id")
+                            viewModel.moveToQuestionByNumber(serverQuestionNumber, id)
+                        }
                     }
                 }
-                // 자동 이동하지 않고 사용자가 버튼을 눌러야 함
             }
             
             println("AssignmentScreen - Answer result: isCorrect=${response.isCorrect}, numberStr=${response.numberStr}")
@@ -369,50 +283,7 @@ fun AssignmentContinuousScreen(
         }
         println("AssignmentScreen - Recording timer ended")
     }
-    
-    // 통계 갱신 후 완료 여부 자동 확인 - 통계 기반으로만 완료 처리
-    LaunchedEffect(personalAssignmentStatistics, answerSubmissionResponse) {
-        val totalProblems = personalAssignmentStatistics?.totalProblem ?: 0
-        val solvedProblems = personalAssignmentStatistics?.solvedProblem ?: 0
-        
-        println("AssignmentScreen - Statistics updated: Total=$totalProblems, Solved=$solvedProblems")
-        
-        // 절대 자동으로 완료 처리하지 않음 - totalProblem과 solvedProblem이 동일할 때만
-        // numberStr이 null인 응답이 있고, 모든 문제를 풀었을 때만 완료 처리
-        val response = answerSubmissionResponse
-        if (response != null && response.numberStr == null) {
-            println("AssignmentScreen - Response with null numberStr received, checking if all problems solved")
-            if (totalProblems > 0 && totalProblems == solvedProblems) {
-                println("AssignmentScreen - Verified: All problems solved (Total: $totalProblems, Solved: $solvedProblems). Setting completed.")
-                viewModel.setAssignmentCompleted(true)
-            } else {
-                println("AssignmentScreen - NOT completed: Total=$totalProblems, Solved=$solvedProblems - waiting for all problems to be solved")
-                // 완료 상태를 false로 유지
-                viewModel.setAssignmentCompleted(false)
-            }
-        } else {
-            // 응답이 없거나 numberStr이 있으면 통계만 확인하여 완료 여부 결정
-            if (totalProblems > 0 && totalProblems == solvedProblems) {
-                println("AssignmentScreen - All problems solved according to statistics (Total: $totalProblems, Solved: $solvedProblems)")
-                // 하지만 numberStr이 null인 응답이 없으면 완료 처리하지 않음 (사용자가 완료 버튼을 눌러야 함)
-            } else {
-                println("AssignmentScreen - Statistics check: Total=$totalProblems, Solved=$solvedProblems - NOT all solved")
-                // 완료 상태를 false로 유지
-                viewModel.setAssignmentCompleted(false)
-            }
-        }
-    }
 
-    // 완료 화면 표시 조건: 
-    // 1. isAssignmentCompleted가 true이고
-    // 2. totalProblem과 solvedProblem이 동일해야 함
-    val totalProblems = personalAssignmentStatistics?.totalProblem ?: 0
-    val solvedProblems = personalAssignmentStatistics?.solvedProblem ?: 0
-    val allProblemsSolved = totalProblems > 0 && totalProblems == solvedProblems
-    val shouldShowCompletionScreen = (isAssignmentCompleted && allProblemsSolved) || 
-                                     (currentQuestion == null && allProblemsSolved && personalAssignmentQuestions.isNotEmpty()) || 
-                                     (personalAssignmentQuestions.isEmpty() && allProblemsSolved && totalProblems > 0)
-    
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -422,7 +293,7 @@ fun AssignmentContinuousScreen(
                 color = PrimaryIndigo
             )
         }
-    } else if (shouldShowCompletionScreen) {
+    } else if (isAssignmentCompleted || currentQuestion == null || personalAssignmentQuestions.isEmpty()) {
         // 퀴즈 완료 화면
         Box(
             modifier = Modifier
@@ -497,7 +368,7 @@ fun AssignmentContinuousScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            // 진행률 텍스트 표시
+            // 진행률 텍스트 표시 (선택사항)
             Text(
                 text = "${solvedProblems} / ${totalProblems}",
                 style = MaterialTheme.typography.bodySmall,
@@ -520,7 +391,7 @@ fun AssignmentContinuousScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Question number - showResult가 false일 때만 질문 번호 표시
-                    if (!showResult && currentQuestion != null) {
+                    if (!showResult) {
                         val questionNumber = currentTailQuestionNumber?.let { tailNumber ->
                             if (tailNumber.contains("-")) "꼬리 질문 $tailNumber" else "질문 $tailNumber"
                         } ?: run {
@@ -528,16 +399,16 @@ fun AssignmentContinuousScreen(
                             val response = answerSubmissionResponse
                             if (response?.numberStr != null && !response.numberStr.contains("-")) {
                                 "질문 ${response.numberStr}"
-                            } else if (currentQuestion?.number?.contains("-") == true) {
+                            } else if (currentQuestion.number.contains("-")) {
                                 "꼬리 질문 ${currentQuestion.number}"
                             } else {
-                                "질문 ${currentQuestion?.number ?: ""}"
+                                "질문 ${currentQuestion.number}"
                             }
                         }
                         
                         println("AssignmentScreen - Displaying question number: $questionNumber")
                         println("AssignmentScreen - currentTailQuestionNumber: $currentTailQuestionNumber")
-                        println("AssignmentScreen - currentQuestion.number: ${currentQuestion?.number}")
+                        println("AssignmentScreen - currentQuestion.number: ${currentQuestion.number}")
                         println("AssignmentScreen - answerSubmissionResponse.numberStr: ${answerSubmissionResponse?.numberStr}")
                         
                         Text(
@@ -552,7 +423,7 @@ fun AssignmentContinuousScreen(
                     val response = answerSubmissionResponse
                     val questionText = when {
                         // 결과 화면이 아니라면
-                        !showResult && currentQuestion != null -> {
+                        !showResult -> {
                             // 새로운 응답이 있고 꼬리 질문인 경우
                             if (response != null && response.numberStr?.contains("-") == true) {
                                 response.tailQuestion?.question ?: currentQuestion.question
@@ -567,7 +438,7 @@ fun AssignmentContinuousScreen(
                                 currentQuestion.question
                             }
                         }
-                        // 결과 화면이거나 currentQuestion이 null인 경우 질문 표시하지 않음
+                        // 결과 화면에서는 질문 표시하지 않음
                         else -> ""
                     }
                     
@@ -618,10 +489,6 @@ fun AssignmentContinuousScreen(
                                         fontWeight = FontWeight.Bold,
                                         color = if (isAnswerCorrect) Success else Error
                                     )
-                                    // 디버깅: 실제 표시되는 값 확인
-                                    LaunchedEffect(isAnswerCorrect) {
-                                        println("AssignmentScreen - Displaying result: isAnswerCorrect=$isAnswerCorrect")
-                                    }
                                 }
                             }
                         }
@@ -779,98 +646,32 @@ fun AssignmentContinuousScreen(
                             val isTailQuestionNum = response?.numberStr?.contains("-") == true
                             
                             if (response?.tailQuestion == null) {
-                                // tailQuestion이 null인 경우 - 실제로 모든 문제를 풀었는지 확인
-                                val totalProblems = personalAssignmentStatistics?.totalProblem ?: 0
-                                val solvedProblems = personalAssignmentStatistics?.solvedProblem ?: 0
-                                val allProblemsSolved = totalProblems > 0 && totalProblems == solvedProblems
-                                
-                                if (allProblemsSolved) {
-                                    // 모든 문제를 풀었으면 완료 버튼 표시
-                                    VTButton(
-                                        text = "완료",
-                                        onClick = {
-                                            println("AssignmentScreen - Completion button pressed")
-                                            println("AssignmentScreen - Total: $totalProblems, Solved: $solvedProblems")
-                                            // 통계를 다시 한번 확인 (최신 상태 확인)
-                                            assignmentId?.let { id ->
-                                                viewModel.loadPersonalAssignmentStatistics(id)
-                                                // 통계 갱신 후 완료 처리 (LaunchedEffect에서 처리)
-                                                // 여기서는 통계 갱신만 하고, LaunchedEffect에서 완료 여부 확인
-                                                scope.launch {
-                                                    delay(500) // 통계 갱신 대기
-                                                    val updatedStats = viewModel.personalAssignmentStatistics.value
-                                                    val updatedTotal = updatedStats?.totalProblem ?: 0
-                                                    val updatedSolved = updatedStats?.solvedProblem ?: 0
-                                                    if (updatedTotal > 0 && updatedTotal == updatedSolved) {
-                                                        println("AssignmentScreen - Verified: All problems solved. Completing assignment.")
-                                                        viewModel.completeAssignment(id)
-                                                        viewModel.setAssignmentCompleted(true)
-                                                    } else {
-                                                        println("AssignmentScreen - Verification failed: Total=$updatedTotal, Solved=$updatedSolved")
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        variant = ButtonVariant.Gradient,
-                                        fullWidth = true
-                                    )
-                                } else {
-                                    // 아직 모든 문제를 풀지 않았으면 통계 갱신 후 다음 문제로 넘어가기
-                                    VTButton(
-                                        text = "다음 문제",
-                                        onClick = {
-                                            println("AssignmentScreen - Not all problems solved yet")
-                                            println("AssignmentScreen - Total: $totalProblems, Solved: $solvedProblems")
-                                            // 통계 갱신
-                                            assignmentId?.let { id ->
-                                                viewModel.loadPersonalAssignmentStatistics(id)
-                                            }
-                                            viewModel.clearAnswerSubmissionResponse()
-                                            showResult = false
-                                            currentTailQuestionNumber = null
-                                            savedTailQuestion = null
-                                        },
-                                        variant = ButtonVariant.Gradient,
-                                        fullWidth = true
-                                    )
-                                }
+                                // tailQuestion이 null인 경우 - 완료 버튼 표시
+                                VTButton(
+                                    text = "완료",
+                                    onClick = {
+                                        println("AssignmentScreen - Completion button pressed")
+                                        // 과제 완료 API 호출
+                                        assignmentId?.let { id ->
+                                            viewModel.completeAssignment(id)
+                                        }
+                                        // 홈으로 돌아가기
+                                        onNavigateToHome()
+                                    },
+                                    variant = ButtonVariant.Gradient,
+                                    fullWidth = true
+                                )
                             } else if (response?.numberStr == null) {
-                                // numberStr이 null인 경우 - totalProblem과 solvedProblem을 확인하여 완료 여부 결정
-                                val totalProblems = personalAssignmentStatistics?.totalProblem ?: 0
-                                val solvedProblems = personalAssignmentStatistics?.solvedProblem ?: 0
-                                val allProblemsSolved = totalProblems > 0 && totalProblems == solvedProblems
-                                
-                                if (allProblemsSolved) {
-                                    // 모든 문제를 풀었으면 홈으로 돌아가기 버튼 표시
-                                    VTButton(
-                                        text = "홈으로 돌아가기",
-                                        onClick = {
-                                            println("AssignmentScreen - Assignment completed, navigating to home")
-                                            onNavigateToHome()
-                                        },
-                                        variant = ButtonVariant.Gradient,
-                                        fullWidth = true
-                                    )
-                                } else {
-                                    // 아직 모든 문제를 풀지 않았으면 통계 갱신 후 다음 문제 찾기
-                                    VTButton(
-                                        text = "다음 문제 찾기",
-                                        onClick = {
-                                            println("AssignmentScreen - Not all problems solved yet")
-                                            println("AssignmentScreen - Total: $totalProblems, Solved: $solvedProblems")
-                                            // 통계 갱신
-                                            assignmentId?.let { id ->
-                                                viewModel.loadPersonalAssignmentStatistics(id)
-                                            }
-                                            viewModel.clearAnswerSubmissionResponse()
-                                            showResult = false
-                                            currentTailQuestionNumber = null
-                                            savedTailQuestion = null
-                                        },
-                                        variant = ButtonVariant.Gradient,
-                                        fullWidth = true
-                                    )
-                                }
+                                // 과제 완료인 경우 - 홈으로 돌아가기 버튼 표시
+                                VTButton(
+                                    text = "홈으로 돌아가기",
+                                    onClick = {
+                                        println("AssignmentScreen - Assignment completed, navigating to home")
+                                        onNavigateToHome()
+                                    },
+                                    variant = ButtonVariant.Gradient,
+                                    fullWidth = true
+                                )
                             } else if (isTailQuestionNum) {
                                 // 꼬리 질문인 경우 - 꼬리질문으로 넘어가기 버튼 표시
                                 VTButton(
@@ -954,11 +755,12 @@ fun AssignmentContinuousScreen(
                                 
                                 // 코루틴 스코프를 안전하게 처리
                                 val user = currentUser
-                                if (audioRecordingState.audioFilePath != null && user != null && currentQuestion != null) {
+                                val audioFilePath = audioRecordingState.audioFilePath
+                                if (audioFilePath != null && user != null && currentQuestion != null) {
                                     println("AssignmentScreen - Sending answer for question ${currentQuestionIndex + 1}")
                                     
                                     // API로 답변 전송
-                                    val audioFile = File(audioRecordingState.audioFilePath)
+                                    val audioFile = File(audioFilePath)
                                     println("AssignmentScreen - Audio file exists: ${audioFile.exists()}")
                                     println("AssignmentScreen - Audio file size: ${audioFile.length()} bytes")
                                     println("AssignmentScreen - Recording duration: ${audioRecordingState.recordingTime} seconds")
@@ -976,13 +778,15 @@ fun AssignmentContinuousScreen(
                                             currentQuestion.id
                                         }
                                         
+                                        println("AssignmentScreen - Submitting answer with questionId: $questionIdToSubmit")
+                                        if (currentTailQuestionNumber != null) {
+                                            println("AssignmentScreen - This is a tail question submission: $currentTailQuestionNumber")
+                                        }
+                                        
                                         // assignmentId는 PersonalAssignment ID
                                         val personalAssignmentId = assignmentId
                                         
                                         println("AssignmentScreen - Submitting answer with personal_assignment_id: $personalAssignmentId, questionId: $questionIdToSubmit")
-                                        if (currentTailQuestionNumber != null) {
-                                            println("AssignmentScreen - This is a tail question submission: $currentTailQuestionNumber")
-                                        }
                                         
                                         if (personalAssignmentId != null) {
                                             viewModel.submitAnswer(
@@ -1034,6 +838,7 @@ fun AssignmentQuizScreen(
         onNavigateToHome = onNavigateToHome
     )
 }
+
 
 @Composable
 fun ConversationBubble(

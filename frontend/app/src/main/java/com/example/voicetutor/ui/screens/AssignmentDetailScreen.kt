@@ -44,10 +44,18 @@ fun AssignmentDetailScreen(
         // 우선순위: ViewModel에 저장된 선택값 → 네비게이션 파라미터
         val personalId = selectedPersonalAssignmentId ?: assignmentId
         val assignId = selectedAssignmentId
+        
+        // selectedAssignmentId가 있으면 Assignment 메타데이터 로드
+        // 없으면 PersonalAssignment 통계만 로드 (Assignment 메타데이터는 선택사항)
         if (assignId != null) {
             println("AssignmentDetailScreen - Loading assignment meta by assignment.id: $assignId")
             assignmentViewModel.loadAssignmentById(assignId)
+        } else {
+            println("AssignmentDetailScreen - selectedAssignmentId is null, skipping loadAssignmentById")
+            println("AssignmentDetailScreen - PersonalAssignment ID: $personalId")
         }
+        
+        // personal_assignment_id로 통계 로드
         personalId?.let { pid ->
             println("AssignmentDetailScreen - Loading statistics by personal_assignment.id: $pid")
             assignmentViewModel.loadPersonalAssignmentStatistics(pid)

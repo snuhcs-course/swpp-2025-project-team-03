@@ -520,8 +520,11 @@ fun VoiceTutorNavigation(
                     assignmentTitle = assignmentTitle,
                     onStartAssignment = {
                         // Navigate to assignment execution screen with personal_assignment_id
-                        val personalId = selectedPersonalAssignmentId?.toString() ?: "1"
+                        // assignmentId is the personal_assignment_id passed from navigation
+                        val personalId = assignmentId.toIntOrNull()?.toString() ?: selectedPersonalAssignmentId?.toString() ?: "1"
                         println("AssignmentDetailScreen - Navigating to Assignment with personal_assignment_id: $personalId")
+                        println("AssignmentDetailScreen - assignmentId from navigation: $assignmentId")
+                        println("AssignmentDetailScreen - selectedPersonalAssignmentId from ViewModel: $selectedPersonalAssignmentId")
                         navController.navigate(VoiceTutorScreens.Assignment.createRoute(personalId, assignmentTitle))
                     },
                     assignmentViewModelParam = assignmentViewModel

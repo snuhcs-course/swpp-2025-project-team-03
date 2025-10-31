@@ -63,7 +63,7 @@ fun CreateClassScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color.White)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
             .clickable { 
