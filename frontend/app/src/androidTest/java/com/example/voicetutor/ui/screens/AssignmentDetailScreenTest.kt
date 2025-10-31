@@ -25,6 +25,8 @@ class AssignmentDetailScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 과제 제목이 표시되어야 함
         composeTestRule.onNodeWithText("테스트 과제", substring = true).assertExists()
     }
@@ -89,6 +91,8 @@ class AssignmentDetailScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("과제 시작", substring = true).performClick()
         // 네비게이션 콜백이 호출되었는지 확인

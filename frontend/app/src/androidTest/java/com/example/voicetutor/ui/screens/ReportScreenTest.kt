@@ -22,6 +22,8 @@ class ReportScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("리포트", substring = true).assertExists()
     }
 
@@ -33,6 +35,8 @@ class ReportScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("리포트", substring = true).assertExists()
     }
 
@@ -43,6 +47,8 @@ class ReportScreenTest {
                 ReportScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("리포트", substring = true).assertExists()
     }

@@ -22,6 +22,8 @@ class StudentDashboardScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 대시보드 제목이 표시되어야 함
         composeTestRule.onAllNodes(hasText("대시보드", substring = true))
             .assertCountEquals(1)
@@ -79,6 +81,8 @@ class StudentDashboardScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 해야 할 과제 버튼 클릭
         composeTestRule.onAllNodes(hasText("모두 보기", substring = true))
             .onFirst()
@@ -95,6 +99,8 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 진행률 리포트가 표시되어야 함
         composeTestRule.onAllNodes(hasText("진행률", substring = true))
@@ -139,6 +145,8 @@ class StudentDashboardScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 리포트 버튼 클릭
         composeTestRule.onAllNodes(hasText("리포트", substring = true))

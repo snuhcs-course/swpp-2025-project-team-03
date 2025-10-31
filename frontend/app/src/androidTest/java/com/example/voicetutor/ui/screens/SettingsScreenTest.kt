@@ -27,6 +27,8 @@ class SettingsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 설정 화면 제목이 표시되어야 함
         composeTestRule.onNodeWithText("설정", substring = true).assertExists()
     }
@@ -137,6 +139,8 @@ class SettingsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("로그아웃", substring = true).performClick()
         // 로그아웃 콜백이 호출되었는지 확인
         assert(loggedOut)
@@ -153,6 +157,8 @@ class SettingsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 앱 정보 버튼 클릭
         composeTestRule.onNodeWithText("앱 정보", substring = true).performClick()
         // 네비게이션이 트리거되었는지 확인 (화면 전환은 네비게이션 시스템에서 처리)
@@ -168,6 +174,8 @@ class SettingsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 버전 정보가 표시되어야 함
         composeTestRule.onNodeWithText("설정", substring = true).assertExists()

@@ -160,6 +160,8 @@ class VoiceTutorNavigationTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 로그인 화면이 표시되어야 함
         composeTestRule.onNodeWithText("로그인", substring = true).assertExists()
     }

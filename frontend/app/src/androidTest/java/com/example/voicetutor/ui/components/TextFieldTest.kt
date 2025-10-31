@@ -87,7 +87,7 @@ class TextFieldTest {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTTextField(
-                    value = "",
+                    value = capturedValue,
                     onValueChange = { capturedValue = it },
                     placeholder = "입력하세요",
                     modifier = Modifier.semantics { testTag = "TestTextField" }
@@ -95,8 +95,13 @@ class TextFieldTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithTag("TestTextField")
+            .performClick()
             .performTextInput("테스트 입력")
+
+        composeTestRule.waitForIdle()
 
         assert(capturedValue == "테스트 입력")
     }

@@ -22,6 +22,8 @@ class AppInfoScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("앱 정보", substring = true).assertExists()
     }
 
@@ -58,6 +60,8 @@ class AppInfoScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onAllNodes(hasContentDescription("뒤로가기"))
             .onFirst()

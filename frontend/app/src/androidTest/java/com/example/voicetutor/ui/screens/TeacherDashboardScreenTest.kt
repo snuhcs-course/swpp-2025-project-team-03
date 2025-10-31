@@ -22,6 +22,8 @@ class TeacherDashboardScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 대시보드 제목이 표시되어야 함
         composeTestRule.onAllNodes(hasText("대시보드", substring = true))
             .assertCountEquals(1)
@@ -78,6 +80,8 @@ class TeacherDashboardScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 수업 관리 버튼 클릭
         composeTestRule.onAllNodes(hasText("수업 관리", substring = true))
             .onFirst()
@@ -98,6 +102,8 @@ class TeacherDashboardScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 학생 관리 버튼 클릭
         composeTestRule.onAllNodes(hasText("학생 관리", substring = true))
@@ -120,6 +126,8 @@ class TeacherDashboardScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 과제 관리 버튼 클릭
         composeTestRule.onAllNodes(hasText("과제 관리", substring = true))
             .onFirst()
@@ -136,6 +144,8 @@ class TeacherDashboardScreenTest {
                 TeacherDashboardScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 빠른 작업 버튼들이 표시되어야 함
         composeTestRule.onAllNodes(hasText("과제", substring = true))

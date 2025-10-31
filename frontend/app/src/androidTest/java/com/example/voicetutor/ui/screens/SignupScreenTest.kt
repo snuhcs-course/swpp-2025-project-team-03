@@ -22,6 +22,8 @@ class SignupScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 회원가입 화면 제목이 표시되어야 함
         composeTestRule.onNodeWithText("회원가입", substring = true).assertExists()
     }
@@ -139,6 +141,8 @@ class SignupScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("로그인", substring = true).performClick()
         // 콜백이 호출되었는지 확인

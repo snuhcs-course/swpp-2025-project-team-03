@@ -22,6 +22,8 @@ class LoginScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 로그인 화면 제목이 표시되어야 함
         composeTestRule.onNodeWithText("로그인", substring = true).assertExists()
     }
@@ -84,6 +86,8 @@ class LoginScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 이메일 필드에 텍스트 입력
         composeTestRule.onAllNodes(hasText("이메일", substring = true))
             .onFirst()
@@ -97,6 +101,8 @@ class LoginScreenTest {
                 LoginScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 비밀번호 필드 찾기
         val passwordField = composeTestRule.onAllNodes(hasText("비밀번호", substring = true))
@@ -121,6 +127,8 @@ class LoginScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("회원가입", substring = true).performClick()
         // 콜백이 호출되었는지 확인

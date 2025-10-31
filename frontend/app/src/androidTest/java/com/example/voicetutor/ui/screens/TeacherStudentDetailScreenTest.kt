@@ -24,6 +24,8 @@ class TeacherStudentDetailScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
     }
 
@@ -36,6 +38,8 @@ class TeacherStudentDetailScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
     }
@@ -52,6 +56,8 @@ class TeacherStudentDetailScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         if (composeTestRule.onAllNodes(hasText("과제", substring = true))
             .fetchSemanticsNodes().size > 1) {
@@ -71,6 +77,8 @@ class TeacherStudentDetailScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
     }

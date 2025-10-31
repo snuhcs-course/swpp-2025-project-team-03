@@ -22,6 +22,8 @@ class CreateAssignmentScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 제목이 표시되어야 함
         composeTestRule.onNodeWithText("과제 생성", substring = true).assertExists()
     }
@@ -112,6 +114,8 @@ class CreateAssignmentScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("취소", substring = true).performClick()
         assert(backClicked)

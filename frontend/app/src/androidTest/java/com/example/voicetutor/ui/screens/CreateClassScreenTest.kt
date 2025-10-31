@@ -22,6 +22,8 @@ class CreateClassScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 제목이 표시되어야 함
         composeTestRule.onNodeWithText("수업 생성", substring = true).assertExists()
     }
@@ -88,6 +90,8 @@ class CreateClassScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 뒤로가기 버튼 클릭
         composeTestRule.onAllNodes(hasContentDescription("뒤로가기"))

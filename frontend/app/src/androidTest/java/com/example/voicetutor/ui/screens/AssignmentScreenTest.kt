@@ -25,6 +25,8 @@ class AssignmentScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 질문이 표시되어야 함 (로딩 중일 수도 있음)
         // 기본 레이아웃 확인
         composeTestRule.onAllNodes(hasContentDescription("과제"))

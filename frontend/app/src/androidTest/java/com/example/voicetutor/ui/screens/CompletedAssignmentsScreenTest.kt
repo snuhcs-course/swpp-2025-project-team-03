@@ -24,6 +24,8 @@ class CompletedAssignmentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 제목이 표시되어야 함
         composeTestRule.onNodeWithText("완료한 과제", substring = true).assertExists()
     }
@@ -68,6 +70,8 @@ class CompletedAssignmentsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 과제 항목 클릭 (있는 경우)
         if (composeTestRule.onAllNodes(hasText("과제", substring = true))

@@ -24,6 +24,8 @@ class TeacherStudentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 제목이 표시되어야 함
         composeTestRule.onNodeWithText("학생 관리", substring = true).assertExists()
     }
@@ -54,6 +56,8 @@ class TeacherStudentsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 학생 항목 클릭 (있는 경우)
         if (composeTestRule.onAllNodes(hasText("학생", substring = true))

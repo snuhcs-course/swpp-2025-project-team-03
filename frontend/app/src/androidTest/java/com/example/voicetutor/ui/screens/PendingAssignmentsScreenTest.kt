@@ -24,6 +24,8 @@ class PendingAssignmentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 제목이 표시되어야 함
         composeTestRule.onNodeWithText("해야 할 과제", substring = true).assertExists()
     }
@@ -68,6 +70,8 @@ class PendingAssignmentsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 과제 항목 클릭 (있는 경우)
         // 네비게이션 콜백이 호출되었는지 확인

@@ -24,6 +24,8 @@ class AllStudentAssignmentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("전체 과제", substring = true).assertExists()
     }
 
@@ -36,6 +38,8 @@ class AllStudentAssignmentsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("전체 과제", substring = true).assertExists()
     }
@@ -52,6 +56,8 @@ class AllStudentAssignmentsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         if (composeTestRule.onAllNodes(hasText("과제", substring = true))
             .fetchSemanticsNodes().size > 1) {

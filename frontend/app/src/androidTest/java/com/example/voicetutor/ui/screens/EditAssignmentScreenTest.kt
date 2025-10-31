@@ -24,6 +24,8 @@ class EditAssignmentScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("과제 편집", substring = true).assertExists()
     }
 

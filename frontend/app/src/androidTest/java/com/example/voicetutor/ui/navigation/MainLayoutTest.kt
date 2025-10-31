@@ -33,6 +33,8 @@ class MainLayoutTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // VoiceTutor 로고가 표시되어야 함
         composeTestRule.onNodeWithText("VoiceTutor", substring = true).assertExists()
     }
@@ -53,6 +55,8 @@ class MainLayoutTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 뒤로가기 버튼이 표시되어야 함
         composeTestRule.onNodeWithContentDescription("뒤로가기").assertExists()
     }
@@ -70,6 +74,8 @@ class MainLayoutTest {
                 }
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 사용자 이름이 표시되어야 함 (초기값 "사용자")
         composeTestRule.onNodeWithText("사용자", substring = true).assertExists()
@@ -89,6 +95,8 @@ class MainLayoutTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 사용자 역할이 표시되어야 함
         composeTestRule.onNodeWithText("선생님", substring = true).assertExists()
     }
@@ -106,6 +114,8 @@ class MainLayoutTest {
                 }
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 학생용 하단 네비게이션이 표시되어야 함
         composeTestRule.onNodeWithText("홈", substring = true).assertExists()
@@ -127,6 +137,8 @@ class MainLayoutTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 선생님용 하단 네비게이션이 표시되어야 함
         composeTestRule.onNodeWithText("홈", substring = true).assertExists()
         composeTestRule.onNodeWithText("수업", substring = true).assertExists()
@@ -146,6 +158,8 @@ class MainLayoutTest {
                 }
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 프로필 버튼이 존재해야 함
         composeTestRule.onAllNodes(hasContentDescription("프로필"))
@@ -167,6 +181,8 @@ class MainLayoutTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 로그아웃 버튼이 존재해야 함
         composeTestRule.onNodeWithContentDescription("로그아웃").assertExists()
     }
@@ -187,6 +203,8 @@ class MainLayoutTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 홈 탭이 선택된 상태여야 함
         composeTestRule.onNodeWithText("홈", substring = true).assertExists()
     }
@@ -206,6 +224,8 @@ class MainLayoutTest {
                 }
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 홈 탭이 선택된 상태여야 함
         composeTestRule.onNodeWithText("홈", substring = true).assertExists()

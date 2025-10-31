@@ -22,6 +22,8 @@ class AllStudentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("전체 학생", substring = true).assertExists()
     }
 
@@ -32,6 +34,8 @@ class AllStudentsScreenTest {
                 AllStudentsScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("전체 학생", substring = true).assertExists()
     }
@@ -47,6 +51,8 @@ class AllStudentsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         if (composeTestRule.onAllNodes(hasText("학생", substring = true))
             .fetchSemanticsNodes().size > 1) {
@@ -64,6 +70,8 @@ class AllStudentsScreenTest {
                 AllStudentsScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("전체 학생", substring = true).assertExists()
     }

@@ -22,6 +22,8 @@ class AllAssignmentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 제목이 표시되어야 함
         composeTestRule.onNodeWithText("전체 과제", substring = true).assertExists()
     }
@@ -33,6 +35,8 @@ class AllAssignmentsScreenTest {
                 AllAssignmentsScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 과제 생성 버튼이 표시되어야 함
         composeTestRule.onNodeWithText("과제 생성", substring = true).assertExists()
@@ -62,6 +66,8 @@ class AllAssignmentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("과제 생성", substring = true).performClick()
         assert(navigated)
     }
@@ -77,6 +83,8 @@ class AllAssignmentsScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 과제 항목 클릭 (있는 경우)
         if (composeTestRule.onAllNodes(hasText("과제", substring = true))
@@ -96,6 +104,8 @@ class AllAssignmentsScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // 과제가 없을 때 적절한 메시지가 표시되어야 함
         composeTestRule.onNodeWithText("전체 과제", substring = true).assertExists()
     }
@@ -107,6 +117,8 @@ class AllAssignmentsScreenTest {
                 AllAssignmentsScreen()
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // 필터 옵션이 표시되어야 함 (있는 경우)
         composeTestRule.onNodeWithText("전체 과제", substring = true).assertExists()

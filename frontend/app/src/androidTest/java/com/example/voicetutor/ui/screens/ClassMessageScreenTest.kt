@@ -24,6 +24,8 @@ class ClassMessageScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("수학", substring = true).assertExists()
     }
 
@@ -36,6 +38,8 @@ class ClassMessageScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("수학", substring = true).assertExists()
     }
@@ -65,6 +69,8 @@ class ClassMessageScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         if (composeTestRule.onAllNodes(hasText("학생", substring = true))
             .fetchSemanticsNodes().size > 1) {

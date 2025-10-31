@@ -99,6 +99,8 @@ class ProgressBarTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         // Progress should be clamped to 100%
         composeTestRule.onNodeWithText("100%", substring = true).assertExists()
     }
@@ -217,6 +219,8 @@ class ProgressBarTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         // Progress should be clamped to 100%
         composeTestRule.onNodeWithText("100%", substring = true).assertExists()

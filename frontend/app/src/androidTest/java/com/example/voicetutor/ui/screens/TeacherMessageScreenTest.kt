@@ -24,6 +24,8 @@ class TeacherMessageScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
     }
 
@@ -36,6 +38,8 @@ class TeacherMessageScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
     }
@@ -62,6 +66,8 @@ class TeacherMessageScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
     }

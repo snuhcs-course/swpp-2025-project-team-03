@@ -25,6 +25,8 @@ class TeacherStudentAssignmentDetailScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("테스트 과제", substring = true).assertExists()
     }
 
@@ -39,6 +41,8 @@ class TeacherStudentAssignmentDetailScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("테스트 과제", substring = true).assertExists()
     }
 
@@ -52,6 +56,8 @@ class TeacherStudentAssignmentDetailScreenTest {
                 )
             }
         }
+
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("테스트 과제", substring = true).assertExists()
     }
