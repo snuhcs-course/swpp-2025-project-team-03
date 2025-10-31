@@ -452,6 +452,174 @@ class TestExtractAcousticFeatures:
         assert "end_slope_f0_st_per_s" in result
 
 
+class TestExtractSemanticFeatures:
+    """extract_semantic_features 함수 테스트"""
+
+    @patch("submissions.utils.feature_extractor.extract_semantic_features.SentenceTransformer")
+    def test_extract_semantic_features_from_dict(self, mock_sentence_transformer_class, test_script):
+        """dict 입력으로 extract_semantic_features 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        mock_model = Mock()
+        sentences = test_script.split(".")
+        num_sentences = len([s for s in sentences if s.strip()])
+        if num_sentences == 0:
+            num_sentences = 1
+
+        mock_embeddings = []
+        for i in range(max(num_sentences, 3)):
+            emb = np.random.rand(384).astype(np.float32)
+            emb = emb / np.linalg.norm(emb)
+            mock_embeddings.append(emb)
+
+        def mock_encode(sentences_list, **kwargs):
+            n = len(sentences_list) if isinstance(sentences_list, list) else 1
+            if n == 0:
+                n = 1
+            return np.array([mock_embeddings[i % len(mock_embeddings)] for i in range(n)])
+
+        mock_model.encode.side_effect = mock_encode
+        mock_sentence_transformer_class.return_value = mock_model
+
+        data = {"script": test_script}
+
+        result = extract_semantic_features(data, model=mock_model)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+        assert "adj_sim_std" in result
+        assert "adj_sim_p10" in result
+        assert "adj_sim_p50" in result
+        assert "adj_sim_p90" in result
+        assert "adj_sim_frac_high" in result
+        assert "adj_sim_frac_low" in result
+        assert "topic_path_len" in result
+        assert "dist_to_centroid_mean" in result
+        assert "dist_to_centroid_std" in result
+        assert "coherence_score" in result
+        assert "intra_coh" in result
+        assert "inter_div" in result
+
+    @patch("submissions.utils.feature_extractor.extract_semantic_features.SentenceTransformer")
+    def test_extract_semantic_features_from_text_string(self, mock_sentence_transformer_class, test_script):
+        """텍스트 문자열 입력으로 extract_semantic_features 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        mock_model = Mock()
+        sentences = test_script.split(".")
+        num_sentences = len([s for s in sentences if s.strip()])
+        if num_sentences == 0:
+            num_sentences = 1
+
+        mock_embeddings = []
+        for i in range(max(num_sentences, 3)):
+            emb = np.random.rand(384).astype(np.float32)
+            emb = emb / np.linalg.norm(emb)
+            mock_embeddings.append(emb)
+
+        def mock_encode(sentences_list, **kwargs):
+            n = len(sentences_list) if isinstance(sentences_list, list) else 1
+            if n == 0:
+                n = 1
+            return np.array([mock_embeddings[i % len(mock_embeddings)] for i in range(n)])
+
+        mock_model.encode.side_effect = mock_encode
+        mock_sentence_transformer_class.return_value = mock_model
+
+        result = extract_semantic_features(test_script, model=mock_model)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+
+    @patch("submissions.utils.feature_extractor.extract_semantic_features.SentenceTransformer")
+    def test_extract_semantic_features_with_prefix(self, mock_sentence_transformer_class, test_script):
+        """prefix 파라미터 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        mock_model = Mock()
+        mock_embeddings = [np.random.rand(384).astype(np.float32) for _ in range(3)]
+        for emb in mock_embeddings:
+            emb /= np.linalg.norm(emb)
+
+        def mock_encode(sentences_list, **kwargs):
+            n = len(sentences_list) if isinstance(sentences_list, list) else 1
+            return np.array([mock_embeddings[i % len(mock_embeddings)] for i in range(n)])
+
+        mock_model.encode.side_effect = mock_encode
+        mock_sentence_transformer_class.return_value = mock_model
+
+        data = {"script": test_script}
+        result = extract_semantic_features(data, model=mock_model, prefix="sem_")
+
+        assert isinstance(result, dict)
+        assert "sem_adj_sim_mean" in result
+        assert "sem_coherence_score" in result
+        assert "adj_sim_mean" not in result
+
+    def test_extract_semantic_features_empty_dict(self):
+        """빈 dict 입력 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        with pytest.raises(ValueError, match="dict 입력에서 'script' 문자열을 찾지 못했습니다"):
+            extract_semantic_features({})
+
+    def test_extract_semantic_features_invalid_input_type(self):
+        """잘못된 입력 타입 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        with pytest.raises(TypeError, match="script_or_json은 str.*또는 dict여야 합니다"):
+            extract_semantic_features(123)
+
+    @patch("submissions.utils.feature_extractor.extract_semantic_features.SentenceTransformer")
+    def test_extract_semantic_features_single_sentence(self, mock_sentence_transformer_class):
+        """단일 문장 입력 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        mock_model = Mock()
+        mock_sentence_transformer_class.return_value = mock_model
+
+        data = {"script": "이것은 단일 문장입니다."}
+        result = extract_semantic_features(data, model=mock_model)
+
+        assert isinstance(result, dict)
+        assert result["adj_sim_mean"] == 1.0
+        assert result["adj_sim_std"] == 0.0
+        assert result["coherence_score"] == 1.0
+
+    @patch("submissions.utils.feature_extractor.extract_semantic_features.SentenceTransformer")
+    def test_extract_semantic_features_custom_thresholds(self, mock_sentence_transformer_class, test_script):
+        """커스텀 임계값 사용 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        mock_model = Mock()
+        sentences = test_script.split(".")
+        num_sentences = len([s for s in sentences if s.strip()])
+        if num_sentences == 0:
+            num_sentences = 1
+
+        mock_embeddings = []
+        for _ in range(max(num_sentences, 3)):
+            emb = np.random.rand(384).astype(np.float32)
+            emb = emb / np.linalg.norm(emb)
+            mock_embeddings.append(emb)
+
+        def mock_encode(sentences_list, **kwargs):
+            n = len(sentences_list) if isinstance(sentences_list, list) else 1
+            if n == 0:
+                n = 1
+            return np.array([mock_embeddings[i % len(mock_embeddings)] for i in range(n)])
+
+        mock_model.encode.side_effect = mock_encode
+        mock_sentence_transformer_class.return_value = mock_model
+
+        data = {"script": test_script}
+        result = extract_semantic_features(data, model=mock_model, high_thr=0.9, low_thr=0.4)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_frac_high" in result
+        assert "adj_sim_frac_low" in result
+
+
 class TestSpeechToText:
     """speech_to_text 함수 테스트 (mocking)"""
 
