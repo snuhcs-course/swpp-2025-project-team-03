@@ -3,7 +3,7 @@ package com.example.voicetutor.data.models
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import assert
+import org.junit.Assert.assertEquals
 
 @RunWith(JUnit4::class)
 class UserModelsTest {
@@ -22,7 +22,7 @@ class UserModelsTest {
         val initial = user.initial
 
         // Assert
-        assert(initial == "홍")
+        assertEquals("홍", initial)
     }
 
     @Test
@@ -39,7 +39,7 @@ class UserModelsTest {
         val initial = user.initial
 
         // Assert
-        assert(initial == "?")
+        assertEquals("?", initial)
     }
 
     @Test
@@ -56,7 +56,7 @@ class UserModelsTest {
         val message = user.welcomeMessage
 
         // Assert
-        assert(message == "환영합니다, 김선생선생님!")
+        assertEquals("환영합니다, 김선생선생님!", message)
     }
 
     @Test
@@ -73,7 +73,7 @@ class UserModelsTest {
         val message = user.welcomeMessage
 
         // Assert
-        assert(message == "안녕하세요, 이학생님!")
+        assertEquals("안녕하세요, 이학생님!", message)
     }
 
     @Test
@@ -90,7 +90,7 @@ class UserModelsTest {
         val message = user.subMessage
 
         // Assert
-        assert(message == "수업을 관리하고 학생들의 진도를 추적하세요")
+        assertEquals("수업을 관리하고 학생들의 진도를 추적하세요", message)
     }
 
     @Test
@@ -107,19 +107,19 @@ class UserModelsTest {
         val message = user.subMessage
 
         // Assert
-        assert(message == "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?")
+        assertEquals("오늘도 VoiceTutor와 함께 학습을 시작해볼까요?", message)
     }
 
     @Test
     fun userRole_teachValue_equalsTeacher() {
         // Assert
-        assert(UserRole.TEACHER.name == "TEACHER")
+        assertEquals("TEACHER", UserRole.TEACHER.name)
     }
 
     @Test
     fun userRole_studentValue_equalsStudent() {
         // Assert
-        assert(UserRole.STUDENT.name == "STUDENT")
+        assertEquals("STUDENT", UserRole.STUDENT.name)
     }
 }
 

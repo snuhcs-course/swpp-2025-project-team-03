@@ -3,7 +3,9 @@ package com.example.voicetutor.data.models
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 @RunWith(JUnit4::class)
 class StudentModelsTest {
@@ -19,10 +21,10 @@ class StudentModelsTest {
         )
 
         // Assert
-        assert(student.id == 1)
-        assert(student.name == "Student1")
-        assert(student.email == "s1@test.com")
-        assert(student.role == UserRole.STUDENT)
+        assertEquals(1, student.id)
+        assertEquals("Student1", student.name)
+        assertEquals("s1@test.com", student.email)
+        assertEquals(UserRole.STUDENT, student.role)
     }
 
     @Test
@@ -36,7 +38,7 @@ class StudentModelsTest {
         )
 
         // Assert
-        assert(student.name == null)
+        assertNull(student.name)
     }
 
     @Test
@@ -78,12 +80,12 @@ class StudentModelsTest {
         )
 
         // Assert
-        assert(progress.studentId == 1)
-        assert(progress.totalAssignments == 10)
-        assert(progress.completedAssignments == 7)
-        assert(progress.averageScore == 85.5)
-        assert(progress.weeklyProgress.size == 1)
-        assert(progress.subjectBreakdown.size == 1)
+        assertEquals(1, progress.studentId)
+        assertEquals(10, progress.totalAssignments)
+        assertEquals(7, progress.completedAssignments)
+        assertEquals(85.5, progress.averageScore, 0.01)
+        assertEquals(1, progress.weeklyProgress.size)
+        assertEquals(1, progress.subjectBreakdown.size)
     }
 
     @Test
@@ -99,8 +101,8 @@ class StudentModelsTest {
         )
 
         // Assert
-        assert(progress.weeklyProgress.isEmpty())
-        assert(progress.subjectBreakdown.isEmpty())
+        assertTrue(progress.weeklyProgress.isEmpty())
+        assertTrue(progress.subjectBreakdown.isEmpty())
     }
 
     @Test
@@ -113,9 +115,9 @@ class StudentModelsTest {
         )
 
         // Assert
-        assert(weekly.week == "Week1")
-        assert(weekly.assignmentsCompleted == 5)
-        assert(weekly.averageScore == 85.5)
+        assertEquals("Week1", weekly.week)
+        assertEquals(5, weekly.assignmentsCompleted)
+        assertEquals(85.5, weekly.averageScore, 0.01)
     }
 
     @Test
@@ -129,10 +131,10 @@ class StudentModelsTest {
         )
 
         // Assert
-        assert(subjectProgress.subject == "Math")
-        assert(subjectProgress.completedAssignments == 5)
-        assert(subjectProgress.totalAssignments == 8)
-        assert(subjectProgress.averageScore == 90.0)
+        assertEquals("Math", subjectProgress.subject)
+        assertEquals(5, subjectProgress.completedAssignments)
+        assertEquals(8, subjectProgress.totalAssignments)
+        assertEquals(90.0, subjectProgress.averageScore, 0.01)
     }
 }
 

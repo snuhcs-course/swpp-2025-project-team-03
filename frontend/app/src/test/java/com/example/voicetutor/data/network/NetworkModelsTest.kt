@@ -7,7 +7,9 @@ import com.example.voicetutor.data.models.Subject
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 @RunWith(JUnit4::class)
 class NetworkModelsTest {
@@ -34,8 +36,8 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(data.personalAssignmentId == 100)
-        assert(data.nextQuestionId == 50)
+        assertEquals(100, data.personalAssignmentId)
+        assertEquals(50, data.nextQuestionId)
     }
 
     @Test
@@ -47,8 +49,8 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(data.personalAssignmentId == 100)
-        assert(data.nextQuestionId == null)
+        assertEquals(100, data.personalAssignmentId)
+        assertNull(data.nextQuestionId)
     }
 
     @Test
@@ -62,10 +64,10 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(response.success == true)
-        assert(response.data == "test data")
-        assert(response.message == "Success")
-        assert(response.error == null)
+        assertEquals(true, response.success)
+        assertEquals("test data", response.data)
+        assertEquals("Success", response.message)
+        assertNull(response.error)
     }
 
     @Test
@@ -79,9 +81,9 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(response.success == false)
-        assert(response.data == null)
-        assert(response.error == "Error occurred")
+        assertEquals(false, response.success)
+        assertNull(response.data)
+        assertEquals("Error occurred", response.error)
     }
 
     @Test
@@ -102,14 +104,14 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.title == "Assignment1")
-        assert(request.subject == "Math")
-        assert(request.class_id == 1)
-        assert(request.due_at == "2025-12-31")
-        assert(request.grade == "1")
-        assert(request.type == "QUIZ")
-        assert(request.description == "Description")
-        assert(request.questions?.size == 1)
+        assertEquals("Assignment1", request.title)
+        assertEquals("Math", request.subject)
+        assertEquals(1, request.class_id)
+        assertEquals("2025-12-31", request.due_at)
+        assertEquals("1", request.grade)
+        assertEquals("QUIZ", request.type)
+        assertEquals("Description", request.description)
+        assertEquals(1, request.questions?.size)
     }
 
     @Test
@@ -127,8 +129,8 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.description == null)
-        assert(request.questions == null)
+        assertNull(request.description)
+        assertNull(request.questions)
     }
 
     @Test
@@ -142,10 +144,10 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(response.assignment_id == 50)
-        assert(response.material_id == 20)
-        assert(response.s3_key == "key123")
-        assert(response.upload_url == "https://s3.amazonaws.com/upload")
+        assertEquals(50, response.assignment_id)
+        assertEquals(20, response.material_id)
+        assertEquals("key123", response.s3_key)
+        assertEquals("https://s3.amazonaws.com/upload", response.upload_url)
     }
 
     @Test
@@ -163,13 +165,13 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(status.assignment_id == 1)
-        assert(status.material_id == 10)
-        assert(status.s3_key == "key123")
-        assert(status.file_exists == true)
-        assert(status.file_size == 1024L)
-        assert(status.content_type == "application/pdf")
-        assert(status.bucket == "my-bucket")
+        assertEquals(1, status.assignment_id)
+        assertEquals(10, status.material_id)
+        assertEquals("key123", status.s3_key)
+        assertEquals(true, status.file_exists)
+        assertEquals(1024L, status.file_size)
+        assertEquals("application/pdf", status.content_type)
+        assertEquals("my-bucket", status.bucket)
     }
 
     @Test
@@ -187,10 +189,10 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(status.file_exists == false)
-        assert(status.file_size == null)
-        assert(status.content_type == null)
-        assert(status.last_modified == null)
+        assertEquals(false, status.file_exists)
+        assertNull(status.file_size)
+        assertNull(status.content_type)
+        assertNull(status.last_modified)
     }
 
     @Test
@@ -203,9 +205,9 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.assignment_id == 1)
-        assert(request.material_id == 10)
-        assert(request.total_number == 5)
+        assertEquals(1, request.assignment_id)
+        assertEquals(10, request.material_id)
+        assertEquals(5, request.total_number)
     }
 
     @Test
@@ -221,10 +223,10 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.name == "Class1")
-        assert(request.description == "Description")
-        assert(request.subject_name == "Math")
-        assert(request.teacher_id == 1)
+        assertEquals("Class1", request.name)
+        assertEquals("Description", request.description)
+        assertEquals("Math", request.subject_name)
+        assertEquals(1, request.teacher_id)
     }
 
     @Test
@@ -240,7 +242,7 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.description == null)
+        assertNull(request.description)
     }
 
     @Test
@@ -260,13 +262,13 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.title == "Updated")
-        assert(request.subject == "Math")
-        assert(request.classId == 1)
-        assert(request.dueDate == "2025-12-31")
-        assert(request.type == "QUIZ")
-        assert(request.description == "New description")
-        assert(request.questions?.size == 1)
+        assertEquals("Updated", request.title)
+        assertEquals("Math", request.subject)
+        assertEquals(1, request.classId)
+        assertEquals("2025-12-31", request.dueDate)
+        assertEquals("QUIZ", request.type)
+        assertEquals("New description", request.description)
+        assertEquals(1, request.questions?.size)
     }
 
     @Test
@@ -283,10 +285,10 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.title == null)
-        assert(request.subject == null)
-        assert(request.classId == null)
-        assert(request.questions == null)
+        assertNull(request.title)
+        assertNull(request.subject)
+        assertNull(request.classId)
+        assertNull(request.questions)
     }
 
     @Test
@@ -302,10 +304,10 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(request.studentId == 1)
-        assert(request.answers.size == 2)
-        assert(request.answers[0].questionId == 1)
-        assert(request.answers[1].audioFile == null)
+        assertEquals(1, request.studentId)
+        assertEquals(2, request.answers.size)
+        assertEquals(1, request.answers[0].questionId)
+        assertNull(request.answers[1].audioFile)
     }
 
     @Test
@@ -319,10 +321,10 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(submission.questionId == 1)
-        assert(submission.answer == "Answer")
-        assert(submission.audioFile == "audio.wav")
-        assert(submission.confidence == 0.95f)
+        assertEquals(1, submission.questionId)
+        assertEquals("Answer", submission.answer)
+        assertEquals("audio.wav", submission.audioFile)
+        assertEquals(0.95f, submission.confidence ?: 0f, 0.01f)
     }
 
     @Test
@@ -336,8 +338,8 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(submission.audioFile == null)
-        assert(submission.confidence == null)
+        assertNull(submission.audioFile)
+        assertNull(submission.confidence)
     }
 
     @Test
@@ -363,11 +365,11 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(result.submissionId == 1)
-        assert(result.score == 85)
-        assert(result.totalQuestions == 10)
-        assert(result.correctAnswers == 8)
-        assert(result.feedback.size == 1)
+        assertEquals(1, result.submissionId)
+        assertEquals(85, result.score)
+        assertEquals(10, result.totalQuestions)
+        assertEquals(8, result.correctAnswers)
+        assertEquals(1, result.feedback.size)
     }
 
     @Test
@@ -384,11 +386,11 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(feedback.questionId == 1)
-        assert(feedback.isCorrect == true)
-        assert(feedback.studentAnswer == "A1")
-        assert(feedback.confidence == 0.95f)
-        assert(feedback.pronunciationScore == 0.9f)
+        assertEquals(1, feedback.questionId)
+        assertEquals(true, feedback.isCorrect)
+        assertEquals("A1", feedback.studentAnswer)
+        assertEquals(0.95f, feedback.confidence, 0.01f)
+        assertEquals(0.9f, feedback.pronunciationScore ?: 0f, 0.01f)
     }
 
     @Test
@@ -405,8 +407,8 @@ class NetworkModelsTest {
         )
 
         // Assert
-        assert(feedback.explanation == null)
-        assert(feedback.pronunciationScore == null)
+        assertNull(feedback.explanation)
+        assertNull(feedback.pronunciationScore)
     }
 }
 

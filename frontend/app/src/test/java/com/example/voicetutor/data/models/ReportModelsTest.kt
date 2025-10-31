@@ -3,7 +3,8 @@ package com.example.voicetutor.data.models
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 
 @RunWith(JUnit4::class)
 class ReportModelsTest {
@@ -23,11 +24,11 @@ class ReportModelsTest {
         )
 
         // Assert
-        assert(report.totalStudents == 50)
-        assert(report.totalAssignments == 20)
-        assert(report.completedAssignments == 15)
-        assert(report.averageScore == 85.5)
-        assert(report.classBreakdown.size == 1)
+        assertEquals(50, report.totalStudents)
+        assertEquals(20, report.totalAssignments)
+        assertEquals(15, report.completedAssignments)
+        assertEquals(85.5, report.averageScore, 0.01)
+        assertEquals(1, report.classBreakdown.size)
     }
 
     @Test
@@ -42,7 +43,7 @@ class ReportModelsTest {
         )
 
         // Assert
-        assert(report.classBreakdown.isEmpty())
+        assertTrue(report.classBreakdown.isEmpty())
     }
 
     @Test
@@ -57,11 +58,11 @@ class ReportModelsTest {
         )
 
         // Assert
-        assert(classProgress.classId == 1)
-        assert(classProgress.className == "Class1")
-        assert(classProgress.studentCount == 10)
-        assert(classProgress.completedAssignments == 5)
-        assert(classProgress.totalAssignments == 8)
+        assertEquals(1, classProgress.classId)
+        assertEquals("Class1", classProgress.className)
+        assertEquals(10, classProgress.studentCount)
+        assertEquals(5, classProgress.completedAssignments)
+        assertEquals(8, classProgress.totalAssignments)
     }
 
     @Test
@@ -77,12 +78,12 @@ class ReportModelsTest {
         )
 
         // Assert
-        assert(result.questionNumber == 1)
-        assert(result.question == "What is 2+2?")
-        assert(result.myAnswer == "4")
-        assert(result.correctAnswer == "4")
-        assert(result.isCorrect == true)
-        assert(result.confidence == 0.95f)
+        assertEquals(1, result.questionNumber)
+        assertEquals("What is 2+2?", result.question)
+        assertEquals("4", result.myAnswer)
+        assertEquals("4", result.correctAnswer)
+        assertEquals(true, result.isCorrect)
+        assertEquals(0.95f, result.confidence, 0.01f)
     }
 
     @Test
@@ -98,8 +99,8 @@ class ReportModelsTest {
         )
 
         // Assert
-        assert(result.isCorrect == false)
-        assert(result.myAnswer != result.correctAnswer)
+        assertEquals(false, result.isCorrect)
+        assertTrue(result.myAnswer != result.correctAnswer)
     }
 }
 

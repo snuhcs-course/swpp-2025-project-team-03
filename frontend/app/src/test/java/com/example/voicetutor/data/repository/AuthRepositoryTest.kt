@@ -78,6 +78,83 @@ class AuthRepositoryTest {
         assert(r.isSuccess)
         assert(r.getOrNull()?.role == UserRole.TEACHER)
     }
+
+    @Test
+    fun login_successButNoUser_returnsFailure() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val resp = LoginResponse(success = true, user = null, token = null, message = null, error = null)
+        whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.success(resp))
+
+        // Act
+        val r = repo.login("a@ex.com", "pw")
+
+        // Assert
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message?.contains("사용자 정보를 찾을 수 없습니다") == true)
+    }
+
+    @Test
+    fun login_apiFailure_noErrorBody_returnsDefaultMessage() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val errorBody = ResponseBody.create("application/json".toMediaType(), """{}""")
+        whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val r = repo.login("a@ex.com", "pw")
+
+        // Assert
+        assert(r.isFailure)
+        // response.body()가 null이므로 기본 메시지 반환
+        assert(r.exceptionOrNull()?.message?.contains("로그인에 실패했습니다") == true)
+    }
+
+    @Test
+    fun signup_successButNoUser_returnsFailure() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val resp = LoginResponse(success = true, user = null, token = null, message = null, error = null)
+        val req = SignupRequest(name = "Bob", email = "b@ex.com", password = "pw", role = UserRole.TEACHER.name)
+        whenever(apiService.signup(req)).thenReturn(Response.success(resp))
+
+        // Act
+        val r = repo.signup("Bob", "b@ex.com", "pw", UserRole.TEACHER)
+
+        // Assert
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message?.contains("회원가입에 실패했습니다") == true)
+    }
+
+    @Test
+    fun login_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        org.mockito.kotlin.doAnswer { throw java.net.UnknownHostException("Network error") }
+            .whenever(apiService).login(org.mockito.kotlin.any())
+
+        // Act
+        val r = repo.login("a@ex.com", "pw")
+
+        // Assert
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message?.contains("Network error") == true)
+    }
+
+    @Test
+    fun signup_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        org.mockito.kotlin.doAnswer { throw java.net.UnknownHostException("Network error") }
+            .whenever(apiService).signup(org.mockito.kotlin.any())
+
+        // Act
+        val r = repo.signup("Bob", "b@ex.com", "pw", UserRole.TEACHER)
+
+        // Assert
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message?.contains("Network error") == true)
+    }
 }
 
 

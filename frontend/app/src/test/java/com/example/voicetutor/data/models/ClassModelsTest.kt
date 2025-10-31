@@ -3,7 +3,8 @@ package com.example.voicetutor.data.models
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 
 @RunWith(JUnit4::class)
 class ClassModelsTest {
@@ -25,22 +26,22 @@ class ClassModelsTest {
         )
 
         // Assert
-        assert(classData.id == 1)
-        assert(classData.name == "Class1")
-        assert(classData.subject.name == "Math")
-        assert(classData.teacherId == 1)
-        assert(classData.studentCount == 10)
+        assertEquals(1, classData.id)
+        assertEquals("Class1", classData.name)
+        assertEquals("Math", classData.subject.name)
+        assertEquals(1, classData.teacherId)
+        assertEquals(10, classData.studentCount)
     }
 
     @Test
-    fun classData_withNullDescription_handlesNull() {
+    fun classData_withEmptyDescription_handlesEmptyString() {
         // Arrange
         val subject = Subject(id = 1, name = "Math")
         val classData = ClassData(
             id = 1,
             name = "Class1",
             subject = subject,
-            description = null,
+            description = "",
             teacherId = 1,
             startDate = "2025-01-01",
             endDate = "2025-12-31",
@@ -49,7 +50,7 @@ class ClassModelsTest {
         )
 
         // Assert
-        assert(classData.description == null)
+        assertEquals("", classData.description)
     }
 
     @Test
@@ -61,7 +62,7 @@ class ClassModelsTest {
             id = 1,
             name = "Class1",
             subject = subject,
-            description = null,
+            description = "",
             teacherId = 1,
             startDate = "2025-01-01",
             endDate = "2025-12-31",
@@ -75,9 +76,9 @@ class ClassModelsTest {
         )
 
         // Assert
-        assert(enrollment.student.id == 1)
-        assert(enrollment.courseClass?.id == 1)
-        assert(enrollment.status == "ENROLLED")
+        assertEquals(1, enrollment.student.id)
+        assertEquals(1, enrollment.courseClass?.id)
+        assertEquals("ENROLLED", enrollment.status)
     }
 
     @Test
@@ -91,9 +92,9 @@ class ClassModelsTest {
         )
 
         // Assert
-        assert(enrollment.student.id == 1)
-        assert(enrollment.courseClass == null)
-        assert(enrollment.status == "PENDING")
+        assertEquals(1, enrollment.student.id)
+        assertNull(enrollment.courseClass)
+        assertEquals("PENDING", enrollment.status)
     }
 }
 

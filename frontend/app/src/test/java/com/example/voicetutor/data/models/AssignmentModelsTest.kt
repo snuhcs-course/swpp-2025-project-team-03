@@ -3,7 +3,8 @@ package com.example.voicetutor.data.models
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 
 @RunWith(JUnit4::class)
 class AssignmentModelsTest {
@@ -11,36 +12,36 @@ class AssignmentModelsTest {
     @Test
     fun assignmentStatus_enumValues_correct() {
         // Assert
-        assert(AssignmentStatus.IN_PROGRESS.name == "IN_PROGRESS")
-        assert(AssignmentStatus.COMPLETED.name == "COMPLETED")
-        assert(AssignmentStatus.DRAFT.name == "DRAFT")
+        assertEquals("IN_PROGRESS", AssignmentStatus.IN_PROGRESS.name)
+        assertEquals("COMPLETED", AssignmentStatus.COMPLETED.name)
+        assertEquals("DRAFT", AssignmentStatus.DRAFT.name)
     }
 
     @Test
     fun assignmentFilter_enumValues_correct() {
         // Assert
-        assert(AssignmentFilter.ALL.name == "ALL")
-        assert(AssignmentFilter.IN_PROGRESS.name == "IN_PROGRESS")
-        assert(AssignmentFilter.COMPLETED.name == "COMPLETED")
+        assertEquals("ALL", AssignmentFilter.ALL.name)
+        assertEquals("IN_PROGRESS", AssignmentFilter.IN_PROGRESS.name)
+        assertEquals("COMPLETED", AssignmentFilter.COMPLETED.name)
     }
 
     @Test
     fun personalAssignmentStatus_enumValues_correct() {
         // Assert
-        assert(PersonalAssignmentStatus.NOT_STARTED.name == "NOT_STARTED")
-        assert(PersonalAssignmentStatus.IN_PROGRESS.name == "IN_PROGRESS")
-        assert(PersonalAssignmentStatus.SUBMITTED.name == "SUBMITTED")
-        assert(PersonalAssignmentStatus.GRADED.name == "GRADED")
+        assertEquals("NOT_STARTED", PersonalAssignmentStatus.NOT_STARTED.name)
+        assertEquals("IN_PROGRESS", PersonalAssignmentStatus.IN_PROGRESS.name)
+        assertEquals("SUBMITTED", PersonalAssignmentStatus.SUBMITTED.name)
+        assertEquals("GRADED", PersonalAssignmentStatus.GRADED.name)
     }
 
     @Test
     fun personalAssignmentFilter_enumValues_correct() {
         // Assert
-        assert(PersonalAssignmentFilter.ALL.name == "ALL")
-        assert(PersonalAssignmentFilter.NOT_STARTED.name == "NOT_STARTED")
-        assert(PersonalAssignmentFilter.IN_PROGRESS.name == "IN_PROGRESS")
-        assert(PersonalAssignmentFilter.SUBMITTED.name == "SUBMITTED")
-        assert(PersonalAssignmentFilter.GRADED.name == "GRADED")
+        assertEquals("ALL", PersonalAssignmentFilter.ALL.name)
+        assertEquals("NOT_STARTED", PersonalAssignmentFilter.NOT_STARTED.name)
+        assertEquals("IN_PROGRESS", PersonalAssignmentFilter.IN_PROGRESS.name)
+        assertEquals("SUBMITTED", PersonalAssignmentFilter.SUBMITTED.name)
+        assertEquals("GRADED", PersonalAssignmentFilter.GRADED.name)
     }
 
     @Test
@@ -75,12 +76,12 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(assignment.id == 1)
-        assert(assignment.title == "Assignment1")
-        assert(assignment.totalQuestions == 5)
-        assert(assignment.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS)
-        assert(assignment.solvedNum == 2)
-        assert(assignment.personalAssignmentId == 10)
+        assertEquals(1, assignment.id)
+        assertEquals("Assignment1", assignment.title)
+        assertEquals(5, assignment.totalQuestions)
+        assertEquals(PersonalAssignmentStatus.IN_PROGRESS, assignment.personalAssignmentStatus)
+        assertEquals(2, assignment.solvedNum)
+        assertEquals(10, assignment.personalAssignmentId)
     }
 
     @Test
@@ -115,12 +116,12 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(assignment.description == null)
-        assert(assignment.createdAt == null)
-        assert(assignment.visibleFrom == null)
-        assert(assignment.materials == null)
-        assert(assignment.grade == null)
-        assert(assignment.personalAssignmentStatus == null)
+        assertNull(assignment.description)
+        assertNull(assignment.createdAt)
+        assertNull(assignment.visibleFrom)
+        assertNull(assignment.materials)
+        assertNull(assignment.grade)
+        assertNull(assignment.personalAssignmentStatus)
     }
 
     @Test
@@ -129,7 +130,7 @@ class AssignmentModelsTest {
         val subject = Subject(id = 1, name = "Math", code = "MATH101")
 
         // Assert
-        assert(subject.code == "MATH101")
+        assertEquals("MATH101", subject.code)
     }
 
     @Test
@@ -138,7 +139,7 @@ class AssignmentModelsTest {
         val subject = Subject(id = 1, name = "Math")
 
         // Assert
-        assert(subject.code == null)
+        assertNull(subject.code)
     }
 
     @Test
@@ -153,10 +154,10 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(material.id == 1)
-        assert(material.kind == "PDF")
-        assert(material.s3Key == "key123")
-        assert(material.bytes == 1024)
+        assertEquals(1, material.id)
+        assertEquals("PDF", material.kind)
+        assertEquals("key123", material.s3Key)
+        assertEquals(1024, material.bytes)
     }
 
     @Test
@@ -171,7 +172,7 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(material.bytes == null)
+        assertNull(material.bytes)
     }
 
     @Test
@@ -188,13 +189,13 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(question.id == 1)
-        assert(question.question == "What is 2+2?")
-        assert(question.type == "MULTIPLE_CHOICE")
-        assert(question.options?.size == 4)
-        assert(question.correctAnswer == "4")
-        assert(question.points == 10)
-        assert(question.explanation == "2+2 equals 4")
+        assertEquals(1, question.id)
+        assertEquals("What is 2+2?", question.question)
+        assertEquals("MULTIPLE_CHOICE", question.type)
+        assertEquals(4, question.options?.size)
+        assertEquals("4", question.correctAnswer)
+        assertEquals(10, question.points)
+        assertEquals("2+2 equals 4", question.explanation)
     }
 
     @Test
@@ -211,8 +212,8 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(question.options == null)
-        assert(question.explanation == null)
+        assertNull(question.options)
+        assertNull(question.explanation)
     }
 
     @Test
@@ -227,7 +228,7 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(question.points == 1)
+        assertEquals(1, question.points)
     }
 
     @Test
@@ -243,12 +244,12 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(question.id == 1)
-        assert(question.number == "1-2")
-        assert(question.question == "Question")
-        assert(question.answer == "Answer")
-        assert(question.explanation == "Explanation")
-        assert(question.difficulty == "medium")
+        assertEquals(1, question.id)
+        assertEquals("1-2", question.number)
+        assertEquals("Question", question.question)
+        assertEquals("Answer", question.answer)
+        assertEquals("Explanation", question.explanation)
+        assertEquals("medium", question.difficulty)
     }
 
     @Test
@@ -265,13 +266,13 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(statistics.totalQuestions == 10)
-        assert(statistics.answeredQuestions == 8)
-        assert(statistics.correctAnswers == 6)
-        assert(statistics.accuracy == 0.75f)
-        assert(statistics.totalProblem == 5)
-        assert(statistics.solvedProblem == 4)
-        assert(statistics.progress == 0.8f)
+        assertEquals(10, statistics.totalQuestions)
+        assertEquals(8, statistics.answeredQuestions)
+        assertEquals(6, statistics.correctAnswers)
+        assertEquals(0.75f, statistics.accuracy)
+        assertEquals(5, statistics.totalProblem)
+        assertEquals(4, statistics.solvedProblem)
+        assertEquals(0.8f, statistics.progress)
     }
 
     @Test
@@ -288,9 +289,9 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(statistics.totalQuestions == 0)
-        assert(statistics.accuracy == 0f)
-        assert(statistics.progress == 0f)
+        assertEquals(0, statistics.totalQuestions)
+        assertEquals(0f, statistics.accuracy)
+        assertEquals(0f, statistics.progress)
     }
 
     @Test
@@ -306,10 +307,10 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(tailQuestion.id == 1)
-        assert(tailQuestion.number == "2-1")
-        assert(tailQuestion.question == "Tail Question")
-        assert(tailQuestion.answer == "Tail Answer")
+        assertEquals(1, tailQuestion.id)
+        assertEquals("2-1", tailQuestion.number)
+        assertEquals("Tail Question", tailQuestion.question)
+        assertEquals("Tail Answer", tailQuestion.answer)
     }
 
     @Test
@@ -330,9 +331,9 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(response.isCorrect == true)
-        assert(response.numberStr == "1-1")
-        assert(response.tailQuestion?.id == 1)
+        assertEquals(true, response.isCorrect)
+        assertEquals("1-1", response.numberStr)
+        assertEquals(1, response.tailQuestion?.id)
     }
 
     @Test
@@ -345,9 +346,9 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(response.isCorrect == false)
-        assert(response.numberStr == null)
-        assert(response.tailQuestion == null)
+        assertEquals(false, response.isCorrect)
+        assertNull(response.numberStr)
+        assertNull(response.tailQuestion)
     }
 
     @Test
@@ -374,13 +375,13 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(personalAssignment.id == 1)
-        assert(personalAssignment.student.id == 1)
-        assert(personalAssignment.assignment.title == "Assignment1")
-        assert(personalAssignment.status == PersonalAssignmentStatus.IN_PROGRESS)
-        assert(personalAssignment.solvedNum == 2)
-        assert(personalAssignment.startedAt == "2025-01-01")
-        assert(personalAssignment.submittedAt == null)
+        assertEquals(1, personalAssignment.id)
+        assertEquals(1, personalAssignment.student.id)
+        assertEquals("Assignment1", personalAssignment.assignment.title)
+        assertEquals(PersonalAssignmentStatus.IN_PROGRESS, personalAssignment.status)
+        assertEquals(2, personalAssignment.solvedNum)
+        assertEquals("2025-01-01", personalAssignment.startedAt)
+        assertNull(personalAssignment.submittedAt)
     }
 
     @Test
@@ -393,9 +394,9 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(studentInfo.id == 1)
-        assert(studentInfo.displayName == "Student1")
-        assert(studentInfo.email == "s1@test.com")
+        assertEquals(1, studentInfo.id)
+        assertEquals("Student1", studentInfo.displayName)
+        assertEquals("s1@test.com", studentInfo.email)
     }
 
     @Test
@@ -412,10 +413,10 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(info.id == 1)
-        assert(info.title == "Assignment1")
-        assert(info.totalQuestions == 5)
-        assert(info.grade == "1")
+        assertEquals(1, info.id)
+        assertEquals("Assignment1", info.title)
+        assertEquals(5, info.totalQuestions)
+        assertEquals("1", info.grade)
     }
 
     @Test
@@ -444,12 +445,12 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(result.studentId == "1")
-        assert(result.name == "Student1")
-        assert(result.score == 85)
-        assert(result.status == "GRADED")
-        assert(result.answers.size == 2)
-        assert(result.detailedAnswers.size == 1)
+        assertEquals("1", result.studentId)
+        assertEquals("Student1", result.name)
+        assertEquals(85, result.score)
+        assertEquals("GRADED", result.status)
+        assertEquals(2, result.answers.size)
+        assertEquals(1, result.detailedAnswers.size)
     }
 
     @Test
@@ -466,11 +467,11 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(answer.questionNumber == 1)
-        assert(answer.studentAnswer == "4")
-        assert(answer.correctAnswer == "4")
-        assert(answer.isCorrect == true)
-        assert(answer.confidenceScore == 95)
+        assertEquals(1, answer.questionNumber)
+        assertEquals("4", answer.studentAnswer)
+        assertEquals("4", answer.correctAnswer)
+        assertEquals(true, answer.isCorrect)
+        assertEquals(95, answer.confidenceScore)
     }
 
     @Test
@@ -479,10 +480,10 @@ class AssignmentModelsTest {
         val state = AudioRecordingState()
 
         // Assert
-        assert(state.isRecording == false)
-        assert(state.recordingDuration == 0)
-        assert(state.audioFilePath == null)
-        assert(state.isProcessing == false)
+        assertEquals(false, state.isRecording)
+        assertEquals(0, state.recordingDuration)
+        assertNull(state.audioFilePath)
+        assertEquals(false, state.isProcessing)
     }
 
     @Test
@@ -496,9 +497,9 @@ class AssignmentModelsTest {
         )
 
         // Assert
-        assert(state.isRecording == true)
-        assert(state.recordingDuration == 10)
-        assert(state.audioFilePath == "/path/to/audio.wav")
+        assertEquals(true, state.isRecording)
+        assertEquals(10, state.recordingDuration)
+        assertEquals("/path/to/audio.wav", state.audioFilePath)
     }
 }
 

@@ -3,7 +3,8 @@ package com.example.voicetutor.data.models
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 
 @RunWith(JUnit4::class)
 class MessageModelsTest {
@@ -18,9 +19,9 @@ class MessageModelsTest {
         )
 
         // Assert
-        assert(request.teacherId == 1)
-        assert(request.studentIds.size == 3)
-        assert(request.content == "Test message")
+        assertEquals(1, request.teacherId)
+        assertEquals(3, request.studentIds.size)
+        assertEquals("Test message", request.content)
     }
 
     @Test
@@ -33,7 +34,7 @@ class MessageModelsTest {
         )
 
         // Assert
-        assert(request.studentIds.isEmpty())
+        assertTrue(request.studentIds.isEmpty())
     }
 
     @Test
@@ -47,10 +48,10 @@ class MessageModelsTest {
         )
 
         // Assert
-        assert(response.messageId == "msg123")
-        assert(response.sentCount == 5)
-        assert(response.failedCount == 0)
-        assert(response.timestamp == 1735689600000L)
+        assertEquals("msg123", response.messageId)
+        assertEquals(5, response.sentCount)
+        assertEquals(0, response.failedCount)
+        assertEquals(1735689600000L, response.timestamp)
     }
 
     @Test
@@ -64,8 +65,8 @@ class MessageModelsTest {
         )
 
         // Assert
-        assert(response.sentCount == 3)
-        assert(response.failedCount == 2)
+        assertEquals(3, response.sentCount)
+        assertEquals(2, response.failedCount)
     }
 
     @Test
@@ -82,11 +83,11 @@ class MessageModelsTest {
         )
 
         // Assert
-        assert(message.id == "msg1")
-        assert(message.teacherId == 1)
-        assert(message.teacherName == "Teacher1")
-        assert(message.studentId == 1)
-        assert(message.content == "Hello")
+        assertEquals("msg1", message.id)
+        assertEquals(1, message.teacherId)
+        assertEquals("Teacher1", message.teacherName)
+        assertEquals(1, message.studentId)
+        assertEquals("Hello", message.content)
     }
 
     @Test
@@ -102,8 +103,8 @@ class MessageModelsTest {
         )
 
         // Assert
-        assert(response.messages.size == 2)
-        assert(response.totalCount == 2)
+        assertEquals(2, response.messages.size)
+        assertEquals(2, response.totalCount)
     }
 
     @Test
@@ -115,8 +116,8 @@ class MessageModelsTest {
         )
 
         // Assert
-        assert(response.messages.isEmpty())
-        assert(response.totalCount == 0)
+        assertTrue(response.messages.isEmpty())
+        assertEquals(0, response.totalCount)
     }
 }
 
