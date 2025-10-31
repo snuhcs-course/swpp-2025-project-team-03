@@ -33,7 +33,8 @@ fun TeacherStudentAssignmentDetailScreen(
     val viewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: com.example.voicetutor.ui.viewmodel.StudentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
-    val assignmentResults by viewModel.assignmentResults.collectAsStateWithLifecycle()
+    // assignmentResults API가 제거되었으므로 빈 리스트 사용
+    val assignmentResults = remember { emptyList<StudentResult>() }
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val currentStudent by studentViewModel.currentStudent.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -50,12 +51,13 @@ fun TeacherStudentAssignmentDetailScreen(
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
     
-    // Load assignment data, student data and results on first composition
+    // Load assignment data, student data on first composition
     LaunchedEffect(targetAssignment?.id, studentId) {
         targetAssignment?.let { assignment ->
             println("TeacherStudentAssignmentDetail - Loading assignment: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
             viewModel.loadAssignmentById(assignment.id)
-            viewModel.loadAssignmentResults(assignment.id)
+            // loadAssignmentResults API가 제거되었으므로 주석 처리
+            // viewModel.loadAssignmentResults(assignment.id)
         }
         studentViewModel.loadStudentById(studentId.toIntOrNull() ?: 1)
     }
@@ -68,7 +70,7 @@ fun TeacherStudentAssignmentDetailScreen(
         }
     }
     
-    // Find student's result
+    // Find student's result (항상 null이 될 것임, API가 없으므로)
     val studentResult = assignmentResults.find { it.studentId == studentId }
     
     Column(
@@ -240,7 +242,9 @@ fun TeacherStudentAssignmentDetailScreen(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            studentResult.detailedAnswers.forEach { answer ->
+            // studentResult가 null이므로 빈 리스트 처리
+            val detailedAnswers = studentResult?.detailedAnswers ?: emptyList()
+            detailedAnswers.forEachIndexed { index, answer ->
                 VTCard(
                     variant = CardVariant.Elevated
                 ) {
@@ -281,7 +285,7 @@ fun TeacherStudentAssignmentDetailScreen(
                         }
                     }
                 }
-                if (answer != studentResult.detailedAnswers.last()) {
+                if (index < detailedAnswers.size - 1) {
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }

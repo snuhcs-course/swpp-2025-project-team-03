@@ -41,9 +41,8 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
     return when (currentDestination) {
         VoiceTutorScreens.Assignment.route -> "과제"
         VoiceTutorScreens.AssignmentDetail.route -> "과제 상세"
-        VoiceTutorScreens.StudentAssignmentDetail.route -> "과제 결과"
-        VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 상세 결과"
-        VoiceTutorScreens.Quiz.route -> "퀴즈"
+        // removed: StudentAssignmentDetail
+        VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
         VoiceTutorScreens.Progress.route -> "진도 리포트"
         VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
         VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
@@ -52,9 +51,9 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         VoiceTutorScreens.CreateAssignment.route -> "과제 생성"
         VoiceTutorScreens.EditAssignment.route -> "과제 편집"
         VoiceTutorScreens.TeacherAssignmentResults.route -> "과제 결과"
-        VoiceTutorScreens.TeacherStudentDetail.route -> "학생 상세"
-        VoiceTutorScreens.TeacherStudentAssignmentDetail.route -> "학생 과제 상세"
         VoiceTutorScreens.TeacherAssignmentDetail.route -> "과제 상세"
+        VoiceTutorScreens.TeacherStudentDetail.route -> "학생 상세"
+        // removed: TeacherStudentAssignmentDetail
         VoiceTutorScreens.Settings.route -> "설정"
         else -> if (userRole == UserRole.TEACHER) "선생님 페이지" else "학생 페이지"
     }
@@ -73,7 +72,7 @@ fun MainLayout(
         VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
         VoiceTutorScreens.Assignment.route -> "assignment"
         VoiceTutorScreens.Progress.route -> "progress"
-        VoiceTutorScreens.StudentAssignmentDetail.route -> "progress" // 리포트 탭 유지
+        // removed: StudentAssignmentDetail
         VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         VoiceTutorScreens.TeacherStudents.route -> "teacher_students"

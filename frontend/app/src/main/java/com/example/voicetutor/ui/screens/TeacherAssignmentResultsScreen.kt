@@ -35,25 +35,33 @@ fun TeacherAssignmentResultsScreen(
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
-    val students by viewModel.assignmentResults.collectAsStateWithLifecycle()
+    // assignmentResults API가 제거되었으므로 빈 리스트 사용
+    val students = remember { emptyList<StudentResult>() }
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     // Find assignment by title from the assignments list
+    // "과목 - 제목" 형식도 처리 가능하도록 수정
     val targetAssignment = remember(assignments, assignmentTitle) {
-        assignments.find { it.title == assignmentTitle }
+        assignments.find { 
+            it.title == assignmentTitle || 
+            "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
+            assignmentTitle.contains(it.title)
+        }
     }
     
     // 동적 과제 제목 가져오기
-    val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
+    val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle)
     
-    // Load assignment data and results on first composition
+    // Load assignment data on first composition
+    // Note: loadAssignmentResults API가 제거되었으므로 assignmentResults는 빈 리스트일 수 있음
     LaunchedEffect(targetAssignment?.id) {
         targetAssignment?.let { target ->
             println("TeacherAssignmentResults - Loading assignment: ${target.title} (ID: ${target.id})")
             viewModel.loadAssignmentById(target.id)
-            viewModel.loadAssignmentResults(target.id)
+            // loadAssignmentResults API가 제거되었으므로 주석 처리
+            // viewModel.loadAssignmentResults(target.id)
         }
     }
     
@@ -190,16 +198,17 @@ fun TeacherAssignmentResultsScreen(
                     }
                 }
             } else {
-                students.forEachIndexed { index, student ->
-                    TeacherAssignmentResultCard(
-                        student = student,
-                        onStudentClick = { onNavigateToStudentDetail(student.studentId) }
-                    )
-                    
-                    if (index < students.size - 1) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
+                // 학생 결과가 없을 때 빈 상태 표시 (API가 없으므로 항상 빈 상태)
+                // students.forEachIndexed { index, student ->
+                //     TeacherAssignmentResultCard(
+                //         student = student,
+                //         onStudentClick = { onNavigateToStudentDetail(student.studentId) }
+                //     )
+                //     
+                //     if (index < students.size - 1) {
+                //         Spacer(modifier = Modifier.height(8.dp))
+                //     }
+                // }
             }
         }
     }

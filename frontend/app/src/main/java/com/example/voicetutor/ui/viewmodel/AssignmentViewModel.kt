@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 import java.io.File
 
@@ -54,11 +55,7 @@ class AssignmentViewModel @Inject constructor(
     private val _recentAssignment = MutableStateFlow<RecentAssignment?>(null)
     val recentAssignment: StateFlow<RecentAssignment?> = _recentAssignment.asStateFlow()
     
-    private val _assignmentResults = MutableStateFlow<List<StudentResult>>(emptyList())
-    val assignmentResults: StateFlow<List<StudentResult>> = _assignmentResults.asStateFlow()
-    
-    private val _assignmentQuestions = MutableStateFlow<List<QuestionData>>(emptyList())
-    val assignmentQuestions: StateFlow<List<QuestionData>> = _assignmentQuestions.asStateFlow()
+    // removed: assignmentResults, assignmentQuestions (API removed)
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -725,39 +722,9 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
-    fun saveAssignmentDraft(assignmentId: Int, draftContent: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            assignmentRepository.saveAssignmentDraft(assignmentId, draftContent)
-                .onSuccess {
-                    // Draft saved successfully
-                    println("Draft saved for assignment $assignmentId")
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
-            _isLoading.value = false
-        }
-    }
+    // removed: saveAssignmentDraft (API removed)
     
-    fun loadAssignmentResults(id: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            assignmentRepository.getAssignmentResults(id)
-                .onSuccess { results ->
-                    _assignmentResults.value = results
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
-            
-            _isLoading.value = false
-        }
-    }
+    // removed: loadAssignmentResults (API removed)
 
     fun loadRecentPersonalAssignment(studentId: Int) {
         viewModelScope.launch {
@@ -768,7 +735,14 @@ class AssignmentViewModel @Inject constructor(
                     _recentPersonalAssignmentId.value = id
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    // 과제가 없는 경우(404)는 정상 케이스이므로 에러로 표시하지 않음
+                    val errorMessage = exception.message ?: ""
+                    if (!errorMessage.contains("해당 학생의 개인 과제가 없습니다") && 
+                        !errorMessage.contains("최근 개인 과제 조회 실패")) {
+                        // 실제 에러인 경우에만 표시
+                        _error.value = exception.message
+                    }
+                    // 과제가 없는 경우는 _error를 설정하지 않음 (null 유지)
                 }
             _isLoading.value = false
         }
@@ -782,22 +756,7 @@ class AssignmentViewModel @Inject constructor(
         personalAssignmentId?.let { pid -> loadPersonalAssignmentStatistics(pid) }
     }
     
-    fun loadAssignmentQuestions(id: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            assignmentRepository.getAssignmentQuestions(id)
-                .onSuccess { questions ->
-                    _assignmentQuestions.value = questions
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
-            
-            _isLoading.value = false
-        }
-    }
+    // removed: loadAssignmentQuestions (API removed)
     
     fun submitAssignment(id: Int, submission: AssignmentSubmissionRequest) {
         viewModelScope.launch {
@@ -1033,7 +992,7 @@ class AssignmentViewModel @Inject constructor(
     
     fun loadPersonalAssignmentStatistics(personalAssignmentId: Int) {
         viewModelScope.launch {
-            _isLoading.value = true
+            // 통계는 백그라운드에서 조용히 로드 (isLoading 설정하지 않음)
             _error.value = null
             
             println("AssignmentViewModel - Loading statistics for PersonalAssignment ID: $personalAssignmentId")
@@ -1047,14 +1006,19 @@ class AssignmentViewModel @Inject constructor(
                     println("  - answeredQuestions: ${statistics.answeredQuestions}")
                     println("  - correctAnswers: ${statistics.correctAnswers}")
                     println("  - accuracy: ${statistics.accuracy}")
+                    
                     _personalAssignmentStatistics.value = statistics
+                    
+                    // totalProblem이 0이면 과제에 문제가 없으므로 즉시 완료 상태로 설정
+                    if (statistics.totalProblem == 0) {
+                        println("AssignmentViewModel - totalProblem is 0, setting assignment as completed")
+                        _isAssignmentCompleted.value = true
+                    }
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - Failed to load statistics: ${exception.message}")
-                    _error.value = exception.message
+                    // 통계 로딩 실패는 에러로 표시하지 않음 (백그라운드 작업)
                 }
-            
-            _isLoading.value = false
         }
     }
 
@@ -1085,14 +1049,14 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
-    fun submitAnswer(studentId: Int, questionId: Int, audioFile: File) {
+    fun submitAnswer(personalAssignmentId: Int, studentId: Int, questionId: Int, audioFile: File) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             
             // 오디오 녹음 상태를 처리 중으로 설정 (SimpleRecordingState에는 isProcessing 필드가 없음)
             
-            assignmentRepository.submitAnswer(studentId, questionId, audioFile)
+            assignmentRepository.submitAnswer(personalAssignmentId, studentId, questionId, audioFile)
                 .onSuccess { response ->
                     _answerSubmissionResponse.value = response
                     
@@ -1155,29 +1119,44 @@ class AssignmentViewModel @Inject constructor(
     
     // 서버 응답의 number_str을 기반으로 올바른 질문으로 이동
     fun moveToQuestionByNumber(questionNumber: String, personalAssignmentId: Int) {
-        println("AssignmentViewModel - moveToQuestionByNumber called with: $questionNumber")
-        
-        // 하이픈이 포함된 경우 (꼬리 질문)는 별도 처리
-        if (questionNumber.contains("-")) {
-            println("AssignmentViewModel - This is a tail question: $questionNumber")
-            return
-        }
-        
-        // 기본 질문 번호로 변환
-        val targetNumber = questionNumber.toIntOrNull() ?: return
-        println("AssignmentViewModel - Target question number: $targetNumber")
-        
-        // 현재 질문 리스트에서 해당 번호의 질문 찾기
-        val questions = _personalAssignmentQuestions.value
-        val targetIndex = questions.indexOfFirst { it.number == questionNumber }
-        
-        if (targetIndex != -1) {
-            println("AssignmentViewModel - Found question at index: $targetIndex")
-            _currentQuestionIndex.value = targetIndex
-        } else {
-            println("AssignmentViewModel - Question $questionNumber not found in current list, loading from server")
-            // 현재 리스트에 없는 경우 서버에서 다음 질문을 로드
-            loadNextQuestion(personalAssignmentId)
+        viewModelScope.launch {
+            println("AssignmentViewModel - moveToQuestionByNumber called with: $questionNumber")
+            
+            // 하이픈이 포함된 경우 (꼬리 질문)는 별도 처리
+            if (questionNumber.contains("-")) {
+                println("AssignmentViewModel - This is a tail question: $questionNumber")
+                return@launch
+            }
+            
+            // 기본 질문 번호로 변환
+            val targetNumber = questionNumber.toIntOrNull() ?: return@launch
+            println("AssignmentViewModel - Target question number: $targetNumber")
+            
+            // 현재 질문 리스트에서 해당 번호의 질문 찾기
+            val questions = _personalAssignmentQuestions.value
+            val targetIndex = questions.indexOfFirst { it.number == questionNumber }
+            
+            if (targetIndex != -1) {
+                println("AssignmentViewModel - Found question at index: $targetIndex")
+                _currentQuestionIndex.value = targetIndex
+            } else {
+                println("AssignmentViewModel - Question $questionNumber not found in current list, loading from server")
+                // 현재 리스트에 없는 경우 서버에서 다음 질문을 로드
+                // isLoading이 true인 경우 잠시 대기 후 재시도
+                if (_isLoading.value) {
+                    println("AssignmentViewModel - Waiting for current loading to complete...")
+                    // 코루틴으로 대기 후 재시도
+                    kotlinx.coroutines.delay(100)
+                    // 재귀 호출 (최대 1회만)
+                    if (!_isLoading.value) {
+                        loadNextQuestion(personalAssignmentId)
+                    } else {
+                        println("AssignmentViewModel - Still loading, will be handled by next question button")
+                    }
+                } else {
+                    loadNextQuestion(personalAssignmentId)
+                }
+            }
         }
     }
     

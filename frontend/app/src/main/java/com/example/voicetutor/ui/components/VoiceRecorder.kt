@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.voicetutor.audio.AudioRecorder
-import com.example.voicetutor.audio.AudioPlayer
 import com.example.voicetutor.utils.PermissionUtils
 import com.example.voicetutor.ui.theme.*
 import kotlinx.coroutines.delay
@@ -251,117 +250,6 @@ fun VoiceWaveform(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun VoicePlayback(
-    audioPath: String,
-    isPlaying: Boolean,
-    onPlayPause: (Boolean) -> Unit,
-    onSeek: (Float) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val audioPlayer = remember { AudioPlayer(context) }
-    val playbackState by audioPlayer.playbackState.collectAsState()
-    
-    // 실제 재생 상태와 동기화
-    LaunchedEffect(isPlaying) {
-        if (isPlaying && !playbackState.isPlaying) {
-            audioPlayer.playAudio(audioPath)
-        } else if (!isPlaying && playbackState.isPlaying) {
-            audioPlayer.pauseResume()
-        }
-    }
-    
-    // 컴포넌트 해제 시 정리
-    DisposableEffect(Unit) {
-        onDispose {
-            audioPlayer.cleanup()
-        }
-    }
-    
-    val playbackProgress = if (playbackState.duration > 0) {
-        playbackState.currentPosition.toFloat() / playbackState.duration.toFloat()
-    } else 0f
-    
-    val currentTimeSeconds = playbackState.currentPosition / 1000
-    val totalTimeSeconds = playbackState.duration / 1000
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            IconButton(
-                onClick = { 
-                    audioPlayer.pauseResume()
-                    onPlayPause(!playbackState.isPlaying)
-                }
-            ) {
-                Icon(
-                    imageVector = if (playbackState.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (playbackState.isPlaying) "일시정지" else "재생",
-                    tint = PrimaryIndigo
-                )
-            }
-            
-            Slider(
-                value = playbackProgress,
-                onValueChange = { progress ->
-                    audioPlayer.seekTo((progress * 100).toInt())
-                    onSeek(progress)
-                },
-                colors = SliderDefaults.colors(
-                    thumbColor = PrimaryIndigo,
-                    activeTrackColor = PrimaryIndigo,
-                    inactiveTrackColor = Gray200
-                ),
-                modifier = Modifier.weight(1f)
-            )
-            
-            Text(
-                text = "${formatTime(currentTimeSeconds)} / ${formatTime(totalTimeSeconds)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
-        }
-        
-        // 재생 속도 조절
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "재생 속도:",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
-            
-            listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f).forEach { speed ->
-                FilterChip(
-                    onClick = { audioPlayer.setPlaybackSpeed(speed) },
-                    label = { Text("${speed}x") },
-                    selected = playbackState.playbackSpeed == speed,
-                    modifier = Modifier.height(32.dp)
-                )
-            }
-        }
-        
-        // 에러 메시지
-        playbackState.error?.let { error ->
-            Text(
-                text = "❌ $error",
-                style = MaterialTheme.typography.bodySmall,
-                color = Error,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
 
 private fun formatTime(seconds: Int): String {
     val minutes = seconds / 60

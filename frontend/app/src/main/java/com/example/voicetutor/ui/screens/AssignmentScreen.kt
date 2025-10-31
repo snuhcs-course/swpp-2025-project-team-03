@@ -28,7 +28,6 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import com.example.voicetutor.ui.viewmodel.AIViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import com.example.voicetutor.audio.AudioRecorder
 import com.example.voicetutor.utils.PermissionUtils
@@ -46,15 +45,13 @@ fun AssignmentScreen(
     onNavigateToHome: () -> Unit = {} // 홈으로 돌아가기 콜백
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
-    val aiViewModel: AIViewModel = hiltViewModel()
     val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
     
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
-    val aiResponse by aiViewModel.aiResponse.collectAsStateWithLifecycle()
-    val voiceRecognitionResult by aiViewModel.voiceRecognitionResult.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
     
@@ -64,11 +61,13 @@ fun AssignmentScreen(
     // Resolve personal assignment id: if null, fetch recent by student id
     val resolvedAssignmentIdState = remember { mutableStateOf<Int?>(assignmentId) }
     val recentId by viewModel.recentPersonalAssignmentId.collectAsStateWithLifecycle()
+    var hasAttemptedLoadRecent by remember { mutableStateOf(false) }
 
     LaunchedEffect(assignmentId, currentUser?.id, recentId) {
-        if (resolvedAssignmentIdState.value == null) {
+        if (resolvedAssignmentIdState.value == null && !hasAttemptedLoadRecent) {
             // fetch recent when no id provided
             currentUser?.id?.let { sid ->
+                hasAttemptedLoadRecent = true
                 viewModel.loadRecentPersonalAssignment(sid)
             }
             if (recentId != null) {
@@ -92,10 +91,51 @@ fun AssignmentScreen(
         }
     } else {
         val effectiveId = resolvedAssignmentIdState.value
-        if (effectiveId != null) {
+        // 과제가 없을 때 처리: assignmentId가 null이고 recentId도 null이고 로딩이 완료된 경우
+        if (effectiveId == null && assignmentId == null && hasAttemptedLoadRecent && !isLoading) {
+            // 과제가 없습니다 메시지 표시
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Assignment,
+                        contentDescription = null,
+                        tint = Gray400,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Text(
+                        text = "과제가 없습니다",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Gray800
+                    )
+                    Text(
+                        text = "진행 중인 과제가 없습니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    VTButton(
+                        text = "홈으로 돌아가기",
+                        onClick = {
+                            onNavigateToHome()
+                        },
+                        variant = ButtonVariant.Gradient,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        } else if (effectiveId != null) {
             AssignmentContinuousScreen(assignmentId = effectiveId, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
         } else {
-            // Still resolving recent assignment id
+            // Still resolving recent assignment id (초기 상태)
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -180,14 +220,25 @@ fun AssignmentContinuousScreen(
     // 과제 완료 상태 감지
     if (isAssignmentCompleted) {
         println("AssignmentScreen - Assignment completed, showing completion screen")
-    } else if (assignmentId != null && personalAssignmentQuestions.isEmpty() && !hasAttemptedLoad && !isLoading) {
-        LaunchedEffect(Unit) {
-            println("AssignmentScreen - Loading all questions for personalAssignmentId: $assignmentId")
-            println("AssignmentScreen - Assignment title: $assignmentTitle")
-            hasAttemptedLoad = true
-            viewModel.loadAllQuestions(assignmentId)
-            // 통계도 함께 로드 (진행률 계산용)
-            viewModel.loadPersonalAssignmentStatistics(assignmentId)
+    } else {
+        // totalProblem이 0이면 과제에 문제가 없으므로 로드하지 않음
+        val totalProblems = personalAssignmentStatistics?.totalProblem ?: -1
+        if (totalProblems == 0) {
+            // 통계만 로드해서 확인 (이미 완료 상태일 수 있음)
+            LaunchedEffect(Unit) {
+                assignmentId?.let { id ->
+                    viewModel.loadPersonalAssignmentStatistics(id)
+                }
+            }
+        } else if (assignmentId != null && personalAssignmentQuestions.isEmpty() && !hasAttemptedLoad && !isLoading && totalProblems != 0) {
+            LaunchedEffect(Unit) {
+                println("AssignmentScreen - Loading all questions for personalAssignmentId: $assignmentId")
+                println("AssignmentScreen - Assignment title: $assignmentTitle")
+                hasAttemptedLoad = true
+                viewModel.loadAllQuestions(assignmentId)
+                // 통계도 함께 로드 (진행률 계산용)
+                viewModel.loadPersonalAssignmentStatistics(assignmentId)
+            }
         }
     }
     
@@ -250,12 +301,6 @@ fun AssignmentContinuousScreen(
                 savedTailQuestion = null
                 println("AssignmentScreen - Next base question available: ${response.numberStr}")
                 
-                // 기본 질문에 답변한 경우 통계 갱신
-                println("AssignmentScreen - Base question answered, refreshing statistics")
-                assignmentId?.let { id ->
-                    viewModel.loadPersonalAssignmentStatistics(id)
-                }
-                
                 // 서버에서 받은 numberStr이 현재 질문과 다르면 서버에서 해당 질문을 로드
                 val currentQuestionNumber = currentQuestion?.number
                 val serverQuestionNumber = response.numberStr
@@ -266,6 +311,15 @@ fun AssignmentContinuousScreen(
                     // 서버에서 해당 질문을 로드
                     assignmentId?.let { id ->
                         viewModel.moveToQuestionByNumber(serverQuestionNumber, id)
+                        // 통계는 백그라운드에서 갱신 (질문 로딩과 별도로 처리)
+                        println("AssignmentScreen - Base question answered, refreshing statistics in background")
+                        viewModel.loadPersonalAssignmentStatistics(id)
+                    }
+                } else {
+                    // 질문 번호가 같으면 통계만 갱신
+                    assignmentId?.let { id ->
+                        println("AssignmentScreen - Base question answered, refreshing statistics in background")
+                        viewModel.loadPersonalAssignmentStatistics(id)
                     }
                 }
                 // 자동 이동하지 않고 사용자가 버튼을 눌러야 함
@@ -375,14 +429,11 @@ fun AssignmentContinuousScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Progress - API에서 받은 통계를 사용하여 진행률 계산
-            // 총 문제 수: PersonalAssignmentStatistics의 totalQuestions (기본 질문만)
-            // 푼 문제 수: 기본 질문(1, 2, 3) 중 답변한 개수 - 꼬리 질문 제외
-            val totalQuestions = personalAssignmentStatistics?.totalQuestions ?: totalBaseQuestions
-            // answeredQuestions가 기본 질문만 포함하는지 확인 필요
-            // 일단 totalQuestions가 기본 질문 개수이므로, answeredQuestions도 기본 질문만 포함한다고 가정
-            val answeredBaseQuestions = personalAssignmentStatistics?.answeredQuestions ?: 0
-            val progress = if (totalQuestions > 0) {
-                (answeredBaseQuestions.toFloat() / totalQuestions.toFloat()).coerceIn(0f, 1f)
+            // total_problem과 solved_problem을 사용하여 진행률 계산
+            val totalProblems = personalAssignmentStatistics?.totalProblem ?: 0
+            val solvedProblems = personalAssignmentStatistics?.solvedProblem ?: 0
+            val progress = if (totalProblems > 0) {
+                (solvedProblems.toFloat() / totalProblems.toFloat()).coerceIn(0f, 1f)
             } else 0f
             
             VTProgressBar(
@@ -391,9 +442,9 @@ fun AssignmentContinuousScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            // 진행률 텍스트 표시 (선택사항)
+            // 진행률 텍스트 표시
             Text(
-                text = "${answeredBaseQuestions} / ${totalQuestions}",
+                text = "${solvedProblems} / ${totalProblems}",
                 style = MaterialTheme.typography.bodySmall,
                 color = Gray600,
                 modifier = Modifier.fillMaxWidth()
@@ -800,16 +851,24 @@ fun AssignmentContinuousScreen(
                                             currentQuestion.id
                                         }
                                         
-                                        println("AssignmentScreen - Submitting answer with questionId: $questionIdToSubmit")
+                                        // assignmentId는 PersonalAssignment ID
+                                        val personalAssignmentId = assignmentId
+                                        
+                                        println("AssignmentScreen - Submitting answer with personal_assignment_id: $personalAssignmentId, questionId: $questionIdToSubmit")
                                         if (currentTailQuestionNumber != null) {
                                             println("AssignmentScreen - This is a tail question submission: $currentTailQuestionNumber")
                                         }
                                         
-                                        viewModel.submitAnswer(
-                                            studentId = user.id,
-                                            questionId = questionIdToSubmit,
-                                            audioFile = finalAudioFile
-                                        )
+                                        if (personalAssignmentId != null) {
+                                            viewModel.submitAnswer(
+                                                personalAssignmentId = personalAssignmentId,
+                                                studentId = user.id,
+                                                questionId = questionIdToSubmit,
+                                                audioFile = finalAudioFile
+                                            )
+                                        } else {
+                                            println("AssignmentScreen - Cannot submit: personalAssignmentId is null")
+                                        }
                                         
                                         println("AssignmentScreen - submitAnswer called successfully")
                                         
@@ -851,294 +910,11 @@ fun AssignmentQuizScreen(
     )
 }
 
-// 이전 객관식 퀴즈 로직 (참고용으로 보관)
-@Composable
-private fun AssignmentQuizScreenOld(
-    assignmentId: Int = 1,
-    assignmentTitle: String
-) {
-    val viewModel: AssignmentViewModel = hiltViewModel()
-    val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
-    val assignmentQuestions by viewModel.assignmentQuestions.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
-    
-    var timeLeft by remember { mutableStateOf(10 * 60) } // 10분
-    var currentQuestion by remember { mutableStateOf(0) }
-    var selectedAnswer by remember { mutableStateOf<Int?>(null) }
-    var isAnswered by remember { mutableStateOf(false) }
-    var showExplanationPrompt by remember { mutableStateOf(false) }
-    var explanation by remember { mutableStateOf("") }
-    var hasExplained by remember { mutableStateOf(false) }
-    var isListening by remember { mutableStateOf(false) }
-    
-    // Load assignment and questions on first composition
-    LaunchedEffect(assignmentId) {
-        viewModel.loadAssignmentById(assignmentId)
-        viewModel.loadAssignmentQuestions(assignmentId)
-    }
-    
-    // Handle error
-    error?.let { errorMessage ->
-        LaunchedEffect(errorMessage) {
-            // Show error message
-            viewModel.clearError()
-        }
-    }
-    
-    // Convert API data to QuizQuestion format
-    val questions = remember(assignmentQuestions, currentAssignment) {
-        assignmentQuestions.mapIndexed { index, questionData ->
-            // QuestionData의 correctAnswer (String)를 options에서의 index로 변환
-            val correctAnswerIndex = questionData.options?.indexOf(questionData.correctAnswer) ?: 0
-            
-            QuizQuestion(
-                id = questionData.id,
-                question = questionData.question,
-                options = questionData.options ?: emptyList(),
-                correctAnswer = correctAnswerIndex,
-                explanation = questionData.explanation ?: "",
-                subject = currentAssignment?.courseClass?.subject?.name ?: "과목"
-            )
-        }
-    }
-
-    // Timer countdown effect
-    LaunchedEffect(timeLeft) {
-        if (timeLeft > 0) {
-            delay(1000)
-            timeLeft--
-        }
-    }
-
-    if (isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(
-                color = PrimaryIndigo
-            )
-        }
-    } else if (questions.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Quiz,
-                    contentDescription = null,
-                    tint = Gray400,
-                    modifier = Modifier.size(48.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "퀴즈 문제가 없습니다",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Gray600
-                )
-            }
-        }
-    } else {
-        val currentQuizQuestion = questions[currentQuestion]
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-                .background(Color.White)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-            .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
-                    )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = assignmentTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                        color = Color.White
-                        )
-                        Text(
-                        text = "문제 ${currentQuestion + 1} / ${questions.size}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-            
-            // Timer and progress
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Timer
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Timer,
-                        contentDescription = null,
-                        tint = PrimaryIndigo,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = String.format("%02d:%02d", timeLeft / 60, timeLeft % 60),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (timeLeft < 300) Error else Gray800 // 5분 이하일 때 빨간색
-                    )
-                }
-                
-                // Progress bar
-                VTProgressBar(
-                    progress = (currentQuestion + 1).toFloat() / questions.size.toFloat(),
-                    showPercentage = false,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            
-            // Question card
-            VTCard(
-                variant = CardVariant.Elevated,
-                modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                    // Question text
-                        Text(
-                        text = currentQuizQuestion.question,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    
-                    // Options
-                    currentQuizQuestion.options.forEachIndexed { index, option ->
-                        OptionButton(
-                            text = option,
-                            isSelected = selectedAnswer == index,
-                            isCorrect = isAnswered && index == currentQuizQuestion.correctAnswer,
-                            isWrong = isAnswered && selectedAnswer == index && index != currentQuizQuestion.correctAnswer,
-                        onClick = {
-                            if (!isAnswered) {
-                                selectedAnswer = index
-                                isAnswered = true
-                                showExplanationPrompt = true
-                            }
-                        }
-                        )
-                    }
-                }
-            }
-            
-            // Explanation prompt
-            if (showExplanationPrompt && !hasExplained) {
-                VTCard(variant = CardVariant.Outlined) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "정답에 대한 설명을 작성해주세요",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        
-                        OutlinedTextField(
-                            value = explanation,
-                            onValueChange = { explanation = it },
-                            label = { Text("설명") },
-                            placeholder = { Text("왜 이 답이 정답인지 설명해주세요...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 3
-                        )
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            VTButton(
-                                text = "설명 완료",
-                                onClick = {
-                                    hasExplained = true
-                                    showExplanationPrompt = false
-                                },
-                                variant = ButtonVariant.Gradient,
-                                modifier = Modifier.width(100.dp)
-                            )
-                        }
-                    }
-                }
-            }
-            
-            // Navigation buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                    VTButton(
-                    text = "이전",
-                                        onClick = {
-                        if (currentQuestion > 0) {
-                            currentQuestion--
-                                                    selectedAnswer = null
-                                                    isAnswered = false
-                                                    showExplanationPrompt = false
-                                                    explanation = ""
-                                                    hasExplained = false
-                                                }
-                                            },
-                                            variant = ButtonVariant.Outline,
-                    enabled = currentQuestion > 0
-                                        )
-                
-                                    VTButton(
-                    text = if (currentQuestion < questions.size - 1) "다음" else "완료",
-                                        onClick = {
-                                            if (currentQuestion < questions.size - 1) {
-                                                currentQuestion++
-                                                selectedAnswer = null
-                                                isAnswered = false
-                                                showExplanationPrompt = false
-                                                explanation = ""
-                                                hasExplained = false
-                                            } else {
-                            // TODO: Submit quiz and show results
-                        }
-                    },
-                    variant = ButtonVariant.Gradient,
-                    enabled = isAnswered && hasExplained
-                )
-            }
-        }
-    }
-}
-
 @Composable
 fun ConversationBubble(
-    message: ConversationMessage
+    message: String
 ) {
-    val isUser = message.speaker == "user"
+    val isUser = true
     
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1154,7 +930,7 @@ fun ConversationBubble(
                 .widthIn(max = 280.dp)
         ) {
             Text(
-                text = message.text,
+                text = message,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isUser) Color.White else Gray800
             )

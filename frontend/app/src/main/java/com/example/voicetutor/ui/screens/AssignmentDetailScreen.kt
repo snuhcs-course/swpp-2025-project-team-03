@@ -172,8 +172,8 @@ fun AssignmentDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (personalAssignmentStatistics?.totalQuestions ?: 0 > 0) {
-                            "${((personalAssignmentStatistics?.answeredQuestions ?: 0).toFloat() / (personalAssignmentStatistics?.totalQuestions ?: 1).toFloat() * 100f).toInt()}%"
+                        text = if (personalAssignmentStatistics?.totalProblem ?: 0 > 0) {
+                            "${((personalAssignmentStatistics?.solvedProblem ?: 0).toFloat() / (personalAssignmentStatistics?.totalProblem ?: 1).toFloat() * 100f).toInt()}%"
                         } else {
                             "0%"
                         },
@@ -197,8 +197,8 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 VTProgressBar(
-                    progress = if (personalAssignmentStatistics?.totalQuestions ?: 0 > 0) {
-                        (personalAssignmentStatistics?.answeredQuestions ?: 0).toFloat() / (personalAssignmentStatistics?.totalQuestions ?: 1).toFloat()
+                    progress = if (personalAssignmentStatistics?.totalProblem ?: 0 > 0) {
+                        (personalAssignmentStatistics?.solvedProblem ?: 0).toFloat() / (personalAssignmentStatistics?.totalProblem ?: 1).toFloat()
                     } else {
                         0f
                     },
@@ -209,7 +209,7 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "${personalAssignmentStatistics?.totalQuestions ?: 0}개 중 ${personalAssignmentStatistics?.answeredQuestions ?: 0}개 완료",
+                    text = "${personalAssignmentStatistics?.totalProblem ?: 0}개 중 ${personalAssignmentStatistics?.solvedProblem ?: 0}개 완료",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600
                 )
