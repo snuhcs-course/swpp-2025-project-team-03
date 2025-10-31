@@ -66,7 +66,7 @@ def extract_all_features(wav_path: str, model_name: str = None) -> dict:
     return features_dict
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     parser = argparse.ArgumentParser(description="WAV 파일에서 모든 특징을 추출합니다.")
     parser.add_argument("--wav_path", type=str, help="입력 WAV 파일의 경로.")
     parser.add_argument(

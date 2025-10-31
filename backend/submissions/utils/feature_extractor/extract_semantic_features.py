@@ -190,7 +190,7 @@ def extract_semantic_features(
     return feats
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import argparse
 
     ap = argparse.ArgumentParser(description="Extract semantic 1D features from script text or JSON(file).")

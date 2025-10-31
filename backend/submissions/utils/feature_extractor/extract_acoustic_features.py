@@ -319,7 +319,7 @@ def _parse_pause_secs(s: str):
     return tuple(vals)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     ap = argparse.ArgumentParser(description="Extract prosodic features for uncertainty from a WAV file.")
     ap.add_argument("wav_path")
     ap.add_argument("--fmin", type=float, default=50.0)
