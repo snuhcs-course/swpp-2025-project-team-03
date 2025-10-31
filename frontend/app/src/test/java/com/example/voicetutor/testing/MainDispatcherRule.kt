@@ -8,8 +8,12 @@ import kotlinx.coroutines.test.setMain
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
+/**
+ * JUnit Rule to swap the main dispatcher with a [StandardTestDispatcher].
+ * AuthViewModelTest 와 동일한 패턴으로 사용합니다.
+ */
 class MainDispatcherRule(
-    private val testDispatcher: TestDispatcher = StandardTestDispatcher()
+    val testDispatcher: TestDispatcher = StandardTestDispatcher()
 ) : TestWatcher() {
 
     override fun starting(description: Description) {
@@ -20,5 +24,4 @@ class MainDispatcherRule(
         Dispatchers.resetMain()
     }
 }
-
 
