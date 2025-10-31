@@ -40,8 +40,7 @@ fun AllAssignmentsScreen(
     teacherId: String? = null,
     onNavigateToAssignmentResults: (String) -> Unit = {},
     onNavigateToEditAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToAssignment: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()

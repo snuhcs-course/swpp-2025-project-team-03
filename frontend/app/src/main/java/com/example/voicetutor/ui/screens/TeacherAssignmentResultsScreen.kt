@@ -198,17 +198,17 @@ fun TeacherAssignmentResultsScreen(
                     }
                 }
             } else {
-                // 학생 결과가 없을 때 빈 상태 표시 (API가 없으므로 항상 빈 상태)
-                // students.forEachIndexed { index, student ->
-                //     TeacherAssignmentResultCard(
-                //         student = student,
-                //         onStudentClick = { onNavigateToStudentDetail(student.studentId) }
-                //     )
-                //     
-                //     if (index < students.size - 1) {
-                //         Spacer(modifier = Modifier.height(8.dp))
-                //     }
-                // }
+                // 학생 결과 표시 (API 데이터가 있을 때만 표시됨)
+                students.forEachIndexed { index, student ->
+                    TeacherAssignmentResultCard(
+                        student = student,
+                        onStudentClick = { onNavigateToStudentDetail(student.studentId) }
+                    )
+                    
+                    if (index < students.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
             }
         }
     }

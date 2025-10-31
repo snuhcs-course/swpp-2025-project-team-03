@@ -10,7 +10,6 @@ import org.junit.runner.Description
 
 /**
  * JUnit Rule to swap the main dispatcher with a [StandardTestDispatcher].
- * AuthViewModelTest 와 동일한 패턴으로 사용합니다.
  */
 class MainDispatcherRule(
     val testDispatcher: TestDispatcher = StandardTestDispatcher()

@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,7 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,7 +63,7 @@ fun CreateClassScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
             .clickable { 
@@ -85,11 +89,20 @@ fun CreateClassScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                VTTextField(
+                OutlinedTextField(
                     value = className,
                     onValueChange = { className = it },
-                    placeholder = "예: 고등학교 1학년 A반",
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("예: 고등학교 1학년 A반") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = TextStyle(color = Color.Black),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        focusedLabelColor = PrimaryIndigo,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color.Black
+                    )
                 )
             }
         }
@@ -124,10 +137,17 @@ fun CreateClassScreen(
                                 value = selectedGrade,
                                 onValueChange = { },
                                 readOnly = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    focusedBorderColor = PrimaryIndigo,
+                                    unfocusedBorderColor = Gray400
+                                ),
                                 trailingIcon = { 
                                     Icon(
                                         imageVector = Icons.Filled.ArrowDropDown,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = Gray800
                                     )
                                 },
                                 modifier = Modifier
@@ -154,7 +174,8 @@ fun CreateClassScreen(
                                                         showGradeDropdown = false
                                                     }
                                                     .padding(12.dp),
-                                                color = if (grade == selectedGrade) PrimaryIndigo else Gray800
+                                                color = if (grade == selectedGrade) Color.Black else Color.Black,
+                                                fontWeight = if (grade == selectedGrade) FontWeight.Bold else FontWeight.Normal
                                             )
                                         }
                                     }
@@ -176,10 +197,17 @@ fun CreateClassScreen(
                                 value = selectedClass,
                                 onValueChange = { },
                                 readOnly = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    focusedBorderColor = PrimaryIndigo,
+                                    unfocusedBorderColor = Gray400
+                                ),
                                 trailingIcon = { 
                                     Icon(
                                         imageVector = Icons.Filled.ArrowDropDown,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = Gray800
                                     )
                                 },
                                 modifier = Modifier
@@ -206,7 +234,8 @@ fun CreateClassScreen(
                                                         showClassDropdown = false
                                                     }
                                                     .padding(12.dp),
-                                                color = if (classOption == selectedClass) PrimaryIndigo else Gray800
+                                                color = if (classOption == selectedClass) Color.Black else Color.Black,
+                                                fontWeight = if (classOption == selectedClass) FontWeight.Bold else FontWeight.Normal
                                             )
                                         }
                                     }
@@ -231,11 +260,20 @@ fun CreateClassScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                VTTextField(
+                OutlinedTextField(
                     value = subject,
                     onValueChange = { subject = it },
-                    placeholder = "예: 영어, 수학, 과학",
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("예: 영어, 수학, 과학") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = TextStyle(color = Color.Black),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        focusedLabelColor = PrimaryIndigo,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color.Black
+                    )
                 )
             }
         }
@@ -253,14 +291,23 @@ fun CreateClassScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                VTTextField(
+                OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    placeholder = "클래스에 대한 간단한 설명을 입력하세요...",
+                    placeholder = { Text("클래스에 대한 간단한 설명을 입력하세요...") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(100.dp),
-                    maxLines = 4
+                    maxLines = 4,
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = TextStyle(color = Color.Black),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        focusedLabelColor = PrimaryIndigo,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color.Black
+                    )
                 )
             }
         }

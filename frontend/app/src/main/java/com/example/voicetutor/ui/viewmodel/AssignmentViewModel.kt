@@ -882,12 +882,34 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
+    // getNextQuestion 실패 시 재시도 방지를 위한 플래그
+    private var nextQuestionFailedForAssignment = mutableSetOf<Int>()
+    
     fun loadAllQuestions(personalAssignmentId: Int) {
         viewModelScope.launch {
             println("AssignmentViewModel - loadAllQuestions CALLED for personalAssignmentId: $personalAssignmentId")
             
             if (_isLoading.value) {
                 println("AssignmentViewModel - Already loading questions - RETURNING EARLY")
+                return@launch
+            }
+            
+            // 이전에 getNextQuestion이 실패했고, 아직 통계상 문제가 남아있다면 baseQuestions에서 첫 문제 표시
+            if (nextQuestionFailedForAssignment.contains(personalAssignmentId)) {
+                println("AssignmentViewModel - getNextQuestion previously failed for this assignment, using base questions")
+                // 이미 로드된 baseQuestions가 있으면 첫 번째 문제 표시
+                if (_totalBaseQuestions.value > 0) {
+                    // baseQuestions를 다시 로드해서 첫 번째 문제 표시
+                    assignmentRepository.getPersonalAssignmentQuestions(personalAssignmentId)
+                        .onSuccess { baseQuestions ->
+                            if (baseQuestions.isNotEmpty()) {
+                                println("AssignmentViewModel - Using first base question: ${baseQuestions[0].number}")
+                                _personalAssignmentQuestions.value = listOf(baseQuestions[0])
+                                _currentQuestionIndex.value = 0
+                            }
+                        }
+                }
+                // 한 번만 재시도하도록 플래그 제거하지 않음 (통계 확인 후 결정)
                 return@launch
             }
             
@@ -908,6 +930,9 @@ class AssignmentViewModel @Inject constructor(
                             .onSuccess { nextQuestion ->
                                 println("AssignmentViewModel - Found next question: ${nextQuestion.number}")
                                 
+                                // 재시도 플래그 제거 (성공했으므로)
+                                nextQuestionFailedForAssignment.remove(personalAssignmentId)
+                                
                                 // 다음 문제를 현재 문제로 설정
                                 _personalAssignmentQuestions.value = listOf(nextQuestion)
                                 _currentQuestionIndex.value = 0
@@ -916,17 +941,28 @@ class AssignmentViewModel @Inject constructor(
                             .onFailure { exception ->
                                 println("AssignmentViewModel - No next question found: ${exception.message}")
                                 
-                                // "모든 문제를 완료했습니다" 메시지인지 확인
+                                // 404 에러나 "No more questions" 메시지가 와도 자동 완료 처리하지 않음
                                 val message = exception.message ?: ""
                                 if (message.contains("모든 문제를 완료했습니다") || 
                                     message.contains("No more questions")) {
-                                    println("AssignmentViewModel - All questions completed! Message: $message")
-                                    _personalAssignmentQuestions.value = emptyList()
-                                    _currentQuestionIndex.value = 0
-                                    _error.value = null
+                                    println("AssignmentViewModel - Server says no more questions, but checking statistics first")
+                                    println("AssignmentViewModel - NOT auto-completing - waiting for statistics verification")
                                     
-                                    // 과제 완료 처리
-                                    completeAssignment(personalAssignmentId)
+                                    // 재시도 플래그 설정 (무한 반복 방지)
+                                    nextQuestionFailedForAssignment.add(personalAssignmentId)
+                                    
+                                    // baseQuestions에서 첫 번째 문제 표시 (아직 풀어야 할 문제가 있을 수 있음)
+                                    if (baseQuestions.isNotEmpty()) {
+                                        println("AssignmentViewModel - Using first base question from list: ${baseQuestions[0].number}")
+                                        _personalAssignmentQuestions.value = listOf(baseQuestions[0])
+                                        _currentQuestionIndex.value = 0
+                                    }
+                                    
+                                    // 통계를 확인하여 실제로 모든 문제를 풀었는지 검증
+                                    loadPersonalAssignmentStatistics(personalAssignmentId)
+                                    
+                                    // 자동 완료 처리 제거 - 통계 확인 후 LaunchedEffect에서 처리
+                                    _error.value = null
                                 } else {
                                     println("AssignmentViewModel - Other error: $message")
                                     _error.value = exception.message
@@ -970,13 +1006,18 @@ class AssignmentViewModel @Inject constructor(
                     .onFailure { exception ->
                         println("AssignmentViewModel - FAILURE: ${exception.message}")
                         
-                        // "No more questions" 에러인지 확인
+                        // "No more questions" 에러가 와도 자동 완료 처리하지 않음
+                        // 통계를 확인해서 totalProblem == solvedProblem일 때만 완료 처리
                         if (exception.message?.contains("No more questions") == true || 
                             exception.message?.contains("모든 문제를 완료했습니다") == true) {
-                            println("AssignmentViewModel - All questions completed - setting empty list")
-                            // 모든 문제가 완료된 경우 빈 리스트로 설정하여 UI가 완료 화면을 표시하도록 함
-                            _personalAssignmentQuestions.value = emptyList()
-                            _error.value = null // 에러를 클리어하여 완료 상태로 처리
+                            println("AssignmentViewModel - Server says no more questions, but checking statistics first")
+                            println("AssignmentViewModel - NOT auto-completing - waiting for statistics verification")
+                            
+                            // 통계를 확인하여 실제로 모든 문제를 풀었는지 검증
+                            loadPersonalAssignmentStatistics(personalAssignmentId)
+                            
+                            // 자동 완료 처리 제거 - 통계 확인 후 LaunchedEffect에서 처리
+                            _error.value = null
                         } else {
                             _error.value = exception.message
                             println("AssignmentViewModel - Failed to load next question: ${exception.message}")

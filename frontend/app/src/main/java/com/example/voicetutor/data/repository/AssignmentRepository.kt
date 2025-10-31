@@ -434,6 +434,9 @@ class AssignmentRepository @Inject constructor(
             if (response.isSuccessful && response.body()?.success == true) {
                 val submissionResponse = response.body()?.data
                 println("AssignmentRepository - Answer submission successful: $submissionResponse")
+                println("AssignmentRepository - Parsed isCorrect value: ${submissionResponse?.isCorrect}")
+                println("AssignmentRepository - Parsed numberStr: ${submissionResponse?.numberStr}")
+                println("AssignmentRepository - Raw response body: ${response.body()}")
                 Result.success(submissionResponse ?: throw Exception("No submission data"))
             } else {
                 println("AssignmentRepository - Answer submission API error: ${response.body()?.error}")

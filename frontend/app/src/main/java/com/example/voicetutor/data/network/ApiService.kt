@@ -161,25 +161,6 @@ interface ApiService {
         @Query("offset") offset: Int = 0
     ): Response<ApiResponse<MessageListResponse>>
     
-    // Analysis APIs
-    @POST("analysis/student/")
-    suspend fun getStudentAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
-    
-    @POST("analysis/class/")
-    suspend fun getClassAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
-    
-    @POST("analysis/subject/")
-    suspend fun getSubjectAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
-    
-    // Student Edit APIs
-    @PUT("students/{studentId}/")
-    suspend fun editStudent(@Path("studentId") studentId: Int, @Body request: StudentEditRequest): Response<ApiResponse<StudentEditResponse>>
-    
-    @DELETE("students/{studentId}/")
-    suspend fun deleteStudent(@Path("studentId") studentId: Int, @Body request: StudentDeleteRequest): Response<ApiResponse<StudentDeleteResponse>>
-    
-    @PUT("students/{studentId}/class/")
-    suspend fun changeStudentClass(@Path("studentId") studentId: Int, @Body request: StudentClassChangeRequest): Response<ApiResponse<StudentClassChangeResponse>>
 }
 
 // Minimal response model for recent personal assignment lookup

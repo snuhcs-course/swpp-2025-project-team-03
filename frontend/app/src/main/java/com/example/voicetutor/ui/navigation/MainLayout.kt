@@ -41,7 +41,6 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
     return when (currentDestination) {
         VoiceTutorScreens.Assignment.route -> "과제"
         VoiceTutorScreens.AssignmentDetail.route -> "과제 상세"
-        // removed: StudentAssignmentDetail
         VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
         VoiceTutorScreens.Progress.route -> "진도 리포트"
         VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
@@ -53,7 +52,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         VoiceTutorScreens.TeacherAssignmentResults.route -> "과제 결과"
         VoiceTutorScreens.TeacherAssignmentDetail.route -> "과제 상세"
         VoiceTutorScreens.TeacherStudentDetail.route -> "학생 상세"
-        // removed: TeacherStudentAssignmentDetail
+        VoiceTutorScreens.TeacherStudentAssignmentDetail.route -> "과제 결과"
         VoiceTutorScreens.Settings.route -> "설정"
         else -> if (userRole == UserRole.TEACHER) "선생님 페이지" else "학생 페이지"
     }
@@ -72,7 +71,6 @@ fun MainLayout(
         VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
         VoiceTutorScreens.Assignment.route -> "assignment"
         VoiceTutorScreens.Progress.route -> "progress"
-        // removed: StudentAssignmentDetail
         VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
@@ -97,8 +95,10 @@ fun MainLayout(
     }
     
     // Check if current page is a dashboard (should show logo) or other page (should show back button)
-    val isDashboard = currentDestination == VoiceTutorScreens.StudentDashboard.route || 
-                     currentDestination == VoiceTutorScreens.TeacherDashboard.route
+    // Remove query parameters for comparison (e.g., "teacher_dashboard?refresh=123" -> "teacher_dashboard")
+    val baseDestination = currentDestination?.split("?")?.first()
+    val isDashboard = baseDestination == VoiceTutorScreens.StudentDashboard.route || 
+                     baseDestination == VoiceTutorScreens.TeacherDashboard.route
     
     val userName = currentUser?.name ?: "사용자"
     val userInitial = currentUser?.initial ?: "?"
@@ -206,7 +206,7 @@ fun MainLayout(
                     // Profile button
                     IconButton(
                         onClick = {
-                            navController.navigate(VoiceTutorScreens.Settings.route)
+                            navController.navigate(VoiceTutorScreens.Settings.createRoute())
                         }
                     ) {
                         Box(
@@ -332,9 +332,9 @@ fun BottomNavigation(
                     )
                 },
                 label = { Text("학생") },
-                selected = currentRoute == "teacher_students",
+                selected = currentRoute == "all_students",
                 onClick = {
-                    navController.navigate(VoiceTutorScreens.TeacherStudents.route)
+                    navController.navigate(VoiceTutorScreens.AllStudents.route)
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = PrimaryIndigo,

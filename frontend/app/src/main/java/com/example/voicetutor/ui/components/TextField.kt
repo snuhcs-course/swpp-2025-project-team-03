@@ -67,9 +67,9 @@ fun VTTextField(
             maxLines = maxLines,
             textStyle = TextStyle(
                 fontSize = 14.sp,
-                color = if (enabled) Gray800 else Gray400
+                color = if (enabled) Color.Black else Gray400
             ),
-            cursorBrush = SolidColor(PrimaryIndigo),
+            cursorBrush = SolidColor(Color.Black),
             decorationBox = { innerTextField ->
                 if (value.isEmpty() && placeholder != null) {
                     Text(
