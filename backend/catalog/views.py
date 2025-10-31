@@ -15,7 +15,7 @@ class SubjectListView(APIView):
     )
     def get(self, request):
         try:
-            subjects = Subject.objects.all().order_by("name")
+            subjects = Subject.objects.all().order_by("id")
             serializer = SubjectSerializer(subjects, many=True)
             return Response(
                 {"success": True, "data": serializer.data, "message": "과목 목록 조회 성공"},

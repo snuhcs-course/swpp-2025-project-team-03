@@ -17,9 +17,9 @@ class TestSubjectListView:
 
     def test_get_subject_list_success(self, api_client):
         """과목 목록 조회 성공 테스트"""
-        Subject.objects.create(name="Mathematics")
-        Subject.objects.create(name="Science")
-        Subject.objects.create(name="English")
+        subject1 = Subject.objects.create(name="Mathematics")
+        subject2 = Subject.objects.create(name="Science")
+        subject3 = Subject.objects.create(name="English")
 
         url = reverse("catalog:subject-list")
         response = api_client.get(url, format="json")
@@ -28,9 +28,12 @@ class TestSubjectListView:
         assert response.data["success"] is True
         assert response.data["message"] == "과목 목록 조회 성공"
         assert len(response.data["data"]) == 3
-        assert response.data["data"][0]["name"] == "English"
-        assert response.data["data"][1]["name"] == "Mathematics"
-        assert response.data["data"][2]["name"] == "Science"
+        assert response.data["data"][0]["id"] == subject1.id
+        assert response.data["data"][0]["name"] == "Mathematics"
+        assert response.data["data"][1]["id"] == subject2.id
+        assert response.data["data"][1]["name"] == "Science"
+        assert response.data["data"][2]["id"] == subject3.id
+        assert response.data["data"][2]["name"] == "English"
 
     def test_get_subject_list_empty(self, api_client):
         """과목이 없는 경우 테스트"""
