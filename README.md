@@ -39,12 +39,12 @@ It is designed for elementary or middle school students, teachers, and parents w
    AWS_STORAGE_BUCKET_NAME='YOUR_S3_BUCKET_NAME'
    ```
 
-2-1 **Create secret key**
-If you want to create secret key for Django, run the command below to generate a key.
+   **Create secret key (Optional)**
+   If you want to create secret key for Django, run the command below to generate a key.
 
-    ```bash
-    .venv/bin/python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key()'
-    ```
+   ```bash
+   .venv/bin/python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key()'
+   ```
 
 3. **Create Virtual Environment**
 
