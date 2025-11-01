@@ -6,6 +6,9 @@ omit =
     */migrations/*
     */management/commands/*
     */__init__.py
+    */tests/*
+    */test/*
+    tests/*
 
 [report]
 exclude_lines =
