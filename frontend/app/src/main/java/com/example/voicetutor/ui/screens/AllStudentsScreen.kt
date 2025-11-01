@@ -337,20 +337,6 @@ fun AllStudentsCard(
                         color = Gray500
                     )
                 }
-                
-                Column {
-                    Text(
-                        text = "마지막 활동",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "활동 없음", // 마지막 활동 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray500
-                    )
-                }
             }
             
             // Progress bar
