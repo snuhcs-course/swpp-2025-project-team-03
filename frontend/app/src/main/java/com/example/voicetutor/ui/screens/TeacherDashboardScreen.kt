@@ -41,12 +41,14 @@ fun TeacherDashboardScreen(
     val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
     val dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel = hiltViewModel()
+    val studentViewModel: com.example.voicetutor.ui.viewmodel.StudentViewModel = hiltViewModel()
     
     val assignments by actualAssignmentViewModel.assignments.collectAsStateWithLifecycle()
     val isLoading by actualAssignmentViewModel.isLoading.collectAsStateWithLifecycle()
     val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     val dashboardStats by dashboardViewModel.dashboardStats.collectAsStateWithLifecycle()
+    val students by studentViewModel.students.collectAsStateWithLifecycle()
     // Recent activities are not supported by current backend API
     
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
@@ -76,6 +78,7 @@ fun TeacherDashboardScreen(
             println("TeacherDashboard - ✅ Force refreshing data (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
             dashboardViewModel.loadDashboardData(actualTeacherId)
+            studentViewModel.loadAllStudents(teacherId = actualTeacherId)
         } else {
             println("TeacherDashboard - ❌ Skipping refresh (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
         }
@@ -86,7 +89,6 @@ fun TeacherDashboardScreen(
         // 이미 assignments가 있으면 API 호출하지 않음 (로그인 시 받은 데이터 사용)
         if (assignments.isNotEmpty()) {
             println("TeacherDashboard - Already have ${assignments.size} assignments from login")
-            return@LaunchedEffect
         }
         
         if (actualTeacherId == null) {
@@ -100,6 +102,10 @@ fun TeacherDashboardScreen(
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
             dashboardViewModel.loadDashboardData(actualTeacherId)
         }
+        
+        // 학생 목록 로드
+        println("TeacherDashboard - Loading students for teacher ID: $actualTeacherId")
+        studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
     
     // Handle filter changes
@@ -227,7 +233,10 @@ fun TeacherDashboardScreen(
             
             VTStatsCard(
                 title = "총 학생",
-                value = dashboardStats?.totalStudents?.toString() ?: currentUser?.totalStudents?.toString() ?: "0",
+                value = students.size.toString().takeIf { students.isNotEmpty() } 
+                    ?: dashboardStats?.totalStudents?.toString() 
+                    ?: currentUser?.totalStudents?.toString() 
+                    ?: "0",
                 icon = Icons.Filled.People,
                 iconColor = Success,
                 variant = CardVariant.Elevated,

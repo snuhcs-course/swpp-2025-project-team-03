@@ -38,11 +38,7 @@ interface ApiService {
     @DELETE("assignments/{id}/")
     suspend fun deleteAssignment(@Path("id") id: Int): Response<ApiResponse<Unit>>
     
-    @POST("assignments/{id}/draft/")
-    suspend fun saveAssignmentDraft(@Path("id") id: Int, @Body content: String): Response<ApiResponse<Unit>>
-    
-    @GET("assignments/{id}/results/")
-    suspend fun getAssignmentResults(@Path("id") id: Int): Response<ApiResponse<List<StudentResult>>>
+    // removed: saveAssignmentDraft, getAssignmentResults
     
     // Student APIs (Backend: /api/courses/students/)
     @GET("courses/students/")
@@ -79,6 +75,7 @@ interface ApiService {
     @Multipart
     @POST("personal_assignments/answer/")
     suspend fun submitAnswer(
+        @Query("personal_assignment_id") personalAssignmentId: Int,
         @Part studentId: MultipartBody.Part,
         @Part questionId: MultipartBody.Part,
         @Part audioFile: MultipartBody.Part
@@ -139,8 +136,7 @@ interface ApiService {
         @Body submission: AssignmentSubmissionRequest
     ): Response<ApiResponse<AssignmentSubmissionResult>>
     
-    @GET("assignments/{id}/questions/")
-    suspend fun getAssignmentQuestions(@Path("id") id: Int): Response<ApiResponse<List<QuestionData>>>
+    // removed: getAssignmentQuestions
     
     @GET("assignments/{assignment_id}/s3-check/")
     suspend fun checkS3Upload(@Path("assignment_id") assignmentId: Int): Response<ApiResponse<S3UploadStatus>>
@@ -155,16 +151,7 @@ interface ApiService {
         @Query("teacherId") teacherId: String
     ): Response<ApiResponse<com.example.voicetutor.data.models.DashboardStats>>
     
-    // AI APIs
-    @POST("ai/conversation/")
-    suspend fun sendAIMessage(@Body request: AIConversationRequest): Response<ApiResponse<AIConversationResponse>>
-    
-    @POST("ai/voice-recognition/")
-    suspend fun recognizeVoice(@Body request: VoiceRecognitionRequest): Response<ApiResponse<VoiceRecognitionResponse>>
-    
-    // Quiz APIs
-    @POST("quiz/submit/")
-    suspend fun submitQuiz(@Body request: QuizSubmissionRequest): Response<ApiResponse<QuizSubmissionResponse>>
+    // AI/Quiz APIs removed
     
     @GET("messages/")
     suspend fun getMessages(
@@ -174,25 +161,6 @@ interface ApiService {
         @Query("offset") offset: Int = 0
     ): Response<ApiResponse<MessageListResponse>>
     
-    // Analysis APIs
-    @POST("analysis/student/")
-    suspend fun getStudentAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
-    
-    @POST("analysis/class/")
-    suspend fun getClassAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
-    
-    @POST("analysis/subject/")
-    suspend fun getSubjectAnalysis(@Body request: AnalysisRequest): Response<ApiResponse<AnalysisResponse>>
-    
-    // Student Edit APIs
-    @PUT("students/{studentId}/")
-    suspend fun editStudent(@Path("studentId") studentId: Int, @Body request: StudentEditRequest): Response<ApiResponse<StudentEditResponse>>
-    
-    @DELETE("students/{studentId}/")
-    suspend fun deleteStudent(@Path("studentId") studentId: Int, @Body request: StudentDeleteRequest): Response<ApiResponse<StudentDeleteResponse>>
-    
-    @PUT("students/{studentId}/class/")
-    suspend fun changeStudentClass(@Path("studentId") studentId: Int, @Body request: StudentClassChangeRequest): Response<ApiResponse<StudentClassChangeResponse>>
 }
 
 // Minimal response model for recent personal assignment lookup

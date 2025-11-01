@@ -6,11 +6,6 @@ enum class AssignmentStatus {
     DRAFT         // 임시저장
 }
 
-enum class AssignmentType {
-    Quiz,         // 퀴즈
-    Continuous,   // 연속형
-    Discussion    // 토론
-}
 
 enum class AssignmentFilter {
     ALL,          // 전체
@@ -27,5 +22,5 @@ data class AssignmentData(
     val submittedCount: Int,
     val totalCount: Int,
     val status: AssignmentStatus,
-    val type: AssignmentType
+    // removed: type (AssignmentType)
 )

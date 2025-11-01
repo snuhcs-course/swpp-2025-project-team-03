@@ -37,7 +37,7 @@ enum class QuestionType {
 
 @Composable
 fun AssignmentDetailedResultsScreen(
-    assignmentTitle: String = "과제 상세 결과",
+    assignmentTitle: String = "과제 결과",
     onBackClick: () -> Unit = {}
 ) {
     // 더미 데이터 생성 - 함수의 개념 단원
@@ -92,14 +92,14 @@ fun AssignmentDetailedResultsScreen(
                     color = Color.White
                 )
                 Text(
-                    text = "문제별 상세 결과를 확인해보세요",
+                    text = "과제 결과",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.9f)
                 )
             }
         }
         
-        // Summary stats
+        // Summary stats (위에 크게 표시)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -123,7 +123,9 @@ fun AssignmentDetailedResultsScreen(
             )
         }
         
-        // Questions list
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Questions list (아래에 문제별 상세)
         Column {
             Text(
                 text = "문제별 상세 결과",
@@ -187,34 +189,6 @@ fun DetailedQuestionResultCard(
                 }
             }
             
-            // Question type and text
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = when (question.questionType) {
-                        QuestionType.MULTIPLE_CHOICE -> Icons.Filled.RadioButtonChecked
-                        QuestionType.SHORT_ANSWER -> Icons.Filled.Edit
-                        QuestionType.VOICE_RESPONSE -> Icons.Filled.Mic
-                    },
-                    contentDescription = null,
-                    tint = PrimaryIndigo,
-                    modifier = Modifier.size(16.dp)
-                )
-                
-                Spacer(modifier = Modifier.width(4.dp))
-                
-                Text(
-                    text = when (question.questionType) {
-                        QuestionType.MULTIPLE_CHOICE -> "객관식"
-                        QuestionType.SHORT_ANSWER -> "주관식"
-                        QuestionType.VOICE_RESPONSE -> "음성 답변"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
-                )
-            }
-            
             // Question text
             Text(
                 text = question.question,
@@ -222,27 +196,6 @@ fun DetailedQuestionResultCard(
                 fontWeight = FontWeight.Medium,
                 color = Gray800
             )
-            
-            // My answer
-            Column {
-                Text(
-                    text = "내 답변",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = Gray600
-                )
-                Text(
-                    text = question.myAnswer,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray800,
-                    modifier = Modifier
-                        .background(
-                            color = if (question.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp)
-                )
-            }
             
             // Correct answer
             Column {

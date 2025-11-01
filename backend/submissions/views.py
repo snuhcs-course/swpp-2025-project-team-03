@@ -233,56 +233,79 @@ class AnswerSubmitView(APIView):
             )
 
             # number별로 그룹화하여 처리
-            current_number = None
-            max_recalled_num = -1
-            candidate_question = None
+            # 모든 number를 순회하면서 답변하지 않은 질문 찾기
+            number_groups = {}
 
+            # number별로 그룹화
             for question in questions:
-                # 새로운 number 그룹 시작
-                if current_number != question.number:
-                    # 이전 그룹에서 후보를 찾았다면 반환
-                    if candidate_question:
-                        break
+                if question.number not in number_groups:
+                    number_groups[question.number] = []
+                number_groups[question.number].append(question)
 
-                    # 새 그룹 초기화
-                    current_number = question.number
-                    max_recalled_num = question.recalled_num
+            # 각 number 그룹을 순회하면서 답변하지 않은 질문 찾기
+            for number in sorted(number_groups.keys()):
+                group_questions = number_groups[number]
 
-                    # 이 질문이 아직 답변되지 않았는지 확인 (메모리에서 체크)
-                    if question.id not in answered_question_ids:
-                        candidate_question = question
-                else:
-                    # 같은 number 그룹 내에서
-                    max_recalled_num = max(max_recalled_num, question.recalled_num)
+                # 이 그룹의 최대 recalled_num 확인
+                max_recalled_in_group = max(q.recalled_num for q in group_questions)
 
-                    # 아직 답변되지 않은 질문 찾기 (메모리에서 체크)
-                    if question.id not in answered_question_ids:
-                        candidate_question = question
+                # 이 그룹의 모든 질문이 답변되었는지 확인
+                unanswered_in_group = [q for q in group_questions if q.id not in answered_question_ids]
 
-            # 마지막 그룹의 후보 확인
-            if candidate_question:
-                # recalled_num이 3 미만인지 확인
-                if candidate_question.recalled_num < 3:
-                    if candidate_question.recalled_num == 0:
-                        number_str = f"{candidate_question.number}"
+                logger.info(
+                    f"[AnswerSubmitView GET] Number {number} group: "
+                    f"total={len(group_questions)}, unanswered={len(unanswered_in_group)}, "
+                    f"max_recalled={max_recalled_in_group}, answered_ids={sorted(answered_question_ids)}"
+                )
+
+                # 이 그룹에 아직 답변하지 않은 질문이 있으면 반환
+                if unanswered_in_group:
+                    # recalled_num이 가장 작은 것부터 반환 (base question 우선)
+                    # 꼬리 질문은 최대 3개까지만 생성되므로 recalled_num < 4로 체크 (0, 1, 2, 3 허용)
+                    valid_unanswered = [q for q in unanswered_in_group if q.recalled_num < 4]
+
+                    if valid_unanswered:
+                        # recalled_num이 가장 작은 것 (base question 우선)
+                        next_question = min(valid_unanswered, key=lambda q: q.recalled_num)
+
+                        logger.info(
+                            f"[AnswerSubmitView GET] Found unanswered question: "
+                            f"number={next_question.number}, recalled_num={next_question.recalled_num}, "
+                            f"question_id={next_question.id}"
+                        )
+
+                        if next_question.recalled_num == 0:
+                            number_str = f"{next_question.number}"
+                        else:
+                            number_str = f"{next_question.number}-{next_question.recalled_num}"
+                        question_data = {
+                            "id": next_question.id,
+                            "number": number_str,
+                            "question": next_question.content,
+                            "answer": next_question.model_answer,
+                            "explanation": next_question.explanation,
+                            "difficulty": next_question.difficulty,
+                        }
+
+                        return create_api_response(
+                            data=question_data,
+                            message="다음 문제 조회 성공",
+                            status_code=status.HTTP_200_OK,
+                        )
                     else:
-                        number_str = f"{candidate_question.number}-{candidate_question.recalled_num}"
-                    question_data = {
-                        "id": candidate_question.id,
-                        "number": number_str,
-                        "question": candidate_question.content,
-                        "answer": candidate_question.model_answer,
-                        "explanation": candidate_question.explanation,
-                        "difficulty": candidate_question.difficulty,
-                    }
+                        logger.info(
+                            f"[AnswerSubmitView GET] All unanswered questions in group {number} have recalled_num >= 4 "
+                            f"(should not happen in normal flow)"
+                        )
 
-                    return create_api_response(
-                        data=question_data,
-                        message="다음 문제 조회 성공",
-                        status_code=status.HTTP_200_OK,
-                    )
+                # 이 그룹의 모든 질문을 답변했거나 max_recalled_num >= 3이면 다음 number로 넘어감
+                # (계속 다음 number 그룹 확인)
+                logger.info(
+                    f"[AnswerSubmitView GET] Number {number} group skipped: "
+                    f"unanswered={len(unanswered_in_group)}, max_recalled={max_recalled_in_group}"
+                )
 
-            # 모든 문제를 다 풀었거나 recalled_num이 3에 도달한 경우
+            # 모든 number 그룹을 확인했지만 답변할 질문이 없는 경우
             return create_api_response(
                 success=False,
                 error="No more questions",
@@ -502,10 +525,26 @@ class AnswerSubmitView(APIView):
                     if personal_assignment.status == PersonalAssignment.Status.NOT_STARTED:
                         personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
 
-                    if tail_payload.get("plan") == "ONLY_CORRECT":
+                    plan = tail_payload.get("plan")
+                    old_solved_num = personal_assignment.solved_num
+
+                    if plan == "ONLY_CORRECT":
                         personal_assignment.solved_num += 1
+                        logger.info(
+                            f"[AnswerSubmitView] solved_num updated: {old_solved_num} -> {personal_assignment.solved_num} "
+                            f"(question_id={question_id}, plan={plan})"
+                        )
+                    else:
+                        logger.info(
+                            f"[AnswerSubmitView] solved_num NOT updated: {old_solved_num} "
+                            f"(question_id={question_id}, plan={plan})"
+                        )
 
                     personal_assignment.save()
+                    logger.info(
+                        f"[AnswerSubmitView] PersonalAssignment saved: "
+                        f"id={personal_assignment.id}, solved_num={personal_assignment.solved_num}"
+                    )
 
                     # Answer 생성 또는 업데이트
                     answer, created = Answer.objects.update_or_create(

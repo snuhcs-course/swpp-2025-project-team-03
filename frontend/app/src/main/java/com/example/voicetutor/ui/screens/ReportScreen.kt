@@ -38,7 +38,7 @@ private fun formatDate(dateString: String): String {
 @Composable
 fun ReportScreen(
     studentId: Int? = null,
-    onNavigateToAssignmentReport: (Int) -> Unit = {}
+    onNavigateToAssignmentReport: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -78,16 +78,6 @@ fun ReportScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            // Header
-            Text(
-                text = "리포트",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Gray800
-            )
-        }
-        
         // Loading indicator
         if (isLoading) {
             item {
@@ -129,9 +119,8 @@ fun ReportScreen(
                 AssignmentReportCard(
                     assignment = assignment,
                     onReportClick = { 
-                        // assignmentId를 전달 (personalAssignmentId가 있으면 사용, 아니면 id 사용)
-                        val assignmentIdToNavigate = assignment.personalAssignmentId ?: assignment.id
-                        onNavigateToAssignmentReport(assignmentIdToNavigate)
+                        // 과제 제목을 전달
+                        onNavigateToAssignmentReport(assignment.title)
                     }
                 )
             }
@@ -160,26 +149,6 @@ fun AssignmentReportCard(
             )
             
             Spacer(modifier = Modifier.height(8.dp))
-            
-            // 반 정보
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Class,
-                    contentDescription = null,
-                    tint = PrimaryIndigo,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = assignment.courseClass.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(4.dp))
             
             // 완료일
             Row(

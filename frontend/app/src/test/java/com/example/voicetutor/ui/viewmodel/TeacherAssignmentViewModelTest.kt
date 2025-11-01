@@ -120,10 +120,10 @@ class TeacherAssignmentViewModelTest {
         // 목록 새로고침 시 빈 리스트로 가정
         whenever(repository.getAllAssignments(null, null, null)).thenReturn(Result.success(emptyList()))
 
-        // when: PDF 포함 과제 생성을 호출하면
+        // when: PDF 포함 과제 생성을 호출하면 (totalNumber를 명시적으로 전달)
         viewModel.isUploading.test {
             assert(awaitItem() == false)
-            viewModel.createAssignmentWithPdf(request, pdf)
+            viewModel.createAssignmentWithPdf(request, pdf, totalNumber = 1)
             runCurrent()
             // then: 업로드 상태 전이는 별도 테스트에서 상세 검증(여기서는 호출 여부 위주)
             cancelAndIgnoreRemainingEvents()

@@ -30,7 +30,7 @@ import com.example.voicetutor.ui.viewmodel.StudentViewModel
 @Composable
 fun AllStudentsScreen(
     teacherId: String = "1", // 임시로 기본값 설정
-    onNavigateToStudentDetail: (String) -> Unit = {},
+    onNavigateToStudentDetail: (Int) -> Unit = {},
     onNavigateToMessage: (String) -> Unit = {}
 ) {
     val viewModel: StudentViewModel = hiltViewModel()
@@ -116,7 +116,7 @@ fun AllStudentsScreen(
                         color = Color.White.copy(alpha = 0.9f)
                     )
                     Text(
-                        text = "총 ${totalStudents}명의 학생 (교사 ID: $teacherId)",
+                        text = "총 ${totalStudents}명의 학생",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -241,7 +241,7 @@ fun AllStudentsScreen(
             items(filteredStudents) { student ->
                 AllStudentsCard(
                     student = student,
-                    onStudentClick = { onNavigateToStudentDetail(student.name) },
+                    onStudentClick = { onNavigateToStudentDetail(student.id) },
                     onMessageClick = { onNavigateToMessage(student.name) }
                 )
             }

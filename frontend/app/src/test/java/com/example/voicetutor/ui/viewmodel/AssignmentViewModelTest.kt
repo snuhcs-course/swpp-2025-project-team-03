@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.example.voicetutor.data.models.AssignmentData
 import com.example.voicetutor.data.models.CourseClass
 import com.example.voicetutor.data.models.Subject
+import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.network.CreateAssignmentRequest
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.testing.MainDispatcherRule
@@ -125,6 +126,147 @@ class AssignmentViewModelTest {
 
         Mockito.verify(assignmentRepository, times(1))
             .completePersonalAssignment(personalAssignmentId)
+    }
+
+    @Test
+    fun loadStudentAssignments_success_updatesAssignmentsAndCalculatesStats() = runTest {
+        // Given
+        val assignments = listOf(buildAssignment(1), buildAssignment(2))
+        Mockito.`when`(assignmentRepository.getAllAssignments())
+            .thenReturn(Result.success(assignments))
+
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        // When
+        viewModel.assignments.test {
+            awaitItem() // initial
+            viewModel.loadStudentAssignments(studentId = 123)
+            runCurrent()
+
+            // Then
+            val next = awaitItem()
+            assert(next == assignments)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        Mockito.verify(assignmentRepository, times(1)).getAllAssignments()
+    }
+
+    @Test
+    fun loadStudentAssignments_failure_setsError() = runTest {
+        // Given
+        Mockito.`when`(assignmentRepository.getAllAssignments())
+            .thenReturn(Result.failure(Exception("Network error")))
+
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        // When
+        viewModel.error.test {
+            awaitItem() // initial null
+            viewModel.loadStudentAssignments(studentId = 123)
+            runCurrent()
+
+            // Then
+            val error = awaitItem()
+            assert(error?.contains("Network error") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentById_success_updatesCurrentAssignment() = runTest {
+        // Given
+        val assignment = buildAssignment(1)
+        Mockito.`when`(assignmentRepository.getAssignmentById(1))
+            .thenReturn(Result.success(assignment))
+
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        // When
+        viewModel.currentAssignment.test {
+            assert(awaitItem() == null)
+            viewModel.loadAssignmentById(1)
+            runCurrent()
+
+            // Then
+            assert(awaitItem() == assignment)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        Mockito.verify(assignmentRepository, times(1)).getAssignmentById(1)
+    }
+
+    @Test
+    fun loadPersonalAssignmentStatistics_success_updatesStatistics() = runTest {
+        // Given
+        val statistics = PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 7,
+            correctAnswers = 5,
+            accuracy = 0.71f,
+            totalProblem = 8,
+            solvedProblem = 6,
+            progress = 0.75f
+        )
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(26))
+            .thenReturn(Result.success(statistics))
+
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        // When
+        viewModel.personalAssignmentStatistics.test {
+            assert(awaitItem() == null)
+            viewModel.loadPersonalAssignmentStatistics(26)
+            runCurrent()
+
+            // Then
+            assert(awaitItem() == statistics)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        Mockito.verify(assignmentRepository, times(1)).getPersonalAssignmentStatistics(26)
+    }
+
+    @Test
+    fun setAssignmentCompleted_setsCompletedState() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        // When
+        viewModel.isAssignmentCompleted.test {
+            assert(!awaitItem()) // initial false
+            
+            viewModel.setAssignmentCompleted(true)
+            
+            // Then
+            assert(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun isLoading_loadingOperation_setsTrueThenFalse() = runTest {
+        // Given
+        Mockito.`when`(assignmentRepository.getAllAssignments(null, null, null))
+            .thenReturn(Result.success(emptyList()))
+
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        // When
+        viewModel.isLoading.test {
+            assert(!awaitItem()) // initial false
+            
+            viewModel.loadAllAssignments()
+            runCurrent()
+
+            // Then: 로딩 상태 변경 확인
+            val states = mutableListOf<Boolean>()
+            states.add(awaitItem())
+            states.add(awaitItem())
+            // 최소 한 번은 true여야 함
+            assert(states.any { it })
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }
 

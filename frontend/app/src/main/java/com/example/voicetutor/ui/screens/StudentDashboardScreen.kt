@@ -72,11 +72,12 @@ fun StudentDashboardScreen(
         }
     }
     
-    // Load student assignments and dashboard data on first composition
+    // Load student assignments and dashboard data on first composition or when returning to screen
+    // 화면이 컴포즈될 때마다 재로딩
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
             // 학생별 해야 할 과제만 조회 (시작 안함 + 진행 중)
-            println("StudentDashboard - Loading pending assignments for student ID: ${user.id}")
+            println("StudentDashboard - Loading/Reloading pending assignments for student ID: ${user.id}")
             viewModelAssignment.loadPendingStudentAssignments(user.id)
         }
     }

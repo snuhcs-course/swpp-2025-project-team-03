@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -23,17 +24,46 @@ import com.example.voicetutor.data.models.UserRole
 @Composable
 fun SettingsScreen(
     userRole: UserRole = UserRole.STUDENT,
+    studentId: Int? = null,
     onLogout: () -> Unit = {},
-    onNavigateToServerSettings: () -> Unit = {},
     navController: androidx.navigation.NavHostController? = null
 ) {
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
+    val studentViewModel: com.example.voicetutor.ui.viewmodel.StudentViewModel = hiltViewModel()
     val currentUserState = authViewModel.currentUser.collectAsStateWithLifecycle()
     val isLoadingState = authViewModel.isLoading.collectAsStateWithLifecycle()
     val errorState = authViewModel.error.collectAsStateWithLifecycle()
     val currentUser = currentUserState.value
-    val isLoading = isLoadingState.value
-    val error = errorState.value
+    
+    // 학생 정보를 로드하는 경우
+    val studentState = studentViewModel.currentStudent.collectAsStateWithLifecycle()
+    val studentLoadingState = studentViewModel.isLoading.collectAsStateWithLifecycle()
+    val studentErrorState = studentViewModel.error.collectAsStateWithLifecycle()
+    
+    // studentId가 있으면 해당 학생 정보 로드
+    LaunchedEffect(studentId) {
+        studentId?.let { id ->
+            println("SettingsScreen - Loading student info for ID: $id")
+            studentViewModel.loadStudentById(id)
+        }
+    }
+    
+    val displayedStudent = studentState.value
+    val isLoading = if (studentId != null) studentLoadingState.value else isLoadingState.value
+    val error = if (studentId != null) studentErrorState.value else errorState.value
+    
+    // 표시할 사용자 정보 결정 (학생 정보가 있으면 학생 정보, 없으면 현재 사용자)
+    val displayUser = if (studentId != null && displayedStudent != null) {
+        // Student 모델을 User 모델로 변환
+        com.example.voicetutor.data.models.User(
+            id = displayedStudent.id,
+            email = displayedStudent.email,
+            name = displayedStudent.name ?: "이름 없음",
+            role = displayedStudent.role
+        )
+    } else {
+        currentUser
+    }
     
     Column(
         modifier = Modifier
@@ -131,7 +161,14 @@ fun SettingsScreen(
                             
                             VTButton(
                                 text = "다시 시도",
-                                onClick = { authViewModel.clearError() },
+                                onClick = { 
+                                    if (studentId != null) {
+                                        studentViewModel.clearError()
+                                        studentViewModel.loadStudentById(studentId)
+                                    } else {
+                                        authViewModel.clearError()
+                                    }
+                                },
                                 variant = ButtonVariant.Outline,
                                 size = ButtonSize.Small
                             )
@@ -149,7 +186,7 @@ fun SettingsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = currentUser?.initial ?: "?",
+                                text = displayUser?.initial ?: "?",
                                 style = MaterialTheme.typography.titleLarge,
                                 color = PrimaryIndigo,
                                 fontWeight = FontWeight.Bold
@@ -160,18 +197,18 @@ fun SettingsScreen(
                         
                         Column {
                             Text(
-                                text = currentUser?.name ?: "사용자",
+                                text = displayUser?.name ?: "사용자",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Gray800
                             )
                             Text(
-                                text = currentUser?.email ?: "이메일 없음",
+                                text = displayUser?.email ?: "이메일 없음",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Gray600
                             )
                             Text(
-                                text = when (currentUser?.role) {
+                                text = when (displayUser?.role) {
                                     com.example.voicetutor.data.models.UserRole.TEACHER -> "선생님"
                                     com.example.voicetutor.data.models.UserRole.STUDENT -> "학생"
                                     null -> "역할 없음"
@@ -197,18 +234,6 @@ fun SettingsScreen(
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                SettingsItem(
-                    icon = Icons.Filled.Settings,
-                    title = "서버 설정",
-                    subtitle = "API 서버 연결 설정",
-                    onClick = onNavigateToServerSettings
-                )
-                
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = Gray200
-                )
                 
                 SettingsItem(
                     icon = Icons.Filled.Notifications,

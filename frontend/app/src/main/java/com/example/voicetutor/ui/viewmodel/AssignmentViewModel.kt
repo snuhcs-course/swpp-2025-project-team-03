@@ -107,17 +107,18 @@ class AssignmentViewModel @Inject constructor(
     // 과제 완료 상태
     private val _isAssignmentCompleted = MutableStateFlow(false)
     val isAssignmentCompleted: StateFlow<Boolean> = _isAssignmentCompleted.asStateFlow()
-
-    // 최근 개인 과제 ID (탭에서 바로 진입할 때 사용)
-    private val _recentPersonalAssignmentId = MutableStateFlow<Int?>(null)
-    val recentPersonalAssignmentId: StateFlow<Int?> = _recentPersonalAssignmentId.asStateFlow()
-
-    // 상세 화면용 선택된 ID들 (assignment.id 와 personalAssignment.id)
+    
+    // 선택된 과제 ID들 (네비게이션용)
     private val _selectedAssignmentId = MutableStateFlow<Int?>(null)
     val selectedAssignmentId: StateFlow<Int?> = _selectedAssignmentId.asStateFlow()
-
+    
     private val _selectedPersonalAssignmentId = MutableStateFlow<Int?>(null)
     val selectedPersonalAssignmentId: StateFlow<Int?> = _selectedPersonalAssignmentId.asStateFlow()
+    
+    fun setSelectedAssignmentIds(assignmentId: Int, personalAssignmentId: Int?) {
+        _selectedAssignmentId.value = assignmentId
+        _selectedPersonalAssignmentId.value = personalAssignmentId
+    }
     
     fun loadAllAssignments(teacherId: String? = null, classId: String? = null, status: AssignmentStatus? = null) {
         viewModelScope.launch {
@@ -586,11 +587,12 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
-    fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File) {
+    fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File, totalNumber: Int = 5) {
         println("=== AssignmentViewModel.createAssignmentWithPdf 시작 ===")
         println("PDF 파일: ${pdfFile.name}")
         println("파일 크기: ${pdfFile.length()} bytes")
         println("파일 존재: ${pdfFile.exists()}")
+        println("문제 개수 (totalNumber): $totalNumber")
         
         viewModelScope.launch {
             _isLoading.value = true
@@ -618,7 +620,7 @@ class AssignmentViewModel @Inject constructor(
                             id = createResponse.assignment_id,
                             title = assignment.title,
                             description = assignment.description,
-                            totalQuestions = assignment.questions?.size ?: 0,
+                            totalQuestions = totalNumber,
                             createdAt = "", // 서버에서 받아올 수 있음
                             visibleFrom = "",
                             dueAt = assignment.due_at,
@@ -647,7 +649,7 @@ class AssignmentViewModel @Inject constructor(
                                 _isUploading.value = false
 
                                 // 3. 업로드 완료 직후 기본 문제 생성 트리거
-                                val totalNumber = assignment.questions?.size ?: 5
+                                // totalNumber 파라미터 사용 (사용자가 입력한 문제 개수)
                                 println("3단계: 기본 문제 생성 트리거 - totalNumber=$totalNumber")
                                 viewModelScope.launch {
                                     assignmentRepository.createQuestionsAfterUpload(
@@ -725,79 +727,59 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
-    fun saveAssignmentDraft(assignmentId: Int, draftContent: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            assignmentRepository.saveAssignmentDraft(assignmentId, draftContent)
-                .onSuccess {
-                    // Draft saved successfully
-                    println("Draft saved for assignment $assignmentId")
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
-            _isLoading.value = false
-        }
-    }
+    // TODO: Implement if needed
+    // fun saveAssignmentDraft(assignmentId: Int, draftContent: String) {
+    //     viewModelScope.launch {
+    //         _isLoading.value = true
+    //         _error.value = null
+    //         
+    //         assignmentRepository.saveAssignmentDraft(assignmentId, draftContent)
+    //             .onSuccess {
+    //                 // Draft saved successfully
+    //                 println("Draft saved for assignment $assignmentId")
+    //             }
+    //             .onFailure { exception ->
+    //                 _error.value = exception.message
+    //             }
+    //         _isLoading.value = false
+    //     }
+    // }
     
-    fun loadAssignmentResults(id: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            assignmentRepository.getAssignmentResults(id)
-                .onSuccess { results ->
-                    _assignmentResults.value = results
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
-            
-            _isLoading.value = false
-        }
-    }
-
-    fun loadRecentPersonalAssignment(studentId: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            assignmentRepository.getRecentPersonalAssignment(studentId)
-                .onSuccess { id ->
-                    _recentPersonalAssignmentId.value = id
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
-            _isLoading.value = false
-        }
-    }
-
-    fun setSelectedAssignmentIds(assignmentId: Int?, personalAssignmentId: Int?) {
-        _selectedAssignmentId.value = assignmentId
-        _selectedPersonalAssignmentId.value = personalAssignmentId
-        // Preload data to avoid timing/navigation issues
-        assignmentId?.let { id -> loadAssignmentById(id) }
-        personalAssignmentId?.let { pid -> loadPersonalAssignmentStatistics(pid) }
-    }
+    // TODO: Implement if needed
+    // fun loadAssignmentResults(id: Int) {
+    //     viewModelScope.launch {
+    //         _isLoading.value = true
+    //         _error.value = null
+    //         
+    //         assignmentRepository.getAssignmentResults(id)
+    //             .onSuccess { results ->
+    //                 _assignmentResults.value = results
+    //             }
+    //             .onFailure { exception ->
+    //                 _error.value = exception.message
+    //             }
+    //         
+    //         _isLoading.value = false
+    //     }
+    // }
     
-    fun loadAssignmentQuestions(id: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            assignmentRepository.getAssignmentQuestions(id)
-                .onSuccess { questions ->
-                    _assignmentQuestions.value = questions
-                }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
-            
-            _isLoading.value = false
-        }
-    }
+    // TODO: Implement if needed
+    // fun loadAssignmentQuestions(id: Int) {
+    //     viewModelScope.launch {
+    //         _isLoading.value = true
+    //         _error.value = null
+    //         
+    //         assignmentRepository.getAssignmentQuestions(id)
+    //             .onSuccess { questions ->
+    //                 _assignmentQuestions.value = questions
+    //             }
+    //             .onFailure { exception ->
+    //                 _error.value = exception.message
+    //             }
+    //         
+    //         _isLoading.value = false
+    //     }
+    // }
     
     fun submitAssignment(id: Int, submission: AssignmentSubmissionRequest) {
         viewModelScope.launch {
@@ -962,12 +944,32 @@ class AssignmentViewModel @Inject constructor(
                                 if (message.contains("모든 문제를 완료했습니다") || 
                                     message.contains("No more questions")) {
                                     println("AssignmentViewModel - All questions completed! Message: $message")
-                                    _personalAssignmentQuestions.value = emptyList()
-                                    _currentQuestionIndex.value = 0
-                                    _error.value = null
                                     
-                                    // 과제 완료 처리
-                                    completeAssignment(personalAssignmentId)
+                                    // 통계를 먼저 다시 로드하여 최신 상태 확인
+                                    assignmentRepository.getPersonalAssignmentStatistics(personalAssignmentId)
+                                        .onSuccess { stats ->
+                                            println("AssignmentViewModel - Statistics: totalProblem=${stats.totalProblem}, solvedProblem=${stats.solvedProblem}")
+                                            
+                                            // totalProblem과 solvedProblem이 같을 때만 완료 처리
+                                            if (stats.totalProblem == stats.solvedProblem) {
+                                                println("AssignmentViewModel - All problems solved, completing assignment")
+                                                _personalAssignmentQuestions.value = emptyList()
+                                                _currentQuestionIndex.value = 0
+                                                _error.value = null
+                                                _personalAssignmentStatistics.value = stats
+                                                
+                                                // 과제 완료 처리
+                                                completeAssignment(personalAssignmentId)
+                                            } else {
+                                                println("AssignmentViewModel - Not all problems solved yet (totalProblem=${stats.totalProblem}, solvedProblem=${stats.solvedProblem})")
+                                                _personalAssignmentStatistics.value = stats
+                                                _error.value = "아직 모든 문제를 완료하지 못했습니다. (${stats.solvedProblem}/${stats.totalProblem})"
+                                            }
+                                        }
+                                        .onFailure { statsException ->
+                                            println("AssignmentViewModel - Failed to load statistics: ${statsException.message}")
+                                            _error.value = "통계를 확인할 수 없습니다: ${statsException.message}"
+                                        }
                                 } else {
                                     println("AssignmentViewModel - Other error: $message")
                                     _error.value = exception.message
@@ -1014,10 +1016,29 @@ class AssignmentViewModel @Inject constructor(
                         // "No more questions" 에러인지 확인
                         if (exception.message?.contains("No more questions") == true || 
                             exception.message?.contains("모든 문제를 완료했습니다") == true) {
-                            println("AssignmentViewModel - All questions completed - setting empty list")
-                            // 모든 문제가 완료된 경우 빈 리스트로 설정하여 UI가 완료 화면을 표시하도록 함
-                            _personalAssignmentQuestions.value = emptyList()
-                            _error.value = null // 에러를 클리어하여 완료 상태로 처리
+                            println("AssignmentViewModel - All questions completed - checking statistics")
+                            
+                            // 통계를 확인하여 모든 문제가 해결되었는지 확인
+                            assignmentRepository.getPersonalAssignmentStatistics(personalAssignmentId)
+                                .onSuccess { stats ->
+                                    println("AssignmentViewModel - Statistics: totalProblem=${stats.totalProblem}, solvedProblem=${stats.solvedProblem}")
+                                    
+                                    // totalProblem과 solvedProblem이 같을 때만 완료 상태로 설정
+                                    if (stats.totalProblem == stats.solvedProblem) {
+                                        println("AssignmentViewModel - All problems solved - setting empty list")
+                                        _personalAssignmentQuestions.value = emptyList()
+                                        _error.value = null
+                                        _personalAssignmentStatistics.value = stats
+                                    } else {
+                                        println("AssignmentViewModel - Not all problems solved yet (totalProblem=${stats.totalProblem}, solvedProblem=${stats.solvedProblem})")
+                                        _personalAssignmentStatistics.value = stats
+                                        _error.value = "아직 모든 문제를 완료하지 못했습니다. (${stats.solvedProblem}/${stats.totalProblem})"
+                                    }
+                                }
+                                .onFailure { statsException ->
+                                    println("AssignmentViewModel - Failed to load statistics: ${statsException.message}")
+                                    _error.value = "통계를 확인할 수 없습니다: ${statsException.message}"
+                                }
                         } else {
                             _error.value = exception.message
                             println("AssignmentViewModel - Failed to load next question: ${exception.message}")
@@ -1085,19 +1106,31 @@ class AssignmentViewModel @Inject constructor(
         }
     }
     
-    fun submitAnswer(studentId: Int, questionId: Int, audioFile: File) {
+    fun submitAnswer(personalAssignmentId: Int, studentId: Int, questionId: Int, audioFile: File) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             
             // 오디오 녹음 상태를 처리 중으로 설정 (SimpleRecordingState에는 isProcessing 필드가 없음)
             
-            assignmentRepository.submitAnswer(studentId, questionId, audioFile)
+            assignmentRepository.submitAnswer(personalAssignmentId, studentId, questionId, audioFile)
                 .onSuccess { response ->
                     _answerSubmissionResponse.value = response
                     
                     println("AssignmentViewModel - Answer submitted successfully")
                     println("AssignmentViewModel - isCorrect: ${response.isCorrect}, numberStr: ${response.numberStr}")
+                    
+                    // 답변 제출 후 통계 갱신 (solved_problem 업데이트 확인용)
+                    assignmentRepository.getPersonalAssignmentStatistics(personalAssignmentId)
+                        .onSuccess { stats ->
+                            println("AssignmentViewModel - Statistics updated after answer submission:")
+                            println("  - solvedProblem: ${stats.solvedProblem}")
+                            println("  - totalProblem: ${stats.totalProblem}")
+                            _personalAssignmentStatistics.value = stats
+                        }
+                        .onFailure { statsException ->
+                            println("AssignmentViewModel - Failed to reload statistics: ${statsException.message}")
+                        }
                 }
                 .onFailure { exception ->
                     _error.value = exception.message

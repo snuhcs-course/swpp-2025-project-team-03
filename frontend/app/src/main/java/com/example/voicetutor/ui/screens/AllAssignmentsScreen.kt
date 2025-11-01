@@ -40,8 +40,7 @@ fun AllAssignmentsScreen(
     teacherId: String? = null,
     onNavigateToAssignmentResults: (String) -> Unit = {},
     onNavigateToEditAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToAssignment: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
@@ -106,11 +105,6 @@ fun AllAssignmentsScreen(
                 text = "총 ${assignments.size}개의 과제",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Gray600
-            )
-            Text(
-                text = "교사 ID: $actualTeacherId",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray500
             )
         }
         
@@ -183,7 +177,7 @@ fun AllAssignmentsScreen(
                 assignments.forEach { assignment ->
                     AssignmentCard(
                         assignment = assignment,
-                        onAssignmentClick = { onNavigateToAssignmentDetail(assignment.id.toString()) },
+                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
                         onEditClick = { onNavigateToEditAssignment("${assignment.courseClass.subject.name} - ${assignment.title}") },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
                         onViewResults = { onNavigateToAssignmentResults("${assignment.courseClass.subject.name} - ${assignment.title}") }
@@ -291,7 +285,7 @@ fun AssignmentCard(
                 VTButton(
                     text = "결과 보기",
                     onClick = onViewResults,
-                    variant = ButtonVariant.Outline,
+                    variant = ButtonVariant.Primary,
                     size = ButtonSize.Small,
                     modifier = Modifier.weight(1f)
                 )
@@ -303,17 +297,6 @@ fun AssignmentCard(
                     size = ButtonSize.Small,
                     modifier = Modifier.weight(1f)
                 )
-                
-                IconButton(
-                    onClick = { onDeleteClick(assignment.id) }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "삭제",
-                        tint = Error,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
             }
         }
     }

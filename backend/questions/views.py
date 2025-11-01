@@ -2,7 +2,9 @@ import tempfile
 
 import boto3
 from assignments.models import Assignment, Material
+from boto3.s3.transfer import TransferConfig
 from django.conf import settings
+from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
 from httpx import NetworkError, TimeoutException
 from openai import OpenAIError
@@ -39,14 +41,16 @@ class QuestionCreateView(APIView):
         },
     )
     def post(self, request):
-        serializer = QuestionCreateRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        try:
+            serializer = QuestionCreateRequestSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            data = serializer.validated_data
 
-        assignment_id = data["assignment_id"]
-        material_id = data["material_id"]
+            assignment_id = data["assignment_id"]
+            material_id = data["material_id"]
+        except Exception as e:
+            return Response({"error": f"요청 데이터 검증 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Assignment, Material 가져오기
         try:
             assignment = Assignment.objects.get(id=assignment_id)
         except Assignment.DoesNotExist:
@@ -62,6 +66,8 @@ class QuestionCreateView(APIView):
                 summarized_text = material.summary
             else:
                 s3_key = material.s3_key
+                transfer_config = TransferConfig(use_threads=False)
+
                 s3 = boto3.client(
                     "s3",
                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -70,12 +76,22 @@ class QuestionCreateView(APIView):
                 )
 
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-                    s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp)
-                    tmp.flush()
-                    local_pdf = tmp.name
+                    try:
+                        s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp, Config=transfer_config)
+                        tmp.flush()
+                        local_pdf = tmp.name
+                    except RuntimeError as e:
+                        if "cannot schedule" in str(e).lower() or "interpreter shutdown" in str(e).lower():
+                            raise RuntimeError(f"S3 파일 다운로드 중 서버 오류: {e}")
+                        raise
 
                 try:
                     summarized_text = summarize_pdf_from_s3(local_pdf)
+                except RuntimeError as e:
+                    if "cannot schedule" in str(e).lower() or "interpreter shutdown" in str(e).lower():
+                        error_msg = "PDF 요약 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+                        return Response({"error": error_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    raise
                 except TimeoutException:
                     return Response({"error": "OpenAI API timeout 발생"}, status=500)
                 except OpenAIError as e:
@@ -83,52 +99,75 @@ class QuestionCreateView(APIView):
                 except NetworkError as e:
                     return Response({"error": f"네트워크 오류: {e}"}, status=500)
                 except Exception as e:
-                    return Response({"error": f"예상치 못한 오류: {e}"}, status=500)
+                    error_message = str(e)
+                    if "poppler" in error_message.lower():
+                        return Response({"error": error_message}, status=500)
+                    return Response({"error": f"예상치 못한 오류: {error_message}"}, status=500)
 
                 material.summary = summarized_text
                 material.save()
 
-            quizzes = generate_base_quizzes(summarized_text, n=data["total_number"])
+            try:
+                quizzes = generate_base_quizzes(summarized_text, n=data["total_number"])
+            except RuntimeError as e:
+                if "interpreter shutdown" in str(e).lower() or "cannot schedule" in str(e).lower():
+                    error_msg = "문제 생성 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+                    return Response({"error": error_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise
+            except Exception as e:
+                error_msg = f"문제 생성 실패: {str(e)}"
+                return Response({"error": error_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            # 해당 assignment에 연결된 모든 personal assignment들 가져오기
             personal_assignments = PersonalAssignment.objects.filter(assignment=assignment)
 
             if not personal_assignments.exists():
-                return Response(
-                    {"error": "No personal assignments found for this assignment"}, status=status.HTTP_400_BAD_REQUEST
-                )
+                error_msg = f"No personal assignments found for assignment {assignment_id}"
+                return Response({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 기존 base question 존재 시 재요청 차단
+            for personal_assignment in personal_assignments:
+                if Question.objects.filter(personal_assignment=personal_assignment, recalled_num=0).exists():
+                    return Response(
+                        {
+                            "error": "Base question already exists",
+                            "message": f"Assignment {assignment_id}에 대한 base question이 이미 존재합니다. 재생성은 지원하지 않습니다.",
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
             created_questions = []
             total_questions_created = 0
 
-            # 각 personal assignment에 대해 질문 생성
-            for personal_assignment in personal_assignments:
-                for i, quiz in enumerate(quizzes, 1):
-                    q = Question.objects.create(
-                        personal_assignment=personal_assignment,
-                        number=i,
-                        content=quiz.question,
-                        recalled_num=0,
-                        explanation=quiz.explanation,
-                        model_answer=quiz.model_answer,
-                        difficulty=quiz.difficulty.lower(),
-                    )
-                    total_questions_created += 1
+            with transaction.atomic():
+                for personal_assignment in personal_assignments:
+                    for i, quiz in enumerate(quizzes, 1):
+                        try:
+                            q = Question.objects.create(
+                                personal_assignment=personal_assignment,
+                                number=i,
+                                content=quiz.question,
+                                recalled_num=0,
+                                explanation=quiz.explanation,
+                                model_answer=quiz.model_answer,
+                                difficulty=quiz.difficulty.lower(),
+                            )
+                            total_questions_created += 1
+                        except Exception as q_error:
+                            raise
 
-                    # 첫 번째 personal assignment의 질문들만 응답에 포함
-                    if personal_assignment == personal_assignments.first():
-                        created_questions.append(
-                            {
-                                "id": q.id,
-                                "number": q.number,
-                                "question": q.content,
-                                "answer": q.model_answer,
-                                "explanation": q.explanation,
-                                "difficulty": q.difficulty,
-                            }
-                        )
+                        # 첫 번째 personal assignment만 응답에 포함
+                        if personal_assignment == personal_assignments.first():
+                            created_questions.append(
+                                {
+                                    "id": q.id,
+                                    "number": q.number,
+                                    "question": q.content,
+                                    "answer": q.model_answer,
+                                    "explanation": q.explanation,
+                                    "difficulty": q.difficulty,
+                                }
+                            )
 
-            # 모든 작업이 성공적으로 완료된 후 assignment의 total_questions 업데이트
             assignment.total_questions = data["total_number"]
             assignment.save()
 
@@ -143,4 +182,10 @@ class QuestionCreateView(APIView):
             )
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+
+            error_traceback = traceback.format_exc()
+            return Response(
+                {"error": f"서버 오류: {str(e)}", "detail": error_traceback if settings.DEBUG else None},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

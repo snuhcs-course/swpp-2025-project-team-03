@@ -35,13 +35,19 @@ fun TeacherAssignmentDetailScreen(
     val assignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     
     // Find assignment by title from the assignments list
+    // "과목 - 제목" 형식도 처리 가능하도록 수정
     val targetAssignment = remember(assignments, assignmentTitle) {
-        assignments.find { it.title == assignmentTitle }
+        assignments.find { 
+            it.title == assignmentTitle || 
+            "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
+            assignmentTitle.contains(it.title)
+        }
     }
     
     // 동적 과제 제목 가져오기
-    val dynamicAssignmentTitle = assignment?.title ?: assignmentTitle
-    val assignmentResults by viewModel.assignmentResults.collectAsStateWithLifecycle()
+    val dynamicAssignmentTitle = assignment?.title ?: (targetAssignment?.title ?: assignmentTitle)
+    // assignmentResults API가 제거되었으므로 빈 리스트 사용
+    val assignmentResults = remember { emptyList<StudentResult>() }
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
@@ -50,7 +56,8 @@ fun TeacherAssignmentDetailScreen(
         targetAssignment?.let { target ->
             println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
             viewModel.loadAssignmentById(target.id)
-            viewModel.loadAssignmentResults(target.id)
+            // loadAssignmentResults API가 제거되었으므로 주석 처리
+            // viewModel.loadAssignmentResults(target.id)
         }
     }
     
@@ -297,7 +304,7 @@ fun TeacherAssignmentDetailScreen(
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                recentSubmissions.forEach { submission ->
+                recentSubmissions.forEachIndexed { index, submission ->
                     VTCard(
                         variant = CardVariant.Elevated,
                         onClick = { /* TODO: Navigate to student detail */ }
@@ -351,7 +358,7 @@ fun TeacherAssignmentDetailScreen(
                         }
                     }
                     
-                    if (submission != recentSubmissions.last()) {
+                    if (index < recentSubmissions.size - 1) {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }

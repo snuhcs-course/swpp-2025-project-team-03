@@ -157,33 +157,7 @@ class AssignmentRepository @Inject constructor(
         }
     }
     
-    suspend fun getAssignmentResults(id: Int): Result<List<StudentResult>> {
-        return try {
-            val response = apiService.getAssignmentResults(id)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()?.data ?: emptyList())
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    suspend fun getAssignmentQuestions(id: Int): Result<List<QuestionData>> {
-        return try {
-            val response = apiService.getAssignmentQuestions(id)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()?.data ?: emptyList())
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    // removed: getAssignmentResults, getAssignmentQuestions
     
     suspend fun submitAssignment(
         id: Int,
@@ -202,19 +176,7 @@ class AssignmentRepository @Inject constructor(
         }
     }
     
-    suspend fun saveAssignmentDraft(assignmentId: Int, draftContent: String): Result<Unit> {
-        return try {
-            val response = apiService.saveAssignmentDraft(assignmentId, draftContent)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Failed to save draft"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    // removed: saveAssignmentDraft
     
     suspend fun uploadPdfToS3(uploadUrl: String, pdfFile: File): Result<Boolean> {
         return try {
@@ -438,12 +400,13 @@ class AssignmentRepository @Inject constructor(
         }
     
     suspend fun submitAnswer(
+        personalAssignmentId: Int,
         studentId: Int,
         questionId: Int,
         audioFile: File
     ): Result<AnswerSubmissionResponse> {
         return try {
-            println("AssignmentRepository - Submitting answer for student $studentId, question $questionId")
+            println("AssignmentRepository - Submitting answer for personal_assignment_id $personalAssignmentId, student $studentId, question $questionId")
             
             // Create multipart request body
             val requestBody = RequestBody.create(
@@ -466,11 +429,14 @@ class AssignmentRepository @Inject constructor(
                 questionId.toString()
             )
             
-            val response = apiService.submitAnswer(studentIdPart, questionIdPart, audioPart)
+            val response = apiService.submitAnswer(personalAssignmentId, studentIdPart, questionIdPart, audioPart)
             
             if (response.isSuccessful && response.body()?.success == true) {
                 val submissionResponse = response.body()?.data
                 println("AssignmentRepository - Answer submission successful: $submissionResponse")
+                println("AssignmentRepository - Parsed isCorrect value: ${submissionResponse?.isCorrect}")
+                println("AssignmentRepository - Parsed numberStr: ${submissionResponse?.numberStr}")
+                println("AssignmentRepository - Raw response body: ${response.body()}")
                 Result.success(submissionResponse ?: throw Exception("No submission data"))
             } else {
                 println("AssignmentRepository - Answer submission API error: ${response.body()?.error}")

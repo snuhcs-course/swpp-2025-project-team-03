@@ -81,8 +81,6 @@ fun CreateAssignmentScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            // 새 파일 선택 시 이전 업로드 상태 초기화
-            actualAssignmentViewModel.resetUploadState()
             println("=== PDF 파일 선택 디버그 ===")
             println("선택된 URI: $uri")
             println("URI 스키마: ${uri.scheme}")
@@ -130,7 +128,6 @@ fun CreateAssignmentScreen(
     var selectedGrade by remember { mutableStateOf("") }
     var selectedSubject by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf("") }
-    var timeLimit by remember { mutableStateOf("15") }
     var questionCount by remember { mutableStateOf("5") }
     var assignToAll by remember { mutableStateOf(true) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
@@ -139,8 +136,6 @@ fun CreateAssignmentScreen(
     
     // Load data on first composition
     LaunchedEffect(actualTeacherId) {
-        // 화면 진입 시 업로드 상태 초기화 (이전 화면의 성공 배너가 남는 현상 방지)
-        actualAssignmentViewModel.resetUploadState()
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
@@ -417,36 +412,19 @@ fun CreateAssignmentScreen(
                         )
                     )
                     
-                    // Due date and time limit
-                    Row(
+                    // Due date
+                    OutlinedTextField(
+                        value = dueDate,
+                        onValueChange = { dueDate = it },
+                        label = { Text("마감일") },
+                        placeholder = { Text("2024-01-15") },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = dueDate,
-                            onValueChange = { dueDate = it },
-                            label = { Text("마감일") },
-                            placeholder = { Text("2024-01-15") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Text,
-                                imeAction = ImeAction.Next
-                            ),
-                            singleLine = true
-                        )
-                        
-                        OutlinedTextField(
-                            value = timeLimit,
-                            onValueChange = { timeLimit = it },
-                            label = { Text("제한시간 (분)") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            singleLine = true
-                        )
-                    }
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true
+                    )
                 }
             }
         }
@@ -755,7 +733,7 @@ fun CreateAssignmentScreen(
         val isFormValid = assignmentTitle.isNotBlank() && assignmentDescription.isNotBlank() && 
             selectedClass.isNotBlank() && selectedClassId != null && 
             selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
-            dueDate.isNotBlank() && timeLimit.isNotBlank() && 
+            dueDate.isNotBlank() && 
             questionCount.isNotBlank() && selectedFiles.isNotEmpty()
         
         VTButton(
@@ -942,13 +920,17 @@ fun CreateAssignmentScreen(
                     println("selectedPdfFile != null: ${selectedPdfFile != null}")
                     println("selectedFiles.size: ${selectedFiles.size}")
                     
+                    // 문제 개수를 정수로 파싱 (기본값 5)
+                    val questionCountInt = questionCount.toIntOrNull() ?: 5
+                    println("문제 개수: $questionCountInt (입력값: $questionCount)")
+                    
                     // PDF 파일이 선택된 경우 PDF 업로드와 함께 과제 생성
                     val pdfFile = selectedPdfFile
                     if (pdfFile != null) {
                         println("✅ PDF 업로드와 함께 과제 생성")
                         println("PDF 파일: ${pdfFile.name}")
                         println("파일 크기: ${pdfFile.length()} bytes")
-                        actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile)
+                        actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile, totalNumber = questionCountInt)
                     } else {
                         // PDF 파일이 없는 경우 일반 과제 생성
                         println("❌ PDF 파일이 없음 - 일반 과제 생성")

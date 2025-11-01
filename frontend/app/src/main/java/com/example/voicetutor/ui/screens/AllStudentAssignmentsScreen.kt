@@ -42,7 +42,8 @@ private fun formatDueDate(dueDate: String): String {
 fun AllStudentAssignmentsScreen(
     studentId: Int,
     onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToAssignment: (String) -> Unit = {}
+    onNavigateToAssignment: (String) -> Unit = {},
+    onNavigateToAssignmentReport: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -66,7 +67,10 @@ fun AllStudentAssignmentsScreen(
                 PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
                 PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
                 PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
-                PersonalAssignmentFilter.GRADED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.GRADED)
+                PersonalAssignmentFilter.GRADED -> {
+                    // GRADED 필터는 UI에서 제거되었지만 enum에 존재하므로 처리 (사용되지 않음)
+                    // 실제로는 SUBMITTED와 동일하게 처리할 수 있지만 필터에서 선택 불가
+                }
             }
         }
     }
@@ -110,8 +114,7 @@ fun AllStudentAssignmentsScreen(
                 PersonalAssignmentFilter.ALL to "전체",
                 PersonalAssignmentFilter.NOT_STARTED to "시작 안함", 
                 PersonalAssignmentFilter.IN_PROGRESS to "진행 중",
-                PersonalAssignmentFilter.SUBMITTED to "제출됨",
-                PersonalAssignmentFilter.GRADED to "완료"
+                PersonalAssignmentFilter.SUBMITTED to "제출됨"
             )) { (filter, label) ->
                 FilterChip(
                     selected = selectedFilter == filter,
@@ -190,7 +193,8 @@ fun AllStudentAssignmentsScreen(
                             onNavigateToAssignment = { assignmentId ->
                                 val personalId = assignment.personalAssignmentId ?: assignment.id
                                 onNavigateToAssignment(personalId.toString())
-                            }
+                            },
+                            onNavigateToAssignmentReport = onNavigateToAssignmentReport
                         )
                     }
                 }
@@ -204,7 +208,8 @@ fun StudentAssignmentCard(
     assignment: AssignmentData,
     onClick: () -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToAssignment: (String) -> Unit = {}
+    onNavigateToAssignment: (String) -> Unit = {},
+    onNavigateToAssignmentReport: (String) -> Unit = {}
 ) {
     VTCard(
         variant = CardVariant.Elevated,
@@ -383,13 +388,13 @@ fun StudentAssignmentCard(
             
             // Action buttons
             if (assignment.personalAssignmentStatus != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // 시작 안함이나 진행 중인 경우 과제 시작과 과제 상세 버튼 표시
-                    if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED || 
-                        assignment.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS) {
+                // 시작 안함이나 진행 중인 경우 과제 시작과 과제 상세 버튼 표시
+                if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED || 
+                    assignment.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         VTButton(
                             text = "과제 시작",
                             onClick = { 
@@ -404,38 +409,29 @@ fun StudentAssignmentCard(
                         
                         VTButton(
                             text = "과제 상세",
-                        onClick = { 
-                            // personalAssignmentId가 있으면 그것을 사용해 상세 화면으로 이동
-                            val detailId = assignment.personalAssignmentId ?: assignment.id
-                            onNavigateToAssignmentDetail(detailId.toString()) 
-                        },
+                            onClick = { 
+                                // personalAssignmentId가 있으면 그것을 사용해 상세 화면으로 이동
+                                val detailId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignmentDetail(detailId.toString()) 
+                            },
                             variant = ButtonVariant.Outline,
                             size = ButtonSize.Small,
                             modifier = Modifier.weight(1f)
                         )
-                    } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.GRADED) {
-                        // 완료된 과제의 경우 리포트 보기 버튼 표시 (CompletedAssignmentsScreen 스타일)
-                        VTButton(
-                            text = "리포트 보기",
-                            onClick = { 
-                                // Assignment ID를 사용하여 과제 상세
-                                onNavigateToAssignmentDetail(assignment.id.toString()) 
-                            },
-                            variant = ButtonVariant.Primary,
-                            size = ButtonSize.Medium,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED) {
-                        // 제출된 과제의 경우 대기 상태 표시
-                        VTButton(
-                            text = "채점 대기",
-                            onClick = { },
-                            variant = ButtonVariant.Outline,
-                            size = ButtonSize.Small,
-                            modifier = Modifier.weight(1f),
-                            enabled = false
-                        )
                     }
+                } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.GRADED || 
+                           assignment.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED) {
+                    // 완료된 과제 또는 제출된 과제의 경우 리포트 보기 버튼 표시 (CompletedAssignmentsScreen 스타일)
+                    VTButton(
+                        text = "리포트 보기",
+                        onClick = { 
+                            // 리포트 화면으로 이동
+                            onNavigateToAssignmentReport(assignment.title)
+                        },
+                        variant = ButtonVariant.Primary,
+                        size = ButtonSize.Medium,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
