@@ -231,5 +231,51 @@ class MessageViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun loadMessages_failure_setsError() = runTest {
+        // Given: 저장소가 실패 반환
+        Mockito.`when`(messageRepository.getMessages(1, null, 50, 0))
+            .thenReturn(Result.failure(Exception("Network error")))
+
+        // When
+        viewModel.error.test {
+            awaitItem() // initial null
+            
+            viewModel.loadMessages(userId = 1)
+            runCurrent()
+
+            // Then: 에러 메시지 설정
+            val error = awaitItem()
+            assert(error?.contains("Network error") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Then: messages가 빈 리스트로 유지됨
+        viewModel.messages.test {
+            assert(awaitItem().isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun sendMessage_withMessageType_callsRepoWithType() = runTest {
+        // Given: messageType 파라미터와 함께 전송
+        val response = SendMessageResponse(
+            messageId = "123",
+            sentCount = 1,
+            failedCount = 0,
+            timestamp = System.currentTimeMillis()
+        )
+        Mockito.`when`(messageRepository.sendMessage(1, listOf(1), "Hello"))
+            .thenReturn(Result.success(response))
+
+        // When: 기본 messageType (TEXT) 사용
+        viewModel.sendMessage(teacherId = 1, studentIds = listOf(1), message = "Hello")
+        runCurrent()
+
+        // Then: 기본값으로 호출됨 (messageType 파라미터는 내부적으로 기본값 사용)
+        Mockito.verify(messageRepository, times(1)).sendMessage(1, listOf(1), "Hello")
+    }
 }
 

@@ -28,7 +28,12 @@ fun SettingsScreen(
     onLogout: () -> Unit = {},
     navController: androidx.navigation.NavHostController? = null
 ) {
-    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
+    // Use graph-scoped ViewModels if navController is available
+    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = if (navController != null) {
+        hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+    } else {
+        hiltViewModel()
+    }
     val studentViewModel: com.example.voicetutor.ui.viewmodel.StudentViewModel = hiltViewModel()
     val currentUserState = authViewModel.currentUser.collectAsStateWithLifecycle()
     val isLoadingState = authViewModel.isLoading.collectAsStateWithLifecycle()

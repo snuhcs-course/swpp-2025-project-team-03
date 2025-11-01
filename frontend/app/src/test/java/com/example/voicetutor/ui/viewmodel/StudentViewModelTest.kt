@@ -254,5 +254,131 @@ class StudentViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun loadStudentById_failure_setsError() = runTest {
+        // Given: 저장소가 실패 반환
+        Mockito.`when`(studentRepository.getStudentById(1))
+            .thenReturn(Result.failure(Exception("Student not found")))
+
+        // When
+        viewModel.error.test {
+            awaitItem() // initial null
+            
+            viewModel.loadStudentById(1)
+            runCurrent()
+
+            // Then: 에러 메시지 설정
+            val error = awaitItem()
+            assert(error?.contains("Student not found") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Then: currentStudent가 null로 유지됨
+        viewModel.currentStudent.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadStudentAssignments_failure_setsError() = runTest {
+        // Given: 저장소가 실패 반환
+        Mockito.`when`(studentRepository.getStudentAssignments(1))
+            .thenReturn(Result.failure(Exception("Failed to load assignments")))
+
+        // When
+        viewModel.error.test {
+            awaitItem() // initial null
+            
+            viewModel.loadStudentAssignments(1)
+            runCurrent()
+
+            // Then: 에러 메시지 설정
+            val error = awaitItem()
+            assert(error?.contains("Failed to load assignments") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Then: studentAssignments가 빈 리스트로 유지됨
+        viewModel.studentAssignments.test {
+            assert(awaitItem().isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadStudentProgress_failure_setsError() = runTest {
+        // Given: 저장소가 실패 반환
+        Mockito.`when`(studentRepository.getStudentProgress(1))
+            .thenReturn(Result.failure(Exception("Failed to load progress")))
+
+        // When
+        viewModel.error.test {
+            awaitItem() // initial null
+            
+            viewModel.loadStudentProgress(1)
+            runCurrent()
+
+            // Then: 에러 메시지 설정
+            val error = awaitItem()
+            assert(error?.contains("Failed to load progress") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Then: studentProgress가 null로 유지됨
+        viewModel.studentProgress.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAllStudents_withOnlyTeacherId_callsRepoWithTeacherId() = runTest {
+        // Given: teacherId만 전달
+        val students = listOf(
+            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT)
+        )
+        Mockito.`when`(studentRepository.getAllStudents("1", null))
+            .thenReturn(Result.success(students))
+
+        // When
+        viewModel.students.test {
+            awaitItem()
+            
+            viewModel.loadAllStudents(teacherId = "1")
+            runCurrent()
+
+            // Then
+            assert(awaitItem() == students)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        Mockito.verify(studentRepository, times(1)).getAllStudents("1", null)
+    }
+
+    @Test
+    fun loadAllStudents_withOnlyClassId_callsRepoWithClassId() = runTest {
+        // Given: classId만 전달
+        val students = listOf(
+            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT)
+        )
+        Mockito.`when`(studentRepository.getAllStudents(null, "10"))
+            .thenReturn(Result.success(students))
+
+        // When
+        viewModel.students.test {
+            awaitItem()
+            
+            viewModel.loadAllStudents(classId = "10")
+            runCurrent()
+
+            // Then
+            assert(awaitItem() == students)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        Mockito.verify(studentRepository, times(1)).getAllStudents(null, "10")
+    }
 }
 
