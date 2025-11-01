@@ -12,12 +12,20 @@ class TestQuestionCreateView(TestCase):
         """테스트 설정"""
         self.client = APIClient()
 
+    @patch("questions.views.transaction.atomic")
+    @patch("questions.views.Question.objects.filter")
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
     @patch("questions.views.PersonalAssignment.objects.filter")
     @patch("questions.views.generate_base_quizzes")
     def test_post_success_with_existing_summary(
-        self, mock_generate, mock_personal_assignment_filter, mock_material_get, mock_assignment_get
+        self,
+        mock_generate,
+        mock_personal_assignment_filter,
+        mock_material_get,
+        mock_assignment_get,
+        mock_question_filter,
+        mock_transaction,
     ):
         """summary가 있는 경우 성공 테스트"""
         # Given
@@ -36,19 +44,30 @@ class TestQuestionCreateView(TestCase):
         mock_personal_assignment2 = Mock()
         mock_personal_assignment2.id = 2
 
-        mock_personal_assignment_qs = Mock()
-        mock_personal_assignment_qs.exists.return_value = True
-        mock_personal_assignment_qs.count.return_value = 2
-        mock_personal_assignment_qs.first.return_value = mock_personal_assignment1
-        mock_personal_assignment_qs.__iter__ = Mock(
-            return_value=iter([mock_personal_assignment1, mock_personal_assignment2])
-        )
-        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
+        personal_assignments_list = [mock_personal_assignment1, mock_personal_assignment2]
+
+        from unittest.mock import MagicMock
+
+        mock_personal_assignment_qs_obj = MagicMock()
+        mock_personal_assignment_qs_obj.exists.return_value = True
+        mock_personal_assignment_qs_obj.count.return_value = 2
+        mock_personal_assignment_qs_obj.first.return_value = personal_assignments_list[0]
+        mock_personal_assignment_qs_obj.__iter__.side_effect = lambda: iter(personal_assignments_list)
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs_obj
+
+        mock_question_filter_qs = Mock()
+        mock_question_filter_qs.exists.return_value = False
+        mock_question_filter.return_value = mock_question_filter_qs
 
         mock_generate.return_value = [
             Mock(question="질문1", explanation="설명1", model_answer="답1", difficulty="EASY"),
             Mock(question="질문2", explanation="설명2", model_answer="답2", difficulty="MEDIUM"),
         ]
+
+        mock_transaction_context = Mock()
+        mock_transaction_context.__enter__ = Mock(return_value=None)
+        mock_transaction_context.__exit__ = Mock(return_value=False)
+        mock_transaction.return_value = mock_transaction_context
 
         request_data = {
             "assignment_id": 1,
@@ -121,8 +140,9 @@ class TestQuestionCreateView(TestCase):
         # Then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)
-        self.assertEqual(response.data["error"], "No personal assignments found for this assignment")
+        self.assertEqual(response.data["error"], "No personal assignments found for assignment 1")
 
+    @patch("questions.views.Question.objects.filter")
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
     @patch("questions.views.PersonalAssignment.objects.filter")
@@ -139,6 +159,7 @@ class TestQuestionCreateView(TestCase):
         mock_personal_assignment_filter,
         mock_material_get,
         mock_assignment_get,
+        mock_question_filter,
     ):
         """summary가 없는 경우 성공 테스트"""
         # Given
@@ -159,9 +180,13 @@ class TestQuestionCreateView(TestCase):
         mock_personal_assignment_qs = Mock()
         mock_personal_assignment_qs.exists.return_value = True
         mock_personal_assignment_qs.count.return_value = 1
-        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
+        mock_personal_assignment_qs.first = Mock(return_value=mock_personal_assignment)
         mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
         mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
+
+        mock_question_filter_qs = Mock()
+        mock_question_filter_qs.exists.return_value = False
+        mock_question_filter.return_value = mock_question_filter_qs
 
         mock_s3_client = Mock()
         mock_boto3.return_value = mock_s3_client
@@ -380,6 +405,7 @@ class TestQuestionCreateView(TestCase):
         # Then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    @patch("questions.views.Question.objects.filter")
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
     @patch("questions.views.PersonalAssignment.objects.filter")
@@ -396,6 +422,7 @@ class TestQuestionCreateView(TestCase):
         mock_personal_assignment_filter,
         mock_material_get,
         mock_assignment_get,
+        mock_question_filter,
     ):
         """빈 summary 문자열 처리 테스트"""
         # Given
@@ -416,9 +443,13 @@ class TestQuestionCreateView(TestCase):
         mock_personal_assignment_qs = Mock()
         mock_personal_assignment_qs.exists.return_value = True
         mock_personal_assignment_qs.count.return_value = 1
-        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
+        mock_personal_assignment_qs.first = Mock(return_value=mock_personal_assignment)
         mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
         mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
+
+        mock_question_filter_qs = Mock()
+        mock_question_filter_qs.exists.return_value = False
+        mock_question_filter.return_value = mock_question_filter_qs
 
         mock_s3_client = Mock()
         mock_boto3.return_value = mock_s3_client
@@ -456,6 +487,7 @@ class TestQuestionCreateView(TestCase):
             # S3 다운로드가 호출되었는지 확인 (빈 문자열이므로)
             mock_s3_client.download_fileobj.assert_called_once()
 
+    @patch("questions.views.Question.objects.filter")
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
     @patch("questions.views.PersonalAssignment.objects.filter")
@@ -472,6 +504,7 @@ class TestQuestionCreateView(TestCase):
         mock_personal_assignment_filter,
         mock_material_get,
         mock_assignment_get,
+        mock_question_filter,
     ):
         """None summary 처리 테스트"""
         # Given
@@ -492,9 +525,13 @@ class TestQuestionCreateView(TestCase):
         mock_personal_assignment_qs = Mock()
         mock_personal_assignment_qs.exists.return_value = True
         mock_personal_assignment_qs.count.return_value = 1
-        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
+        mock_personal_assignment_qs.first = Mock(return_value=mock_personal_assignment)
         mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
         mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
+
+        mock_question_filter_qs = Mock()
+        mock_question_filter_qs.exists.return_value = False
+        mock_question_filter.return_value = mock_question_filter_qs
 
         mock_s3_client = Mock()
         mock_boto3.return_value = mock_s3_client
@@ -532,12 +569,20 @@ class TestQuestionCreateView(TestCase):
             # S3 다운로드가 호출되었는지 확인 (None이므로)
             mock_s3_client.download_fileobj.assert_called_once()
 
+    @patch("questions.views.transaction.atomic")
+    @patch("questions.views.Question.objects.filter")
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
     @patch("questions.views.PersonalAssignment.objects.filter")
     @patch("questions.views.generate_base_quizzes")
     def test_question_creation_fields(
-        self, mock_generate, mock_personal_assignment_filter, mock_material_get, mock_assignment_get
+        self,
+        mock_generate,
+        mock_personal_assignment_filter,
+        mock_material_get,
+        mock_assignment_get,
+        mock_question_filter,
+        mock_transaction,
     ):
         """생성된 Question 객체의 필드 확인"""
         # Given
@@ -551,19 +596,32 @@ class TestQuestionCreateView(TestCase):
         mock_material_get.return_value = mock_material
 
         # PersonalAssignment Mock 설정
+        from unittest.mock import MagicMock
+
         mock_personal_assignment = Mock()
         mock_personal_assignment.id = 1
 
-        mock_personal_assignment_qs = Mock()
-        mock_personal_assignment_qs.exists.return_value = True
-        mock_personal_assignment_qs.count.return_value = 1
-        mock_personal_assignment_qs.first.return_value = mock_personal_assignment
-        mock_personal_assignment_qs.__iter__ = Mock(return_value=iter([mock_personal_assignment]))
-        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs
+        personal_assignments_list = [mock_personal_assignment]
+
+        mock_personal_assignment_qs_obj = MagicMock()
+        mock_personal_assignment_qs_obj.exists.return_value = True
+        mock_personal_assignment_qs_obj.count.return_value = 1
+        mock_personal_assignment_qs_obj.first.return_value = personal_assignments_list[0]
+        mock_personal_assignment_qs_obj.__iter__.side_effect = lambda: iter(personal_assignments_list)
+        mock_personal_assignment_filter.return_value = mock_personal_assignment_qs_obj
+
+        mock_question_filter_qs = Mock()
+        mock_question_filter_qs.exists.return_value = False
+        mock_question_filter.return_value = mock_question_filter_qs
 
         mock_generate.return_value = [
             Mock(question="테스트 질문", explanation="테스트 설명", model_answer="테스트 답", difficulty="HARD"),
         ]
+
+        mock_transaction_context = Mock()
+        mock_transaction_context.__enter__ = Mock(return_value=None)
+        mock_transaction_context.__exit__ = Mock(return_value=False)
+        mock_transaction.return_value = mock_transaction_context
 
         request_data = {
             "assignment_id": 1,

@@ -649,7 +649,7 @@ def generate_tail_question(question, model_answer, student_answer, eval_grade, r
     return payload
 
 
-def main():
+if __name__ == "__main__":  # pragma: no cover
     ap = argparse.ArgumentParser(description="Planner-only correctness; rule-based routing; always output correctness.")
     ap.add_argument("--question", "-q", type=str, default="호흡 운동에서 가슴이 부풀어 오르는 이유는 무엇인가요?")
     ap.add_argument(
@@ -674,7 +674,3 @@ def main():
     print(f"\nTotal time: {total_s:.2f}s")
 
     print(json.dumps(payload, ensure_ascii=False, indent=2))
-
-
-if __name__ == "__main__":
-    main()
