@@ -128,7 +128,6 @@ fun CreateAssignmentScreen(
     var selectedGrade by remember { mutableStateOf("") }
     var selectedSubject by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf("") }
-    var timeLimit by remember { mutableStateOf("15") }
     var questionCount by remember { mutableStateOf("5") }
     var assignToAll by remember { mutableStateOf(true) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
@@ -413,36 +412,19 @@ fun CreateAssignmentScreen(
                         )
                     )
                     
-                    // Due date and time limit
-                    Row(
+                    // Due date
+                    OutlinedTextField(
+                        value = dueDate,
+                        onValueChange = { dueDate = it },
+                        label = { Text("마감일") },
+                        placeholder = { Text("2024-01-15") },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = dueDate,
-                            onValueChange = { dueDate = it },
-                            label = { Text("마감일") },
-                            placeholder = { Text("2024-01-15") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Text,
-                                imeAction = ImeAction.Next
-                            ),
-                            singleLine = true
-                        )
-                        
-                        OutlinedTextField(
-                            value = timeLimit,
-                            onValueChange = { timeLimit = it },
-                            label = { Text("제한시간 (분)") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            singleLine = true
-                        )
-                    }
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true
+                    )
                 }
             }
         }
@@ -751,7 +733,7 @@ fun CreateAssignmentScreen(
         val isFormValid = assignmentTitle.isNotBlank() && assignmentDescription.isNotBlank() && 
             selectedClass.isNotBlank() && selectedClassId != null && 
             selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
-            dueDate.isNotBlank() && timeLimit.isNotBlank() && 
+            dueDate.isNotBlank() && 
             questionCount.isNotBlank() && selectedFiles.isNotEmpty()
         
         VTButton(
