@@ -244,59 +244,6 @@ fun TeacherClassesScreen(
                 }
             }
         }
-        
-        // Recent activity
-        VTCard(variant = CardVariant.Elevated) {
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.History,
-                        contentDescription = null,
-                        tint = PrimaryIndigo,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "최근 활동",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    RecentActivityItem(
-                        title = "고1 A반에 새 과제 생성",
-                        description = "생물학 - 세포분열 리뷰",
-                        time = "30분 전",
-                        icon = Icons.Filled.Assignment,
-                        color = PrimaryIndigo
-                    )
-                    
-                    RecentActivityItem(
-                        title = "고2 B반 과제 결과 확인",
-                        description = "화학 - 원소주기율표 퀴즈",
-                        time = "1시간 전",
-                        icon = Icons.Filled.Assessment,
-                        color = Success
-                    )
-                    
-                    RecentActivityItem(
-                        title = "고3 C반 학생 피드백",
-                        description = "물리학 과제에 대한 개별 피드백 제공",
-                        time = "2시간 전",
-                        icon = Icons.Filled.Feedback,
-                        color = Warning
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -473,58 +420,6 @@ fun ClassStatItem(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = color
-        )
-    }
-}
-
-@Composable
-fun RecentActivityItem(
-    title: String,
-    description: String,
-    time: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    color: Color
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(androidx.compose.foundation.shape.CircleShape)
-                .background(color.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = Gray800
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
-        }
-        
-        Text(
-            text = time,
-            style = MaterialTheme.typography.bodySmall,
-            color = Gray500
         )
     }
 }
