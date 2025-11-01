@@ -8,6 +8,10 @@ import retrofit2.http.*
 
 interface ApiService {
     
+    // Health check API
+    @GET("core/health/")
+    suspend fun healthCheck(): Response<ApiResponse<String>>
+    
     // Auth APIs
     @POST("auth/login/")
     suspend fun login(@Body request: com.example.voicetutor.data.models.LoginRequest): Response<com.example.voicetutor.data.models.LoginResponse>
