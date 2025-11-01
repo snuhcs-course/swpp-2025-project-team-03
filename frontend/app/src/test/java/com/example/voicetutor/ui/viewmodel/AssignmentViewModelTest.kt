@@ -268,6 +268,42 @@ class AssignmentViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun StudentStats_creation_withAllParameters_createsCorrectInstance() {
+        // given: 모든 파라미터가 주어진 경우
+        // when: StudentStats 인스턴스 생성
+        val stats = com.example.voicetutor.ui.viewmodel.StudentStats(
+            totalAssignments = 10,
+            completedAssignments = 5,
+            inProgressAssignments = 3,
+            completionRate = 0.5f
+        )
+        
+        // then: 모든 필드가 올바르게 설정됨
+        assert(stats.totalAssignments == 10)
+        assert(stats.completedAssignments == 5)
+        assert(stats.inProgressAssignments == 3)
+        assert(stats.completionRate == 0.5f)
+    }
+
+    @Test
+    fun StudentStats_creation_withZeroValues_createsCorrectInstance() {
+        // given: 모든 값이 0인 경우
+        // when: StudentStats 인스턴스 생성
+        val stats = com.example.voicetutor.ui.viewmodel.StudentStats(
+            totalAssignments = 0,
+            completedAssignments = 0,
+            inProgressAssignments = 0,
+            completionRate = 0.0f
+        )
+        
+        // then: 모든 필드가 0으로 설정됨
+        assert(stats.totalAssignments == 0)
+        assert(stats.completedAssignments == 0)
+        assert(stats.inProgressAssignments == 0)
+        assert(stats.completionRate == 0.0f)
+    }
 }
 
 

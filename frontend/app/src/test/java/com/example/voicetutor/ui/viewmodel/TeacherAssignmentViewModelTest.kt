@@ -9,19 +9,13 @@ import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.testing.MainDispatcherRule
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 import java.io.File
 
 @RunWith(MockitoJUnitRunner::class)
@@ -169,6 +163,308 @@ class TeacherAssignmentViewModelTest {
         }
     }
 
+    // 5) S3 업로드 상태 확인 실패
+    @Test
+    fun checkS3Upload_failure_setsError() {
+        runTest(mainRule.testDispatcher) {
+        // given: 저장소가 실패를 반환
+        whenever(repository.checkS3Upload(10))
+            .thenReturn(Result.failure(Exception("S3 error")))
+
+        viewModel.error.test {
+            // when: 체크 호출
+            assert(awaitItem() == null)
+            viewModel.checkS3UploadStatus(10)
+            runCurrent()
+            
+            // then: 에러 메시지가 설정됨
+            val error = awaitItem()
+            assert(error?.contains("S3 error") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+        }
+    }
+
+    // 6) PDF 업로드 실패 (과제 생성 단계)
+    @Test
+    fun createAssignmentWithPdf_failureAtCreate_setsError() {
+        runTest(mainRule.testDispatcher) {
+        // given: 과제 생성이 실패하도록 스텁
+        val request = CreateAssignmentRequest(
+            title = "t",
+            subject = "s",
+            class_id = 1,
+            due_at = "2025-12-31T23:59:00Z",
+            grade = "초6",
+            type = "Quiz",
+            description = "d",
+            questions = null
+        )
+        val pdf = File.createTempFile("test", ".pdf")
+
+        whenever(repository.createAssignment(request))
+            .thenReturn(Result.failure(Exception("Creation failed")))
+
+        viewModel.error.test {
+            // when: PDF 포함 과제 생성을 호출
+            assert(awaitItem() == null)
+            viewModel.createAssignmentWithPdf(request, pdf, totalNumber = 5)
+            runCurrent()
+            
+            // then: 에러 메시지가 설정됨
+            val error = awaitItem()
+            assert(error?.contains("Creation failed") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // then: 업로드나 질문 생성은 호출되지 않음
+        verify(repository, never()).uploadPdfToS3(any(), any())
+        verify(repository, never()).createQuestionsAfterUpload(any(), any(), any())
+        }
+    }
+
+    // 7) PDF 업로드 실패 (S3 업로드 단계)
+    @Test
+    fun createAssignmentWithPdf_failureAtUpload_setsError() {
+        runTest(mainRule.testDispatcher) {
+        // given: 과제 생성은 성공하지만 S3 업로드가 실패
+        val request = CreateAssignmentRequest(
+            title = "t",
+            subject = "s",
+            class_id = 1,
+            due_at = "2025-12-31T23:59:00Z",
+            grade = "초6",
+            type = "Quiz",
+            description = "d",
+            questions = null
+        )
+        val createResp = CreateAssignmentResponse(
+            assignment_id = 10, material_id = 20, s3_key = "k", upload_url = "http://upload"
+        )
+        val pdf = File.createTempFile("test", ".pdf")
+
+        whenever(repository.createAssignment(request)).thenReturn(Result.success(createResp))
+        whenever(repository.uploadPdfToS3(eq(createResp.upload_url), eq(pdf)))
+            .thenReturn(Result.failure(Exception("Upload failed")))
+
+        viewModel.error.test {
+            // when: PDF 포함 과제 생성을 호출
+            assert(awaitItem() == null)
+            viewModel.createAssignmentWithPdf(request, pdf, totalNumber = 5)
+            runCurrent()
+            
+            // then: 에러 메시지가 설정됨
+            val error = awaitItem()
+            assert(error?.contains("Upload failed") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // then: 질문 생성은 호출되지 않음
+        verify(repository, times(1)).createAssignment(request)
+        verify(repository, times(1)).uploadPdfToS3(createResp.upload_url, pdf)
+        verify(repository, never()).createQuestionsAfterUpload(any(), any(), any())
+        }
+    }
+
+    // 8) 필터링 테스트 - teacherId
+    @Test
+    fun loadAllAssignments_withTeacherId_callsRepoWithFilter() {
+        runTest(mainRule.testDispatcher) {
+        // given: teacherId 필터 적용
+        val returned = listOf(sampleAssignment(1, "A"))
+        whenever(repository.getAllAssignments("1", null, null))
+            .thenReturn(Result.success(returned))
+
+        viewModel.assignments.test {
+            assert(awaitItem().isEmpty())
+            
+            viewModel.loadAllAssignments(teacherId = "1")
+            runCurrent()
+
+            assert(awaitItem() == returned)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        verify(repository, times(1)).getAllAssignments("1", null, null)
+        }
+    }
+
+    // 9) 필터링 테스트 - classId
+    @Test
+    fun loadAllAssignments_withClassId_callsRepoWithFilter() {
+        runTest(mainRule.testDispatcher) {
+        // given: classId 필터 적용
+        val returned = listOf(sampleAssignment(1, "A"))
+        whenever(repository.getAllAssignments(null, "10", null))
+            .thenReturn(Result.success(returned))
+
+        viewModel.assignments.test {
+            assert(awaitItem().isEmpty())
+            
+            viewModel.loadAllAssignments(classId = "10")
+            runCurrent()
+
+            assert(awaitItem() == returned)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        verify(repository, times(1)).getAllAssignments(null, "10", null)
+        }
+    }
+
+    // 10) 필터링 테스트 - status
+    @Test
+    fun loadAllAssignments_withStatus_callsRepoWithFilter() {
+        runTest(mainRule.testDispatcher) {
+        // given: status 필터 적용
+        val returned = listOf(sampleAssignment(1, "A"))
+        whenever(repository.getAllAssignments(null, null, AssignmentStatus.IN_PROGRESS))
+            .thenReturn(Result.success(returned))
+
+        viewModel.assignments.test {
+            assert(awaitItem().isEmpty())
+            
+            viewModel.loadAllAssignments(status = AssignmentStatus.IN_PROGRESS)
+            runCurrent()
+
+            assert(awaitItem() == returned)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        verify(repository, times(1)).getAllAssignments(null, null, AssignmentStatus.IN_PROGRESS)
+        }
+    }
+
+    // 7) 과제 결과 로드 성공 (주석 처리된 API용)
+    // @Test
+    // fun loadAssignmentResults_success_updatesResults() {
+    //     runTest(mainRule.testDispatcher) {
+    //     // given: 저장소가 성공적으로 결과를 반환
+    //     val results = listOf(
+    //         StudentResult(
+    //             studentId = "1",
+    //             name = "Student 1",
+    //             submittedAt = "2025-01-01",
+    //             score = 85,
+    //             status = "GRADED"
+    //         ),
+    //         StudentResult(
+    //             studentId = "2",
+    //             name = "Student 2",
+    //             submittedAt = "2025-01-02",
+    //             score = 90,
+    //             status = "GRADED"
+    //         )
+    //     )
+    //     whenever(repository.getAssignmentResults(10)).thenReturn(Result.success(results))
+    //
+    //     viewModel.assignmentResults.test {
+    //         // when: 초기 상태를 구독한 뒤 loadAssignmentResults() 호출
+    //         assert(awaitItem().isEmpty())
+    //         
+    //         viewModel.loadAssignmentResults(10)
+    //         runCurrent()
+    //         
+    //         // then: 결과 목록이 업데이트됨
+    //         assert(awaitItem() == results)
+    //         cancelAndIgnoreRemainingEvents()
+    //     }
+    //
+    //     // then: 저장소는 정확히 1회 호출됨
+    //     verify(repository, times(1)).getAssignmentResults(10)
+    //     }
+    // }
+
+    // 8) 과제 결과 로드 실패 (주석 처리된 API용)
+    // @Test
+    // fun loadAssignmentResults_failure_setsError() {
+    //     runTest(mainRule.testDispatcher) {
+    //     // given: 저장소가 실패를 반환
+    //     whenever(repository.getAssignmentResults(10))
+    //         .thenReturn(Result.failure(Exception("Network error")))
+    //
+    //     viewModel.error.test {
+    //         // when: 초기 상태를 구독한 뒤 loadAssignmentResults() 호출
+    //         assert(awaitItem() == null)
+    //         
+    //         viewModel.loadAssignmentResults(10)
+    //         runCurrent()
+    //         
+    //         // then: 에러 메시지가 설정됨
+    //         val error = awaitItem()
+    //         assert(error?.contains("Network error") == true)
+    //         cancelAndIgnoreRemainingEvents()
+    //     }
+    //     }
+    // }
+
+    // 9) 기본 문제 로드 성공 (주석 처리된 API용)
+    // @Test
+    // fun loadAssignmentQuestions_success_updatesQuestions() {
+    //     runTest(mainRule.testDispatcher) {
+    //     // given: 저장소가 성공적으로 문제 목록을 반환
+    //     val questions = listOf(
+    //         QuestionData(
+    //             id = 1,
+    //             question = "Q1",
+    //             type = "VOICE_RESPONSE",
+    //             options = null,
+    //             correctAnswer = "A1",
+    //             points = 10,
+    //             explanation = "E1"
+    //         ),
+    //         QuestionData(
+    //             id = 2,
+    //             question = "Q2",
+    //             type = "VOICE_RESPONSE",
+    //             options = null,
+    //             correctAnswer = "A2",
+    //             points = 10,
+    //             explanation = "E2"
+    //         )
+    //     )
+    //     whenever(repository.getAssignmentQuestions(10)).thenReturn(Result.success(questions))
+    //
+    //     viewModel.assignmentQuestions.test {
+    //         // when: 초기 상태를 구독한 뒤 loadAssignmentQuestions() 호출
+    //         assert(awaitItem().isEmpty())
+    //         
+    //         viewModel.loadAssignmentQuestions(10)
+    //         runCurrent()
+    //         
+    //         // then: 문제 목록이 업데이트됨
+    //         assert(awaitItem() == questions)
+    //         cancelAndIgnoreRemainingEvents()
+    //     }
+    //
+    //     // then: 저장소는 정확히 1회 호출됨
+    //     verify(repository, times(1)).getAssignmentQuestions(10)
+    //     }
+    // }
+
+    // 10) 기본 문제 로드 실패 (주석 처리된 API용)
+    // @Test
+    // fun loadAssignmentQuestions_failure_setsError() {
+    //     runTest(mainRule.testDispatcher) {
+    //     // given: 저장소가 실패를 반환
+    //     whenever(repository.getAssignmentQuestions(10))
+    //         .thenReturn(Result.failure(Exception("Not found")))
+    //
+    //     viewModel.error.test {
+    //         // when: 초기 상태를 구독한 뒤 loadAssignmentQuestions() 호출
+    //         assert(awaitItem() == null)
+    //         
+    //         viewModel.loadAssignmentQuestions(10)
+    //         runCurrent()
+    //         
+    //         // then: 에러 메시지가 설정됨
+    //         val error = awaitItem()
+    //         assert(error?.contains("Not found") == true)
+    //         cancelAndIgnoreRemainingEvents()
+    //     }
+    //     }
+    // }
+
     // ----------------------
     // helpers
     private fun sampleAssignment(id: Int, title: String) = AssignmentData(
@@ -194,5 +490,3 @@ class TeacherAssignmentViewModelTest {
         grade = "초6"
     )
 }
-
-
