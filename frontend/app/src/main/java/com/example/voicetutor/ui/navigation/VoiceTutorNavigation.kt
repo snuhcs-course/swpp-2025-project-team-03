@@ -455,8 +455,8 @@ fun VoiceTutorNavigation(
                 AllStudentsScreen(
                     teacherId = currentUser?.id?.toString() ?: "1",
                     onNavigateToStudentDetail = { studentId ->
-                        // 학생을 클릭하면 Settings 화면으로 이동하여 해당 학생 정보 표시
-                        navController.navigate(VoiceTutorScreens.Settings.createRoute(studentId))
+                        // 클릭해도 페이지 넘어가는 것 없도록 설정
+                        // No navigation on student click
                     },
                     onNavigateToMessage = { studentName ->
                         navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentName))
