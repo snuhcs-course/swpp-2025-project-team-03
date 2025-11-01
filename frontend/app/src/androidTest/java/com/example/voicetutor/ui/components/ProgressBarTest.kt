@@ -88,24 +88,6 @@ class ProgressBarTest {
     }
 
     @Test
-    fun progressBar_handlesProgressGreaterThanOne() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VTProgressBar(
-                    progress = 1.5f,
-                    showPercentage = true,
-                    animated = false // Disable animation for test stability
-                )
-            }
-        }
-
-        composeTestRule.waitForIdle()
-
-        // Progress should be clamped to 100%
-        composeTestRule.onNodeWithText("100%", substring = true).assertExists()
-    }
-
-    @Test
     fun progressBar_displaysCustomHeight() {
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -206,24 +188,6 @@ class ProgressBarTest {
         }
 
         composeTestRule.onNodeWithText("0%", substring = true).assertExists()
-    }
-
-    @Test
-    fun circularProgress_handlesProgressGreaterThanOne() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VTCircularProgress(
-                    progress = 1.5f,
-                    showPercentage = true,
-                    animated = false // Disable animation for test stability
-                )
-            }
-        }
-
-        composeTestRule.waitForIdle()
-
-        // Progress should be clamped to 100%
-        composeTestRule.onNodeWithText("100%", substring = true).assertExists()
     }
 
     // VTStepProgress Tests

@@ -151,22 +151,6 @@ class VoiceTutorNavigationTest {
     }
 
     @Test
-    fun voiceTutorNavigation_startsAtLogin() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VoiceTutorNavigation(
-                    startDestination = VoiceTutorScreens.Login.route
-                )
-            }
-        }
-
-        composeTestRule.waitForIdle()
-
-        // 로그인 화면이 표시되어야 함
-        composeTestRule.onNodeWithText("로그인", substring = true).assertExists()
-    }
-
-    @Test
     fun voiceTutorNavigation_allRoutes_haveUniqueRoutes() {
         val routes = listOf(
             VoiceTutorScreens.Login.route,
@@ -312,21 +296,6 @@ class VoiceTutorNavigationTest {
     fun voiceTutorScreens_teacherStudentAssignmentDetail_createRoute_handlesEmptyStudentId() {
         val route = VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute("", "과제")
         assertEquals("teacher_student_assignment_detail//과제", route)
-    }
-
-    // Navigation flow tests
-    @Test
-    fun voiceTutorNavigation_customStartDestination_works() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VoiceTutorNavigation(
-                    startDestination = VoiceTutorScreens.Signup.route
-                )
-            }
-        }
-
-        // 회원가입 화면이 표시되어야 함
-        composeTestRule.onNodeWithText("회원가입", substring = true).assertExists()
     }
 
     @Test

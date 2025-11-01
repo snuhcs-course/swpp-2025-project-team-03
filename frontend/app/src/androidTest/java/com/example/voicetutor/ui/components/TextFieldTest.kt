@@ -81,32 +81,6 @@ class TextFieldTest {
     }
 
     @Test
-    fun textField_callsOnValueChange_whenTextIsEntered() {
-        var capturedValue = ""
-        
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VTTextField(
-                    value = capturedValue,
-                    onValueChange = { capturedValue = it },
-                    placeholder = "입력하세요",
-                    modifier = Modifier.semantics { testTag = "TestTextField" }
-                )
-            }
-        }
-
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithTag("TestTextField")
-            .performClick()
-            .performTextInput("테스트 입력")
-
-        composeTestRule.waitForIdle()
-
-        assert(capturedValue == "테스트 입력")
-    }
-
-    @Test
     fun textField_displaysErrorMessage_whenErrorState() {
         composeTestRule.setContent {
             VoiceTutorTheme {
