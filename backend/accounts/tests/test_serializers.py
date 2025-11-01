@@ -111,6 +111,30 @@ class TestLoginSerializer:
         # authenticate가 None을 반환하므로 "잘못된 이메일 또는 비밀번호" 에러 발생
         assert "잘못된 이메일 또는 비밀번호입니다" in str(exc_info.value.detail)
 
+    def test_validate_inactive_user_with_authenticate_mock(self):
+        """authenticate가 비활성화된 사용자를 반환하는 경우 테스트 (line 36 커버)"""
+        from unittest.mock import patch
+
+        user = Account.objects.create_user(
+            email="inactive@example.com",
+            password="testpass123",
+            is_active=False,
+        )
+
+        data = {
+            "email": "inactive@example.com",
+            "password": "testpass123",
+        }
+        serializer = LoginSerializer(data=data)
+
+        with patch("accounts.serializers.authenticate") as mock_authenticate:
+            mock_authenticate.return_value = user
+
+            with pytest.raises(ValidationError) as exc_info:
+                serializer.is_valid(raise_exception=True)
+
+            assert "비활성화된 계정입니다" in str(exc_info.value.detail)
+
     def test_validate_nonexistent_user(self):
         """존재하지 않는 유저 검증 테스트"""
         data = {

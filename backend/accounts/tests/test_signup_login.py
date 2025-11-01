@@ -88,6 +88,27 @@ class SignupLoginTestCase(APITestCase):
         response = self.client.post(self.signup_url, invalid_data, format="json")
         self.assertIn(response.status_code, [status.HTTP_400_BAD_REQUEST, status.HTTP_500_INTERNAL_SERVER_ERROR])
 
+    # (13) 회원가입 일반 Exception 발생 테스트 (line 68-70 커버)
+    def test_signup_unexpected_exception(self):
+        """SignupView에서 예상치 못한 Exception 발생 시 처리 테스트"""
+        from unittest.mock import Mock, patch
+
+        with patch("accounts.views.SignupRequestSerializer") as mock_serializer_class:
+            mock_serializer_instance = Mock()
+            mock_serializer_instance.is_valid.side_effect = Exception("Unexpected error")
+            mock_serializer_class.return_value = mock_serializer_instance
+
+            response = self.client.post(
+                self.signup_url,
+                {"email": "test@example.com", "password": "testpass123", "name": "Test", "role": "STUDENT"},
+                format="json",
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            self.assertIn("회원가입 중 오류가 발생했습니다", response.data["message"])
+            self.assertIn("error", response.data)
+            self.assertEqual(response.data["error"], "Unexpected error")
+
     # (10) 로그아웃 성공 테스트
     def test_logout_success(self):
         user = Account.objects.create_user(email="test@example.com", password="testpass123")
