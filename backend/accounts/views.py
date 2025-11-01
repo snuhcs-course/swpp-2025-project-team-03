@@ -83,6 +83,7 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
+        logger.info("로그인 요청 도착함")
 
         if not email or not password:
             return Response(
@@ -98,6 +99,7 @@ class LoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
+            logger.info("로그인 성공함")
             return set_jwt_cookie_response(user, status_code=status.HTTP_200_OK)
 
         except Account.DoesNotExist:
