@@ -1,6 +1,9 @@
 from unittest.mock import Mock, patch
 
+import pytest
 from reports.utils.analyze_achievement import parse_curriculum
+
+pytestmark = pytest.mark.django_db
 
 
 class TestAnalyzeAchievementEdgeCases:
@@ -31,6 +34,56 @@ class TestAnalyzeAchievementEdgeCases:
             result = parse_curriculum(student_id=1, class_id=1)
             # Warning 메시지가 출력되었는지 확인
             assert any("Could not determine school level" in str(call) for call in mock_print.call_args_list)
+
+    @patch("reports.utils.analyze_achievement.calculate_statistics")
+    @patch("reports.utils.analyze_achievement.find_best_achievement_code")
+    @patch("reports.utils.analyze_achievement.csv.DictReader")
+    @patch("reports.utils.analyze_achievement.open")
+    @patch("reports.utils.analyze_achievement.Question.objects")
+    def test_parse_curriculum_high_school_grade(
+        self, mock_question_objects, mock_open, mock_csv_reader, mock_find_code, mock_calc_stats
+    ):
+        """고등학교 학년 테스트 (line 79 커버)"""
+        mock_question = Mock()
+        mock_question.id = 1
+        mock_question.achievement_code = None
+        mock_question.personal_assignment.assignment.subject.name = "수학"
+        mock_question.personal_assignment.assignment.grade = "고등학교 1학년"
+        mock_question.content = "테스트 질문"
+        mock_question.save = Mock()
+
+        mock_questions = [mock_question]
+        mock_question_qs = Mock()
+        mock_question_qs.__iter__ = Mock(return_value=iter(mock_questions))
+        mock_question_qs.select_related.return_value = mock_question_qs
+        mock_question_objects.filter.return_value = mock_question_qs
+
+        mock_csv_data = [
+            {
+                "subject": "수학",
+                "school": "고등학교",
+                "code": "수1-01",
+                "content": "고등학교 수학 성취기준",
+                "grade": "1학년",
+            }
+        ]
+        mock_csv_reader.return_value = mock_csv_data
+        mock_file = Mock()
+        mock_open.return_value.__enter__.return_value = mock_file
+
+        mock_find_code.return_value = "수1-01"
+        mock_calc_stats.return_value = {
+            "total_questions": 0,
+            "total_correct": 0,
+            "overall_accuracy": 0.0,
+            "achievement_statistics": {},
+        }
+
+        result = parse_curriculum(student_id=1, class_id=1)
+
+        assert result == mock_calc_stats.return_value
+        mock_find_code.assert_called_once()
+        mock_question.save.assert_called_once()
 
     @patch("reports.utils.analyze_achievement.calculate_statistics")
     @patch("reports.utils.analyze_achievement.csv.DictReader")

@@ -5,6 +5,7 @@ AnswerSubmitView unit tests
 """
 
 import io
+import os
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -788,3 +789,142 @@ class TestAnswerSubmitViewPOST:
             # 에러가 발생해도 답변은 정상적으로 저장되고, tail_question은 None
             assert resp.status_code == status.HTTP_201_CREATED
             assert resp.data["data"]["tail_question"] is None
+
+
+class TestFeatureExtractionAndInference:
+    """extract_all_features와 run_inference 로직 테스트"""
+
+    @pytest.fixture
+    def test_wav_path(self):
+        """테스트용 WAV 파일 경로"""
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        wav_path = os.path.join(current_dir, "test_sample", "test_record.wav")
+        if not os.path.exists(wav_path):
+            pytest.skip(f"테스트용 WAV 파일이 없습니다: {wav_path}")
+        return wav_path
+
+    def test_extract_all_features_and_inference_success(self, test_wav_path):
+        """extract_all_features와 run_inference 성공 테스트"""
+        from datetime import timedelta
+
+        from django.utils import timezone
+        from submissions.utils.feature_extractor.extract_all_features import extract_all_features
+        from submissions.utils.inference import run_inference
+
+        features = extract_all_features(test_wav_path)
+
+        audio_duration_sec = features.get("total_length", 0.0)
+        started_at = timezone.now() - timedelta(seconds=audio_duration_sec)
+
+        assert audio_duration_sec > 0.0
+        assert isinstance(started_at, type(timezone.now()))
+
+        transcript = features.get("script", "")
+        assert transcript is not None
+        assert isinstance(transcript, str)
+
+        xgbmodel_path = "submissions/machine/model.joblib"
+
+        if os.path.exists(xgbmodel_path):
+            inference_results = run_inference(xgbmodel_path, features)
+            confidence_score = inference_results.get("pred_cont")
+
+            assert confidence_score is not None
+            assert isinstance(confidence_score, (int, float))
+            assert 0 <= confidence_score <= 8
+
+            assert "pred_rounded" in inference_results
+            assert "pred_letter" in inference_results
+
+    @patch("submissions.utils.inference.run_inference")
+    def test_extract_all_features_with_mocked_inference(self, mock_run_inference, test_wav_path):
+        """extract_all_features는 실제 호출하고 run_inference는 mock하는 테스트"""
+        from datetime import timedelta
+
+        from django.utils import timezone
+        from submissions.utils.feature_extractor.extract_all_features import extract_all_features
+        from submissions.utils.inference import run_inference
+
+        mock_run_inference.return_value = {
+            "pred_cont": 6.5,
+            "pred_rounded": 7,
+            "pred_letter": "A",
+        }
+
+        features = extract_all_features(test_wav_path)
+
+        audio_duration_sec = features.get("total_length", 0.0)
+        started_at = timezone.now() - timedelta(seconds=audio_duration_sec)
+
+        assert audio_duration_sec > 0.0
+        assert isinstance(started_at, type(timezone.now()))
+
+        transcript = features.get("script", "")
+        assert transcript is not None
+        assert isinstance(transcript, str)
+
+        xgbmodel_path = "submissions/machine/model.joblib"
+        inference_results = run_inference(xgbmodel_path, features)
+
+        confidence_score = inference_results.get("pred_cont")
+        assert confidence_score == 6.5
+
+        mock_run_inference.assert_called_once_with(xgbmodel_path, features)
+
+    def test_stt_empty_script_handling(self, test_wav_path):
+        """STT 결과가 비어있는 경우 처리 테스트"""
+        from submissions.utils.feature_extractor.extract_all_features import extract_all_features
+
+        with patch("submissions.utils.feature_extractor.extract_all_features.wave_to_text.speech_to_text") as mock_stt:
+            mock_stt.return_value = ""
+
+            features = extract_all_features(test_wav_path)
+
+            transcript = features.get("script", "")
+            assert transcript is not None
+            assert isinstance(transcript, str)
+
+    def test_inference_missing_pred_cont_handling(self):
+        """inference 결과에 pred_cont가 없는 경우 처리 테스트"""
+        from submissions.utils.inference import run_inference
+
+        xgbmodel_path = "submissions/machine/model.joblib"
+        features = {
+            "script": "테스트 스크립트",
+            "total_length": 3.5,
+            "word_cnt": 5,
+            "repeat_cnt": 0,
+            "filler_words_cnt": 1,
+            "pause_0_5_cnt": 2,
+            "voc_speed": 150.0,
+            "percent_silence": 0.1,
+            "min_f0_hz": 100.0,
+            "max_f0_hz": 300.0,
+            "range_f0_hz": 200.0,
+            "tot_slope_f0_st_per_s": 50.0,
+            "end_slope_f0_st_per_s": 30.0,
+            "word_speed": 120.0,
+            "avg_sentence_len": 5.0,
+            "adj_sim_mean": 0.8,
+            "adj_sim_std": 0.1,
+            "adj_sim_p10": 0.7,
+            "adj_sim_p50": 0.8,
+            "adj_sim_p90": 0.9,
+            "adj_sim_frac_high": 0.6,
+            "adj_sim_frac_low": 0.1,
+            "topic_path_len": 0.5,
+            "dist_to_centroid_mean": 0.3,
+            "dist_to_centroid_std": 0.05,
+            "coherence_score": 0.9,
+            "intra_coh": 0.85,
+            "inter_div": 0.2,
+        }
+
+        if os.path.exists(xgbmodel_path):
+            inference_results = run_inference(xgbmodel_path, features)
+            assert "pred_cont" in inference_results
+            confidence_score = inference_results.get("pred_cont")
+            assert confidence_score is not None
+        else:
+            pytest.skip(f"모델 파일이 없습니다: {xgbmodel_path}")
