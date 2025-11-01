@@ -3,20 +3,34 @@
 ![Logo](https://raw.githubusercontent.com/snuhcs-course/swpp-2025-project-team-03/main/docs/images/logo.png)
 
 VoiceTutor is an AI-powered learning application that helps students strengthen their understanding by **speaking out loud**.  
-Through conversational review sessions, adaptive quizzes, and multimodal analysis (ASR, prosody, and reasoning), the app evaluates not just answers but **conceptual understanding**.  
+Through conversational review sessions, adaptive quizzes, and multimodal evaluation (prosody, and reasoning), the app evaluates not just answers but **conceptual understanding**.  
 It is designed for elementary or middle school students, teachers, and parents who want deeper insight into learning progress beyond traditional test scores.
 
 ## Features
 
+- **Automatic Quiz Generation**: Automatically generates quiz questions from PDFs.
 - **Conversational Review**: Short, AI-guided verbal review sessions with open-ended questions.
-- **Adaptive Quizzes**: Automatically generated follow-up questions tailored to each student’s weak points.
-- **Multimodal Analysis**: Evaluation of content accuracy, reasoning structure, and supportive delivery metrics (speech rate, pauses, intonation).
-- **Progress Tracking**: Visual summaries of concept mastery and learning trends over time.
+- **Adaptive Quizzes**: Personalized follow-up questions tailored to each student’s weaknesses.
 
 ## Demo 3: Teacher Screen & Student Screen
 
 <details>
-<summary> Click to expand how to run demo 3 in local</summary>
+<summary> Click to expand how to run demo 3</summary>
+
+
+Although the actual deployment will use a remote server, relying on it during the Iteration 3 demo may cause compatibility issues if the backend server is updated afterward. To ensure consistent behavior between the current Iteration 3 backend and frontend, we recommend running the server locally using the Android Studio emulator.
+Please follow the local setup instructions described below.
+<details>
+<summary> Click to expand how to run demo 3 on a physical device</summary>
+If you want to test on a physical device, you may connect to the remote server. However, please note that this may lead to mismatches in features or API responses due to potential backend changes after the Iteration 3 code freeze.
+
+To force the app to use the local server even on a physical device, update the following line in
+frontend/app/src/main/java/com/example/voicetutor/data/network/ApiConfig.kt (around line 30):
+```
+        return prefs.getString(KEY_BASE_URL, PROD_URL) ?: PROD_URL
+```
+Then rebuild and run the app on your device.
+</details>
 
 #### Step 1: Backend setup
 
@@ -97,10 +111,22 @@ python manage.py migrate
 # Create superuser (optional)
 python manage.py createsuperuser
 
+# Create initial sample data for testing (optional)
+python manage.py create_all
+
 # Run development server
 python manage.py runserver
 ```
 
+#### Step 3: Run Android Studio
+
+1. **Open the "Extended Controls" window of your selected virtual device.**
+
+2. **Go to "Microphone" and enable "Virtual microphone uses host audio input"**
+
+This allows the emulator to capture real voice input for testing. 
+
+Now run the VoiceTutor app on the emulator, and it should operate properly.
 </details>
 
 ## Demo 3-(a): Teacher Screen
