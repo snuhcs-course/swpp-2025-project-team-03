@@ -619,6 +619,363 @@ class TestExtractSemanticFeatures:
         assert "adj_sim_frac_high" in result
         assert "adj_sim_frac_low" in result
 
+    @patch("submissions.utils.feature_extractor.extract_semantic_features.SentenceTransformer")
+    def test_extract_semantic_features_with_test_script_file(self, mock_sentence_transformer_class):
+        """test_script.txt 파일을 직접 사용하는 테스트 (mock 사용)"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        test_script_path = os.path.join(current_dir, "test_sample", "test_script.txt")
+        if not os.path.exists(test_script_path):
+            pytest.skip(f"테스트용 텍스트 파일이 없습니다: {test_script_path}")
+
+        with open(test_script_path, "r", encoding="utf-8") as f:
+            script_content = f.read().strip()
+
+        sentences = script_content.split(".")
+        num_sentences = len([s for s in sentences if s.strip()])
+        if num_sentences == 0:
+            num_sentences = 1
+
+        mock_model = Mock()
+        mock_embeddings = []
+        for _ in range(max(num_sentences, 3)):
+            emb = np.random.rand(384).astype(np.float32)
+            emb = emb / np.linalg.norm(emb)
+            mock_embeddings.append(emb)
+
+        def mock_encode(sentences_list, **kwargs):
+            n = len(sentences_list) if isinstance(sentences_list, list) else 1
+            if n == 0:
+                n = 1
+            embeddings_to_return = []
+            for i in range(n):
+                idx = i % len(mock_embeddings)
+                embeddings_to_return.append(mock_embeddings[idx])
+            return np.array(embeddings_to_return)
+
+        mock_model.encode.side_effect = mock_encode
+        mock_sentence_transformer_class.return_value = mock_model
+
+        result = extract_semantic_features(test_script_path, model=mock_model)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+        assert "adj_sim_std" in result
+        assert "adj_sim_p10" in result
+        assert "adj_sim_p50" in result
+        assert "adj_sim_p90" in result
+        assert "adj_sim_frac_high" in result
+        assert "adj_sim_frac_low" in result
+        assert "topic_path_len" in result
+        assert "dist_to_centroid_mean" in result
+        assert "dist_to_centroid_std" in result
+        assert "coherence_score" in result
+        assert "intra_coh" in result
+        assert "inter_div" in result
+
+        assert isinstance(result["adj_sim_mean"], float)
+        assert isinstance(result["coherence_score"], float)
+        assert 0.0 <= result["coherence_score"] <= 1.0
+
+    def test_extract_semantic_features_with_test_script_file_real_transformer(self):
+        """test_script.txt 파일을 실제 transformer로 실행하는 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        test_script_path = os.path.join(current_dir, "test_sample", "test_script.txt")
+        if not os.path.exists(test_script_path):
+            pytest.skip(f"테스트용 텍스트 파일이 없습니다: {test_script_path}")
+
+        result = extract_semantic_features(test_script_path)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+        assert "adj_sim_std" in result
+        assert "adj_sim_p10" in result
+        assert "adj_sim_p50" in result
+        assert "adj_sim_p90" in result
+        assert "adj_sim_frac_high" in result
+        assert "adj_sim_frac_low" in result
+        assert "topic_path_len" in result
+        assert "dist_to_centroid_mean" in result
+        assert "dist_to_centroid_std" in result
+        assert "coherence_score" in result
+        assert "intra_coh" in result
+        assert "inter_div" in result
+
+        assert isinstance(result["adj_sim_mean"], float)
+        assert isinstance(result["coherence_score"], float)
+        assert isinstance(result["topic_path_len"], float)
+        assert isinstance(result["dist_to_centroid_mean"], float)
+        assert isinstance(result["intra_coh"], float)
+        assert isinstance(result["inter_div"], float)
+
+        assert 0.0 <= result["coherence_score"] <= 1.0
+        assert 0.0 <= result["intra_coh"] <= 1.0
+        assert 0.0 <= result["inter_div"] <= 1.0
+        assert result["topic_path_len"] >= 0.0
+        assert result["dist_to_centroid_mean"] >= 0.0
+
+    def test_extract_semantic_features_with_test_script_as_dict_real_transformer(self, test_script):
+        """test_script를 dict로 전달하여 실제 transformer로 실행하는 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        data = {"script": test_script}
+        result = extract_semantic_features(data)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+        assert "coherence_score" in result
+        assert isinstance(result["adj_sim_mean"], float)
+        assert isinstance(result["coherence_score"], float)
+        assert 0.0 <= result["coherence_score"] <= 1.0
+
+    def test_extract_semantic_features_with_test_script_with_prefix_real_transformer(self, test_script):
+        """prefix 파라미터와 함께 실제 transformer로 실행하는 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        data = {"script": test_script}
+        result = extract_semantic_features(data, prefix="sem_")
+
+        assert isinstance(result, dict)
+        assert "sem_adj_sim_mean" in result
+        assert "sem_coherence_score" in result
+        assert "adj_sim_mean" not in result
+        assert isinstance(result["sem_adj_sim_mean"], float)
+        assert isinstance(result["sem_coherence_score"], float)
+
+    def test_extract_semantic_features_with_test_script_as_text_string_real_transformer(self, test_script):
+        """test_script를 텍스트 문자열로 전달하여 실제 transformer로 실행하는 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        result = extract_semantic_features(test_script)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+        assert "coherence_score" in result
+        assert isinstance(result["adj_sim_mean"], float)
+        assert isinstance(result["coherence_score"], float)
+        assert 0.0 <= result["coherence_score"] <= 1.0
+
+    def test_extract_semantic_features_empty_string_real_transformer(self):
+        """빈 문자열로 실제 transformer 실행하는 테스트 (T == 0)"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        result = extract_semantic_features("")
+
+        assert isinstance(result, dict)
+        assert result["adj_sim_mean"] == 0.0
+        assert result["adj_sim_std"] == 0.0
+        assert result["adj_sim_p10"] == 0.0
+        assert result["adj_sim_p50"] == 0.0
+        assert result["adj_sim_p90"] == 0.0
+        assert result["adj_sim_frac_high"] == 0.0
+        assert result["adj_sim_frac_low"] == 0.0
+        assert result["topic_path_len"] == 0.0
+        assert result["dist_to_centroid_mean"] == 0.0
+        assert result["dist_to_centroid_std"] == 0.0
+        assert result["coherence_score"] == 1.0
+        assert result["intra_coh"] == 1.0
+        assert result["inter_div"] == 0.0
+
+    def test_extract_semantic_features_single_sentence_real_transformer(self):
+        """단일 문장으로 실제 transformer 실행하는 테스트 (T == 1)"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        result = extract_semantic_features("이것은 단일 문장입니다.")
+
+        assert isinstance(result, dict)
+        assert result["adj_sim_mean"] == 1.0
+        assert result["adj_sim_std"] == 0.0
+        assert result["adj_sim_p10"] == 1.0
+        assert result["adj_sim_p50"] == 1.0
+        assert result["adj_sim_p90"] == 1.0
+        assert result["adj_sim_frac_high"] == 1.0
+        assert result["adj_sim_frac_low"] == 0.0
+        assert result["topic_path_len"] == 0.0
+        assert result["dist_to_centroid_mean"] == 0.0
+        assert result["dist_to_centroid_std"] == 0.0
+        assert result["coherence_score"] == 1.0
+        assert result["intra_coh"] == 1.0
+        assert result["inter_div"] == 0.0
+
+    def test_extract_semantic_features_with_json_file_real_transformer(self):
+        """JSON 파일을 직접 사용하는 테스트"""
+        import json
+        import tempfile
+
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        test_script_path = os.path.join(current_dir, "test_sample", "test_script.txt")
+        if not os.path.exists(test_script_path):
+            pytest.skip(f"테스트용 텍스트 파일이 없습니다: {test_script_path}")
+
+        with open(test_script_path, "r", encoding="utf-8") as f:
+            script_content = f.read().strip()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as tmp_file:
+            json.dump({"script": script_content}, tmp_file, ensure_ascii=False)
+            tmp_file.flush()
+            json_path = tmp_file.name
+
+        try:
+            result = extract_semantic_features(json_path)
+
+            assert isinstance(result, dict)
+            assert "adj_sim_mean" in result
+            assert "coherence_score" in result
+        finally:
+            os.unlink(json_path)
+
+    def test_extract_semantic_features_with_invalid_json_file(self):
+        """script가 없는 JSON 파일 테스트"""
+        import json
+        import tempfile
+
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as tmp_file:
+            json.dump({"content": "no script field"}, tmp_file, ensure_ascii=False)
+            tmp_file.flush()
+            json_path = tmp_file.name
+
+        try:
+            with pytest.raises(ValueError, match="JSON에 'script'가 없습니다"):
+                extract_semantic_features(json_path)
+        finally:
+            os.unlink(json_path)
+
+    def test_extract_semantic_features_with_other_extension_file_real_transformer(self):
+        """다른 확장자 파일(.dat 등)을 사용하는 테스트"""
+        import tempfile
+
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        test_script_path = os.path.join(current_dir, "test_sample", "test_script.txt")
+        if not os.path.exists(test_script_path):
+            pytest.skip(f"테스트용 텍스트 파일이 없습니다: {test_script_path}")
+
+        with open(test_script_path, "r", encoding="utf-8") as f:
+            script_content = f.read().strip()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".dat", delete=False, encoding="utf-8") as tmp_file:
+            tmp_file.write(script_content)
+            tmp_file.flush()
+            dat_path = tmp_file.name
+
+        try:
+            result = extract_semantic_features(dat_path)
+
+            assert isinstance(result, dict)
+            assert "adj_sim_mean" in result
+            assert "coherence_score" in result
+        finally:
+            os.unlink(dat_path)
+
+    def test_extract_semantic_features_with_empty_dict(self):
+        """빈 dict 입력 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        with pytest.raises(ValueError, match="dict 입력에서 'script' 문자열을 찾지 못했습니다"):
+            extract_semantic_features({})
+
+    def test_extract_semantic_features_with_dict_missing_script(self):
+        """script 필드가 없는 dict 입력 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        with pytest.raises(ValueError, match="dict 입력에서 'script' 문자열을 찾지 못했습니다"):
+            extract_semantic_features({"content": "no script field"})
+
+    def test_extract_semantic_features_with_dict_empty_script(self):
+        """script가 빈 문자열인 dict 입력 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        with pytest.raises(ValueError, match="dict 입력에서 'script' 문자열을 찾지 못했습니다"):
+            extract_semantic_features({"script": ""})
+
+    def test_extract_semantic_features_with_invalid_type(self):
+        """잘못된 타입 입력 테스트"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        with pytest.raises(TypeError, match="script_or_json은 str.*또는 dict여야 합니다"):
+            extract_semantic_features(123)
+
+    def test_extract_semantic_features_with_test_script_multiple_sentences_real_transformer(self, test_script):
+        """여러 문장으로 실제 transformer 실행하는 테스트 (T > 1, 모든 분기 커버)"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        long_script = test_script + " " + test_script + " " + test_script
+        result = extract_semantic_features(long_script)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+        assert "adj_sim_std" in result
+        assert "adj_sim_p10" in result
+        assert "adj_sim_p50" in result
+        assert "adj_sim_p90" in result
+        assert "adj_sim_frac_high" in result
+        assert "adj_sim_frac_low" in result
+        assert "topic_path_len" in result
+        assert "dist_to_centroid_mean" in result
+        assert "dist_to_centroid_std" in result
+        assert "coherence_score" in result
+        assert "intra_coh" in result
+        assert "inter_div" in result
+
+        assert isinstance(result["adj_sim_mean"], float)
+        assert isinstance(result["coherence_score"], float)
+        assert result["topic_path_len"] >= 0.0
+        assert 0.0 <= result["coherence_score"] <= 1.0
+        assert 0.0 <= result["intra_coh"] <= 1.0
+        assert 0.0 <= result["inter_div"] <= 1.0
+
+    def test_extract_semantic_features_with_many_sentences_for_segments_real_transformer(self):
+        """많은 문장으로 실제 transformer 실행하는 테스트 (각 세그먼트에 2개 이상의 문장 포함, line 78-80 커버)"""
+        from submissions.utils.feature_extractor.extract_semantic_features import extract_semantic_features
+
+        sentences = [
+            "첫 번째 문장입니다.",
+            "두 번째 문장입니다.",
+            "세 번째 문장입니다.",
+            "네 번째 문장입니다.",
+            "다섯 번째 문장입니다.",
+            "여섯 번째 문장입니다.",
+            "일곱 번째 문장입니다.",
+            "여덟 번째 문장입니다.",
+            "아홉 번째 문장입니다.",
+            "열 번째 문장입니다.",
+            "열한 번째 문장입니다.",
+            "열두 번째 문장입니다.",
+        ]
+        many_sentences_script = " ".join(sentences)
+
+        result = extract_semantic_features(many_sentences_script)
+
+        assert isinstance(result, dict)
+        assert "adj_sim_mean" in result
+        assert "adj_sim_std" in result
+        assert "adj_sim_p10" in result
+        assert "adj_sim_p50" in result
+        assert "adj_sim_p90" in result
+        assert "adj_sim_frac_high" in result
+        assert "adj_sim_frac_low" in result
+        assert "topic_path_len" in result
+        assert "dist_to_centroid_mean" in result
+        assert "dist_to_centroid_std" in result
+        assert "coherence_score" in result
+        assert "intra_coh" in result
+        assert "inter_div" in result
+
+        assert isinstance(result["adj_sim_mean"], float)
+        assert isinstance(result["coherence_score"], float)
+        assert result["topic_path_len"] >= 0.0
+        assert 0.0 <= result["coherence_score"] <= 1.0
+        assert 0.0 <= result["intra_coh"] <= 1.0
+        assert 0.0 <= result["inter_div"] <= 1.0
+
 
 class TestSpeechToText:
     """speech_to_text 함수 테스트 (mocking)"""
