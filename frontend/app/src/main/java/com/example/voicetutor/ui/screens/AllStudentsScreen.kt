@@ -307,7 +307,9 @@ fun AllStudentsCard(
             
             // Progress info
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
@@ -334,20 +336,6 @@ fun AllStudentsCard(
                         text = "정보 없음", // 평균 점수 정보가 없으므로 기본값
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Gray500
-                    )
-                }
-                
-                Column {
-                    Text(
-                        text = "마지막 활동",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "활동 없음", // 마지막 활동 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
                         color = Gray500
                     )
                 }

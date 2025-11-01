@@ -78,8 +78,9 @@ fun MainLayout(
     }
     
     // Get recent assignment data from API for students
-    val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel()
-    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
+    // Use graph-scoped ViewModels to share data between screens
+    val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
     val recentAssignmentState = assignmentViewModel.recentAssignment.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val recentAssignment = if (userRole == UserRole.STUDENT) recentAssignmentState.value else null
