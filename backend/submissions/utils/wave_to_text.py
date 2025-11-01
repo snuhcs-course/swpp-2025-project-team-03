@@ -80,7 +80,7 @@ def speech_to_text(filepath: str, language_code: str = "ko-KR") -> str:
     return transcript.strip()
 
 
-def main():
+if __name__ == "__main__":  # pragma: no cover
     parser = argparse.ArgumentParser(description="Google STT로 음성파일을 텍스트로 변환 (in-memory)")
     parser.add_argument("audio_path", type=str, help="입력 WAV 파일 경로")
     parser.add_argument("--lang", type=str, default="ko-KR", help="언어 코드 (기본값: ko-KR)")
@@ -88,7 +88,6 @@ def main():
 
     if not os.path.exists(args.audio_path):
         print(f"File not found: {args.audio_path}")
-        return
 
     # 파일 크기 및 길이 확인
     file_size = os.path.getsize(args.audio_path)
@@ -101,7 +100,3 @@ def main():
             print("(인식된 텍스트 없음)")
     except Exception as e:
         print(f"Error: {e}")
-
-
-if __name__ == "__main__":
-    main()

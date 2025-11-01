@@ -120,7 +120,7 @@ def run_inference(model_path: str, js: dict) -> dict:
     }
 
 
-def main():
+if __name__ == "__main__":  # pragma: no cover
     ap = argparse.ArgumentParser(description="XGBoost 회귀 모델 inference (단일 JSON 파일)")
     ap.add_argument("--model_path", type=str, required=True, help="joblib로 저장된 XGBoost 모델 경로")
     ap.add_argument("--json_path", type=str, required=True, help="예측할 JSON 파일 경로")
@@ -135,10 +135,8 @@ def main():
             js = json.load(f)
     except json.JSONDecodeError as e:
         print(f"[ERROR] JSON 파싱 실패 ({json_path}): {e}")
-        return
     except Exception as e:
         print(f"[ERROR] JSON 로드 실패: {e}")
-        return
 
     result = run_inference(args.model_path, js)
 
@@ -151,7 +149,3 @@ def main():
         )
     except KeyError as e:
         print(f"[ERROR] 결과 형식 오류: {e}")
-
-
-if __name__ == "__main__":
-    main()
