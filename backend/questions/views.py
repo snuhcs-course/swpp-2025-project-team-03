@@ -4,6 +4,7 @@ import boto3
 from assignments.models import Assignment, Material
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
+from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
 from httpx import NetworkError, TimeoutException
 from openai import OpenAIError
@@ -129,45 +130,54 @@ class QuestionCreateView(APIView):
                 error_msg = f"No personal assignments found for assignment {assignment_id}"
                 return Response({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
 
+            # 기존 base question 존재 여부 확인 - 재요청 차단
+            # 이미 base question이 존재하는 경우 재생성을 허용하지 않습니다.
+            # 재요청 시나리오를 방지하여 코드를 간결하게 유지합니다.
+            for personal_assignment in personal_assignments:
+                if Question.objects.filter(personal_assignment=personal_assignment, recalled_num=0).exists():
+                    return Response(
+                        {
+                            "error": "Base question already exists",
+                            "message": f"Assignment {assignment_id}에 대한 base question이 이미 존재합니다. 재생성은 지원하지 않습니다.",
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
             created_questions = []
             total_questions_created = 0
 
-            # 각 personal assignment에 대해 질문 생성
-            for personal_assignment in personal_assignments:
-                # 기존 base question들 삭제 (recalled_num=0인 것들만, tail question은 유지)
-                existing_base_questions = Question.objects.filter(
-                    personal_assignment=personal_assignment, recalled_num=0
-                )
-                if existing_base_questions.count() > 0:
-                    existing_base_questions.delete()
+            # 트랜잭션으로 일관성 보장
+            with transaction.atomic():
+                # 각 personal assignment에 대해 질문 생성
+                for personal_assignment in personal_assignments:
+                    # 새로운 base question 생성
+                    for i, quiz in enumerate(quizzes, 1):
+                        try:
+                            q = Question.objects.create(
+                                personal_assignment=personal_assignment,
+                                number=i,
+                                content=quiz.question,
+                                recalled_num=0,
+                                explanation=quiz.explanation,
+                                model_answer=quiz.model_answer,
+                                difficulty=quiz.difficulty.lower(),
+                            )
+                            total_questions_created += 1
+                        except Exception as q_error:
+                            raise  # 상위로 전파하여 전체 작업 실패 처리
 
-                for i, quiz in enumerate(quizzes, 1):
-                    try:
-                        q = Question.objects.create(
-                            personal_assignment=personal_assignment,
-                            number=i,
-                            content=quiz.question,
-                            recalled_num=0,
-                            explanation=quiz.explanation,
-                            model_answer=quiz.model_answer,
-                            difficulty=quiz.difficulty.lower(),
-                        )
-                        total_questions_created += 1
-                    except Exception as q_error:
-                        raise  # 상위로 전파하여 전체 작업 실패 처리
-
-                    # 첫 번째 personal assignment의 질문들만 응답에 포함
-                    if personal_assignment == personal_assignments.first():
-                        created_questions.append(
-                            {
-                                "id": q.id,
-                                "number": q.number,
-                                "question": q.content,
-                                "answer": q.model_answer,
-                                "explanation": q.explanation,
-                                "difficulty": q.difficulty,
-                            }
-                        )
+                        # 첫 번째 personal assignment의 질문들만 응답에 포함
+                        if personal_assignment == personal_assignments.first():
+                            created_questions.append(
+                                {
+                                    "id": q.id,
+                                    "number": q.number,
+                                    "question": q.content,
+                                    "answer": q.model_answer,
+                                    "explanation": q.explanation,
+                                    "difficulty": q.difficulty,
+                                }
+                            )
 
             # 모든 작업이 성공적으로 완료된 후 assignment의 total_questions 업데이트
             assignment.total_questions = data["total_number"]

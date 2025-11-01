@@ -261,8 +261,7 @@ class AnswerSubmitView(APIView):
                 # 이 그룹에 아직 답변하지 않은 질문이 있으면 반환
                 if unanswered_in_group:
                     # recalled_num이 가장 작은 것부터 반환 (base question 우선)
-                    # recalled_num < 4 조건: 꼬리 질문은 최대 3개까지만 생성되므로 (0, 1, 2, 3)
-                    # 실제로는 recalled_num=3까지 허용되어야 하지만, 로직상 4 미만으로 체크
+                    # 꼬리 질문은 최대 3개까지만 생성되므로 recalled_num < 4로 체크 (0, 1, 2, 3 허용)
                     valid_unanswered = [q for q in unanswered_in_group if q.recalled_num < 4]
 
                     if valid_unanswered:
