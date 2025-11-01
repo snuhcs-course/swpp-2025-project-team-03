@@ -51,7 +51,6 @@ class QuestionCreateView(APIView):
         except Exception as e:
             return Response({"error": f"요청 데이터 검증 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Assignment, Material 가져오기
         try:
             assignment = Assignment.objects.get(id=assignment_id)
         except Assignment.DoesNotExist:
@@ -67,8 +66,6 @@ class QuestionCreateView(APIView):
                 summarized_text = material.summary
             else:
                 s3_key = material.s3_key
-
-                # ThreadPoolExecutor를 사용하지 않도록 TransferConfig 설정
                 transfer_config = TransferConfig(use_threads=False)
 
                 s3 = boto3.client(
@@ -80,7 +77,6 @@ class QuestionCreateView(APIView):
 
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
                     try:
-                        # TransferConfig를 사용하여 멀티스레딩 비활성화
                         s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp, Config=transfer_config)
                         tmp.flush()
                         local_pdf = tmp.name
@@ -104,7 +100,6 @@ class QuestionCreateView(APIView):
                     return Response({"error": f"네트워크 오류: {e}"}, status=500)
                 except Exception as e:
                     error_message = str(e)
-                    # poppler 관련 오류인 경우 더 명확한 메시지 제공
                     if "poppler" in error_message.lower():
                         return Response({"error": error_message}, status=500)
                     return Response({"error": f"예상치 못한 오류: {error_message}"}, status=500)
@@ -123,16 +118,13 @@ class QuestionCreateView(APIView):
                 error_msg = f"문제 생성 실패: {str(e)}"
                 return Response({"error": error_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            # 해당 assignment에 연결된 모든 personal assignment들 가져오기
             personal_assignments = PersonalAssignment.objects.filter(assignment=assignment)
 
             if not personal_assignments.exists():
                 error_msg = f"No personal assignments found for assignment {assignment_id}"
                 return Response({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
 
-            # 기존 base question 존재 여부 확인 - 재요청 차단
-            # 이미 base question이 존재하는 경우 재생성을 허용하지 않습니다.
-            # 재요청 시나리오를 방지하여 코드를 간결하게 유지합니다.
+            # 기존 base question 존재 시 재요청 차단
             for personal_assignment in personal_assignments:
                 if Question.objects.filter(personal_assignment=personal_assignment, recalled_num=0).exists():
                     return Response(
@@ -146,11 +138,8 @@ class QuestionCreateView(APIView):
             created_questions = []
             total_questions_created = 0
 
-            # 트랜잭션으로 일관성 보장
             with transaction.atomic():
-                # 각 personal assignment에 대해 질문 생성
                 for personal_assignment in personal_assignments:
-                    # 새로운 base question 생성
                     for i, quiz in enumerate(quizzes, 1):
                         try:
                             q = Question.objects.create(
@@ -164,9 +153,9 @@ class QuestionCreateView(APIView):
                             )
                             total_questions_created += 1
                         except Exception as q_error:
-                            raise  # 상위로 전파하여 전체 작업 실패 처리
+                            raise
 
-                        # 첫 번째 personal assignment의 질문들만 응답에 포함
+                        # 첫 번째 personal assignment만 응답에 포함
                         if personal_assignment == personal_assignments.first():
                             created_questions.append(
                                 {
@@ -179,7 +168,6 @@ class QuestionCreateView(APIView):
                                 }
                             )
 
-            # 모든 작업이 성공적으로 완료된 후 assignment의 total_questions 업데이트
             assignment.total_questions = data["total_number"]
             assignment.save()
 
