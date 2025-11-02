@@ -79,7 +79,7 @@ Then rebuild and run the app on your device.
 5. **Install Dependencies**
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements-local.txt
    ```
 
 6. **SentenceTransformer model setup (for semantic feature extraction)**
