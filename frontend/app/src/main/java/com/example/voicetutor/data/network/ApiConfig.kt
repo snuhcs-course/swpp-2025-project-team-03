@@ -27,7 +27,7 @@ class ApiConfig @Inject constructor(
     }
     
     fun getBaseUrl(): String {
-        return prefs.getString(KEY_BASE_URL, PROD_URL) ?: PROD_URL
+        return prefs.getString(KEY_BASE_URL, LOCALHOST_URL) ?: LOCALHOST_URL
     }
 }
 
