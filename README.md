@@ -127,7 +127,7 @@ python manage.py migrate
 # Create superuser (optional)
 python manage.py createsuperuser
 
-# Create initial sample data for testing (optional)
+# Create initial sample data for testing (recommended)
 python manage.py create_all
 
 # Run development server
