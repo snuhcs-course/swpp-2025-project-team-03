@@ -18,29 +18,37 @@ It is designed for elementary or middle school students, teachers, and parents w
 <summary> Click to expand how to run demo 3</summary>
 
 
-Although the actual deployment will use a remote server, relying on it during the Iteration 3 demo may cause compatibility issues if the backend server is updated afterward. To ensure consistent behavior between the current Iteration 3 backend and frontend, we recommend running the server locally using the Android Studio emulator.
-Please follow the local setup instructions described below.
-<details>
-<summary> Click to expand how to run demo 3 on a physical device</summary>
-If you want to test on a physical device, you may connect to the remote server. However, please note that this may lead to mismatches in features or API responses due to potential backend changes after the Iteration 3 code freeze.
+<br>
+Although the actual deployment will use a remote server, relying on it during the Iteration 3 demo may cause compatibility issues if the backend server is updated afterward. 
 
-To force the app to use the local server even on a physical device, update the following line in
-frontend/app/src/main/java/com/example/voicetutor/data/network/ApiConfig.kt (around line 30):
-```
+To ensure consistent behavior between the current Iteration 3 backend and frontend, we recommend running the server locally using the Android Studio emulator.
+<br>
+
+---
+
+<details>
+<summary> Click to expand how to run demo 3 on a physical device(Not recommended)</summary>
+        
+- If you want to test on a physical device, you may connect to the remote server. However, please note that this may lead to mismatches in features or API responses due to potential backend changes after the Iteration 3 code freeze.
+
+- To force the app to use the local server even on a physical device, update the following line in frontend/app/src/main/java/com/example/voicetutor/data/network/ApiConfig.kt (around line 30):
+```kotlin
         return prefs.getString(KEY_BASE_URL, PROD_URL) ?: PROD_URL
 ```
 Then rebuild and run the app on your device.
 </details>
 
+---
+
 #### Step 1: Backend setup
 
 1. **Poppler Installation**
 
-Please install Poppler for your OS and make sure its bin folder is added to your system PATH.
-- Windows: Install Poppler (prebuilt binaries) and add bin to PATH
-- macOS: brew install poppler (ensure PATH is updated)
-- Linux: Install poppler-utils via your package manager
-Verify by running pdfinfo in a new terminal.
+   Please install Poppler for your OS and make sure its bin folder is added to your system PATH.
+   - Windows: Install Poppler (prebuilt binaries) and add bin to PATH
+   - macOS: brew install poppler (ensure PATH is updated)
+   - Linux: Install poppler-utils via your package manager
+   Verify by running pdfinfo in a new terminal.
 
 2. **Navigate to Backend Directory**
 
@@ -68,13 +76,13 @@ Verify by running pdfinfo in a new terminal.
    .venv/bin/python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key()'
    ```
 
-4. **Create Virtual Environment**
+5. **Create Virtual Environment**
 
    ```bash
    python -m venv venv
    ```
 
-5. **Activate Virtual Environment**
+6. **Activate Virtual Environment**
 
    ```bash
    # Windows
@@ -84,20 +92,20 @@ Verify by running pdfinfo in a new terminal.
    source venv/bin/activate
    ```
 
-6. **Install Dependencies**
+7. **Install Dependencies**
 
    ```bash
    pip install -r requirements-local.txt
    ```
 
-7. **SentenceTransformer model setup (for semantic feature extraction)**
+8. **SentenceTransformer model setup (for semantic feature extraction)**
 
    ```bash
    # download model
    python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('snunlp/KR-SBERT-V40K-klueNLI-augSTS'); model.save('submissions/utils/KR_SBERT_local')"
    ```
 
-8. **Google Cloud setup (for speech-to-text)**
+9. **Google Cloud setup (for speech-to-text)**
 
    1. Create project at [Google Cloud Console](https://console.cloud.google.com/)
    2. Activate Speech-to-Text API
@@ -155,6 +163,8 @@ The video demonstrates how both teachers and students interact with the system t
 
 3. **PDF-based Quiz Generation (Teacher)**
    - The teacher uploads a PDF, and quiz questions are automatically generated.
+   - Due to current technical constraints, PDF-based quiz generation may take a bit longer than expected.
+   - Students may need to wait briefly before their assignments become available in the app.
 
 4. **Student Assignment Availability**
    - Students enrolled in the class can access the generated assignment in their class dashboard and begin a conversational review session.
