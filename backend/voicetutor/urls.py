@@ -41,5 +41,6 @@ urlpatterns = [
     path("api/personal_assignments/", include("submissions.urls")),
     path("api/reports/", include("reports.urls")),
     path("api/catalog/", include("catalog.urls")),
+    path("api/core/", include("core.urls")),
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"),
 ]
