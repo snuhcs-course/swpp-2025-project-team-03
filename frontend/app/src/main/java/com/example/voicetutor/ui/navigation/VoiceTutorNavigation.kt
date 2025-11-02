@@ -89,14 +89,16 @@ fun VoiceTutorNavigation(
         }
         
         composable(VoiceTutorScreens.Signup.route) {
-            val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
+            val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             val isLoggedIn by authViewModel.isLoggedIn.collectAsStateWithLifecycle()
             val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
             
-            // 회원가입 성공 시 자동으로 대시보드로 이동
             LaunchedEffect(isLoggedIn, currentUser) {
-                if (isLoggedIn && currentUser != null) {
-                    when (currentUser?.role) {
+                val user = currentUser
+                println("VoiceTutorNavigation - Signup screen: isLoggedIn=$isLoggedIn, currentUser=${user?.email}, role=${user?.role}, id=${user?.id}")
+                if (isLoggedIn && user != null) {
+                    println("VoiceTutorNavigation - ✅ Navigating to dashboard for role: ${user.role}")
+                    when (user.role) {
                         com.example.voicetutor.data.models.UserRole.TEACHER -> {
                             navController.navigate(VoiceTutorScreens.TeacherDashboard.route) {
                                 popUpTo(VoiceTutorScreens.Login.route) { inclusive = true }
@@ -107,14 +109,18 @@ fun VoiceTutorNavigation(
                                 popUpTo(VoiceTutorScreens.Login.route) { inclusive = true }
                             }
                         }
-                        null -> { /* 회원가입되지 않음 */ }
+                        null -> {
+                            println("VoiceTutorNavigation - ❌ User role is null!")
+                        }
                     }
+                } else {
+                    println("VoiceTutorNavigation - ⚠️ Waiting for user data: isLoggedIn=$isLoggedIn, currentUser=${user?.email}")
                 }
             }
             
             SignupScreen(
+                authViewModel = authViewModel,
                 onSignupSuccess = {
-                    // 회원가입 성공 시 로그인 화면으로 이동
                     navController.popBackStack()
                 },
                 onLoginClick = {
@@ -125,10 +131,14 @@ fun VoiceTutorNavigation(
         
         // Student screens with layout
         composable(VoiceTutorScreens.StudentDashboard.route) {
-            // Navigation Graph 레벨의 ViewModel 사용 (모든 화면에서 공유)
             val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             val dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+            
+            val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+            LaunchedEffect(currentUser) {
+                println("VoiceTutorNavigation - StudentDashboard composable: currentUser=${currentUser?.email}, id=${currentUser?.id}, role=${currentUser?.role}")
+            }
             
             MainLayout(
                 navController = navController,

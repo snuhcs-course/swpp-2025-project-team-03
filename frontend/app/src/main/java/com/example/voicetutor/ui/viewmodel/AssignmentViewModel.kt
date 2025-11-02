@@ -125,11 +125,15 @@ class AssignmentViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             
+            println("AssignmentViewModel - loadAllAssignments called with teacherId=$teacherId, classId=$classId, status=$status")
+            
             assignmentRepository.getAllAssignments(teacherId, classId, status)
                 .onSuccess { assignments ->
+                    println("AssignmentViewModel - ✅ Successfully loaded ${assignments.size} assignments")
                     _assignments.value = assignments
                 }
                 .onFailure { exception ->
+                    println("AssignmentViewModel - ❌ Failed to load assignments: ${exception.message}")
                     _error.value = exception.message
                 }
             
