@@ -1,0 +1,42 @@
+name: "Bug Report"
+description: "앱 실행 중 발생한 버그를 신고할 때 사용하세요."
+title: "[BUG]: "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: "## 버그 설명"
+  - type: textarea
+    id: description
+    attributes:
+      label: "문제 내용"
+      description: "무슨 문제가 발생했는지 자세히 설명해주세요."
+      placeholder: "예: 로그인 버튼을 눌러도 반응이 없습니다."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "재현 방법"
+      description: "문제를 어떻게 재현할 수 있는지 단계별로 적어주세요."
+      placeholder: |
+        1. 앱 실행
+        2. 로그인 버튼 클릭
+        3. 오류 메시지 발생
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: "테스트 환경"
+      placeholder: "예: 에뮬레이터 or 실제 기기"
+
+  - type: textarea
+    id: log
+    attributes:
+      label: "관련 로그 (선택)"
+      description: "로그캣(Logcat) 또는 콘솔 출력 중 관련된 로그가 있으면 첨부해주세요."
