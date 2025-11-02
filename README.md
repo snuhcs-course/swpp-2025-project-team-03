@@ -129,12 +129,35 @@ This allows the emulator to capture real voice input for testing.
 Now run the VoiceTutor app on the emulator, and it should operate properly.
 </details>
 
-## Demo 3-(a): Teacher Screen
+## Demo 3: Teacher Screen
 
-[Demo Video: Teacher's view - todo: fix link to real video](demo/videos/student_view1.mp4)
+[Demo Video](demo/videos/iter3_demo.mp4)
+
+This demo showcases the core end-to-end learning flow implemented in Iteration 3 of VoiceTutor, an AI-powered verbal learning application.
+The video demonstrates how both teachers and students interact with the system through PDF-based assignments, voice input, and AI-driven adaptive feedback.
+
+### Features Demonstrated
+
+1. **User Registration & Login**
+   - A new user signs up as a teacher or student and logs into the system.
+
+2. **Class Creation (Teacher)**
+   - The teacher creates a new class, which appears in their dashboard.
+   - The teacher adds existing students to the class.
+
+3. **PDF-based Quiz Generation (Teacher)**
+   - The teacher uploads a PDF, and quiz questions are automatically generated.
+
+4. **Student Assignment Availability**
+   - Students enrolled in the class can access the generated assignment in their class dashboard and begin a conversational review session.
+
+5. **Voice-Based Quiz Participation (Student)**
+   - The student records spoken answers.
+   - Speech-to-Text converts them into text.
+   - Submission is evaluated and recorded.
+
+6. **AI Adaptive Follow-up**
+   - The system generates tail questions tailored to the student’s weak concepts.
+   - The system moves to the next base question if a tail question is not generated.
 
 ---
-
-## Demo 3-(b): Student Screen
-
-[Demo Video: Student screen - todo: fix link to real video](demo/videos/question_generation.mp4)
