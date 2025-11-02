@@ -10,11 +10,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AuthRepository @Inject constructor(
+open class AuthRepository @Inject constructor(
     private val apiService: ApiService
 ) {
     
-    suspend fun login(email: String, password: String): Result<User> {
+    open suspend fun login(email: String, password: String): Result<User> {
         return try {
             val request = LoginRequest(email, password)
             val response = apiService.login(request)
@@ -45,7 +45,7 @@ class AuthRepository @Inject constructor(
         }
     }
     
-    suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
+    open suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
         return try {
             val signupRequest = SignupRequest(
                 name = name,
