@@ -71,9 +71,10 @@ fun StudentDashboardScreen(
     }
     
     LaunchedEffect(currentUser) {
-        if (currentUser != null) {
-            println("StudentDashboard - Loading/Reloading pending assignments for student ID: ${currentUser.id}")
-            viewModelAssignment.loadPendingStudentAssignments(currentUser.id)
+        val user = currentUser
+        if (user != null) {
+            println("StudentDashboard - Loading/Reloading pending assignments for student ID: ${user.id}")
+            viewModelAssignment.loadPendingStudentAssignments(user.id)
         } else {
             println("StudentDashboard - ⚠️ currentUser is null! Waiting for user data...")
             kotlinx.coroutines.delay(500)

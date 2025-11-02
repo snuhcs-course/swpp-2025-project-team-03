@@ -94,10 +94,11 @@ fun VoiceTutorNavigation(
             val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
             
             LaunchedEffect(isLoggedIn, currentUser) {
-                println("VoiceTutorNavigation - Signup screen: isLoggedIn=$isLoggedIn, currentUser=${currentUser?.email}, role=${currentUser?.role}, id=${currentUser?.id}")
-                if (isLoggedIn && currentUser != null) {
-                    println("VoiceTutorNavigation - ✅ Navigating to dashboard for role: ${currentUser.role}")
-                    when (currentUser.role) {
+                val user = currentUser
+                println("VoiceTutorNavigation - Signup screen: isLoggedIn=$isLoggedIn, currentUser=${user?.email}, role=${user?.role}, id=${user?.id}")
+                if (isLoggedIn && user != null) {
+                    println("VoiceTutorNavigation - ✅ Navigating to dashboard for role: ${user.role}")
+                    when (user.role) {
                         com.example.voicetutor.data.models.UserRole.TEACHER -> {
                             navController.navigate(VoiceTutorScreens.TeacherDashboard.route) {
                                 popUpTo(VoiceTutorScreens.Login.route) { inclusive = true }
@@ -113,7 +114,7 @@ fun VoiceTutorNavigation(
                         }
                     }
                 } else {
-                    println("VoiceTutorNavigation - ⚠️ Waiting for user data: isLoggedIn=$isLoggedIn, currentUser=${currentUser?.email}")
+                    println("VoiceTutorNavigation - ⚠️ Waiting for user data: isLoggedIn=$isLoggedIn, currentUser=${user?.email}")
                 }
             }
             

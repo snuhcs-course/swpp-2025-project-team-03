@@ -34,14 +34,28 @@ class AssignmentRepository @Inject constructor(
         status: AssignmentStatus? = null
     ): Result<List<AssignmentData>> {
         return try {
+            println("AssignmentRepository - getAllAssignments called with teacherId=$teacherId, classId=$classId, status=$status")
             val response = apiService.getAllAssignments(teacherId, classId, status?.name)
             
+            println("AssignmentRepository - Response code: ${response.code()}")
+            println("AssignmentRepository - Response success: ${response.body()?.success}")
+            println("AssignmentRepository - Response data count: ${response.body()?.data?.size}")
+            
             if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()?.data ?: emptyList())
+                val assignments = response.body()?.data ?: emptyList()
+                println("AssignmentRepository - ✅ Got ${assignments.size} assignments")
+                assignments.forEach {
+                    println("  - ${it.title} (teacher: ${it.courseClass.teacherName})")
+                }
+                Result.success(assignments)
             } else {
-                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+                val errorMsg = response.body()?.error ?: "Unknown error"
+                println("AssignmentRepository - ❌ Error: $errorMsg")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
+            println("AssignmentRepository - Exception: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }

@@ -84,51 +84,50 @@ fun TeacherDashboardScreen(
         }
     }
     
-    // 초기 로드 (로그인 후 처음 진입 시) - 필터링으로 인한 빈 상태는 제외
     LaunchedEffect(actualTeacherId) {
-        // 이미 assignments가 있으면 API 호출하지 않음 (로그인 시 받은 데이터 사용)
-        if (assignments.isNotEmpty()) {
-            println("TeacherDashboard - Already have ${assignments.size} assignments from login")
-        }
-        
         if (actualTeacherId == null) {
-            println("TeacherDashboard - Waiting for user to be loaded...")
+            println("TeacherDashboard - ⚠️ Waiting for user to be loaded...")
             return@LaunchedEffect
         }
         
-        // 필터링으로 인한 빈 상태가 아닌 경우에만 초기 로드
+        println("TeacherDashboard - ✅ Initial loading data for teacher ID: $actualTeacherId")
+        println("TeacherDashboard - Current user ID: ${currentUser?.id}, email: ${currentUser?.email}")
+        
+        // 항상 해당 선생님의 과제만 가져오도록 teacherId 필수로 전달
+        // 로그인 시 받은 assignments는 무시하고 항상 API로 최신 데이터 가져오기
         if (selectedFilter == AssignmentFilter.ALL) {
-            println("TeacherDashboard - Initial loading data for teacher ID: $actualTeacherId")
+            println("TeacherDashboard - Calling loadAllAssignments with teacherId=$actualTeacherId (required)")
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
             dashboardViewModel.loadDashboardData(actualTeacherId)
         }
         
-        // 학생 목록 로드
-        println("TeacherDashboard - Loading students for teacher ID: $actualTeacherId")
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
     
-    // Handle filter changes
     LaunchedEffect(selectedFilter, actualTeacherId) {
-        if (actualTeacherId == null) return@LaunchedEffect
+        if (actualTeacherId == null) {
+            println("TeacherDashboard - Filter change skipped: teacherId is null")
+            return@LaunchedEffect
+        }
         
         println("TeacherDashboard - Loading assignments with filter: $selectedFilter, teacherId: $actualTeacherId")
         
-        // 상태별 필터링 적용
         val status = when (selectedFilter) {
             AssignmentFilter.ALL -> null
             AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
             AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
         }
         
+        // teacherId 필수로 전달하여 해당 선생님의 과제만 가져오기
         actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
     }
     
-    // 디버깅: assignments 상태 변화 추적
     LaunchedEffect(assignments) {
+        val user = currentUser
         println("TeacherDashboard - Assignments state updated: ${assignments.size} assignments")
+        println("TeacherDashboard - Current user ID: ${user?.id}, email: ${user?.email}")
         assignments.forEach { 
-            println("  - ${it.title} (${it.courseClass.subject.name})")
+            println("  - ${it.title} (${it.courseClass.subject.name}) - teacher: ${it.courseClass.teacherName}")
         }
     }
     
