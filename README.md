@@ -34,13 +34,21 @@ Then rebuild and run the app on your device.
 
 #### Step 1: Backend setup
 
-1. **Navigate to Backend Directory**
+1. **Poppler Installation**
+
+Please install Poppler for your OS and make sure its bin folder is added to your system PATH.
+- Windows: Install Poppler (prebuilt binaries) and add bin to PATH
+- macOS: brew install poppler (ensure PATH is updated)
+- Linux: Install poppler-utils via your package manager
+Verify by running pdfinfo in a new terminal.
+
+2. **Navigate to Backend Directory**
 
    ```bash
    cd backend
    ```
 
-2. **Create .env**  
+3. **Create .env**  
    Create your S3 bucket first, and make **.env** at **backend/** directory like below.
 
    ```bash
@@ -60,13 +68,13 @@ Then rebuild and run the app on your device.
    .venv/bin/python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key()'
    ```
 
-3. **Create Virtual Environment**
+4. **Create Virtual Environment**
 
    ```bash
    python -m venv venv
    ```
 
-4. **Activate Virtual Environment**
+5. **Activate Virtual Environment**
 
    ```bash
    # Windows
@@ -76,20 +84,20 @@ Then rebuild and run the app on your device.
    source venv/bin/activate
    ```
 
-5. **Install Dependencies**
+6. **Install Dependencies**
 
    ```bash
    pip install -r requirements-local.txt
    ```
 
-6. **SentenceTransformer model setup (for semantic feature extraction)**
+7. **SentenceTransformer model setup (for semantic feature extraction)**
 
    ```bash
    # download model
    python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('snunlp/KR-SBERT-V40K-klueNLI-augSTS'); model.save('submissions/utils/KR_SBERT_local')"
    ```
 
-7. **Google Cloud setup (for speech-to-text)**
+8. **Google Cloud setup (for speech-to-text)**
 
    1. Create project at [Google Cloud Console](https://console.cloud.google.com/)
    2. Activate Speech-to-Text API
@@ -129,7 +137,7 @@ This allows the emulator to capture real voice input for testing.
 Now run the VoiceTutor app on the emulator, and it should operate properly.
 </details>
 
-## Demo 3: Teacher Screen
+---
 
 [Demo Video](demo/videos/iter3_demo.mp4)
 
