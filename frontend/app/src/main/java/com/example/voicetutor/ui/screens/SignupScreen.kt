@@ -36,13 +36,14 @@ import com.example.voicetutor.ui.viewmodel.AuthViewModel
 
 @Composable
 fun SignupScreen(
+    authViewModel: AuthViewModel? = null,
     onSignupSuccess: () -> Unit = {},
     onLoginClick: () -> Unit = {}
 ) {
-    val authViewModel: AuthViewModel = hiltViewModel()
-    val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by authViewModel.error.collectAsStateWithLifecycle()
-    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val viewModelAuth = authViewModel ?: hiltViewModel()
+    val isLoading by viewModelAuth.isLoading.collectAsStateWithLifecycle()
+    val error by viewModelAuth.error.collectAsStateWithLifecycle()
+    val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -52,21 +53,8 @@ fun SignupScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     
-    // Handle signup success - 회원가입 성공 시 로그인 화면으로 이동
-    LaunchedEffect(currentUser) {
-        if (currentUser != null) {
-            // 회원가입 성공 시 로그인 화면으로 이동
-            onSignupSuccess()
-            // currentUser를 초기화하여 로그인 화면에서 자동 로그인되지 않도록 함
-            authViewModel.logout()
-        }
-    }
-    
-    // Handle error
     LaunchedEffect(error) {
-        error?.let {
-            // Error is already handled by AuthViewModel
-        }
+        error?.let { }
     }
 
     Box(
@@ -82,7 +70,6 @@ fun SignupScreen(
                 )
             )
     ) {
-        // Background decorative elements
         Box(
             modifier = Modifier
                 .size(288.dp)
@@ -99,7 +86,6 @@ fun SignupScreen(
                 .blur(60.dp)
         )
 
-        // Main content
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -119,7 +105,6 @@ fun SignupScreen(
                 ) {
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Logo
                     Box(
                         modifier = Modifier
                             .size(80.dp)
@@ -141,7 +126,6 @@ fun SignupScreen(
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Title
                     Text(
                         text = "계정 만들기",
                         style = MaterialTheme.typography.headlineSmall,
@@ -161,7 +145,6 @@ fun SignupScreen(
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
-                    // Role selection
                     Text(
                         text = "역할을 선택하세요",
                         style = MaterialTheme.typography.titleSmall,
@@ -176,7 +159,6 @@ fun SignupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Student role card
                         RoleCard(
                             title = "학생",
                             description = "과제를 받고 학습합니다",
@@ -186,7 +168,6 @@ fun SignupScreen(
                             modifier = Modifier.weight(1f)
                         )
                         
-                        // Teacher role card
                         RoleCard(
                             title = "선생님",
                             description = "과제를 생성하고 관리합니다",
@@ -199,12 +180,11 @@ fun SignupScreen(
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Name field
                     OutlinedTextField(
                         value = name,
                         onValueChange = { 
                             name = it
-                            authViewModel.clearError()
+                            viewModelAuth.clearError()
                         },
                         label = { Text("이름") },
                         placeholder = { Text("홍길동") },
@@ -219,18 +199,20 @@ fun SignupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         )
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Email field
                     OutlinedTextField(
                         value = email,
                         onValueChange = { 
                             email = it
-                            authViewModel.clearError()
+                            viewModelAuth.clearError()
                         },
                         label = { Text("이메일") },
                         placeholder = { Text("이메일을 입력하세요") },
@@ -246,18 +228,20 @@ fun SignupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         )
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Password field
                     OutlinedTextField(
                         value = password,
                         onValueChange = { 
                             password = it
-                            authViewModel.clearError()
+                            viewModelAuth.clearError()
                         },
                         label = { Text("비밀번호") },
                         placeholder = { Text("••••••••") },
@@ -283,18 +267,20 @@ fun SignupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         )
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Confirm Password field
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { 
                             confirmPassword = it
-                            authViewModel.clearError()
+                            viewModelAuth.clearError()
                         },
                         label = { Text("비밀번호 확인") },
                         placeholder = { Text("••••••••") },
@@ -320,7 +306,10 @@ fun SignupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         )
                     )
                     
@@ -341,7 +330,6 @@ fun SignupScreen(
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Signup button
                     VTButton(
                         text = if (isLoading) "계정 생성 중..." else "계정 만들기",
                         onClick = {
@@ -353,8 +341,7 @@ fun SignupScreen(
                                 password != confirmPassword -> return@VTButton
                                 password.length < 6 -> return@VTButton
                                 else -> {
-                                    // Call actual signup API
-                                    authViewModel.signup(name, email, password, selectedRole)
+                                    viewModelAuth.signup(name, email, password, selectedRole)
                                 }
                             }
                         },
@@ -366,12 +353,10 @@ fun SignupScreen(
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Divider
                     HorizontalDivider(color = Gray200)
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Login section
                     Text(
                         text = "이미 계정이 있으신가요?",
                         style = MaterialTheme.typography.bodyMedium,

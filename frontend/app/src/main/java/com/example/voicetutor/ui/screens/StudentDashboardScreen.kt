@@ -57,12 +57,10 @@ fun StudentDashboardScreen(
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val studentStats by viewModelAssignment.studentStats.collectAsStateWithLifecycle()
     
-    // 동적 사용자 이름 가져오기
     val studentName = currentUser?.name ?: "학생"
     
-    // 디버깅 로그
     LaunchedEffect(assignments) {
-        println("StudentDashboard - currentUser: ${currentUser?.email}")
+        println("StudentDashboard - currentUser: ${currentUser?.email}, id: ${currentUser?.id}, role: ${currentUser?.role}")
         println("StudentDashboard - assignments from ViewModel: ${assignments.size}")
         assignments.forEach { 
             println("  - ${it.title}")
@@ -72,13 +70,21 @@ fun StudentDashboardScreen(
         }
     }
     
-    // Load student assignments and dashboard data on first composition or when returning to screen
-    // 화면이 컴포즈될 때마다 재로딩
     LaunchedEffect(currentUser) {
-        currentUser?.let { user ->
-            // 학생별 해야 할 과제만 조회 (시작 안함 + 진행 중)
+        val user = currentUser
+        if (user != null) {
             println("StudentDashboard - Loading/Reloading pending assignments for student ID: ${user.id}")
             viewModelAssignment.loadPendingStudentAssignments(user.id)
+        } else {
+            println("StudentDashboard - ⚠️ currentUser is null! Waiting for user data...")
+            kotlinx.coroutines.delay(500)
+            val retryUser = viewModelAuth.currentUser.value
+            if (retryUser != null) {
+                println("StudentDashboard - Retry: Loading assignments for student ID: ${retryUser.id}")
+                viewModelAssignment.loadPendingStudentAssignments(retryUser.id)
+            } else {
+                println("StudentDashboard - ❌ Still no user data after retry")
+            }
         }
     }
     

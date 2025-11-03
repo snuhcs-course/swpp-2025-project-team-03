@@ -10,11 +10,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AuthRepository @Inject constructor(
+open class AuthRepository @Inject constructor(
     private val apiService: ApiService
 ) {
     
-    suspend fun login(email: String, password: String): Result<User> {
+    open suspend fun login(email: String, password: String): Result<User> {
         return try {
             val request = LoginRequest(email, password)
             val response = apiService.login(request)
@@ -45,7 +45,7 @@ class AuthRepository @Inject constructor(
         }
     }
     
-    suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
+    open suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
         return try {
             val signupRequest = SignupRequest(
                 name = name,
@@ -55,17 +55,28 @@ class AuthRepository @Inject constructor(
             )
             val response = apiService.signup(signupRequest)
             
+            println("AuthRepository - Signup response code: ${response.code()}")
+            println("AuthRepository - Signup response success: ${response.body()?.success}")
+            println("AuthRepository - Signup response body: ${response.body()}")
+            
             if (response.isSuccessful && response.body()?.success == true) {
                 val user = response.body()?.user
+                println("AuthRepository - Signup User parsed: ${user?.email}, id: ${user?.id}, role: ${user?.role}")
+                
                 if (user != null) {
                     Result.success(user)
                 } else {
-                    Result.failure(Exception("회원가입에 실패했습니다"))
+                    println("AuthRepository - Signup User is null!")
+                    Result.failure(Exception("회원가입에 실패했습니다 - 사용자 정보를 받을 수 없습니다"))
                 }
             } else {
-                Result.failure(Exception(response.body()?.error ?: "회원가입에 실패했습니다"))
+                val errorMsg = response.body()?.error ?: "회원가입에 실패했습니다"
+                println("AuthRepository - Signup failed: $errorMsg")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
+            println("AuthRepository - Signup error: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }

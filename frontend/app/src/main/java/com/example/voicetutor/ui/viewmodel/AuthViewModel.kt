@@ -69,13 +69,16 @@ class AuthViewModel @Inject constructor(
             // 실제 API 호출
             authRepository.signup(name, email, password, role)
                 .onSuccess { user ->
-                    // 회원가입 성공 시 자동 입력 정보 저장
+                    println("AuthViewModel - Signup success! User: ${user.email}, id: ${user.id}, role: ${user.role}")
+                    println("AuthViewModel - Setting currentUser and isLoggedIn...")
                     _autoFillCredentials.value = Pair(email, password)
-                    // currentUser를 설정하여 SignupScreen에서 감지할 수 있도록 함
                     _currentUser.value = user
+                    _isLoggedIn.value = true
                     _error.value = null
+                    println("AuthViewModel - ✅ User set: ${_currentUser.value?.email}, isLoggedIn: ${_isLoggedIn.value}")
                 }
                 .onFailure { exception ->
+                    println("AuthViewModel - Signup failed: ${exception.message}")
                     _error.value = exception.message
                 }
             
