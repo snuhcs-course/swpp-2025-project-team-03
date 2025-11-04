@@ -58,7 +58,7 @@ fun CreateAssignmentScreen(
     
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val students by studentViewModel.students.collectAsStateWithLifecycle()
-    val isLoading by actualAssignmentViewModel.isLoading.collectAsStateWithLifecycle()
+    val isCreatingAssignment by actualAssignmentViewModel.isCreatingAssignment.collectAsStateWithLifecycle()  // 변경
     val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
     val currentAssignment by actualAssignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
     val isUploading by actualAssignmentViewModel.isUploading.collectAsStateWithLifecycle()
@@ -186,19 +186,19 @@ fun CreateAssignmentScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header removed - now handled by MainLayout
-            
-            // Loading indicator
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = PrimaryIndigo
-                    )
-                }
-            } else {
+        // Header removed - now handled by MainLayout
+        
+        // Loading indicator (과제 생성 중에만 표시, 다른 UI 블로킹 안 함)
+        if (isCreatingAssignment) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = PrimaryIndigo
+                )
+            }
+        } else {
             // Basic info section
             VTCard(variant = CardVariant.Elevated) {
             Column {
@@ -986,7 +986,7 @@ fun CreateAssignmentScreen(
             },
             variant = ButtonVariant.Gradient,
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid && !isLoading,
+            enabled = isFormValid && !isCreatingAssignment,  // 변경: isCreatingAssignment 사용
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Add,

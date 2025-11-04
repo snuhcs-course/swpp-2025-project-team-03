@@ -63,6 +63,10 @@ class AssignmentViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
+    // 과제 생성 전용 로딩 상태 (다른 UI를 블로킹하지 않음)
+    private val _isCreatingAssignment = MutableStateFlow(false)
+    val isCreatingAssignment: StateFlow<Boolean> = _isCreatingAssignment.asStateFlow()
+    
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
     
@@ -133,12 +137,15 @@ class AssignmentViewModel @Inject constructor(
         _selectedPersonalAssignmentId.value = personalAssignmentId
     }
     
-    fun loadAllAssignments(teacherId: String? = null, classId: String? = null, status: AssignmentStatus? = null) {
+    fun loadAllAssignments(teacherId: String? = null, classId: String? = null, status: AssignmentStatus? = null, silent: Boolean = false) {
         viewModelScope.launch {
-            _isLoading.value = true
+            // silent가 true면 다른 UI를 블로킹하지 않음
+            if (!silent) {
+                _isLoading.value = true
+            }
             _error.value = null
             
-            println("AssignmentViewModel - loadAllAssignments called with teacherId=$teacherId, classId=$classId, status=$status")
+            println("AssignmentViewModel - loadAllAssignments called with teacherId=$teacherId, classId=$classId, status=$status, silent=$silent")
             
             assignmentRepository.getAllAssignments(teacherId, classId, status)
                 .onSuccess { assignments ->
@@ -150,7 +157,9 @@ class AssignmentViewModel @Inject constructor(
                     _error.value = exception.message
                 }
             
-            _isLoading.value = false
+            if (!silent) {
+                _isLoading.value = false
+            }
         }
     }
     
@@ -599,43 +608,36 @@ class AssignmentViewModel @Inject constructor(
     fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File, totalNumber: Int = 5) {
         println("=== AssignmentViewModel.createAssignmentWithPdf 시작 ===")
         println("PDF 파일: ${pdfFile.name}")
-        println("파일 크기: ${pdfFile.length()} bytes")
-        println("파일 존재: ${pdfFile.exists()}")
-        println("문제 개수 (totalNumber): $totalNumber")
         
-        viewModelScope.launch {
-            _isLoading.value = true
-            _isUploading.value = true
-            _error.value = null
-            _uploadProgress.value = 0f.coerceIn(0f, 1f)
-            println("DEBUG: uploadProgress set to 0f")
-            _uploadSuccess.value = false
+        // 🔥 완전히 독립적인 코루틴으로 실행 - 즉시 반환
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                _isCreatingAssignment.value = true
+                _isUploading.value = true
+                _uploadProgress.value = 0f
+                _uploadSuccess.value = false
+            }
             
             try {
-                println("1단계: 과제 생성 요청 시작")
-                // 1. 과제 생성 (S3 업로드 URL 받기)
-                        assignmentRepository.createAssignment(assignment)
-                    .onSuccess { createResponse ->
-                        println("✅ 과제 생성 성공")
-                        println("과제 ID: ${createResponse.assignment_id}")
-                        println("자료 ID: ${createResponse.material_id}")
-                        println("S3 키: ${createResponse.s3_key}")
-                        println("업로드 URL: ${createResponse.upload_url}")
-                        _uploadProgress.value = 0.3f.coerceIn(0f, 1f)
-                        println("DEBUG: uploadProgress set to 0.3f")
-                        
-                        // 생성된 과제 정보를 currentAssignment에 설정
+                println("1단계: 과제 생성")
+                val createResult = assignmentRepository.createAssignment(assignment)
+                
+                createResult.onSuccess { createResponse ->
+                    println("✅ 과제 생성 성공: ${createResponse.assignment_id}")
+                    
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        _uploadProgress.value = 0.3f
                         _currentAssignment.value = AssignmentData(
                             id = createResponse.assignment_id,
                             title = assignment.title,
                             description = assignment.description,
                             totalQuestions = totalNumber,
-                            createdAt = "", // 서버에서 받아올 수 있음
+                            createdAt = "",
                             visibleFrom = "",
                             dueAt = assignment.due_at,
                             courseClass = CourseClass(
                                 id = assignment.class_id,
-                                name = "", // 서버에서 받아올 수 있음
+                                name = "",
                                 description = "",
                                 subject = Subject(id = 0, name = assignment.subject),
                                 teacherName = "",
@@ -646,65 +648,100 @@ class AssignmentViewModel @Inject constructor(
                             ),
                             grade = assignment.grade
                         )
+                    }
+                    
+                    println("2단계: PDF 업로드")
+                    val uploadResult = assignmentRepository.uploadPdfToS3(createResponse.upload_url, pdfFile)
+                    
+                    uploadResult.onSuccess {
+                        println("✅ PDF 업로드 완료")
                         
-                        println("2단계: S3 업로드 시작")
-                        // 2. PDF 파일을 S3에 업로드
-                        assignmentRepository.uploadPdfToS3(createResponse.upload_url, pdfFile)
-                            .onSuccess {
-                                println("✅ S3 업로드 성공")
-                                _uploadProgress.value = 1f.coerceIn(0f, 1f)
-                                println("DEBUG: uploadProgress set to 1f")
-                                _uploadSuccess.value = true
-                                _isUploading.value = false
-                                _isLoading.value = false  // PDF 업로드 완료 시 로딩 상태 해제
-
-                                // 3. 업로드 완료 직후 기본 문제 생성 트리거 (백그라운드)
-                                // totalNumber 파라미터 사용 (사용자가 입력한 문제 개수)
-                                println("3단계: 기본 문제 생성 트리거 - totalNumber=$totalNumber (백그라운드)")
+                        // 🔥🔥🔥 즉시 모든 상태 해제
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            _uploadProgress.value = 1f
+                            _uploadSuccess.value = true
+                            _isUploading.value = false
+                            _isCreatingAssignment.value = false
+                            println("✅✅✅ 모든 로딩 상태 해제 완료")
+                        }
+                        
+                        // 백그라운드 작업들 시작 (완전히 독립적, fire-and-forget)
+                        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                            try {
+                                println("🔄 [별도 스레드] 과제 목록 새로고침")
+                                loadAllAssignments(silent = true)
+                                println("✅ [별도 스레드] 과제 목록 새로고침 완료")
+                            } catch (e: Exception) {
+                                println("❌ [별도 스레드] 과제 목록 새로고침 실패: ${e.message}")
+                            }
+                        }
+                        
+                        // 문제 생성도 완전히 독립적으로
+                        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                 _isGeneratingQuestions.value = true
-                                _questionGenerationError.value = null
                                 _generatingAssignmentTitle.value = assignment.title
-                                viewModelScope.launch {
-                                    assignmentRepository.createQuestionsAfterUpload(
-                                        assignmentId = createResponse.assignment_id,
-                                        materialId = createResponse.material_id,
-                                        totalNumber = totalNumber
-                                    ).onSuccess {
-                                        println("✅ 기본 문제 생성 요청 성공")
+                            }
+                            
+                            try {
+                                println("🔄 [별도 스레드] 문제 생성 시작")
+                                val result = assignmentRepository.createQuestionsAfterUpload(
+                                    assignmentId = createResponse.assignment_id,
+                                    materialId = createResponse.material_id,
+                                    totalNumber = totalNumber
+                                )
+                                
+                                result.onSuccess {
+                                    println("✅ [별도 스레드] 문제 생성 완료")
+                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                         _questionGenerationSuccess.value = true
                                         _isGeneratingQuestions.value = false
                                         _generatingAssignmentTitle.value = null
-                                    }.onFailure { genErr ->
-                                        println("❌ 기본 문제 생성 요청 실패: ${genErr.message}")
-                                        _questionGenerationError.value = genErr.message
+                                    }
+                                }.onFailure { e ->
+                                    println("❌ [별도 스레드] 문제 생성 실패: ${e.message}")
+                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                        _questionGenerationError.value = e.message
                                         _isGeneratingQuestions.value = false
                                         _generatingAssignmentTitle.value = null
                                     }
                                 }
-                                
-                                // Refresh assignments list
-                                loadAllAssignments()
+                            } catch (e: Exception) {
+                                println("❌ [별도 스레드] 문제 생성 예외: ${e.message}")
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                    _questionGenerationError.value = e.message
+                                    _isGeneratingQuestions.value = false
+                                    _generatingAssignmentTitle.value = null
+                                }
                             }
-                            .onFailure { uploadException ->
-                                println("❌ S3 업로드 실패: ${uploadException.message}")
-                                _error.value = "PDF 업로드 실패: ${uploadException.message}"
-                                _isUploading.value = false
-                                _isLoading.value = false
-                            }
+                        }
+                    }.onFailure { e ->
+                        println("❌ PDF 업로드 실패: ${e.message}")
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            _error.value = "PDF 업로드 실패: ${e.message}"
+                            _isUploading.value = false
+                            _isCreatingAssignment.value = false
+                        }
                     }
-                    .onFailure { createException ->
-                        println("❌ 과제 생성 실패: ${createException.message}")
-                        _error.value = "과제 생성 실패: ${createException.message}"
+                }.onFailure { e ->
+                    println("❌ 과제 생성 실패: ${e.message}")
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        _error.value = "과제 생성 실패: ${e.message}"
                         _isUploading.value = false
-                        _isLoading.value = false
+                        _isCreatingAssignment.value = false
                     }
+                }
             } catch (e: Exception) {
-                println("❌ 예상치 못한 오류: ${e.message}")
-                _error.value = "예상치 못한 오류: ${e.message}"
-                _isUploading.value = false
-                _isLoading.value = false
+                println("❌ 예외 발생: ${e.message}")
+                e.printStackTrace()
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    _error.value = "오류: ${e.message}"
+                    _isUploading.value = false
+                    _isCreatingAssignment.value = false
+                }
             }
         }
+        // 🔥 함수는 여기서 즉시 반환됨!
     }
     
     fun updateAssignment(id: Int, assignment: UpdateAssignmentRequest) {
