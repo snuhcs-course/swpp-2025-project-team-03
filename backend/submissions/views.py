@@ -719,6 +719,52 @@ class PersonalAssignmentStatisticsView(APIView):
             total_problem = personal_assignment.assignment.total_questions
             solved_problem = personal_assignment.solved_num
 
+            # average_score 계산
+            # 각 base question (recalled_num=0)에 대해 점수 계산
+            base_questions = personal_assignment.questions.filter(recalled_num=0)
+            total_score = 0
+            base_question_count = base_questions.count()
+
+            for base_question in base_questions:
+                question_number = base_question.number
+                # 해당 question_number의 모든 recalled_num 질문들 가져오기 (0, 1, 2, 3)
+                related_questions = personal_assignment.questions.filter(number=question_number).order_by(
+                    "recalled_num"
+                )
+
+                question_score = 0
+                has_answer = False
+
+                for question in related_questions:
+                    try:
+                        answer = Answer.objects.get(question=question, student=personal_assignment.student)
+                        has_answer = True
+
+                        # is_correct가 True인 경우 점수 부여
+                        if answer.state == Answer.State.CORRECT:
+                            if question.recalled_num == 0:
+                                question_score = 100
+                            elif question.recalled_num == 1:
+                                question_score = 75
+                            elif question.recalled_num == 2:
+                                question_score = 50
+                            elif question.recalled_num == 3:
+                                question_score = 25
+                            break  # 처음으로 정답인 경우 점수 확정
+
+                    except Answer.DoesNotExist:
+                        # 답변이 없는 경우
+                        # 이전에 is_correct가 True였다면 이미 break되었을 것
+                        # 답변이 없으면 다음 recalled_num 확인 불가하므로
+                        # has_answer가 True이면 이전 답변들이 모두 틀렸다는 의미
+                        break
+
+                # 모든 recalled_num에 대해 답변이 있고 모두 틀린 경우 또는
+                # 답변이 없는 경우 question_score는 0
+                total_score += question_score
+
+            average_score = (total_score / base_question_count) if base_question_count > 0 else 0
+
             statistics = {
                 "total_questions": total_questions,
                 "answered_questions": answered_questions,
@@ -727,6 +773,7 @@ class PersonalAssignmentStatisticsView(APIView):
                 "total_problem": total_problem,
                 "solved_problem": solved_problem,
                 "progress": (solved_problem / total_problem * 100) if total_problem > 0 else 0,
+                "average_score": average_score,
             }
 
             serializer = PersonalAssignmentStatisticsSerializer(data=statistics)
