@@ -702,65 +702,70 @@ class PersonalAssignmentStatisticsView(APIView):
             - id: PersonalAssignment ID
         """
         try:
-            # PersonalAssignment 조회
-            personal_assignment = PersonalAssignment.objects.get(id=id)
+            # PersonalAssignment 조회 (관련 데이터 한번에 로드)
+            personal_assignment = PersonalAssignment.objects.select_related("assignment", "student").get(id=id)
+
+            # 모든 질문과 답변을 한번에 가져오기 (N+1 쿼리 방지)
+            all_questions = list(personal_assignment.questions.all().order_by("number", "recalled_num"))
+
+            # 해당 학생의 모든 답변을 한번에 가져와서 딕셔너리로 변환
+            answers_qs = Answer.objects.filter(
+                question__in=all_questions, student=personal_assignment.student
+            ).select_related("question")
+
+            # question_id를 키로 하는 딕셔너리 생성 (O(1) 조회)
+            answers_by_question_id = {answer.question_id: answer for answer in answers_qs}
 
             # 통계 정보 계산
-            total_questions = personal_assignment.questions.count()
-            answered_questions = Answer.objects.filter(
-                question__in=personal_assignment.questions.all(), student=personal_assignment.student
-            ).count()
-            correct_answers = Answer.objects.filter(
-                question__in=personal_assignment.questions.all(),
-                student=personal_assignment.student,
-                state=Answer.State.CORRECT,
-            ).count()
+            total_questions = len(all_questions)
+            answered_questions = len(answers_by_question_id)
+            correct_answers = sum(
+                1 for answer in answers_by_question_id.values() if answer.state == Answer.State.CORRECT
+            )
 
             total_problem = personal_assignment.assignment.total_questions
             solved_problem = personal_assignment.solved_num
 
             # average_score 계산
-            # 각 base question (recalled_num=0)에 대해 점수 계산
-            base_questions = personal_assignment.questions.filter(recalled_num=0)
+            # question_number별로 질문들을 그룹화 (메모리 내에서 처리)
+            questions_by_number = {}
+            base_question_count = 0
+
+            for question in all_questions:
+                if question.number not in questions_by_number:
+                    questions_by_number[question.number] = []
+                questions_by_number[question.number].append(question)
+
+                if question.recalled_num == 0:
+                    base_question_count += 1
+
             total_score = 0
-            base_question_count = base_questions.count()
 
-            for base_question in base_questions:
-                question_number = base_question.number
-                # 해당 question_number의 모든 recalled_num 질문들 가져오기 (0, 1, 2, 3)
-                related_questions = personal_assignment.questions.filter(number=question_number).order_by(
-                    "recalled_num"
-                )
-
+            # 각 question_number별로 점수 계산
+            for question_number, questions in questions_by_number.items():
+                # recalled_num 순으로 정렬되어 있음 (이미 order_by 적용됨)
                 question_score = 0
-                has_answer = False
 
-                for question in related_questions:
-                    try:
-                        answer = Answer.objects.get(question=question, student=personal_assignment.student)
-                        has_answer = True
+                for question in questions:
+                    # 딕셔너리에서 답변 조회 (O(1))
+                    answer = answers_by_question_id.get(question.id)
 
-                        # is_correct가 True인 경우 점수 부여
-                        if answer.state == Answer.State.CORRECT:
-                            if question.recalled_num == 0:
-                                question_score = 100
-                            elif question.recalled_num == 1:
-                                question_score = 75
-                            elif question.recalled_num == 2:
-                                question_score = 50
-                            elif question.recalled_num == 3:
-                                question_score = 25
-                            break  # 처음으로 정답인 경우 점수 확정
-
-                    except Answer.DoesNotExist:
-                        # 답변이 없는 경우
-                        # 이전에 is_correct가 True였다면 이미 break되었을 것
-                        # 답변이 없으면 다음 recalled_num 확인 불가하므로
-                        # has_answer가 True이면 이전 답변들이 모두 틀렸다는 의미
+                    if answer is None:
+                        # 답변이 없으면 더 이상 진행 불가
                         break
 
-                # 모든 recalled_num에 대해 답변이 있고 모두 틀린 경우 또는
-                # 답변이 없는 경우 question_score는 0
+                    # 정답인 경우 recalled_num에 따라 점수 부여
+                    if answer.state == Answer.State.CORRECT:
+                        if question.recalled_num == 0:
+                            question_score = 100
+                        elif question.recalled_num == 1:
+                            question_score = 75
+                        elif question.recalled_num == 2:
+                            question_score = 50
+                        elif question.recalled_num == 3:
+                            question_score = 25
+                        break  # 처음으로 정답인 경우 점수 확정
+
                 total_score += question_score
 
             average_score = (total_score / base_question_count) if base_question_count > 0 else 0

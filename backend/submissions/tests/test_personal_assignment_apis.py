@@ -652,11 +652,14 @@ class TestPersonalAssignmentStatisticsView:
     def test_get_statistics_unexpected_exception(self, api_client, personal_assignment1, monkeypatch):
         """예상치 못한 예외 발생 시 500 에러"""
 
-        def mock_get(*args, **kwargs):
-            raise Exception("Database connection failed")
+        def mock_select_related(*args, **kwargs):
+            # select_related는 self를 반환하므로 체이닝을 위해 mock 객체 반환
+            mock_manager = type("MockManager", (), {})()
+            mock_manager.get = lambda *a, **kw: (_ for _ in ()).throw(Exception("Database connection failed"))
+            return mock_manager
 
         url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
-        monkeypatch.setattr(PersonalAssignment.objects, "get", mock_get)
+        monkeypatch.setattr(PersonalAssignment.objects, "select_related", mock_select_related)
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
