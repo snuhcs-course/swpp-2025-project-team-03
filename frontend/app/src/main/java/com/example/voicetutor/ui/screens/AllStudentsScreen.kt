@@ -10,6 +10,8 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,7 +34,8 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 @Composable
 fun AllStudentsScreen(
     teacherId: String = "1", // 임시로 기본값 설정
-    onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> },
+    onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> },  // 리포트용
+    onNavigateToStudentInfo: (String, String) -> Unit = { _, _ -> },  // 학생 상세용
     onNavigateToMessage: (String) -> Unit = {}
 ) {
     val studentViewModel: StudentViewModel = hiltViewModel()
@@ -45,7 +48,10 @@ fun AllStudentsScreen(
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
     
-    var selectedClassId by remember { mutableStateOf<Int?>(null) }
+    var selectedClassId by rememberSaveable(stateSaver = Saver(
+        save = { it ?: -1 },
+        restore = { if (it == -1) null else it }
+    )) { mutableStateOf<Int?>(null) }
     var expandedClassDropdown by remember { mutableStateOf(false) }
     
     // Load classes for teacher
@@ -259,14 +265,22 @@ fun AllStudentsScreen(
                 }
             }
         } else {
-            items(allStudents) { student ->
+            items(
+                items = allStudents,
+                key = { student -> student.id }  // 각 학생의 고유 ID를 키로 사용
+            ) { student ->
                 AllStudentsCard(
                     student = student,
                     onStudentClick = { 
+                        // 학생 상세 페이지로 이동
+                        onNavigateToStudentInfo(student.id.toString(), student.name)
+                    },
+                    onMessageClick = { onNavigateToMessage(student.name) },
+                    onReportClick = {
+                        // 리포트 페이지로 이동
                         val classId = selectedClassId ?: 0
                         onNavigateToStudentDetail(classId, student.id, student.name)
-                    },
-                    onMessageClick = { onNavigateToMessage(student.name) }
+                    }
                 )
             }
         }
@@ -277,7 +291,8 @@ fun AllStudentsScreen(
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
     onStudentClick: () -> Unit,
-    onMessageClick: () -> Unit
+    onMessageClick: () -> Unit,
+    onReportClick: () -> Unit = onStudentClick
 ) {
     VTCard(
         variant = CardVariant.Elevated,
@@ -374,8 +389,33 @@ fun AllStudentsCard(
             // Action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // 리포트 버튼 (좌측 하단)
+                Box(
+                    modifier = Modifier.widthIn(max = 240.dp)
+                ) {
+                    VTButton(
+                        text = "리포트 보기",
+                        onClick = {
+                            onReportClick()
+                        },
+                        variant = ButtonVariant.Outline,
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Assessment,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // 메시지 버튼 (우측)
                 IconButton(
                     onClick = onMessageClick
                 ) {

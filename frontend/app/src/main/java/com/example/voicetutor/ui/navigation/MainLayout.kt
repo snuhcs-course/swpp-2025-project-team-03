@@ -75,6 +75,7 @@ fun MainLayout(
         VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
         VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
+        VoiceTutorScreens.TeacherStudentDetail.route -> "teacher_students" // 학생 상세 페이지에서 학생 탭 선택
         else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"
     }
     

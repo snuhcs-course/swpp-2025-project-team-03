@@ -338,7 +338,7 @@ fun TeacherStudentReportScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "성취기준 데이터가 없습니다",
+                                    text = "제출한 과제가 없습니다",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Gray600
                                 )

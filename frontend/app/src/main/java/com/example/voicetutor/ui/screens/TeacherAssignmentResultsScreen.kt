@@ -32,7 +32,7 @@ fun TeacherAssignmentResultsScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentId: Int = 0,
     assignmentTitle: String? = null, // For backward compatibility
-    onNavigateToStudentDetail: (String) -> Unit = {}
+    onNavigateToStudentDetail: (Int) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -214,7 +214,7 @@ fun TeacherAssignmentResultsScreen(
                 students.forEachIndexed { index, student ->
                     TeacherAssignmentResultCard(
                         student = student,
-                        onStudentClick = { onNavigateToStudentDetail(student.studentId) }
+                        onStudentClick = { onNavigateToStudentDetail(student.studentId.toIntOrNull() ?: 1) }
                     )
                     
                     if (index < students.size - 1) {
