@@ -39,7 +39,7 @@ private fun formatDueDate(dueDate: String): String {
 fun CompletedAssignmentsScreen(
     studentId: Int? = null,
     onNavigateToAssignmentDetail: (Int) -> Unit = {},
-    onNavigateToAssignmentReport: (String) -> Unit = {}
+    onNavigateToAssignmentReport: (Int, String) -> Unit = { _, _ -> }
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -138,7 +138,9 @@ fun CompletedAssignmentsScreen(
                         assignment = assignment,
                         onClick = { 
                             // 리포트 보기 버튼은 리포트 화면으로 이동
-                            onNavigateToAssignmentReport(assignment.title)
+                            assignment.personalAssignmentId?.let { personalAssignmentId ->
+                                onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
+                            }
                         }
                     )
                     }

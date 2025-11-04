@@ -43,7 +43,7 @@ fun AllStudentAssignmentsScreen(
     studentId: Int,
     onNavigateToAssignmentDetail: (String) -> Unit = {},
     onNavigateToAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentReport: (String) -> Unit = {}
+    onNavigateToAssignmentReport: (Int, String) -> Unit = { _, _ -> }
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -205,7 +205,7 @@ fun StudentAssignmentCard(
     onClick: () -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {},
     onNavigateToAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentReport: (String) -> Unit = {}
+    onNavigateToAssignmentReport: (Int, String) -> Unit = { _, _ -> }
 ) {
     VTCard(
         variant = CardVariant.Elevated,
@@ -415,7 +415,9 @@ fun StudentAssignmentCard(
                         text = "리포트 보기",
                         onClick = { 
                             // 리포트 화면으로 이동
-                            onNavigateToAssignmentReport(assignment.title)
+                            assignment.personalAssignmentId?.let { personalAssignmentId ->
+                                onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
+                            }
                         },
                         variant = ButtonVariant.Primary,
                         size = ButtonSize.Medium,

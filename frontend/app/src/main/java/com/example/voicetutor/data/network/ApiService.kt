@@ -92,10 +92,13 @@ interface ApiService {
     
     @POST("personal_assignments/{id}/complete/")
     suspend fun completePersonalAssignment(@Path("id") id: Int): Response<ApiResponse<Unit>>
-    
+
+    @GET("personal_assignments/{id}/correctness/")
+    suspend fun getAssignmentCorrectness(@Path("id") id: Int): Response<ApiResponse<List<AssignmentCorrectnessItem>>>
+
     @GET("courses/students/{id}/progress/")
     suspend fun getStudentProgress(@Path("id") id: Int): Response<ApiResponse<StudentProgress>>
-    
+
     // Class APIs (Backend: /api/courses/classes/)
     @GET("courses/classes/")
     suspend fun getClasses(@Query("teacherId") teacherId: String): Response<ApiResponse<List<ClassData>>>

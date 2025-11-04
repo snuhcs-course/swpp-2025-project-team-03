@@ -128,6 +128,10 @@ class AssignmentViewModel @Inject constructor(
     private val _isAssignmentCompleted = MutableStateFlow(false)
     val isAssignmentCompleted: StateFlow<Boolean> = _isAssignmentCompleted.asStateFlow()
     
+    // 과제 정답 여부 데이터
+    private val _assignmentCorrectness = MutableStateFlow<List<com.example.voicetutor.data.models.AssignmentCorrectnessItem>>(emptyList())
+    val assignmentCorrectness: StateFlow<List<com.example.voicetutor.data.models.AssignmentCorrectnessItem>> = _assignmentCorrectness.asStateFlow()
+
     // 선택된 과제 ID들 (네비게이션용)
     private val _selectedAssignmentId = MutableStateFlow<Int?>(null)
     val selectedAssignmentId: StateFlow<Int?> = _selectedAssignmentId.asStateFlow()
@@ -1594,6 +1598,25 @@ class AssignmentViewModel @Inject constructor(
             println("AssignmentViewModel - Error getting assignment stats: ${e.message}")
             e.printStackTrace()
             AssignmentStatistics(0, 0, 0, 0)
+
+//     fun loadAssignmentCorrectness(personalAssignmentId: Int) {
+//         viewModelScope.launch {
+//             println("AssignmentViewModel - Loading correctness for personal assignment $personalAssignmentId")
+//             _isLoading.value = true
+//             _error.value = null
+
+//             assignmentRepository.getAssignmentCorrectness(personalAssignmentId)
+//                 .onSuccess { correctnessData ->
+//                     _assignmentCorrectness.value = correctnessData
+//                     println("AssignmentViewModel - Successfully loaded ${correctnessData.size} correctness items")
+//                 }
+//                 .onFailure { exception ->
+//                     _error.value = exception.message
+//                     println("AssignmentViewModel - Failed to load correctness: ${exception.message}")
+//                 }
+
+//             _isLoading.value = false
+
         }
     }
 }
