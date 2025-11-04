@@ -34,6 +34,7 @@ class PersonalAssignmentStatisticsSerializer(serializers.Serializer):
     total_problem = serializers.IntegerField()  # 과제에 할당된 전체 문제 수 (꼬리 질문 미포함)
     solved_problem = serializers.IntegerField()  # 과제에 할당된 문제 중 푼 문제 수 (꼬리 질문 미포함)
     progress = serializers.FloatField()  # 진행률 (푼 문제 비율)
+    average_score = serializers.FloatField()  # 평균 점수 (꼬리 질문 포함)
 
 
 class AnswerCorrectnessSerializer(serializers.Serializer):
