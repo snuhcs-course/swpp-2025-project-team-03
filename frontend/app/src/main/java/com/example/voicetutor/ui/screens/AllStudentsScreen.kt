@@ -10,6 +10,8 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,7 +48,10 @@ fun AllStudentsScreen(
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
     
-    var selectedClassId by remember { mutableStateOf<Int?>(null) }
+    var selectedClassId by rememberSaveable(stateSaver = Saver(
+        save = { it ?: -1 },
+        restore = { if (it == -1) null else it }
+    )) { mutableStateOf<Int?>(null) }
     var expandedClassDropdown by remember { mutableStateOf(false) }
     
     // Load classes for teacher
