@@ -814,13 +814,18 @@ class AnswerCorrectnessView(APIView):
             # PersonalAssignment 조회
             personal_assignment = PersonalAssignment.objects.get(pk=id)
 
-            questions = personal_assignment.questions.filter(recalled_num=0).order_by("number")
+            questions = personal_assignment.questions.order_by("number", "recalled_num")
 
             answer_correctness_list = []
             for question in questions:
                 try:
                     answer = Answer.objects.get(question=question, student=personal_assignment.student)
                     is_correct = answer.state == Answer.State.CORRECT
+                    question_num = (
+                        f"{question.number}-{question.recalled_num}"
+                        if question.recalled_num > 0
+                        else f"{question.number}"
+                    )
                 except Answer.DoesNotExist:
                     continue  # 답안이 없는 경우 건너뜀
 
@@ -828,8 +833,11 @@ class AnswerCorrectnessView(APIView):
                     {
                         "question_content": question.content,
                         "question_model_answer": question.model_answer,
+                        "student_answer": answer.text_answer,
                         "is_correct": is_correct,
                         "answered_at": answer.submitted_at,
+                        "question_number": question_num,
+                        "explanation": question.explanation,
                     }
                 )
 

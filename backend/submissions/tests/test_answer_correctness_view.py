@@ -145,8 +145,8 @@ class TestAnswerCorrectnessView:
         assert resp.data["success"] is True
         assert len(resp.data["data"]) == 0
 
-    def test_only_base_questions_included(self, api_client, personal_assignment, questions, tail_questions, student):
-        """recalled_num=0인 기본 질문만 조회됨 (꼬리 질문 제외)"""
+    def test_all_questions_included(self, api_client, personal_assignment, questions, tail_questions, student):
+        """기본 질문+꼬리 질문 모두 조회됨"""
         # 기본 질문에만 답변
         for q in questions:
             Answer.objects.create(
@@ -174,8 +174,8 @@ class TestAnswerCorrectnessView:
         url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
-        # 기본 질문 3개만 반환
-        assert len(resp.data["data"]) == 3
+        # 기본 질문 3개 + 꼬리 질문 2개 = 5개 반환
+        assert len(resp.data["data"]) == 5
 
     def test_correct_answer_state(self, api_client, personal_assignment, questions, student):
         """정답인 경우 is_correct=True"""
@@ -453,3 +453,370 @@ class TestAnswerCorrectnessView:
 
         assert resp.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert resp.data["success"] is False
+
+    def test_question_number_base_question(self, api_client, personal_assignment, questions, student):
+        """recalled_num=0인 기본 질문의 question_number는 숫자만 표시"""
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer="my answer",
+            state=Answer.State.CORRECT,
+            eval_grade=0.8,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        # recalled_num=0이므로 question_number는 "1"이어야 함
+        assert data["question_number"] == "1"
+        assert "-" not in data["question_number"]
+
+    def test_question_number_tail_question(self, api_client, personal_assignment, tail_questions, student):
+        """recalled_num>0인 꼬리 질문의 question_number는 'number-recalled_num' 형식"""
+        # tail_questions[0]은 number=1, recalled_num=1
+        Answer.objects.create(
+            question=tail_questions[0],
+            student=student,
+            text_answer="tail answer",
+            state=Answer.State.INCORRECT,
+            eval_grade=0.5,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        # recalled_num=1이므로 question_number는 "1-1"이어야 함
+        assert data["question_number"] == "1-1"
+
+    def test_question_number_multiple_tail_questions(self, api_client, personal_assignment, questions, student):
+        """여러 단계의 꼬리 질문에 대한 question_number 형식 확인"""
+        # recalled_num=2인 꼬리 질문 생성
+        tail_q2 = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=1,
+            content="Tail Question 2",
+            model_answer="Tail Answer 2",
+            explanation="Tail Explanation 2",
+            difficulty=Question.Difficulty.HARD,
+            recalled_num=2,
+            base_question=questions[0],
+        )
+
+        # recalled_num=3인 꼬리 질문 생성
+        tail_q3 = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=1,
+            content="Tail Question 3",
+            model_answer="Tail Answer 3",
+            explanation="Tail Explanation 3",
+            difficulty=Question.Difficulty.HARD,
+            recalled_num=3,
+            base_question=questions[0],
+        )
+
+        # 답변 생성
+        Answer.objects.create(
+            question=tail_q2,
+            student=student,
+            text_answer="answer for tail 2",
+            state=Answer.State.CORRECT,
+            eval_grade=0.7,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        Answer.objects.create(
+            question=tail_q3,
+            student=student,
+            text_answer="answer for tail 3",
+            state=Answer.State.CORRECT,
+            eval_grade=0.8,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data["data"]) == 2
+
+        # question_number 확인
+        question_numbers = [item["question_number"] for item in resp.data["data"]]
+        assert "1-2" in question_numbers
+        assert "1-3" in question_numbers
+
+    def test_student_answer_field_exists(self, api_client, personal_assignment, questions, student):
+        """student_answer 필드가 응답에 포함되는지 확인"""
+        student_answer_text = "This is my student answer"
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer=student_answer_text,
+            state=Answer.State.CORRECT,
+            eval_grade=0.8,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        assert "student_answer" in data
+        assert isinstance(data["student_answer"], str)
+
+    def test_student_answer_content(self, api_client, personal_assignment, questions, student):
+        """student_answer에 올바른 답변 내용이 포함되는지 확인"""
+        student_answer_text = "이것은 학생의 답변입니다"
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer=student_answer_text,
+            state=Answer.State.CORRECT,
+            eval_grade=0.9,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        assert data["student_answer"] == student_answer_text
+
+    def test_student_answer_multiple_questions(self, api_client, personal_assignment, questions, student):
+        """여러 질문에 대한 student_answer가 올바르게 반환되는지 확인"""
+        answers_map = {
+            questions[0]: "첫 번째 답변",
+            questions[1]: "두 번째 답변",
+            questions[2]: "세 번째 답변",
+        }
+
+        for question, answer_text in answers_map.items():
+            Answer.objects.create(
+                question=question,
+                student=student,
+                text_answer=answer_text,
+                state=Answer.State.CORRECT,
+                eval_grade=0.8,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data["data"]) == 3
+
+        # 각 답변의 student_answer가 올바른지 확인
+        for item in resp.data["data"]:
+            question_content = item["question_content"]
+            question_number = int(question_content.split()[-1])  # "Question 1" -> 1
+            expected_answer = answers_map[questions[question_number - 1]]
+            assert item["student_answer"] == expected_answer
+
+    def test_complete_response_with_all_new_fields(
+        self, api_client, personal_assignment, questions, tail_questions, student
+    ):
+        """모든 새로운 필드(student_answer, question_number)가 포함된 완전한 응답 확인"""
+        # 기본 질문 답변
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer="Base question answer",
+            state=Answer.State.CORRECT,
+            eval_grade=0.85,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # 꼬리 질문 답변
+        Answer.objects.create(
+            question=tail_questions[0],
+            student=student,
+            text_answer="Tail question answer",
+            state=Answer.State.INCORRECT,
+            eval_grade=0.4,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data["data"]) == 2
+
+        # 기본 질문 확인
+        base_item = next(item for item in resp.data["data"] if item["question_number"] == "1")
+        assert base_item["student_answer"] == "Base question answer"
+        assert base_item["question_number"] == "1"
+        assert base_item["is_correct"] is True
+        assert "question_content" in base_item
+        assert "question_model_answer" in base_item
+        assert "answered_at" in base_item
+
+        # 꼬리 질문 확인
+        tail_item = next(item for item in resp.data["data"] if item["question_number"] == "1-1")
+        assert tail_item["student_answer"] == "Tail question answer"
+        assert tail_item["question_number"] == "1-1"
+        assert tail_item["is_correct"] is False
+        assert "question_content" in tail_item
+        assert "question_model_answer" in tail_item
+        assert "answered_at" in tail_item
+
+    def test_explanation_field_exists(self, api_client, personal_assignment, questions, student):
+        """explanation 필드가 응답에 포함되는지 확인"""
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer="my answer",
+            state=Answer.State.CORRECT,
+            eval_grade=0.8,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        assert "explanation" in data
+        assert isinstance(data["explanation"], str)
+
+    def test_explanation_content(self, api_client, personal_assignment, questions, student):
+        """explanation에 올바른 해설 내용이 포함되는지 확인"""
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer="my answer",
+            state=Answer.State.CORRECT,
+            eval_grade=0.9,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        # questions[0]의 explanation은 "Explanation 1"
+        assert data["explanation"] == "Explanation 1"
+
+    def test_explanation_for_multiple_questions(self, api_client, personal_assignment, questions, student):
+        """여러 질문에 대한 explanation이 올바르게 반환되는지 확인"""
+        for q in questions:
+            Answer.objects.create(
+                question=q,
+                student=student,
+                text_answer="answer",
+                state=Answer.State.CORRECT,
+                eval_grade=0.8,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data["data"]) == 3
+
+        # 각 질문의 explanation 확인
+        for i, item in enumerate(resp.data["data"]):
+            expected_explanation = f"Explanation {i + 1}"
+            assert item["explanation"] == expected_explanation
+
+    def test_explanation_for_tail_questions(self, api_client, personal_assignment, tail_questions, student):
+        """꼬리 질문의 explanation이 올바르게 반환되는지 확인"""
+        Answer.objects.create(
+            question=tail_questions[0],
+            student=student,
+            text_answer="tail answer",
+            state=Answer.State.INCORRECT,
+            eval_grade=0.5,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        # tail_questions[0]의 explanation은 "Tail Explanation 1"
+        assert data["explanation"] == "Tail Explanation 1"
+
+    def test_all_fields_in_response(self, api_client, personal_assignment, questions, student):
+        """응답에 모든 필드(question_content, question_model_answer, student_answer, is_correct, answered_at, question_number, explanation)가 포함되는지 확인"""
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer="student's answer",
+            state=Answer.State.CORRECT,
+            eval_grade=0.85,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        # 모든 필수 필드 확인
+        required_fields = [
+            "question_content",
+            "question_model_answer",
+            "student_answer",
+            "is_correct",
+            "answered_at",
+            "question_number",
+            "explanation",
+        ]
+        for field in required_fields:
+            assert field in data, f"Field '{field}' is missing from response"
+
+        # 값 검증
+        assert data["question_content"] == "Question 1"
+        assert data["question_model_answer"] == "Answer 1"
+        assert data["student_answer"] == "student's answer"
+        assert data["is_correct"] is True
+        assert data["question_number"] == "1"
+        assert data["explanation"] == "Explanation 1"
+
+    def test_field_types_validation(self, api_client, personal_assignment, questions, student):
+        """모든 필드의 타입이 올바른지 확인"""
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer="answer text",
+            state=Answer.State.CORRECT,
+            eval_grade=0.8,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("answer-correctness", kwargs={"id": personal_assignment.id})
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        data = resp.data["data"][0]
+        # 필드 타입 검증
+        assert isinstance(data["question_content"], str)
+        assert isinstance(data["question_model_answer"], str)
+        assert isinstance(data["student_answer"], str)
+        assert isinstance(data["is_correct"], bool)
+        assert isinstance(data["answered_at"], str)  # ISO format string
+        assert isinstance(data["question_number"], str)
+        assert isinstance(data["explanation"], str)
