@@ -45,6 +45,7 @@ class AnswerCorrectnessSerializer(serializers.Serializer):
     is_correct = serializers.BooleanField(help_text="학생의 답변이 정답인지 여부")
     answered_at = serializers.DateTimeField(help_text="답변한 시각")
     question_number = serializers.CharField(help_text="질문 번호 (꼬리 질문인 경우 '-recalled_num' 포함)")
+    explanation = serializers.CharField(help_text="질문 해설")
 
 
 class PersonalAssignmentRecentSerializer(serializers.Serializer):

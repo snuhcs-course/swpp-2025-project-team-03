@@ -837,6 +837,7 @@ class AnswerCorrectnessView(APIView):
                         "is_correct": is_correct,
                         "answered_at": answer.submitted_at,
                         "question_number": question_num,
+                        "explanation": question.explanation,
                     }
                 )
 
