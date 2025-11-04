@@ -30,7 +30,8 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 @Composable
 fun TeacherAssignmentResultsScreen(
     assignmentViewModel: AssignmentViewModel? = null,
-    assignmentTitle: String = "과제",
+    assignmentId: Int = 0,
+    assignmentTitle: String? = null, // For backward compatibility
     onNavigateToStudentDetail: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
@@ -41,28 +42,39 @@ fun TeacherAssignmentResultsScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
-    // Find assignment by title from the assignments list
+    // Find assignment by ID or title from the assignments list
     // "과목 - 제목" 형식도 처리 가능하도록 수정
-    val targetAssignment = remember(assignments, assignmentTitle) {
+    val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
+        if (assignmentId > 0) {
+            assignments.find { it.id == assignmentId }
+        } else if (assignmentTitle != null) {
         assignments.find { 
             it.title == assignmentTitle || 
             "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
             assignmentTitle.contains(it.title)
+            }
+        } else {
+            null
         }
     }
     
     // 동적 과제 제목 가져오기
-    val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle)
+    val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle ?: "과제")
     
     // Load assignment data on first composition
     // Note: loadAssignmentResults API가 제거되었으므로 assignmentResults는 빈 리스트일 수 있음
-    LaunchedEffect(targetAssignment?.id) {
+    LaunchedEffect(assignmentId, targetAssignment?.id) {
+        if (assignmentId > 0) {
+            println("TeacherAssignmentResults - Loading assignment by ID: $assignmentId")
+            viewModel.loadAssignmentById(assignmentId)
+        } else {
         targetAssignment?.let { target ->
             println("TeacherAssignmentResults - Loading assignment: ${target.title} (ID: ${target.id})")
             viewModel.loadAssignmentById(target.id)
-            // loadAssignmentResults API가 제거되었으므로 주석 처리
-            // viewModel.loadAssignmentResults(target.id)
+            }
         }
+        // loadAssignmentResults API가 제거되었으므로 주석 처리
+        // viewModel.loadAssignmentResults(target.id)
     }
     
     // Handle error

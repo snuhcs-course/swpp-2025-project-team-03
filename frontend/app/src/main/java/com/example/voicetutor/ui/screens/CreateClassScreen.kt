@@ -31,6 +31,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateClassScreen(
     onBackClick: () -> Unit = {},
@@ -66,10 +67,6 @@ fun CreateClassScreen(
             .background(Color.White)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
-            .clickable { 
-                showGradeDropdown = false
-                showClassDropdown = false
-            }
     ) {
         VTHeader(
             title = "새 클래스 만들기",
@@ -132,10 +129,14 @@ fun CreateClassScreen(
                             color = Gray600
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Box {
+                        ExposedDropdownMenuBox(
+                            expanded = showGradeDropdown,
+                            onExpandedChange = { showGradeDropdown = !showGradeDropdown },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             OutlinedTextField(
                                 value = selectedGrade,
-                                onValueChange = { },
+                                onValueChange = {},
                                 readOnly = true,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedTextColor = Color.Black,
@@ -143,42 +144,24 @@ fun CreateClassScreen(
                                     focusedBorderColor = PrimaryIndigo,
                                     unfocusedBorderColor = Gray400
                                 ),
-                                trailingIcon = { 
-                                    Icon(
-                                        imageVector = Icons.Filled.ArrowDropDown,
-                                        contentDescription = null,
-                                        tint = Gray800
-                                    )
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showGradeDropdown)
                                 },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showGradeDropdown = true }
+                                modifier = Modifier.menuAnchor()
                             )
                             
-                            // Grade dropdown
-                            if (showGradeDropdown) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                                ) {
-                                    Column {
-                                        grades.forEach { grade ->
-                                            Text(
-                                                text = grade,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        selectedGrade = grade
-                                                        showGradeDropdown = false
-                                                    }
-                                                    .padding(12.dp),
-                                                color = if (grade == selectedGrade) Color.Black else Color.Black,
-                                                fontWeight = if (grade == selectedGrade) FontWeight.Bold else FontWeight.Normal
-                                            )
+                            ExposedDropdownMenu(
+                                expanded = showGradeDropdown,
+                                onDismissRequest = { showGradeDropdown = false }
+                            ) {
+                                grades.forEach { grade ->
+                                    DropdownMenuItem(
+                                        text = { Text(grade) },
+                                        onClick = {
+                                            selectedGrade = grade
+                                            showGradeDropdown = false
                                         }
-                                    }
+                                    )
                                 }
                             }
                         }
@@ -192,10 +175,14 @@ fun CreateClassScreen(
                             color = Gray600
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Box {
+                        ExposedDropdownMenuBox(
+                            expanded = showClassDropdown,
+                            onExpandedChange = { showClassDropdown = !showClassDropdown },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             OutlinedTextField(
                                 value = selectedClass,
-                                onValueChange = { },
+                                onValueChange = {},
                                 readOnly = true,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedTextColor = Color.Black,
@@ -203,42 +190,24 @@ fun CreateClassScreen(
                                     focusedBorderColor = PrimaryIndigo,
                                     unfocusedBorderColor = Gray400
                                 ),
-                                trailingIcon = { 
-                                    Icon(
-                                        imageVector = Icons.Filled.ArrowDropDown,
-                                        contentDescription = null,
-                                        tint = Gray800
-                                    )
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showClassDropdown)
                                 },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showClassDropdown = true }
+                                modifier = Modifier.menuAnchor()
                             )
                             
-                            // Class dropdown
-                            if (showClassDropdown) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                                ) {
-                                    Column {
-                                        classOptions.forEach { classOption ->
-                                            Text(
-                                                text = classOption,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        selectedClass = classOption
-                                                        showClassDropdown = false
-                                                    }
-                                                    .padding(12.dp),
-                                                color = if (classOption == selectedClass) Color.Black else Color.Black,
-                                                fontWeight = if (classOption == selectedClass) FontWeight.Bold else FontWeight.Normal
-                                            )
+                            ExposedDropdownMenu(
+                                expanded = showClassDropdown,
+                                onDismissRequest = { showClassDropdown = false }
+                            ) {
+                                classOptions.forEach { classOption ->
+                                    DropdownMenuItem(
+                                        text = { Text(classOption) },
+                                        onClick = {
+                                            selectedClass = classOption
+                                            showClassDropdown = false
                                         }
-                                    }
+                                    )
                                 }
                             }
                         }

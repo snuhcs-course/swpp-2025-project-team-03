@@ -27,8 +27,8 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun TeacherAssignmentDetailScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentTitle: String = "과제",
-    onNavigateToAssignmentResults: (String) -> Unit = {},
-    onNavigateToEditAssignment: (String) -> Unit = {}
+    onNavigateToAssignmentResults: (Int) -> Unit = {},
+    onNavigateToEditAssignment: (Int) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -372,7 +372,12 @@ fun TeacherAssignmentDetailScreen(
         ) {
             VTButton(
                 text = "결과 보기",
-                onClick = { onNavigateToAssignmentResults(dynamicAssignmentTitle) },
+                onClick = { 
+                    val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
+                    if (assignmentId > 0) {
+                        onNavigateToAssignmentResults(assignmentId)
+                    }
+                },
                 variant = ButtonVariant.Primary,
                 modifier = Modifier.weight(1f),
                 leadingIcon = {
@@ -386,7 +391,12 @@ fun TeacherAssignmentDetailScreen(
             
             VTButton(
                 text = "편집",
-                onClick = { onNavigateToEditAssignment(dynamicAssignmentTitle) },
+                onClick = { 
+                    val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
+                    if (assignmentId > 0) {
+                        onNavigateToEditAssignment(assignmentId)
+                    }
+                },
                 variant = ButtonVariant.Outline,
                 modifier = Modifier.weight(1f),
                 leadingIcon = {

@@ -27,7 +27,8 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun EditAssignmentScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null, // 실제 선생님 ID 사용
-    assignmentTitle: String = "과제",
+    assignmentId: Int = 0,
+    assignmentTitle: String? = null, // For backward compatibility
     onSaveAssignment: () -> Unit = {}
 ) {
     val classViewModel: ClassViewModel = hiltViewModel()
@@ -39,13 +40,19 @@ fun EditAssignmentScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
-    // Find assignment by title from the assignments list
-    val targetAssignment = remember(assignments, assignmentTitle) {
+    // Find assignment by ID or title from the assignments list
+    val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
+        if (assignmentId > 0) {
+            assignments.find { it.id == assignmentId }
+        } else if (assignmentTitle != null) {
         assignments.find { it.title == assignmentTitle }
+        } else {
+            null
+        }
     }
     
     // 동적 과제 제목 가져오기
-    val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
+    val dynamicAssignmentTitle = currentAssignment?.title ?: targetAssignment?.title ?: assignmentTitle ?: "과제"
     var title: String by remember { mutableStateOf(dynamicAssignmentTitle) }
     var description by remember { mutableStateOf("세포분열 과정을 단계별로 설명하고, 각 단계에서 일어나는 주요 변화들을 정리해보세요.") }
     
@@ -57,10 +64,15 @@ fun EditAssignmentScreen(
     var isPublished by remember { mutableStateOf(true) }
     
     // Load data on first composition
-    LaunchedEffect(targetAssignment?.id, teacherId) {
+    LaunchedEffect(assignmentId, targetAssignment?.id, teacherId) {
+        if (assignmentId > 0) {
+            println("EditAssignment - Loading assignment by ID: $assignmentId")
+            viewModel.loadAssignmentById(assignmentId)
+        } else {
         targetAssignment?.let { target ->
             println("EditAssignment - Loading assignment: ${target.title} (ID: ${target.id})")
             viewModel.loadAssignmentById(target.id)
+            }
         }
         teacherId?.let { id ->
             classViewModel.loadClasses(id)
