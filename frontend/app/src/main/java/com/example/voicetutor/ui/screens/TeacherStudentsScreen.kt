@@ -27,6 +27,7 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 @Composable
 fun TeacherStudentsScreen(
     classId: Int? = null,
+    teacherId: String? = null,
     onNavigateToSendMessage: () -> Unit = {},
     onNavigateToStudentDetail: (Int) -> Unit = {},
     onNavigateToMessage: (Int) -> Unit = {},
@@ -35,20 +36,28 @@ fun TeacherStudentsScreen(
 ) {
     val viewModel: StudentViewModel = hiltViewModel()
     val classViewModel: ClassViewModel = hiltViewModel()
+    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
+    
     val students by viewModel.students.collectAsStateWithLifecycle()
     val currentClass by classViewModel.currentClass.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     
     // 동적 클래스 정보 가져오기
     val className = currentClass?.name ?: "고등학교 1학년 A반"
-    val subject = currentClass?.subject ?: "과목"
+    val subjectName = currentClass?.subject?.name ?: "과목"
     val description = currentClass?.description ?: "과목 설명"
+    val teacherName = currentClass?.teacherName ?: currentUser?.name ?: "선생님"
     
     // Load students and class data on first composition
-    LaunchedEffect(classId) {
-        viewModel.loadAllStudents(classId = classId?.toString())
-        classId?.let { classViewModel.loadClassById(it) }
+    LaunchedEffect(classId, currentUser?.id) {
+        val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+        if (classId != null && actualTeacherId != null) {
+            println("TeacherStudentsScreen - Loading students for class ID: $classId, teacher ID: $actualTeacherId")
+            viewModel.loadAllStudents(teacherId = actualTeacherId, classId = classId.toString())
+            classViewModel.loadClassById(classId)
+        }
     }
     
     // Handle error
@@ -97,7 +106,7 @@ fun TeacherStudentsScreen(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "$subject - $description",
+                        text = "$subjectName - $description",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
                     )
@@ -120,7 +129,7 @@ fun TeacherStudentsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "김",
+                        text = teacherName.firstOrNull()?.toString() ?: "T",
                         color = Color.White,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold

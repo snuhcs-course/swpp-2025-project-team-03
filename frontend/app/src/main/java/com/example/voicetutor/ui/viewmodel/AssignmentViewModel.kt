@@ -205,8 +205,7 @@ class AssignmentViewModel @Inject constructor(
         
         // 완료한 과제: 제출됨 + 완료
         val completedAssignments = personalAssignments.count { personalAssignment: PersonalAssignmentData -> 
-            personalAssignment.status == PersonalAssignmentStatus.SUBMITTED || 
-            personalAssignment.status == PersonalAssignmentStatus.GRADED
+            personalAssignment.status == PersonalAssignmentStatus.SUBMITTED
         }
         
         val completionRate = if (totalAssignments > 0) completedAssignments.toFloat() / totalAssignments else 0f
@@ -397,13 +396,6 @@ class AssignmentViewModel @Inject constructor(
                             println("AssignmentViewModel - Filter: SUBMITTED - found ${filtered.size} assignments")
                             filtered
                         }
-                        PersonalAssignmentFilter.GRADED -> {
-                            val filtered = personalAssignments.filter { 
-                                it.status == PersonalAssignmentStatus.GRADED 
-                            }
-                            println("AssignmentViewModel - Filter: GRADED - found ${filtered.size} assignments")
-                            filtered
-                        }
                     }
                     
                     // PersonalAssignmentData를 AssignmentData로 변환
@@ -535,9 +527,9 @@ class AssignmentViewModel @Inject constructor(
                 .onSuccess { personalAssignments: List<PersonalAssignmentData> ->
                     println("AssignmentViewModel - Received ${personalAssignments.size} personal assignments")
                     
-                    // 완료된 과제만 필터링 (SUBMITTED 또는 GRADED 상태)
+                    // 완료된 과제만 필터링 (SUBMITTED 상태)
                     val completedAssignments = personalAssignments.filter { 
-                        it.status == PersonalAssignmentStatus.SUBMITTED || it.status == PersonalAssignmentStatus.GRADED
+                        it.status == PersonalAssignmentStatus.SUBMITTED
                     }
                     
                     println("AssignmentViewModel - Found ${completedAssignments.size} completed assignments")

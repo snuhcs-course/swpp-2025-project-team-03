@@ -412,12 +412,25 @@ fun VoiceTutorNavigation(
             }
         }
         
-        composable(VoiceTutorScreens.TeacherStudents.route) {
+        composable(
+            route = VoiceTutorScreens.TeacherStudents.route,
+            arguments = listOf(
+                navArgument("classId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val classId = backStackEntry.arguments?.getString("classId")?.toIntOrNull()
+            val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+            val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+            
             MainLayout(
                 navController = navController,
                 userRole = UserRole.TEACHER
             ) {
                 TeacherStudentsScreen(
+                    classId = classId,
+                    teacherId = currentUser?.id?.toString(),
                     onNavigateToStudentDetail = { studentId ->
                         navController.navigate(VoiceTutorScreens.TeacherStudentDetail.createRoute(studentId.toString()))
                     },
@@ -464,9 +477,9 @@ fun VoiceTutorNavigation(
             ) {
                 AllStudentsScreen(
                     teacherId = currentUser?.id?.toString() ?: "1",
-                    onNavigateToStudentDetail = { studentId ->
-                        // 클릭해도 페이지 넘어가는 것 없도록 설정
-                        // No navigation on student click
+                    onNavigateToStudentDetail = { classId, studentId, studentName ->
+                        // 학생 클릭 시 리포트로 이동 (선택된 반의 클래스 ID 전달)
+                        navController.navigate(VoiceTutorScreens.TeacherStudentReport.createRoute(classId, studentId, studentName))
                     },
                     onNavigateToMessage = { studentName ->
                         navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentName))
@@ -811,6 +824,40 @@ fun VoiceTutorNavigation(
         }
         
         
+        // Teacher student report screen
+        composable(
+            route = VoiceTutorScreens.TeacherStudentReport.route,
+            arguments = listOf(
+                navArgument("classId") {
+                    type = NavType.IntType
+                },
+                navArgument("studentId") {
+                    type = NavType.IntType
+                },
+                navArgument("studentName") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val classId = backStackEntry.arguments?.getInt("classId") ?: 0
+            val studentId = backStackEntry.arguments?.getInt("studentId") ?: 0
+            val studentName = backStackEntry.arguments?.getString("studentName")?.replace("_", " ") ?: "학생"
+            
+            MainLayout(
+                navController = navController,
+                userRole = UserRole.TEACHER
+            ) {
+                TeacherStudentReportScreen(
+                    classId = classId,
+                    studentId = studentId,
+                    studentName = studentName,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+        
         // App info screen
         composable(VoiceTutorScreens.AppInfo.route) {
             AppInfoScreen(
@@ -889,5 +936,8 @@ sealed class VoiceTutorScreens(val route: String) {
     }
     object AttendanceManagement : VoiceTutorScreens("attendance_management/{classId}") {
         fun createRoute(classId: Int) = "attendance_management/$classId"
+    }
+    object TeacherStudentReport : VoiceTutorScreens("teacher_student_report/{classId}/{studentId}/{studentName}") {
+        fun createRoute(classId: Int, studentId: Int, studentName: String) = "teacher_student_report/$classId/$studentId/${studentName.replace("/", "_")}"
     }
 }

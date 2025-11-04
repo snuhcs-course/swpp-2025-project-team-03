@@ -111,7 +111,7 @@ fun TeacherClassesScreen(
             name = classData.name,
             subject = classData.subject.name,
             description = classData.description,
-            studentCount = classData.studentCount,
+            studentCount = classData.actualStudentCount,
             assignmentCount = assignmentCount,
             completionRate = completionRate,
             color = when (classData.id % 4) {

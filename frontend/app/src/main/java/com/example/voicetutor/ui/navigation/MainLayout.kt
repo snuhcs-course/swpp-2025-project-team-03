@@ -74,6 +74,7 @@ fun MainLayout(
         VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
+        VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
         else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"
     }
     
@@ -333,7 +334,7 @@ fun BottomNavigation(
                     )
                 },
                 label = { Text("학생") },
-                selected = currentRoute == "all_students",
+                selected = currentRoute == "teacher_students",
                 onClick = {
                     navController.navigate(VoiceTutorScreens.AllStudents.route)
                 },

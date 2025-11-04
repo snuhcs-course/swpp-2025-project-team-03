@@ -67,10 +67,6 @@ fun AllStudentAssignmentsScreen(
                 PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
                 PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
                 PersonalAssignmentFilter.SUBMITTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED)
-                PersonalAssignmentFilter.GRADED -> {
-                    // GRADED 필터는 UI에서 제거되었지만 enum에 존재하므로 처리 (사용되지 않음)
-                    // 실제로는 SUBMITTED와 동일하게 처리할 수 있지만 필터에서 선택 불가
-                }
             }
         }
     }
@@ -257,7 +253,6 @@ fun StudentAssignmentCard(
                                                 PersonalAssignmentStatus.NOT_STARTED -> Gray400.copy(alpha = 0.1f)
                                                 PersonalAssignmentStatus.IN_PROGRESS -> Warning.copy(alpha = 0.15f)
                                                 PersonalAssignmentStatus.SUBMITTED -> Warning.copy(alpha = 0.1f)
-                                                PersonalAssignmentStatus.GRADED -> Success.copy(alpha = 0.1f)
                                                 else -> Gray400.copy(alpha = 0.1f)
                                             }
                                         )
@@ -268,7 +263,6 @@ fun StudentAssignmentCard(
                                             PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
                                             PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
                                             PersonalAssignmentStatus.SUBMITTED -> "제출됨"
-                                            PersonalAssignmentStatus.GRADED -> "완료"
                                             else -> ""
                                         },
                                         style = MaterialTheme.typography.bodySmall,
@@ -276,7 +270,6 @@ fun StudentAssignmentCard(
                                             PersonalAssignmentStatus.NOT_STARTED -> Gray400
                                             PersonalAssignmentStatus.IN_PROGRESS -> Warning
                                             PersonalAssignmentStatus.SUBMITTED -> Warning
-                                            PersonalAssignmentStatus.GRADED -> Success
                                             else -> Gray400
                                         },
                                         fontWeight = FontWeight.Medium
@@ -299,7 +292,6 @@ fun StudentAssignmentCard(
                                             PersonalAssignmentStatus.NOT_STARTED -> Gray400.copy(alpha = 0.1f)
                                             PersonalAssignmentStatus.IN_PROGRESS -> Warning.copy(alpha = 0.15f)
                                             PersonalAssignmentStatus.SUBMITTED -> Warning.copy(alpha = 0.1f)
-                                            PersonalAssignmentStatus.GRADED -> Success.copy(alpha = 0.1f)
                                             else -> Gray400.copy(alpha = 0.1f)
                                         }
                                     )
@@ -310,7 +302,6 @@ fun StudentAssignmentCard(
                                         PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
                                         PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
                                         PersonalAssignmentStatus.SUBMITTED -> "제출됨"
-                                        PersonalAssignmentStatus.GRADED -> "완료"
                                         else -> ""
                                     },
                                     style = MaterialTheme.typography.bodySmall,
@@ -318,7 +309,6 @@ fun StudentAssignmentCard(
                                         PersonalAssignmentStatus.NOT_STARTED -> Gray400
                                         PersonalAssignmentStatus.IN_PROGRESS -> Warning
                                         PersonalAssignmentStatus.SUBMITTED -> Warning
-                                        PersonalAssignmentStatus.GRADED -> Success
                                         else -> Gray400
                                     },
                                     fontWeight = FontWeight.Medium
@@ -419,8 +409,7 @@ fun StudentAssignmentCard(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.GRADED || 
-                           assignment.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED) {
+                } else if (assignment.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED) {
                     // 완료된 과제 또는 제출된 과제의 경우 리포트 보기 버튼 표시 (CompletedAssignmentsScreen 스타일)
                     VTButton(
                         text = "리포트 보기",

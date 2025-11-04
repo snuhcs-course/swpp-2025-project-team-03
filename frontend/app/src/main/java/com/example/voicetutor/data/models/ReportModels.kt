@@ -76,3 +76,27 @@ data class QuestionResult(
     // @SerializedName("questionType")
     // val questionType: QuestionType
 )
+
+// 성취기준별 통계 데이터
+data class AchievementStatistics(
+    @SerializedName("total_questions")
+    val totalQuestions: Int,
+    @SerializedName("correct_questions")
+    val correctQuestions: Int,
+    @SerializedName("accuracy")
+    val accuracy: Double,
+    @SerializedName("content")
+    val content: String
+)
+
+// 성취기준 분석 리포트 데이터
+data class CurriculumReportData(
+    @SerializedName("total_questions")
+    val totalQuestions: Int,
+    @SerializedName("total_correct")
+    val totalCorrect: Int,
+    @SerializedName("overall_accuracy")
+    val overallAccuracy: Double,
+    @SerializedName("achievement_statistics")
+    val achievementStatistics: Map<String, AchievementStatistics>
+)

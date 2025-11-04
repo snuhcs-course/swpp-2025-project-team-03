@@ -892,9 +892,7 @@ class PersonalAssignmentRecentView(APIView):
                 recent_answer = recent_answers.first()
                 personal_assignment = recent_answer.question.personal_assignment
 
-                if (personal_assignment.status != PersonalAssignment.Status.SUBMITTED) and (
-                    personal_assignment.status != PersonalAssignment.Status.GRADED
-                ):
+                if personal_assignment.status != PersonalAssignment.Status.SUBMITTED:
                     break
                 else:
                     recent_answers = recent_answers.exclude(id=recent_answer.id)

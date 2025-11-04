@@ -81,7 +81,7 @@ def personal_assignment(student, assignment):
     return PersonalAssignment.objects.create(
         student=student,
         assignment=assignment,
-        status=PersonalAssignment.Status.GRADED,
+        status=PersonalAssignment.Status.SUBMITTED,
         started_at=timezone.now() - timedelta(hours=2),
         submitted_at=timezone.now() - timedelta(hours=1),
     )
