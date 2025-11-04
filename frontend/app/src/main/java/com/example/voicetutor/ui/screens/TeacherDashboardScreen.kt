@@ -34,8 +34,8 @@ fun TeacherDashboardScreen(
     onNavigateToAllStudents: () -> Unit = {},
     onCreateNewAssignment: () -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {},
-    onNavigateToAssignmentResults: (String) -> Unit = {},
-    onNavigateToEditAssignment: (String) -> Unit = {},
+    onNavigateToAssignmentResults: (Int) -> Unit = {},
+    onNavigateToEditAssignment: (Int) -> Unit = {},
     onNavigateToStudentDetail: (String) -> Unit = {}
 ) {
     val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
@@ -421,9 +421,9 @@ fun TeacherDashboardScreen(
                         totalCount = assignment.totalQuestions,
                         dueDate = assignment.dueAt,
                         status = AssignmentStatus.IN_PROGRESS, // 기본값으로 설정
-                        onClick = { onNavigateToAssignmentDetail(assignment.title) },
-                        onViewResults = { onNavigateToAssignmentResults(assignment.title) },
-                        onEdit = { onNavigateToEditAssignment(assignment.title) }
+                        onClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        onViewResults = { onNavigateToAssignmentResults(assignment.id) },
+                        onEdit = { onNavigateToEditAssignment(assignment.id) }
                     )
                     
                     if (index < filteredAssignments.size - 1) {

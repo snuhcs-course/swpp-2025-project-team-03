@@ -38,8 +38,8 @@ private fun formatDueDate(dueDate: String): String {
 @Composable
 fun AllAssignmentsScreen(
     teacherId: String? = null,
-    onNavigateToAssignmentResults: (String) -> Unit = {},
-    onNavigateToEditAssignment: (String) -> Unit = {},
+    onNavigateToAssignmentResults: (Int) -> Unit = {},
+    onNavigateToEditAssignment: (Int) -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
@@ -62,6 +62,16 @@ fun AllAssignmentsScreen(
         } else {
             println("AllAssignmentsScreen - No teacher ID available, loading all assignments")
             viewModel.loadAllAssignments()
+        }
+    }
+    
+    // Reload when screen becomes visible (for refresh after creating assignment)
+    LaunchedEffect(Unit) {
+        // This will run when the composable is first created
+        // Additional reload can be triggered by navigation lifecycle
+        if (actualTeacherId != null) {
+            println("AllAssignmentsScreen - Screen visible, ensuring assignments are loaded for teacher ID: $actualTeacherId")
+            viewModel.loadAllAssignments(teacherId = actualTeacherId)
         }
     }
     
@@ -178,9 +188,9 @@ fun AllAssignmentsScreen(
                     AssignmentCard(
                         assignment = assignment,
                         onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
-                        onEditClick = { onNavigateToEditAssignment("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        onEditClick = { onNavigateToEditAssignment(assignment.id) },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
-                        onViewResults = { onNavigateToAssignmentResults("${assignment.courseClass.subject.name} - ${assignment.title}") }
+                        onViewResults = { onNavigateToAssignmentResults(assignment.id) }
                     )
                 }
             }
@@ -192,7 +202,7 @@ fun AllAssignmentsScreen(
 fun AssignmentCard(
     assignment: AssignmentData,
     onAssignmentClick: (String) -> Unit,
-    onEditClick: (String) -> Unit,
+    onEditClick: (Int) -> Unit,
     onDeleteClick: (Int) -> Unit,
     onViewResults: () -> Unit
 ) {
@@ -292,7 +302,7 @@ fun AssignmentCard(
                 
                 VTButton(
                     text = "편집",
-                    onClick = { onEditClick("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                    onClick = { onEditClick(assignment.id) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
                     modifier = Modifier.weight(1f)

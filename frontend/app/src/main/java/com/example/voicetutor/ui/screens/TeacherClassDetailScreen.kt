@@ -49,7 +49,7 @@ fun TeacherClassDetailScreen(
     subject: String? = null, // 실제 과목명 사용
     onNavigateToClassMessage: () -> Unit = {},
     onNavigateToCreateAssignment: () -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     val assignmentViewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: StudentViewModel = hiltViewModel()
@@ -308,7 +308,7 @@ fun TeacherClassDetailScreen(
             items(classAssignments) { assignment ->
                 ClassAssignmentCard(
                     assignment = assignment,
-                    onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
+                    onNavigateToAssignmentDetail = { onNavigateToAssignmentDetail(assignment.id) }
                 )
             }
         }
@@ -379,11 +379,11 @@ fun TeacherClassDetailScreen(
 @Composable
 fun ClassAssignmentCard(
     assignment: ClassAssignment,
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onNavigateToAssignmentDetail(assignment.title) }
+        onClick = { onNavigateToAssignmentDetail(assignment.id) }
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
