@@ -40,7 +40,7 @@ fun AllAssignmentsScreen(
     teacherId: String? = null,
     onNavigateToAssignmentResults: (Int) -> Unit = {},
     onNavigateToEditAssignment: (Int) -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
@@ -187,7 +187,7 @@ fun AllAssignmentsScreen(
                 assignments.forEach { assignment ->
                     AssignmentCard(
                         assignment = assignment,
-                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        onAssignmentClick = { onNavigateToAssignmentDetail(assignment.id) },
                         onEditClick = { onNavigateToEditAssignment(assignment.id) },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
                         onViewResults = { onNavigateToAssignmentResults(assignment.id) }
@@ -201,14 +201,14 @@ fun AllAssignmentsScreen(
 @Composable
 fun AssignmentCard(
     assignment: AssignmentData,
-    onAssignmentClick: (String) -> Unit,
+    onAssignmentClick: (Int) -> Unit,
     onEditClick: (Int) -> Unit,
     onDeleteClick: (Int) -> Unit,
     onViewResults: () -> Unit
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onAssignmentClick("${assignment.courseClass.subject.name} - ${assignment.title}") }
+        onClick = { onAssignmentClick(assignment.id) }
     ) {
         Column {
             Row(

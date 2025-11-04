@@ -31,7 +31,7 @@ import com.example.voicetutor.ui.viewmodel.StudentViewModel
 fun TeacherStudentDetailScreen(
     studentId: Int = 1, // 임시로 기본값 설정
     onNavigateToAllAssignments: () -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
+    onNavigateToAssignmentDetail: (Int) -> Unit = {},
     onNavigateToMessage: (Int) -> Unit = {},
     onNavigateToEdit: (Int) -> Unit = {}
 ) {
@@ -78,8 +78,9 @@ fun TeacherStudentDetailScreen(
     // Convert AssignmentData to StudentAssignment for UI
     val recentAssignments = studentAssignments.map { assignment ->
         StudentAssignment(
+            id = assignment.id,
             title = assignment.title,
-                        subject = assignment.courseClass.subject.name,
+            subject = assignment.courseClass.subject.name,
             dueDate = assignment.dueAt,
             submittedDate = "", // AssignmentData 모델에 submittedDate 없음
             score = 0, // AssignmentData 모델에 score 없음
@@ -255,7 +256,7 @@ fun TeacherStudentDetailScreen(
                     subject = assignment.subject,
                     dueDate = assignment.dueDate,
                     progress = if (assignment.status == "완료") 1.0f else 0.3f,
-                    onClick = { onNavigateToAssignmentDetail(assignment.title) }
+                    onClick = { onNavigateToAssignmentDetail(assignment.id) }
                 )
                 
                 if (assignment != recentAssignments.last()) {
@@ -340,6 +341,7 @@ data class StudentDetail(
 )
 
 data class StudentAssignment(
+    val id: Int,
     val title: String,
     val subject: String,
     val dueDate: String,

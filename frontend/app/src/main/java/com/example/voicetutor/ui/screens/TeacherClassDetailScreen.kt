@@ -99,20 +99,39 @@ fun TeacherClassDetailScreen(
     var showEnrollSheet by remember { mutableStateOf(false) }
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     
-    // Convert API data to ClassAssignment format
+    // 제출 현황을 저장하는 StateMap
+    val assignmentStatsMap = remember { mutableStateMapOf<Int, Triple<Int, Int, Int>>() }
+    
+    // 각 과제의 제출 현황을 로드
+    assignments.forEach { assignment ->
+        LaunchedEffect(assignment.id) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val stats = assignmentViewModel.getAssignmentSubmissionStats(assignment.id)
+                assignmentStatsMap[assignment.id] = Triple(
+                    stats.submittedStudents,
+                    stats.totalStudents,
+                    stats.averageScore
+                )
+            }
+        }
+    }
+    
+    // Convert API data to ClassAssignment format with real submission stats
     val classAssignments = assignments.map { assignment ->
+        val stats = assignmentStatsMap[assignment.id] ?: Triple(0, classStudents.size, 0)
         ClassAssignment(
             id = assignment.id,
             title = assignment.title,
-                        subject = assignment.courseClass.subject.name,
+            subject = assignment.courseClass.subject.name,
             dueDate = assignment.dueAt,
-            completionRate = 0.0f, // 임시로 0% 설정
-            totalStudents = classStudents.size,
-            completedStudents = classStudents.count { student ->
-                // 임시로 완료된 학생 수 계산
-                0 > 0
+            completionRate = if (stats.second > 0) {
+                stats.first.toFloat() / stats.second
+            } else {
+                0.0f
             },
-            averageScore = 85 // 임시로 기본값 사용
+            totalStudents = stats.second,
+            completedStudents = stats.first,
+            averageScore = stats.third
         )
     }
     

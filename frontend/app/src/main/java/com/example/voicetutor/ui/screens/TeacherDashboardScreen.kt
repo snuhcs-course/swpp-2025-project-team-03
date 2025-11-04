@@ -33,7 +33,7 @@ fun TeacherDashboardScreen(
     onNavigateToAllAssignments: () -> Unit = {},
     onNavigateToAllStudents: () -> Unit = {},
     onCreateNewAssignment: () -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {},
+    onNavigateToAssignmentDetail: (Int) -> Unit = {},
     onNavigateToAssignmentResults: (Int) -> Unit = {},
     onNavigateToEditAssignment: (Int) -> Unit = {},
     onNavigateToStudentDetail: (String) -> Unit = {}
@@ -413,15 +413,30 @@ fun TeacherDashboardScreen(
                     }
                 }
             } else {
+                // 제출 현황을 저장하는 StateMap
+                val assignmentStatsMap = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
+                
+                // 각 과제의 제출 현황을 로드
+                filteredAssignments.forEach { assignment ->
+                    LaunchedEffect(assignment.id) {
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            val stats = actualAssignmentViewModel.getAssignmentSubmissionStats(assignment.id)
+                            assignmentStatsMap[assignment.id] = stats.submittedStudents to stats.totalStudents
+                        }
+                    }
+                }
+                
                 filteredAssignments.forEachIndexed { index, assignment ->
+                    val stats = assignmentStatsMap[assignment.id] ?: (0 to assignment.courseClass.studentCount)
+                    
                     TeacherAssignmentCard(
                         title = assignment.title,
                         className = assignment.courseClass.name,
-                        submittedCount = 0,
-                        totalCount = assignment.totalQuestions,
+                        submittedCount = stats.first,
+                        totalCount = stats.second,
                         dueDate = assignment.dueAt,
                         status = AssignmentStatus.IN_PROGRESS, // 기본값으로 설정
-                        onClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        onClick = { onNavigateToAssignmentDetail(assignment.id) },
                         onViewResults = { onNavigateToAssignmentResults(assignment.id) },
                         onEdit = { onNavigateToEditAssignment(assignment.id) }
                     )
