@@ -1,0 +1,21 @@
+[run]
+omit =
+    */asgi.py
+    */wsgi.py
+    */manage.py
+    */migrations/*
+    */management/commands/*
+    */__init__.py
+    */tests/*
+    */test/*
+    tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod

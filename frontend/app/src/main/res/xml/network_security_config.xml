@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 개발 환경에서 localhost HTTP 통신 허용 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <!-- 실제 디바이스용 로컬 IP -->
+        <domain includeSubdomains="true">192.168.35.202</domain>
+        <domain includeSubdomains="true">192.168.1.100</domain>
+        <!-- 배포 서버 IP -->
+        <domain includeSubdomains="true">147.46.78.61</domain>
+    </domain-config>
+    
+    <!-- S3 업로드를 위한 HTTPS 통신 허용 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">s3.ap-northeast-2.amazonaws.com</domain>
+        <domain includeSubdomains="true">s3.amazonaws.com</domain>
+    </domain-config>
+</network-security-config>
+

@@ -97,6 +97,13 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+### 6. model Setup
+
+```bash
+# download model
+python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('snunlp/KR-SBERT-V40K-klueNLI-augSTS'); model.save('submissions/utils/KR_SBERT_local')"
+```
+
 # Research
 
 ## 1. Initial Setup

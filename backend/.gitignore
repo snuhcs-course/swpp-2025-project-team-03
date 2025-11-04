@@ -174,3 +174,12 @@ cython_debug/
 #.idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/django
+
+# Custom ignores
+# KR-SBERT local model (large ML model files)
+submissions/utils/KR_SBERT_local/
+
+# Google Cloud STT credentials
+submissions/json/stt-tutor-474416-e99142c7677c.json
+staticfiles/
+nohup.out
