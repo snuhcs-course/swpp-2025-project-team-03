@@ -609,7 +609,7 @@ class AssignmentViewModel @Inject constructor(
         println("=== AssignmentViewModel.createAssignmentWithPdf 시작 ===")
         println("PDF 파일: ${pdfFile.name}")
         
-        // 🔥 완전히 독립적인 코루틴으로 실행 - 즉시 반환
+        // 완전히 독립적인 코루틴으로 실행
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                 _isCreatingAssignment.value = true
@@ -656,13 +656,13 @@ class AssignmentViewModel @Inject constructor(
                     uploadResult.onSuccess {
                         println("✅ PDF 업로드 완료")
                         
-                        // 🔥🔥🔥 즉시 모든 상태 해제
+                        // 즉시 모든 상태 해제
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                             _uploadProgress.value = 1f
                             _uploadSuccess.value = true
                             _isUploading.value = false
                             _isCreatingAssignment.value = false
-                            println("✅✅✅ 모든 로딩 상태 해제 완료")
+                            println("✅ 모든 로딩 상태 해제 완료")
                         }
                         
                         // 백그라운드 작업들 시작 (완전히 독립적, fire-and-forget)
@@ -741,7 +741,7 @@ class AssignmentViewModel @Inject constructor(
                 }
             }
         }
-        // 🔥 함수는 여기서 즉시 반환됨!
+        // 함수는 여기서 즉시 반환됨
     }
     
     fun updateAssignment(id: Int, assignment: UpdateAssignmentRequest) {
