@@ -1598,25 +1598,26 @@ class AssignmentViewModel @Inject constructor(
             println("AssignmentViewModel - Error getting assignment stats: ${e.message}")
             e.printStackTrace()
             AssignmentStatistics(0, 0, 0, 0)
+        }
+    }
 
-//     fun loadAssignmentCorrectness(personalAssignmentId: Int) {
-//         viewModelScope.launch {
-//             println("AssignmentViewModel - Loading correctness for personal assignment $personalAssignmentId")
-//             _isLoading.value = true
-//             _error.value = null
+    fun loadAssignmentCorrectness(personalAssignmentId: Int) {
+        viewModelScope.launch {
+            println("AssignmentViewModel - Loading correctness for personal assignment $personalAssignmentId")
+            _isLoading.value = true
+            _error.value = null
 
-//             assignmentRepository.getAssignmentCorrectness(personalAssignmentId)
-//                 .onSuccess { correctnessData ->
-//                     _assignmentCorrectness.value = correctnessData
-//                     println("AssignmentViewModel - Successfully loaded ${correctnessData.size} correctness items")
-//                 }
-//                 .onFailure { exception ->
-//                     _error.value = exception.message
-//                     println("AssignmentViewModel - Failed to load correctness: ${exception.message}")
-//                 }
+            assignmentRepository.getAssignmentCorrectness(personalAssignmentId)
+                .onSuccess { correctnessData ->
+                    _assignmentCorrectness.value = correctnessData
+                    println("AssignmentViewModel - Successfully loaded ${correctnessData.size} correctness items")
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                    println("AssignmentViewModel - Failed to load correctness: ${exception.message}")
+                }
 
-//             _isLoading.value = false
-
+            _isLoading.value = false
         }
     }
 }

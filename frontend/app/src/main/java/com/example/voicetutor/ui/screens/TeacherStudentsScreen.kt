@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeacherStudentsScreen(
     classId: Int? = null,
@@ -39,6 +41,7 @@ fun TeacherStudentsScreen(
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
     
     val students by viewModel.students.collectAsStateWithLifecycle()
+    val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
     val currentClass by classViewModel.currentClass.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
@@ -57,6 +60,7 @@ fun TeacherStudentsScreen(
             println("TeacherStudentsScreen - Loading students for class ID: $classId, teacher ID: $actualTeacherId")
             viewModel.loadAllStudents(teacherId = actualTeacherId, classId = classId.toString())
             classViewModel.loadClassById(classId)
+            classViewModel.loadClassStudents(classId)
         }
     }
     
@@ -65,6 +69,37 @@ fun TeacherStudentsScreen(
         LaunchedEffect(errorMessage) {
             // Show error message
             viewModel.clearError()
+        }
+    }
+    
+    // 학생 등록 바텀시트 상태
+    var showEnrollSheet by remember { mutableStateOf(false) }
+    val selectedToEnroll = remember { mutableStateListOf<Int>() }
+    val allStudentsForEnroll = remember { mutableStateListOf<Student>() }
+    
+    // 바텀시트 열 때 전체 학생 목록 로드, 닫을 때 클래스 학생 목록 복원
+    LaunchedEffect(showEnrollSheet) {
+        if (showEnrollSheet) {
+            val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+            actualTeacherId?.let {
+                viewModel.loadAllStudents(teacherId = it)
+            }
+        } else {
+            // 바텀시트가 닫히면 클래스 학생 목록 복원
+            classId?.let { id ->
+                val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+                actualTeacherId?.let {
+                    viewModel.loadAllStudents(teacherId = it, classId = id.toString())
+                }
+            }
+        }
+    }
+    
+    // 전체 학생 목록을 상태로 저장
+    LaunchedEffect(viewModel.students) {
+        if (showEnrollSheet) {
+            allStudentsForEnroll.clear()
+            allStudentsForEnroll.addAll(viewModel.students.value)
         }
     }
     
@@ -161,19 +196,41 @@ fun TeacherStudentsScreen(
         }
         
         // Action buttons
-        VTButton(
-            text = "메시지 보내기",
-            onClick = onNavigateToSendMessage,
-            variant = ButtonVariant.Primary,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.Message,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            VTButton(
+                text = "메시지 보내기",
+                onClick = onNavigateToSendMessage,
+                variant = ButtonVariant.Primary,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Message,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                modifier = Modifier.weight(1f)
+            )
+            
+            VTButton(
+                text = "학생 등록하기",
+                onClick = {
+                    selectedToEnroll.clear()
+                    showEnrollSheet = true
+                },
+                variant = ButtonVariant.Outline,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.PersonAdd,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                modifier = Modifier.weight(1f)
+            )
+        }
         
         // Students list
         Column {
@@ -290,6 +347,72 @@ fun TeacherStudentsScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
+            }
+        }
+    }
+    
+    // 학생 등록 바텀시트
+    if (showEnrollSheet) {
+        ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(12.dp))
+
+                // 이미 등록된 학생 제외 목록
+                val enrolledIds = classStudents.map { it.id }.toSet()
+                val allStudentsList = if (allStudentsForEnroll.isEmpty()) viewModel.students.value else allStudentsForEnroll
+                val candidates = allStudentsList.filter { it.id !in enrolledIds }
+
+                if (candidates.isEmpty()) {
+                    Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                } else {
+                    candidates.forEach { student ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                            }
+                            val checked = selectedToEnroll.contains(student.id)
+                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
+                            })
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    VTButton(
+                        text = "취소",
+                        onClick = { showEnrollSheet = false },
+                        variant = ButtonVariant.Outline,
+                        modifier = Modifier.weight(1f)
+                    )
+                    VTButton(
+                        text = "등록",
+                        onClick = {
+                            classId?.let { id ->
+                                selectedToEnroll.forEach { sid ->
+                                    classViewModel.enrollStudentToClass(classId = id, studentId = sid)
+                                }
+                                // 완료 후 갱신 및 닫기
+                                classViewModel.loadClassStudents(id)
+                                val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+                                actualTeacherId?.let {
+                                    viewModel.loadAllStudents(teacherId = it, classId = id.toString())
+                                }
+                            }
+                            showEnrollSheet = false
+                        },
+                        variant = ButtonVariant.Primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
