@@ -334,7 +334,7 @@ fun BottomNavigation(
                     )
                 },
                 label = { Text("학생") },
-                selected = currentRoute == "all_students",
+                selected = currentRoute == "teacher_students",
                 onClick = {
                     navController.navigate(VoiceTutorScreens.AllStudents.route)
                 },
