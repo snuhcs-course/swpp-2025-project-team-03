@@ -661,3 +661,579 @@ class TestPersonalAssignmentStatisticsView:
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert response.data["success"] is False
+
+    # ============================================================================
+    # average_score 테스트
+    # ============================================================================
+
+    def test_average_score_all_correct_on_first_try(self, api_client, personal_assignment1, student1):
+        """모든 문제를 첫 시도(recalled_num=0)에 정답 맞춘 경우 - 평균 100점"""
+        from submissions.models import Answer
+
+        # 3개의 base question 생성
+        base_questions = [
+            Question.objects.create(
+                personal_assignment=personal_assignment1,
+                number=i,
+                content=f"문제 {i}",
+                model_answer=f"정답 {i}",
+                recalled_num=0,
+            )
+            for i in range(1, 4)
+        ]
+
+        # 모든 base question에 정답 답변
+        for q in base_questions:
+            Answer.objects.create(
+                question=q,
+                student=student1,
+                text_answer="정답",
+                state=Answer.State.CORRECT,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        assert "average_score" in data
+        # 3문제 모두 100점 -> 평균 100점
+        assert data["average_score"] == 100.0
+
+    def test_average_score_correct_on_second_try(self, api_client, personal_assignment1, student1):
+        """recalled_num=1에서 처음으로 정답 맞춘 경우 - 75점"""
+        from submissions.models import Answer
+
+        # base question (recalled_num=0)
+        base_q = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+
+        # tail question (recalled_num=1)
+        tail_q1 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1-1",
+            model_answer="정답 1-1",
+            recalled_num=1,
+            base_question=base_q,
+        )
+
+        # base question에 오답
+        Answer.objects.create(
+            question=base_q,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # tail question에 정답
+        Answer.objects.create(
+            question=tail_q1,
+            student=student1,
+            text_answer="정답",
+            state=Answer.State.CORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # recalled_num=1에서 첫 정답 -> 75점
+        assert data["average_score"] == 75.0
+
+    def test_average_score_correct_on_third_try(self, api_client, personal_assignment1, student1):
+        """recalled_num=2에서 처음으로 정답 맞춘 경우 - 50점"""
+        from submissions.models import Answer
+
+        base_q = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+
+        tail_q1 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1-1",
+            model_answer="정답 1-1",
+            recalled_num=1,
+            base_question=base_q,
+        )
+
+        tail_q2 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1-2",
+            model_answer="정답 1-2",
+            recalled_num=2,
+            base_question=base_q,
+        )
+
+        # recalled_num=0, 1 모두 오답
+        Answer.objects.create(
+            question=base_q,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        Answer.objects.create(
+            question=tail_q1,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # recalled_num=2에서 정답
+        Answer.objects.create(
+            question=tail_q2,
+            student=student1,
+            text_answer="정답",
+            state=Answer.State.CORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # recalled_num=2에서 첫 정답 -> 50점
+        assert data["average_score"] == 50.0
+
+    def test_average_score_correct_on_fourth_try(self, api_client, personal_assignment1, student1):
+        """recalled_num=3에서 처음으로 정답 맞춘 경우 - 25점"""
+        from submissions.models import Answer
+
+        base_q = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+
+        # recalled_num 1, 2, 3 생성
+        tail_questions = []
+        for i in range(1, 4):
+            tail_q = Question.objects.create(
+                personal_assignment=personal_assignment1,
+                number=1,
+                content=f"문제 1-{i}",
+                model_answer=f"정답 1-{i}",
+                recalled_num=i,
+                base_question=base_q,
+            )
+            tail_questions.append(tail_q)
+
+        # recalled_num=0, 1, 2 모두 오답
+        Answer.objects.create(
+            question=base_q,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        Answer.objects.create(
+            question=tail_questions[0],
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        Answer.objects.create(
+            question=tail_questions[1],
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # recalled_num=3에서 정답
+        Answer.objects.create(
+            question=tail_questions[2],
+            student=student1,
+            text_answer="정답",
+            state=Answer.State.CORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # recalled_num=3에서 첫 정답 -> 25점
+        assert data["average_score"] == 25.0
+
+    def test_average_score_all_incorrect(self, api_client, personal_assignment1, student1):
+        """모든 recalled_num에서 오답인 경우 - 0점"""
+        from submissions.models import Answer
+
+        base_q = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+
+        tail_questions = []
+        for i in range(1, 4):
+            tail_q = Question.objects.create(
+                personal_assignment=personal_assignment1,
+                number=1,
+                content=f"문제 1-{i}",
+                model_answer=f"정답 1-{i}",
+                recalled_num=i,
+                base_question=base_q,
+            )
+            tail_questions.append(tail_q)
+
+        # 모든 recalled_num에서 오답
+        Answer.objects.create(
+            question=base_q,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        for tail_q in tail_questions:
+            Answer.objects.create(
+                question=tail_q,
+                student=student1,
+                text_answer="오답",
+                state=Answer.State.INCORRECT,
+                started_at=timezone.now(),
+                submitted_at=timezone.now(),
+            )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # 모두 오답 -> 0점
+        assert data["average_score"] == 0.0
+
+    def test_average_score_no_answers(self, api_client, personal_assignment1):
+        """답변이 전혀 없는 경우 - 0점"""
+        # base questions만 생성, 답변 없음
+        for i in range(1, 4):
+            Question.objects.create(
+                personal_assignment=personal_assignment1,
+                number=i,
+                content=f"문제 {i}",
+                model_answer=f"정답 {i}",
+                recalled_num=0,
+            )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # 답변 없음 -> 0점
+        assert data["average_score"] == 0.0
+
+    def test_average_score_partial_answers_with_previous_correct(self, api_client, personal_assignment1, student1):
+        """일부만 답변했지만 이전에 정답이 있는 경우"""
+        from submissions.models import Answer
+
+        base_q = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+
+        tail_q1 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1-1",
+            model_answer="정답 1-1",
+            recalled_num=1,
+            base_question=base_q,
+        )
+
+        tail_q2 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1-2",
+            model_answer="정답 1-2",
+            recalled_num=2,
+            base_question=base_q,
+        )
+
+        # recalled_num=0 오답, recalled_num=1 정답
+        Answer.objects.create(
+            question=base_q,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        Answer.objects.create(
+            question=tail_q1,
+            student=student1,
+            text_answer="정답",
+            state=Answer.State.CORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        # recalled_num=2는 답변 없음
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # recalled_num=1에서 정답 -> 75점
+        assert data["average_score"] == 75.0
+
+    def test_average_score_partial_answers_all_incorrect(self, api_client, personal_assignment1, student1):
+        """일부만 답변했고 이전이 모두 오답인 경우 - 0점"""
+        from submissions.models import Answer
+
+        base_q = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+
+        tail_q1 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1-1",
+            model_answer="정답 1-1",
+            recalled_num=1,
+            base_question=base_q,
+        )
+
+        tail_q2 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1-2",
+            model_answer="정답 1-2",
+            recalled_num=2,
+            base_question=base_q,
+        )
+
+        # recalled_num=0, 1 모두 오답
+        Answer.objects.create(
+            question=base_q,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        Answer.objects.create(
+            question=tail_q1,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        # recalled_num=2는 답변 없음
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # 이전이 모두 오답이고 다음 답변 없음 -> 0점
+        assert data["average_score"] == 0.0
+
+    def test_average_score_multiple_questions_mixed_results(self, api_client, personal_assignment1, student1):
+        """여러 문제가 있고 각각 다른 recalled_num에서 정답인 경우"""
+        from submissions.models import Answer
+
+        # 문제 1: recalled_num=0에서 정답 (100점)
+        q1_base = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+        Answer.objects.create(
+            question=q1_base,
+            student=student1,
+            text_answer="정답",
+            state=Answer.State.CORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # 문제 2: recalled_num=1에서 정답 (75점)
+        q2_base = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=2,
+            content="문제 2",
+            model_answer="정답 2",
+            recalled_num=0,
+        )
+        q2_tail1 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=2,
+            content="문제 2-1",
+            model_answer="정답 2-1",
+            recalled_num=1,
+            base_question=q2_base,
+        )
+        Answer.objects.create(
+            question=q2_base,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+        Answer.objects.create(
+            question=q2_tail1,
+            student=student1,
+            text_answer="정답",
+            state=Answer.State.CORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # 문제 3: 모두 오답 (0점)
+        q3_base = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=3,
+            content="문제 3",
+            model_answer="정답 3",
+            recalled_num=0,
+        )
+        Answer.objects.create(
+            question=q3_base,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # (100 + 75 + 0) / 3 = 58.333...
+        expected_score = (100 + 75 + 0) / 3
+        assert abs(data["average_score"] - expected_score) < 0.01
+
+    def test_average_score_with_no_base_questions(self, api_client, personal_assignment1):
+        """base question이 없는 경우 - 0점"""
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # base question이 없으면 0점
+        assert data["average_score"] == 0.0
+
+    def test_average_score_only_answers_for_some_questions(self, api_client, personal_assignment1, student1):
+        """일부 문제만 답변한 경우 - 답변 없는 문제는 0점 처리"""
+        from submissions.models import Answer
+
+        # 문제 1: 정답 (100점)
+        q1 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+        Answer.objects.create(
+            question=q1,
+            student=student1,
+            text_answer="정답",
+            state=Answer.State.CORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        # 문제 2: 답변 없음 (0점)
+        Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=2,
+            content="문제 2",
+            model_answer="정답 2",
+            recalled_num=0,
+        )
+
+        # 문제 3: 오답 (0점)
+        q3 = Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=3,
+            content="문제 3",
+            model_answer="정답 3",
+            recalled_num=0,
+        )
+        Answer.objects.create(
+            question=q3,
+            student=student1,
+            text_answer="오답",
+            state=Answer.State.INCORRECT,
+            started_at=timezone.now(),
+            submitted_at=timezone.now(),
+        )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        # (100 + 0 + 0) / 3 = 33.333...
+        expected_score = 100 / 3
+        assert abs(data["average_score"] - expected_score) < 0.01
+
+    def test_average_score_serializer_field_exists(self, api_client, personal_assignment1):
+        """average_score 필드가 응답에 포함되는지 확인"""
+        Question.objects.create(
+            personal_assignment=personal_assignment1,
+            number=1,
+            content="문제 1",
+            model_answer="정답 1",
+            recalled_num=0,
+        )
+
+        url = reverse("personal-assignment-statistics", kwargs={"id": personal_assignment1.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["data"]
+        assert "average_score" in data
+        assert isinstance(data["average_score"], (int, float))
+        assert 0 <= data["average_score"] <= 100
