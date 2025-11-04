@@ -45,7 +45,6 @@ fun AllStudentsScreen(
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
     
-    var searchQuery by remember { mutableStateOf("") }
     var selectedClassId by remember { mutableStateOf<Int?>(null) }
     var expandedClassDropdown by remember { mutableStateOf(false) }
     
@@ -55,14 +54,19 @@ fun AllStudentsScreen(
         classViewModel.loadClasses(teacherId)
     }
     
+    // Auto-select first class if not already selected
+    LaunchedEffect(classes) {
+        if (classes.isNotEmpty() && selectedClassId == null) {
+            selectedClassId = classes.first().id
+            println("AllStudentsScreen - Auto-selecting first class: ${classes.first().id}")
+        }
+    }
+    
     // Load students when class is selected
     LaunchedEffect(selectedClassId) {
         if (selectedClassId != null) {
             println("AllStudentsScreen - Loading students for class ID: $selectedClassId")
             studentViewModel.loadAllStudents(teacherId = teacherId, classId = selectedClassId.toString())
-        } else {
-            println("AllStudentsScreen - Loading all students for teacher ID: $teacherId")
-            studentViewModel.loadAllStudents(teacherId = teacherId)
         }
     }
     
@@ -82,19 +86,6 @@ fun AllStudentsScreen(
             email = student.email,
             role = student.role
         )
-    }
-    
-    // Filter and search students
-    val filteredStudents = remember(allStudents, searchQuery) {
-        allStudents.filter { student ->
-            val matchesSearch = searchQuery.isEmpty() || 
-                student.name.contains(searchQuery, ignoreCase = true) ||
-                student.email.contains(searchQuery, ignoreCase = true)
-            
-            val matchesFilter = true // 모든 학생 표시
-            
-            matchesSearch && matchesFilter
-        }
     }
     
     // Calculate stats
@@ -172,72 +163,39 @@ fun AllStudentsScreen(
         }
         
         item {
-            // Class selector dropdown and search
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Class selector dropdown only (no search)
+            ExposedDropdownMenuBox(
+                expanded = expandedClassDropdown,
+                onExpandedChange = { expandedClassDropdown = it }
             ) {
-                // Class selector
-                ExposedDropdownMenuBox(
+                OutlinedTextField(
+                    value = classes.find { it.id == selectedClassId }?.name ?: "반 선택",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("반 선택") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                )
+                
+                ExposedDropdownMenu(
                     expanded = expandedClassDropdown,
-                    onExpandedChange = { expandedClassDropdown = it }
+                    onDismissRequest = { expandedClassDropdown = false }
                 ) {
-                    OutlinedTextField(
-                        value = if (selectedClassId != null) {
-                            classes.find { it.id == selectedClassId }?.name ?: "반 선택"
-                        } else {
-                            "전체 학생"
-                        },
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("반 선택") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = expandedClassDropdown,
-                        onDismissRequest = { expandedClassDropdown = false }
-                    ) {
+                    classes.forEach { classData ->
                         DropdownMenuItem(
-                            text = { Text("전체 학생") },
+                            text = { Text(classData.name) },
                             onClick = {
-                                selectedClassId = null
+                                selectedClassId = classData.id
                                 expandedClassDropdown = false
                             }
                         )
-                        
-                        classes.forEach { classData ->
-                            DropdownMenuItem(
-                                text = { Text(classData.name) },
-                                onClick = {
-                                    selectedClassId = classData.id
-                                    expandedClassDropdown = false
-                                }
-                            )
-                        }
                     }
                 }
-                
-                // Search field
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("학생 검색") },
-                    placeholder = { Text("이름, 이메일로 검색") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = null
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
             }
         }
         
@@ -256,7 +214,7 @@ fun AllStudentsScreen(
                 )
                 
                 Text(
-                    text = "${filteredStudents.size}명",
+                    text = "${allStudents.size}명",
                     style = MaterialTheme.typography.bodyMedium,
                     color = PrimaryIndigo,
                     fontWeight = FontWeight.Medium
@@ -276,7 +234,7 @@ fun AllStudentsScreen(
                     )
                 }
             }
-        } else if (filteredStudents.isEmpty()) {
+        } else if (allStudents.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -293,11 +251,7 @@ fun AllStudentsScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (searchQuery.isNotEmpty()) {
-                                "검색 결과가 없습니다"
-                            } else {
-                                "학생이 없습니다"
-                            },
+                            text = "학생이 없습니다",
                             style = MaterialTheme.typography.bodyLarge,
                             color = Gray600
                         )
@@ -305,7 +259,7 @@ fun AllStudentsScreen(
                 }
             }
         } else {
-            items(filteredStudents) { student ->
+            items(allStudents) { student ->
                 AllStudentsCard(
                     student = student,
                     onStudentClick = { 
