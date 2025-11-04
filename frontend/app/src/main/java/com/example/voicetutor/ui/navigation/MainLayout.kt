@@ -86,6 +86,10 @@ fun MainLayout(
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val recentAssignment = if (userRole == UserRole.STUDENT) recentAssignmentState.value else null
     
+    // Get question generation status for floating progress indicator
+    val isGeneratingQuestions by assignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
+    val generatingAssignmentTitle by assignmentViewModel.generatingAssignmentTitle.collectAsStateWithLifecycle()
+    
     // Load recent assignment for students
     LaunchedEffect(userRole, currentUser?.id) {
         if (userRole == UserRole.STUDENT) {
@@ -259,6 +263,47 @@ fun MainLayout(
                 .padding(16.dp)
         ) {
             content()
+        }
+        
+        // Floating progress indicator for background question generation (above bottom navigation)
+        if (isGeneratingQuestions && generatingAssignmentTitle != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .shadow(8.dp, RoundedCornerShape(12.dp))
+                        .wrapContentWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White,
+                    tonalElevation = 8.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "$generatingAssignmentTitle: 질문 생성 중...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray800,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 200.dp)
+                        )
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo,
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+            }
         }
         
         // Bottom navigation
