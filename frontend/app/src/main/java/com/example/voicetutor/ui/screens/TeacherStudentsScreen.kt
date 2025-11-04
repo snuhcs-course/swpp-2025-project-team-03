@@ -30,6 +30,8 @@ import com.example.voicetutor.ApiServiceEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +47,7 @@ fun TeacherStudentsScreen(
     val viewModel: StudentViewModel = hiltViewModel()
     val classViewModel: ClassViewModel = hiltViewModel()
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
+    val coroutineScope = rememberCoroutineScope()
     
     val students by viewModel.students.collectAsStateWithLifecycle()
     val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
@@ -430,14 +433,19 @@ fun TeacherStudentsScreen(
                         text = "등록",
                         onClick = {
                             classId?.let { id ->
-                                selectedToEnroll.forEach { sid ->
-                                    classViewModel.enrollStudentToClass(classId = id, studentId = sid)
-                                }
-                                // 완료 후 갱신 및 닫기
-                                classViewModel.loadClassStudents(id)
-                                val actualTeacherId = teacherId ?: currentUser?.id?.toString()
-                                actualTeacherId?.let {
-                                    viewModel.loadAllStudents(teacherId = it, classId = id.toString())
+                                coroutineScope.launch {
+                                    // 모든 학생 등록 API 호출
+                                    selectedToEnroll.forEach { sid ->
+                                        classViewModel.enrollStudentToClass(classId = id, studentId = sid)
+                                    }
+                                    // 등록 완료를 위해 잠시 대기 (API 처리 시간)
+                                    delay(500)
+                                    // 완료 후 갱신
+                                    classViewModel.loadClassStudents(id)
+                                    val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+                                    actualTeacherId?.let {
+                                        viewModel.loadAllStudents(teacherId = it, classId = id.toString())
+                                    }
                                 }
                             }
                             showEnrollSheet = false
