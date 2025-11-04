@@ -133,6 +133,13 @@ interface ApiService {
         @Query("period") period: String = "week"
     ): Response<ApiResponse<ProgressReportData>>
     
+    // Curriculum Report API (선생님용 학생 리포트)
+    @GET("reports/{class_id}/{student_id}/")
+    suspend fun getCurriculumReport(
+        @Path("class_id") classId: Int,
+        @Path("student_id") studentId: Int
+    ): Response<ApiResponse<com.example.voicetutor.data.models.CurriculumReportData>>
+    
     // Quiz/Assignment Submission APIs
     @POST("assignments/{id}/submit/")
     suspend fun submitAssignment(

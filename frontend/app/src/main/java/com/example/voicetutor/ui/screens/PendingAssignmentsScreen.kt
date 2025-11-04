@@ -58,7 +58,7 @@ fun PendingAssignmentsScreen(
             PersonalAssignmentFilter.ALL -> viewModel.loadPendingStudentAssignments(studentId)
             PersonalAssignmentFilter.NOT_STARTED -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED)
             PersonalAssignmentFilter.IN_PROGRESS -> viewModel.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS)
-            else -> {} // SUBMITTED and GRADED not shown in pending
+            else -> {} // SUBMITTED is not shown in pending
         }
     }
     

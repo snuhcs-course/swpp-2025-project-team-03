@@ -27,9 +27,7 @@ enum class PersonalAssignmentStatus {
     @SerializedName("IN_PROGRESS")
     IN_PROGRESS,
     @SerializedName("SUBMITTED")
-    SUBMITTED,
-    @SerializedName("GRADED")
-    GRADED
+    SUBMITTED
 }
 
 // Personal Assignment용 필터
@@ -37,8 +35,7 @@ enum class PersonalAssignmentFilter {
     ALL,           // 모든 과제
     NOT_STARTED,   // 시작 안함
     IN_PROGRESS,   // 진행 중
-    SUBMITTED,     // 제출 완료
-    GRADED         // 채점 완료
+    SUBMITTED      // 제출 완료
 }
 
 data class AssignmentData(

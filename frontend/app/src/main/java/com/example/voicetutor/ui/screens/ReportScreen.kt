@@ -49,7 +49,7 @@ fun ReportScreen(
     LaunchedEffect(Unit) {
         println("ReportScreen - Loading completed assignments for studentId: $studentId")
         if (studentId != null) {
-            // 학생의 완료한 과제만 로드 (GRADED 상태)
+            // 학생의 완료한 과제만 로드 (SUBMITTED 상태)
             viewModel.loadCompletedStudentAssignments(studentId)
         } else {
             println("ReportScreen - studentId is null, cannot load assignments")

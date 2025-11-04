@@ -24,33 +24,53 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
+import com.example.voicetutor.ui.viewmodel.ClassViewModel
 
 // AllStudentsStudent는 StudentModels.kt에서 정의된 것을 사용
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllStudentsScreen(
     teacherId: String = "1", // 임시로 기본값 설정
-    onNavigateToStudentDetail: (Int) -> Unit = {},
+    onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> },
     onNavigateToMessage: (String) -> Unit = {}
 ) {
-    val viewModel: StudentViewModel = hiltViewModel()
-    val apiStudents by viewModel.students.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
+    val studentViewModel: StudentViewModel = hiltViewModel()
+    val classViewModel: ClassViewModel = hiltViewModel()
+    
+    val apiStudents by studentViewModel.students.collectAsStateWithLifecycle()
+    val isLoading by studentViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by studentViewModel.error.collectAsStateWithLifecycle()
+    
+    val classes by classViewModel.classes.collectAsStateWithLifecycle()
+    val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
     
     var searchQuery by remember { mutableStateOf("") }
+    var selectedClassId by remember { mutableStateOf<Int?>(null) }
+    var expandedClassDropdown by remember { mutableStateOf(false) }
     
-    // Load students on first composition
+    // Load classes for teacher
     LaunchedEffect(teacherId) {
-        println("AllStudentsScreen - Loading students for teacher ID: $teacherId")
-        viewModel.loadAllStudents(teacherId = teacherId)
+        println("AllStudentsScreen - Loading classes for teacher ID: $teacherId")
+        classViewModel.loadClasses(teacherId)
+    }
+    
+    // Load students when class is selected
+    LaunchedEffect(selectedClassId) {
+        if (selectedClassId != null) {
+            println("AllStudentsScreen - Loading students for class ID: $selectedClassId")
+            studentViewModel.loadAllStudents(teacherId = teacherId, classId = selectedClassId.toString())
+        } else {
+            println("AllStudentsScreen - Loading all students for teacher ID: $teacherId")
+            studentViewModel.loadAllStudents(teacherId = teacherId)
+        }
     }
     
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show error message
-            viewModel.clearError()
+            studentViewModel.clearError()
         }
     }
     
@@ -152,15 +172,63 @@ fun AllStudentsScreen(
         }
         
         item {
-            // Search and filter
+            // Class selector dropdown and search
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Class selector
+                ExposedDropdownMenuBox(
+                    expanded = expandedClassDropdown,
+                    onExpandedChange = { expandedClassDropdown = it }
+                ) {
+                    OutlinedTextField(
+                        value = if (selectedClassId != null) {
+                            classes.find { it.id == selectedClassId }?.name ?: "반 선택"
+                        } else {
+                            "전체 학생"
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("반 선택") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = expandedClassDropdown,
+                        onDismissRequest = { expandedClassDropdown = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("전체 학생") },
+                            onClick = {
+                                selectedClassId = null
+                                expandedClassDropdown = false
+                            }
+                        )
+                        
+                        classes.forEach { classData ->
+                            DropdownMenuItem(
+                                text = { Text(classData.name) },
+                                onClick = {
+                                    selectedClassId = classData.id
+                                    expandedClassDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                // Search field
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     label = { Text("학생 검색") },
-                    placeholder = { Text("이름, 이메일, 학급으로 검색") },
+                    placeholder = { Text("이름, 이메일로 검색") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Search,
@@ -170,7 +238,6 @@ fun AllStudentsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
             }
         }
         
@@ -241,7 +308,10 @@ fun AllStudentsScreen(
             items(filteredStudents) { student ->
                 AllStudentsCard(
                     student = student,
-                    onStudentClick = { onNavigateToStudentDetail(student.id) },
+                    onStudentClick = { 
+                        val classId = selectedClassId ?: 0
+                        onNavigateToStudentDetail(classId, student.id, student.name)
+                    },
                     onMessageClick = { onNavigateToMessage(student.name) }
                 )
             }

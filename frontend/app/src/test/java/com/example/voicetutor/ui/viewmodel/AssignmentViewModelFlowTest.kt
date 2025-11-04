@@ -138,7 +138,7 @@ class AssignmentViewModelFlowTest {
             pa(1, PersonalAssignmentStatus.NOT_STARTED),
             pa(2, PersonalAssignmentStatus.IN_PROGRESS, solved = 1),
             pa(3, PersonalAssignmentStatus.SUBMITTED),
-            pa(4, PersonalAssignmentStatus.GRADED)
+            pa(4, PersonalAssignmentStatus.SUBMITTED)
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
             .thenReturn(Result.success(list))
@@ -161,7 +161,7 @@ class AssignmentViewModelFlowTest {
             pa(1, PersonalAssignmentStatus.NOT_STARTED),
             pa(2, PersonalAssignmentStatus.IN_PROGRESS),
             pa(3, PersonalAssignmentStatus.SUBMITTED),
-            pa(4, PersonalAssignmentStatus.GRADED)
+            pa(4, PersonalAssignmentStatus.SUBMITTED)
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
             .thenReturn(Result.success(list))
@@ -172,7 +172,7 @@ class AssignmentViewModelFlowTest {
             runCurrent()
             val next = awaitItem()
             assert(next.size == 2)
-            assert(next.all { it.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED || it.personalAssignmentStatus == PersonalAssignmentStatus.GRADED })
+            assert(next.all { it.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED })
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -184,7 +184,7 @@ class AssignmentViewModelFlowTest {
             pa(1, PersonalAssignmentStatus.NOT_STARTED),
             pa(2, PersonalAssignmentStatus.IN_PROGRESS),
             pa(3, PersonalAssignmentStatus.SUBMITTED),
-            pa(4, PersonalAssignmentStatus.GRADED)
+            pa(4, PersonalAssignmentStatus.SUBMITTED)
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
             .thenReturn(Result.success(list))
@@ -194,7 +194,7 @@ class AssignmentViewModelFlowTest {
         vm.assignments.test { awaitItem(); vm.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.NOT_STARTED); runCurrent(); val ns = awaitItem(); assert(ns.size == 1 && ns.first().personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED); cancelAndIgnoreRemainingEvents() }
         vm.assignments.test { awaitItem(); vm.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.IN_PROGRESS); runCurrent(); val ip = awaitItem(); assert(ip.size == 1 && ip.first().personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS); cancelAndIgnoreRemainingEvents() }
         vm.assignments.test { awaitItem(); vm.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED); runCurrent(); val sub = awaitItem(); assert(sub.size == 1 && sub.first().personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED); cancelAndIgnoreRemainingEvents() }
-        vm.assignments.test { awaitItem(); vm.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.GRADED); runCurrent(); val gr = awaitItem(); assert(gr.size == 1 && gr.first().personalAssignmentStatus == PersonalAssignmentStatus.GRADED); cancelAndIgnoreRemainingEvents() }
+        vm.assignments.test { awaitItem(); vm.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.SUBMITTED); runCurrent(); val gr = awaitItem(); assert(gr.size == 1 && gr.first().personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED); cancelAndIgnoreRemainingEvents() }
     }
 
     // Questions and navigation
@@ -1266,7 +1266,7 @@ class AssignmentViewModelFlowTest {
         val list = listOf(
             pa(1, PersonalAssignmentStatus.NOT_STARTED),
             pa(2, PersonalAssignmentStatus.SUBMITTED),
-            pa(3, PersonalAssignmentStatus.GRADED)
+            pa(3, PersonalAssignmentStatus.SUBMITTED)
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
             .thenReturn(Result.success(list))
@@ -1279,28 +1279,6 @@ class AssignmentViewModelFlowTest {
             val result = awaitItem()
             assert(result.size == 1)
             assert(result.first().personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun loadStudentAssignmentsWithPersonalFilter_GRADED_filtersCorrectly() = runTest {
-        val studentId = 5
-        val list = listOf(
-            pa(1, PersonalAssignmentStatus.SUBMITTED),
-            pa(2, PersonalAssignmentStatus.GRADED)
-        )
-        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
-            .thenReturn(Result.success(list))
-        val vm = AssignmentViewModel(assignmentRepository)
-
-        vm.assignments.test {
-            awaitItem()
-            vm.loadStudentAssignmentsWithPersonalFilter(studentId, PersonalAssignmentFilter.GRADED)
-            advanceUntilIdle()
-            val result = awaitItem()
-            assert(result.size == 1)
-            assert(result.first().personalAssignmentStatus == PersonalAssignmentStatus.GRADED)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -1335,7 +1313,7 @@ class AssignmentViewModelFlowTest {
             pa(1, PersonalAssignmentStatus.NOT_STARTED),
             pa(2, PersonalAssignmentStatus.IN_PROGRESS),
             pa(3, PersonalAssignmentStatus.SUBMITTED),
-            pa(4, PersonalAssignmentStatus.GRADED)
+            pa(4, PersonalAssignmentStatus.SUBMITTED)
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
             .thenReturn(Result.success(list))
@@ -1346,7 +1324,7 @@ class AssignmentViewModelFlowTest {
             vm.loadCompletedStudentAssignments(studentId)
             advanceUntilIdle()
             val result = awaitItem()
-            // COMPLETED는 SUBMITTED 또는 GRADED
+            // COMPLETED는 SUBMITTED
             assert(result.size == 2)
             cancelAndIgnoreRemainingEvents()
         }

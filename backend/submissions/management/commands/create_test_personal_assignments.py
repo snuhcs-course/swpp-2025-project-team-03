@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
         # 상태 순서 정의
         status_cycle = [
-            PersonalAssignment.Status.GRADED,
+            PersonalAssignment.Status.SUBMITTED,
             PersonalAssignment.Status.IN_PROGRESS,
             PersonalAssignment.Status.NOT_STARTED,
             PersonalAssignment.Status.SUBMITTED,

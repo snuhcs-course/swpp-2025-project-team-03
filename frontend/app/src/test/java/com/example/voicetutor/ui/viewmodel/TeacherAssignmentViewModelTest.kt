@@ -346,14 +346,14 @@ class TeacherAssignmentViewModelTest {
     //             name = "Student 1",
     //             submittedAt = "2025-01-01",
     //             score = 85,
-    //             status = "GRADED"
+    //             status = "SUBMITTED"
     //         ),
     //         StudentResult(
     //             studentId = "2",
     //             name = "Student 2",
     //             submittedAt = "2025-01-02",
     //             score = 90,
-    //             status = "GRADED"
+    //             status = "SUBMITTED"
     //         )
     //     )
     //     whenever(repository.getAssignmentResults(10)).thenReturn(Result.success(results))

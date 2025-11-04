@@ -122,7 +122,7 @@ def parse_curriculum(student_id, class_id):
         for future in as_completed(futures):
             future.result()
 
-    # 4. 통계량 계산 (GRADED 상태의 PersonalAssignment만 대상)
+    # 4. 통계량 계산 (SUBMITTED 상태의 PersonalAssignment만 대상)
     statistics = calculate_statistics(student_id, class_id)
 
     return statistics
@@ -130,7 +130,7 @@ def parse_curriculum(student_id, class_id):
 
 def calculate_statistics(student_id, class_id):
     """
-    특정 학생과 클래스의 GRADED 상태 PersonalAssignment에 대한 통계량을 계산하는 함수
+    특정 학생과 클래스의 SUBMITTED 상태 PersonalAssignment에 대한 통계량을 계산하는 함수
 
     Args:
         student_id: 학생 ID
@@ -140,19 +140,19 @@ def calculate_statistics(student_id, class_id):
         dict: 통계량 정보
     """
 
-    # GRADED 상태의 PersonalAssignment에 해당하는 질문들과 답안들 조회
-    graded_questions = Question.objects.filter(
+    # SUBMITTED 상태의 PersonalAssignment에 해당하는 질문들과 답안들 조회
+    submitted_questions = Question.objects.filter(
         personal_assignment__student_id=student_id,
         personal_assignment__assignment__course_class_id=class_id,
-        personal_assignment__status=PersonalAssignment.Status.GRADED,
+        personal_assignment__status=PersonalAssignment.Status.SUBMITTED,
         achievement_code__isnull=False,  # 성취기준이 설정된 것만
     ).select_related("personal_assignment")
 
     # 해당 질문들에 대한 답안들 조회
-    answers = Answer.objects.filter(question__in=graded_questions, student_id=student_id).select_related("question")
+    answers = Answer.objects.filter(question__in=submitted_questions, student_id=student_id).select_related("question")
 
     print("\n=== 통계량 계산 ===")
-    print(f"GRADED 상태 질문 수: {graded_questions.count()}")
+    print(f"SUBMITTED 상태 질문 수: {submitted_questions.count()}")
     print(f"답안 수: {answers.count()}")
 
     # 전체 통계량 계산

@@ -13,15 +13,23 @@ data class ClassData(
     val description: String,
     @SerializedName("teacherId")
     val teacherId: Int,
+    @SerializedName("teacher_name")
+    val teacherName: String? = null,
     @SerializedName("studentCount")
     val studentCount: Int,
+    @SerializedName("student_count")
+    val studentCountAlt: Int? = null,
     @SerializedName("createdAt")
     val createdAt: String? = null,
     @SerializedName("startDate")
     val startDate: String? = null,
     @SerializedName("endDate")
     val endDate: String? = null
-)
+) {
+    // Helper property to get student count from either field
+    val actualStudentCount: Int
+        get() = studentCountAlt ?: studentCount
+}
 
 data class EnrollmentData(
     @SerializedName("student")

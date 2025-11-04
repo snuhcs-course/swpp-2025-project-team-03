@@ -31,7 +31,6 @@ class AssignmentModelsTest {
         assertEquals("NOT_STARTED", PersonalAssignmentStatus.NOT_STARTED.name)
         assertEquals("IN_PROGRESS", PersonalAssignmentStatus.IN_PROGRESS.name)
         assertEquals("SUBMITTED", PersonalAssignmentStatus.SUBMITTED.name)
-        assertEquals("GRADED", PersonalAssignmentStatus.GRADED.name)
     }
 
     @Test
@@ -41,7 +40,6 @@ class AssignmentModelsTest {
         assertEquals("NOT_STARTED", PersonalAssignmentFilter.NOT_STARTED.name)
         assertEquals("IN_PROGRESS", PersonalAssignmentFilter.IN_PROGRESS.name)
         assertEquals("SUBMITTED", PersonalAssignmentFilter.SUBMITTED.name)
-        assertEquals("GRADED", PersonalAssignmentFilter.GRADED.name)
     }
 
     @Test
@@ -438,7 +436,7 @@ class AssignmentModelsTest {
             name = "Student1",
             score = 85,
             confidenceScore = 90,
-            status = "GRADED",
+            status = "SUBMITTED",
             submittedAt = "2025-01-01",
             answers = listOf("A1", "A2"),
             detailedAnswers = detailedAnswers
@@ -448,7 +446,7 @@ class AssignmentModelsTest {
         assertEquals("1", result.studentId)
         assertEquals("Student1", result.name)
         assertEquals(85, result.score)
-        assertEquals("GRADED", result.status)
+        assertEquals("SUBMITTED", result.status)
         assertEquals(2, result.answers.size)
         assertEquals(1, result.detailedAnswers.size)
     }
