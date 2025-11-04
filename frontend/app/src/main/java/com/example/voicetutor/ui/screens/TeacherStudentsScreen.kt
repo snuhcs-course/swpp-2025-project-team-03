@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
@@ -24,6 +25,11 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
+import com.example.voicetutor.data.repository.StudentRepository
+import com.example.voicetutor.ApiServiceEntryPoint
+import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,30 +82,47 @@ fun TeacherStudentsScreen(
     var showEnrollSheet by remember { mutableStateOf(false) }
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     val allStudentsForEnroll = remember { mutableStateListOf<Student>() }
+    var isLoadingAllStudents by remember { mutableStateOf(false) }
     
-    // 바텀시트 열 때 전체 학생 목록 로드, 닫을 때 클래스 학생 목록 복원
-    LaunchedEffect(showEnrollSheet) {
-        if (showEnrollSheet) {
-            val actualTeacherId = teacherId ?: currentUser?.id?.toString()
-            actualTeacherId?.let {
-                viewModel.loadAllStudents(teacherId = it)
-            }
-        } else {
-            // 바텀시트가 닫히면 클래스 학생 목록 복원
-            classId?.let { id ->
-                val actualTeacherId = teacherId ?: currentUser?.id?.toString()
-                actualTeacherId?.let {
-                    viewModel.loadAllStudents(teacherId = it, classId = id.toString())
-                }
-            }
-        }
+    // EntryPoint를 통해 ApiService 주입받기 (바텀시트 독립적 데이터 로딩용)
+    val context = LocalContext.current
+    val studentRepository = remember {
+        val entryPoint = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            ApiServiceEntryPoint::class.java
+        )
+        val apiService = entryPoint.apiService()
+        StudentRepository(apiService)
     }
     
-    // 전체 학생 목록을 상태로 저장
-    LaunchedEffect(viewModel.students) {
+    // 바텀시트 열 때 전체 학생 목록을 별도로 로드 (viewModel.students와 완전히 독립)
+    LaunchedEffect(showEnrollSheet) {
         if (showEnrollSheet) {
+            isLoadingAllStudents = true
+            try {
+                // teacherId = null로 전체 학생 계정 가져오기
+                val result = studentRepository.getAllStudents(teacherId = null, classId = null)
+                result.onSuccess { allStudents ->
+                    withContext(Dispatchers.Main) {
+                        allStudentsForEnroll.clear()
+                        allStudentsForEnroll.addAll(allStudents)
+                        isLoadingAllStudents = false
+                    }
+                }.onFailure {
+                    withContext(Dispatchers.Main) {
+                        isLoadingAllStudents = false
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    isLoadingAllStudents = false
+                    println("Error loading all students for enrollment: ${e.message}")
+                }
+            }
+        } else {
+            // 바텀시트가 닫히면 바텀시트용 목록만 클리어 (viewModel.students는 건드리지 않음)
             allStudentsForEnroll.clear()
-            allStudentsForEnroll.addAll(viewModel.students.value)
+            selectedToEnroll.clear()
         }
     }
     
@@ -358,15 +381,25 @@ fun TeacherStudentsScreen(
                 Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
 
-                // 이미 등록된 학생 제외 목록
-                val enrolledIds = classStudents.map { it.id }.toSet()
-                val allStudentsList = if (allStudentsForEnroll.isEmpty()) viewModel.students.value else allStudentsForEnroll
-                val candidates = allStudentsList.filter { it.id !in enrolledIds }
-
-                if (candidates.isEmpty()) {
-                    Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                // 로딩 중일 때
+                if (isLoadingAllStudents) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PrimaryIndigo)
+                    }
                 } else {
-                    candidates.forEach { student ->
+                    // 이미 등록된 학생 제외 목록
+                    val enrolledIds = classStudents.map { it.id }.toSet()
+                    val candidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
+
+                    if (candidates.isEmpty()) {
+                        Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                    } else {
+                        candidates.forEach { student ->
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -381,6 +414,7 @@ fun TeacherStudentsScreen(
                                 if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
                             })
                         }
+                    }
                     }
                 }
 
