@@ -269,3 +269,21 @@ data class AudioRecordingState(
     val audioFilePath: String? = null,
     val isProcessing: Boolean = false
 )
+
+
+data class AssignmentCorrectnessItem(
+    @SerializedName("question_content")
+    val questionContent: String,
+    @SerializedName("question_model_answer")
+    val questionModelAnswer: String,
+    @SerializedName("student_answer")
+    val studentAnswer: String,
+    @SerializedName("is_correct")
+    val isCorrect: Boolean,
+    @SerializedName("answered_at")
+    val answeredAt: String,
+    @SerializedName("question_number")
+    val questionNum: String,
+    @SerializedName("explanation")
+    val explanation: String
+)

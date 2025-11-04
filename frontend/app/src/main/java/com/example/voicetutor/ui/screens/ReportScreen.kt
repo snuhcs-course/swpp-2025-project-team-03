@@ -38,7 +38,7 @@ private fun formatDate(dateString: String): String {
 @Composable
 fun ReportScreen(
     studentId: Int? = null,
-    onNavigateToAssignmentReport: (String) -> Unit = {}
+    onNavigateToAssignmentReport: (Int, String) -> Unit = { _, _ -> }
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -119,8 +119,10 @@ fun ReportScreen(
                 AssignmentReportCard(
                     assignment = assignment,
                     onReportClick = { 
-                        // 과제 제목을 전달
-                        onNavigateToAssignmentReport(assignment.title)
+                        // personalAssignmentId와 과제 제목을 전달
+                        assignment.personalAssignmentId?.let { personalAssignmentId ->
+                            onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
+                        }
                     }
                 )
             }
