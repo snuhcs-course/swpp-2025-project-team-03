@@ -64,6 +64,9 @@ fun CreateAssignmentScreen(
     val isUploading by actualAssignmentViewModel.isUploading.collectAsStateWithLifecycle()
     val uploadProgress by actualAssignmentViewModel.uploadProgress.collectAsStateWithLifecycle()
     val uploadSuccess by actualAssignmentViewModel.uploadSuccess.collectAsStateWithLifecycle()
+    val isGeneratingQuestions by actualAssignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
+    val questionGenerationSuccess by actualAssignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
+    val questionGenerationError by actualAssignmentViewModel.questionGenerationError.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
     val fileManager = remember { FileManager(context) }
@@ -139,20 +142,17 @@ fun CreateAssignmentScreen(
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
-    
-    // Navigate to assignment detail when creation succeeds
+    // Navigate to assignment detail when creation succeeds (after upload, not waiting for question generation)
     LaunchedEffect(currentAssignment, assignmentCreated, uploadSuccess) {
-        if (assignmentCreated && (currentAssignment != null || uploadSuccess)) {
-            println("Assignment created successfully: ${currentAssignment?.title}")
+        if (assignmentCreated && uploadSuccess) {
             currentAssignment?.let { assignment ->
+                println("Assignment and PDF upload completed successfully: ${assignment.title}")
                 onCreateAssignment(assignment.title)
-            }
-            // 업로드 성공 시 상태 리셋
-            if (uploadSuccess) {
-                actualAssignmentViewModel.resetUploadState()
+                // Note: 문제 생성은 백그라운드에서 계속 진행됨
             }
         }
     }
+
     
     // Handle error
     error?.let { errorMessage ->
@@ -178,26 +178,27 @@ fun CreateAssignmentScreen(
     
     val studentNames = students.map { it.name }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Header removed - now handled by MainLayout
-        
-        // Loading indicator
-        if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    color = PrimaryIndigo
-                )
-            }
-        } else {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header removed - now handled by MainLayout
+            
+            // Loading indicator
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = PrimaryIndigo
+                    )
+                }
+            } else {
             // Basic info section
             VTCard(variant = CardVariant.Elevated) {
             Column {
@@ -994,6 +995,62 @@ fun CreateAssignmentScreen(
                 )
             }
         )
+        }
+    }
+        
+        // Loading overlay for PDF upload only (not for question generation)
+        if (isUploading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .clickable(enabled = false) { },
+                contentAlignment = Alignment.Center
+            ) {
+                VTCard(
+                    variant = CardVariant.Elevated,
+                    modifier = Modifier
+                        .padding(32.dp)
+                        .wrapContentSize()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        
+                        Text(
+                            text = "PDF 업로드 중...",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LinearProgressIndicator(
+                                progress = uploadProgress,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp),
+                                color = PrimaryIndigo,
+                                trackColor = Gray200
+                            )
+                            Text(
+                                text = "${(uploadProgress * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Gray600
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -80,6 +80,16 @@ class AssignmentViewModel @Inject constructor(
     private val _s3UploadStatus = MutableStateFlow<S3UploadStatus?>(null)
     val s3UploadStatus: StateFlow<S3UploadStatus?> = _s3UploadStatus.asStateFlow()
     
+    // 문제 생성 관련 상태
+    private val _isGeneratingQuestions = MutableStateFlow(false)
+    val isGeneratingQuestions: StateFlow<Boolean> = _isGeneratingQuestions.asStateFlow()
+    
+    private val _questionGenerationSuccess = MutableStateFlow(false)
+    val questionGenerationSuccess: StateFlow<Boolean> = _questionGenerationSuccess.asStateFlow()
+    
+    private val _questionGenerationError = MutableStateFlow<String?>(null)
+    val questionGenerationError: StateFlow<String?> = _questionGenerationError.asStateFlow()
+    
     // 학생별 통계
     private val _studentStats = MutableStateFlow<StudentStats?>(null)
     val studentStats: StateFlow<StudentStats?> = _studentStats.asStateFlow()
@@ -647,6 +657,8 @@ class AssignmentViewModel @Inject constructor(
                                 // 3. 업로드 완료 직후 기본 문제 생성 트리거
                                 // totalNumber 파라미터 사용 (사용자가 입력한 문제 개수)
                                 println("3단계: 기본 문제 생성 트리거 - totalNumber=$totalNumber")
+                                _isGeneratingQuestions.value = true
+                                _questionGenerationError.value = null
                                 viewModelScope.launch {
                                     assignmentRepository.createQuestionsAfterUpload(
                                         assignmentId = createResponse.assignment_id,
@@ -654,9 +666,12 @@ class AssignmentViewModel @Inject constructor(
                                         totalNumber = totalNumber
                                     ).onSuccess {
                                         println("✅ 기본 문제 생성 요청 성공")
+                                        _questionGenerationSuccess.value = true
+                                        _isGeneratingQuestions.value = false
                                     }.onFailure { genErr ->
                                         println("❌ 기본 문제 생성 요청 실패: ${genErr.message}")
-                                        // 실패해도 과제 생성 자체는 유지. 필요 시 사용자 알림 처리 가능
+                                        _questionGenerationError.value = genErr.message
+                                        _isGeneratingQuestions.value = false
                                     }
                                 }
                                 
@@ -835,6 +850,9 @@ class AssignmentViewModel @Inject constructor(
         println("DEBUG: uploadProgress reset to 0f")
         _isUploading.value = false
         _uploadSuccess.value = false
+        _isGeneratingQuestions.value = false
+        _questionGenerationSuccess.value = false
+        _questionGenerationError.value = null
     }
     
     fun checkS3UploadStatus(assignmentId: Int) {

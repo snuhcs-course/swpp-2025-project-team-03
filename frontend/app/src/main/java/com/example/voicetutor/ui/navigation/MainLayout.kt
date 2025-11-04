@@ -86,6 +86,9 @@ fun MainLayout(
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val recentAssignment = if (userRole == UserRole.STUDENT) recentAssignmentState.value else null
     
+    // Get question generation status for floating progress indicator
+    val isGeneratingQuestions by assignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
+    
     // Load recent assignment for students
     LaunchedEffect(userRole, currentUser?.id) {
         if (userRole == UserRole.STUDENT) {
@@ -268,6 +271,36 @@ fun MainLayout(
             currentRoute = currentRoute,
             recentAssignment = recentAssignment
         )
+        
+        // Floating progress indicator for background question generation
+        if (isGeneratingQuestions) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .shadow(8.dp, RoundedCornerShape(28.dp)),
+                    shape = RoundedCornerShape(28.dp),
+                    color = Color.White,
+                    tonalElevation = 8.dp
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo,
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
