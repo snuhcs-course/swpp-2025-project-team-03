@@ -451,6 +451,7 @@ class AssignmentViewModel @Inject constructor(
                                                 !personalAssignment.startedAt.isNullOrEmpty() -> "진행 중"
                                                 else -> "미시작"
                                             },
+                                            startedAt = personalAssignment.startedAt,
                                             submittedAt = personalAssignment.submittedAt ?: personalAssignment.startedAt ?: "",
                                             answers = emptyList(),
                                             detailedAnswers = emptyList()

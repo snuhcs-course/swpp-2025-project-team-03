@@ -321,7 +321,7 @@ fun TeacherAssignmentResultCard(
                         color = Gray600
                     )
                     Text(
-                        text = "정보 없음",
+                        text = formatDuration(student.startedAt, student.submittedAt),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = Gray800
@@ -406,6 +406,52 @@ private fun getGradeColor(grade: String): Color {
         "D" -> Color(0xFFFF9800)
         "F" -> Error
         else -> Gray600
+    }
+}
+
+// Helper function to format duration between startedAt and submittedAt
+private fun formatDuration(startIso: String?, endIso: String?): String {
+    return try {
+        println("formatDuration start!")
+        if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
+            println("startIso or endIso is null, $startIso || $endIso")
+            return "정보 없음"
+        }
+        val start = parseIsoToMillis(startIso)
+        val end = parseIsoToMillis(endIso)
+        if (start == null || end == null || end <= start) {
+            println("start or end is null $startIso ,$endIso")
+            return "정보 없음"
+        }
+        val diffMs = end - start
+        val totalSeconds = diffMs / 1000
+        val hours = (totalSeconds / 3600).toInt()
+        val minutes = ((totalSeconds % 3600) / 60).toInt()
+        val seconds = (totalSeconds % 60).toInt()
+        if (hours > 0) {
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format("%02d:%02d", minutes, seconds)
+        }
+    } catch (e: Exception) {
+        println("FormatDuration: Exception!! $startIso $endIso")
+        "정보 없음"
+    }
+}
+
+// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
+private fun parseIsoToMillis(iso: String): Long? {
+    return try {
+        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
+        val cleaned = iso.replace("Z", "").let { raw ->
+            val dotIdx = raw.indexOf('.')
+            if (dotIdx != -1) raw.substring(0, dotIdx) else raw
+        }
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        sdf.parse(cleaned)?.time
+    } catch (e: Exception) {
+        null
     }
 }
 

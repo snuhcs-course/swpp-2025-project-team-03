@@ -180,6 +180,8 @@ data class StudentResult(
     val confidenceScore: Int,
     @SerializedName("status")
     val status: String,
+    @SerializedName("startedAt")
+    val startedAt: String? = null,
     @SerializedName("submittedAt")
     val submittedAt: String,
     @SerializedName("answers")
