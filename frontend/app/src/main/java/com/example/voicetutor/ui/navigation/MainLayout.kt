@@ -88,6 +88,7 @@ fun MainLayout(
     
     // Get question generation status for floating progress indicator
     val isGeneratingQuestions by assignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
+    val generatingAssignmentTitle by assignmentViewModel.generatingAssignmentTitle.collectAsStateWithLifecycle()
     
     // Load recent assignment for students
     LaunchedEffect(userRole, currentUser?.id) {
@@ -264,34 +265,37 @@ fun MainLayout(
             content()
         }
         
-        // Bottom navigation
-        BottomNavigation(
-            navController = navController,
-            userRole = userRole,
-            currentRoute = currentRoute,
-            recentAssignment = recentAssignment
-        )
-        
-        // Floating progress indicator for background question generation
-        if (isGeneratingQuestions) {
+        // Floating progress indicator for background question generation (above bottom navigation)
+        if (isGeneratingQuestions && generatingAssignmentTitle != null) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.BottomEnd
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.CenterEnd
             ) {
                 Surface(
                     modifier = Modifier
-                        .size(56.dp)
-                        .shadow(8.dp, RoundedCornerShape(28.dp)),
-                    shape = RoundedCornerShape(28.dp),
+                        .shadow(8.dp, RoundedCornerShape(12.dp))
+                        .wrapContentWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
                     color = Color.White,
                     tonalElevation = 8.dp
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.padding(12.dp)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        Text(
+                            text = "$generatingAssignmentTitle: 질문 생성 중...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray800,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 200.dp)
+                        )
                         CircularProgressIndicator(
                             color = PrimaryIndigo,
                             strokeWidth = 3.dp,
@@ -301,6 +305,14 @@ fun MainLayout(
                 }
             }
         }
+        
+        // Bottom navigation
+        BottomNavigation(
+            navController = navController,
+            userRole = userRole,
+            currentRoute = currentRoute,
+            recentAssignment = recentAssignment
+        )
     }
 }
 

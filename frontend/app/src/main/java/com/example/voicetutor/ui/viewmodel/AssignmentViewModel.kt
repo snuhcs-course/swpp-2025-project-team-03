@@ -90,6 +90,9 @@ class AssignmentViewModel @Inject constructor(
     private val _questionGenerationError = MutableStateFlow<String?>(null)
     val questionGenerationError: StateFlow<String?> = _questionGenerationError.asStateFlow()
     
+    private val _generatingAssignmentTitle = MutableStateFlow<String?>(null)
+    val generatingAssignmentTitle: StateFlow<String?> = _generatingAssignmentTitle.asStateFlow()
+    
     // 학생별 통계
     private val _studentStats = MutableStateFlow<StudentStats?>(null)
     val studentStats: StateFlow<StudentStats?> = _studentStats.asStateFlow()
@@ -653,12 +656,14 @@ class AssignmentViewModel @Inject constructor(
                                 println("DEBUG: uploadProgress set to 1f")
                                 _uploadSuccess.value = true
                                 _isUploading.value = false
+                                _isLoading.value = false  // PDF 업로드 완료 시 로딩 상태 해제
 
-                                // 3. 업로드 완료 직후 기본 문제 생성 트리거
+                                // 3. 업로드 완료 직후 기본 문제 생성 트리거 (백그라운드)
                                 // totalNumber 파라미터 사용 (사용자가 입력한 문제 개수)
-                                println("3단계: 기본 문제 생성 트리거 - totalNumber=$totalNumber")
+                                println("3단계: 기본 문제 생성 트리거 - totalNumber=$totalNumber (백그라운드)")
                                 _isGeneratingQuestions.value = true
                                 _questionGenerationError.value = null
+                                _generatingAssignmentTitle.value = assignment.title
                                 viewModelScope.launch {
                                     assignmentRepository.createQuestionsAfterUpload(
                                         assignmentId = createResponse.assignment_id,
@@ -668,10 +673,12 @@ class AssignmentViewModel @Inject constructor(
                                         println("✅ 기본 문제 생성 요청 성공")
                                         _questionGenerationSuccess.value = true
                                         _isGeneratingQuestions.value = false
+                                        _generatingAssignmentTitle.value = null
                                     }.onFailure { genErr ->
                                         println("❌ 기본 문제 생성 요청 실패: ${genErr.message}")
                                         _questionGenerationError.value = genErr.message
                                         _isGeneratingQuestions.value = false
+                                        _generatingAssignmentTitle.value = null
                                     }
                                 }
                                 
@@ -682,20 +689,21 @@ class AssignmentViewModel @Inject constructor(
                                 println("❌ S3 업로드 실패: ${uploadException.message}")
                                 _error.value = "PDF 업로드 실패: ${uploadException.message}"
                                 _isUploading.value = false
+                                _isLoading.value = false
                             }
                     }
                     .onFailure { createException ->
                         println("❌ 과제 생성 실패: ${createException.message}")
                         _error.value = "과제 생성 실패: ${createException.message}"
                         _isUploading.value = false
+                        _isLoading.value = false
                     }
             } catch (e: Exception) {
                 println("❌ 예상치 못한 오류: ${e.message}")
                 _error.value = "예상치 못한 오류: ${e.message}"
                 _isUploading.value = false
+                _isLoading.value = false
             }
-            
-            _isLoading.value = false
         }
     }
     
@@ -853,6 +861,7 @@ class AssignmentViewModel @Inject constructor(
         _isGeneratingQuestions.value = false
         _questionGenerationSuccess.value = false
         _questionGenerationError.value = null
+        _generatingAssignmentTitle.value = null
     }
     
     fun checkS3UploadStatus(assignmentId: Int) {
