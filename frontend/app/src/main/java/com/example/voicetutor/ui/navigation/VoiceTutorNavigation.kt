@@ -372,8 +372,8 @@ fun VoiceTutorNavigation(
                     onCreateNewAssignment = {
                         navController.navigate(VoiceTutorScreens.CreateAssignment.route)
                     },
-                    onNavigateToAssignmentDetail = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentTitle))
+                    onNavigateToAssignmentDetail = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     },
                     onNavigateToAssignmentResults = { assignmentId ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentId))
@@ -464,8 +464,8 @@ fun VoiceTutorNavigation(
                     onNavigateToEditAssignment = { assignmentId ->
                         navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentId))
                     },
-                    onNavigateToAssignmentDetail = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentTitle))
+                    onNavigateToAssignmentDetail = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     }
                 )
             }
@@ -511,8 +511,8 @@ fun VoiceTutorNavigation(
                     onNavigateToAllAssignments = {
                         navController.navigate(VoiceTutorScreens.AllAssignments.route)
                     },
-                    onNavigateToAssignmentDetail = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentTitle))
+                    onNavigateToAssignmentDetail = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     },
                     onNavigateToMessage = { studentId ->
                         navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentId.toString()))
@@ -675,12 +675,12 @@ fun VoiceTutorNavigation(
         composable(
             route = VoiceTutorScreens.TeacherAssignmentDetail.route,
             arguments = listOf(
-                navArgument("title") {
-                    type = NavType.StringType
+                navArgument("id") {
+                    type = NavType.IntType
                 }
             )
         ) { backStackEntry ->
-            val assignmentTitle = backStackEntry.arguments?.getString("title") ?: "과제"
+            val assignmentId = backStackEntry.arguments?.getInt("id") ?: 0
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             
             MainLayout(
@@ -689,7 +689,7 @@ fun VoiceTutorNavigation(
             ) {
                 TeacherAssignmentDetailScreen(
                     assignmentViewModel = assignmentViewModel,
-                    assignmentTitle = assignmentTitle,
+                    assignmentId = assignmentId,
                     onNavigateToAssignmentResults = { assignmentId ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentId))
                     },
@@ -923,8 +923,8 @@ sealed class VoiceTutorScreens(val route: String) {
     object TeacherAssignmentResults : VoiceTutorScreens("teacher_assignment_results/{assignment_id}") {
         fun createRoute(assignmentId: Int) = "teacher_assignment_results/$assignmentId"
     }
-    object TeacherAssignmentDetail : VoiceTutorScreens("teacher_assignment_detail/{title}") {
-        fun createRoute(title: String) = "teacher_assignment_detail/$title"
+    object TeacherAssignmentDetail : VoiceTutorScreens("teacher_assignment_detail/{id}") {
+        fun createRoute(id: Int) = "teacher_assignment_detail/$id"
     }
     object TeacherStudentDetail : VoiceTutorScreens("teacher_student_detail/{name}") {
         fun createRoute(name: String) = "teacher_student_detail/$name"

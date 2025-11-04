@@ -41,13 +41,6 @@ fun CreateClassScreen(
     var className by remember { mutableStateOf("") }
     var subject by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedGrade by remember { mutableStateOf("1학년") }
-    var selectedClass by remember { mutableStateOf("A반") }
-    var showGradeDropdown by remember { mutableStateOf(false) }
-    var showClassDropdown by remember { mutableStateOf(false) }
-    
-    val grades = listOf("1학년", "2학년", "3학년")
-    val classOptions = listOf("A반", "B반", "C반", "D반")
     
     // ViewModel 상태 관찰
     val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
@@ -101,118 +94,6 @@ fun CreateClassScreen(
                         cursorColor = Color.Black
                     )
                 )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Grade and Class selection
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
-                Text(
-                    text = "학년 및 반",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Grade selection
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "학년",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ExposedDropdownMenuBox(
-                            expanded = showGradeDropdown,
-                            onExpandedChange = { showGradeDropdown = !showGradeDropdown },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = selectedGrade,
-                                onValueChange = {},
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showGradeDropdown)
-                                },
-                                modifier = Modifier.menuAnchor()
-                            )
-                            
-                            ExposedDropdownMenu(
-                                expanded = showGradeDropdown,
-                                onDismissRequest = { showGradeDropdown = false }
-                            ) {
-                                grades.forEach { grade ->
-                                    DropdownMenuItem(
-                                        text = { Text(grade) },
-                                        onClick = {
-                                            selectedGrade = grade
-                                            showGradeDropdown = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Class selection
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "반",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ExposedDropdownMenuBox(
-                            expanded = showClassDropdown,
-                            onExpandedChange = { showClassDropdown = !showClassDropdown },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = selectedClass,
-                                onValueChange = {},
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showClassDropdown)
-                                },
-                                modifier = Modifier.menuAnchor()
-                            )
-                            
-                            ExposedDropdownMenu(
-                                expanded = showClassDropdown,
-                                onDismissRequest = { showClassDropdown = false }
-                            ) {
-                                classOptions.forEach { classOption ->
-                                    DropdownMenuItem(
-                                        text = { Text(classOption) },
-                                        onClick = {
-                                            selectedClass = classOption
-                                            showClassDropdown = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
         
@@ -287,12 +168,6 @@ fun CreateClassScreen(
         VTButton(
             text = if (isLoading) "생성 중..." else "클래스 만들기",
             onClick = {
-                val fullClassName = if (className.isNotBlank()) {
-                    className
-                } else {
-                    "$selectedGrade $selectedClass"
-                }
-                
                 // 현재 시간을 ISO 형식으로 변환
                 val now = LocalDateTime.now()
                 val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
@@ -308,7 +183,7 @@ fun CreateClassScreen(
                         
                         // 클래스 생성 요청
                         val createClassRequest = CreateClassRequest(
-                            name = fullClassName,
+                            name = className,
                             description = description,
                             subject_name = subject,
                             teacher_id = teacherIdInt,
@@ -328,7 +203,7 @@ fun CreateClassScreen(
                 }
             },
             fullWidth = true,
-            enabled = !isLoading && (className.isNotBlank() || (selectedGrade.isNotBlank() && selectedClass.isNotBlank())),
+            enabled = !isLoading && className.isNotBlank(),
             variant = ButtonVariant.Gradient
         )
         
