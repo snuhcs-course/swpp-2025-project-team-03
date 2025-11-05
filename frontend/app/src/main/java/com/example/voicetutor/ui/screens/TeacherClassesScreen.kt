@@ -319,28 +319,7 @@ fun ClassCard(
                             color = classRoom.color,
                             fontWeight = FontWeight.Medium
                         )
-                        Text(
-                            text = classRoom.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
                     }
-                }
-                
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = "${classRoom.completionRate.toInt()}%",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = classRoom.color
-                    )
-                    Text(
-                        text = "완료율",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
                 }
             }
             
@@ -372,16 +351,6 @@ fun ClassCard(
                     color = Gray600
                 )
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Progress bar
-            VTProgressBar(
-                progress = (classRoom.completionRate / 100f).coerceIn(0f, 1f),
-                showPercentage = false,
-                color = classRoom.color,
-                height = 6
-            )
             
             Spacer(modifier = Modifier.height(16.dp))
             

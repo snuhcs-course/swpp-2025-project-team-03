@@ -576,8 +576,6 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
 
             # 모든 학생의 통계 계산
             students_statistics = []
-            total_all_scores = 0.0
-            students_with_scores = 0
 
             for student in students:
                 # 해당 학생의 PersonalAssignment들
@@ -669,14 +667,6 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
                     }
                 )
 
-                # 전체 평균 점수 계산을 위한 누적
-                if assignments_with_scores > 0:
-                    total_all_scores += average_score
-                    students_with_scores += 1
-
-            # 전체 평균 점수 계산
-            overall_average_score = (total_all_scores / students_with_scores) if students_with_scores > 0 else 0
-
             # 전체 평균 완료율 계산: 전체 학생 완료한 과제 수 / 전체 학생 과제 수
             total_completed_assignments = sum(stat["completed_assignments"] for stat in students_statistics)
             total_student_assignments = sum(stat["total_assignments"] for stat in students_statistics)
@@ -685,7 +675,6 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
             )
 
             data = {
-                "overall_average_score": round(overall_average_score, 1),
                 "overall_completion_rate": round(overall_completion_rate, 1),
                 "students": students_statistics,
             }
@@ -716,13 +705,16 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
 
 class ClassCompletionRateView(APIView):  # GET /classes/{id}/completion-rate
     @swagger_auto_schema(
-        operation_id="반 완료율 조회",
-        operation_description="특정 반의 전체 완료율을 조회합니다. (전체 학생 완료한 과제 수 / 전체 학생 과제 수)",
+        operation_id="반 완료율 조회 (최근 한 달)",
+        operation_description="특정 반의 최근 한 달간 전체 완료율을 조회합니다. (전체 학생 완료한 과제 수 / 전체 학생 과제 수)",
         responses={200: "Class completion rate"},
     )
     def get(self, request, id):
         try:
+            from datetime import timedelta
+
             from assignments.models import Assignment
+            from django.utils import timezone
             from submissions.models import PersonalAssignment
 
             # 클래스 확인
@@ -738,8 +730,9 @@ class ClassCompletionRateView(APIView):  # GET /classes/{id}/completion-rate
                     message="반 완료율 조회 성공",
                 )
 
-            # 해당 반의 모든 과제
-            assignments = Assignment.objects.filter(course_class=course_class)
+            # 최근 한 달간의 과제만 필터링
+            one_month_ago = timezone.now() - timedelta(days=30)
+            assignments = Assignment.objects.filter(course_class=course_class, created_at__gte=one_month_ago)
             total_assignments = assignments.count()
 
             if total_assignments == 0:

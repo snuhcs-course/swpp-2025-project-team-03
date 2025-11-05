@@ -96,7 +96,6 @@ fun AllStudentsScreen(
     
     // Calculate stats
     val totalStudents = allStudents.size
-    var overallAverageScore by remember { mutableStateOf(0f) }
     
     // 학생 통계 데이터 클래스
     data class StudentStats(
@@ -115,7 +114,6 @@ fun AllStudentsScreen(
             isLoadingStatistics = true
             classViewModel.loadClassStudentsStatistics(classId) { result ->
                 result.onSuccess { stats ->
-                    overallAverageScore = stats.overallAverageScore
                     studentsStatisticsMap = stats.students.associate { 
                         it.studentId to StudentStats(
                             averageScore = it.averageScore,
@@ -126,7 +124,6 @@ fun AllStudentsScreen(
                     }
                     isLoadingStatistics = false
                 }.onFailure {
-                    overallAverageScore = 0f
                     studentsStatisticsMap = emptyMap()
                     isLoadingStatistics = false
                 }
@@ -180,30 +177,15 @@ fun AllStudentsScreen(
         }
         
         item {
-            // Stats cards
-            Row(
+            // Stats card
+            VTStatsCard(
+                title = "전체 학생",
+                value = "${totalStudents}명",
+                icon = Icons.Filled.People,
+                iconColor = PrimaryIndigo,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                VTStatsCard(
-                    title = "전체 학생",
-                    value = "${totalStudents}명",
-                    icon = Icons.Filled.People,
-                    iconColor = PrimaryIndigo,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
-                )
-                
-                
-                VTStatsCard(
-                    title = "평균 점수",
-                    value = if (isLoadingStatistics) "로딩 중..." else "${overallAverageScore.toInt()}점",
-                    icon = Icons.Filled.Star,
-                    iconColor = Warning,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
-                )
-            }
+                variant = CardVariant.Gradient
+            )
         }
         
         item {

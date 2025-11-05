@@ -124,7 +124,6 @@ class ClassStudentsStatisticsSerializer(serializers.Serializer):
         total_assignments = serializers.IntegerField()  # 전체 과제 수
         completed_assignments = serializers.IntegerField()  # 완료한 과제 수
 
-    overall_average_score = serializers.FloatField()  # 전체 평균 점수
     overall_completion_rate = serializers.FloatField()  # 전체 평균 완료율
     students = StudentStatisticsItemSerializer(many=True)
 
