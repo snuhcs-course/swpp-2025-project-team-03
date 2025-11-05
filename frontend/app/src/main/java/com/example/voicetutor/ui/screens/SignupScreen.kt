@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,9 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -52,7 +56,35 @@ fun SignupScreen(
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    
+    val focusManager = LocalFocusManager.current
+
+    // 회원가입 로직을 함수로 분리
+    val performSignup = {
+        when {
+            name.isBlank() -> {
+                viewModelAuth.setError("이름을 입력해주세요")
+            }
+            email.isBlank() -> {
+                viewModelAuth.setError("이메일을 입력해주세요")
+            }
+            password.isBlank() -> {
+                viewModelAuth.setError("비밀번호를 입력해주세요")
+            }
+            confirmPassword.isBlank() -> {
+                viewModelAuth.setError("비밀번호 확인을 입력해주세요")
+            }
+            password != confirmPassword -> {
+                viewModelAuth.setError("비밀번호가 일치하지 않습니다")
+            }
+            password.length < 6 -> {
+                viewModelAuth.setError("비밀번호는 최소 6자 이상이어야 합니다")
+            }
+            else -> {
+                viewModelAuth.signup(name, email, password, selectedRole)
+            }
+        }
+    }
+
     LaunchedEffect(error) {
         error?.let { }
     }
@@ -89,6 +121,7 @@ fun SignupScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -195,6 +228,14 @@ fun SignupScreen(
                                 tint = PrimaryIndigo
                             )
                         },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                focusManager.moveFocus(FocusDirection.Down)
+                            }
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -223,7 +264,15 @@ fun SignupScreen(
                                 tint = PrimaryIndigo
                             )
                         },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                focusManager.moveFocus(FocusDirection.Down)
+                            }
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -262,7 +311,15 @@ fun SignupScreen(
                             }
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                focusManager.moveFocus(FocusDirection.Down)
+                            }
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -301,7 +358,16 @@ fun SignupScreen(
                             }
                         },
                         visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                                performSignup()
+                            }
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -334,12 +400,24 @@ fun SignupScreen(
                         text = if (isLoading) "계정 생성 중..." else "계정 만들기",
                         onClick = {
                             when {
-                                name.isBlank() -> return@VTButton
-                                email.isBlank() -> return@VTButton
-                                password.isBlank() -> return@VTButton
-                                confirmPassword.isBlank() -> return@VTButton
-                                password != confirmPassword -> return@VTButton
-                                password.length < 6 -> return@VTButton
+                                name.isBlank() -> {
+                                    viewModelAuth.setError("이름을 입력해주세요")
+                                }
+                                email.isBlank() -> {
+                                    viewModelAuth.setError("이메일을 입력해주세요")
+                                }
+                                password.isBlank() -> {
+                                    viewModelAuth.setError("비밀번호를 입력해주세요")
+                                }
+                                confirmPassword.isBlank() -> {
+                                    viewModelAuth.setError("비밀번호 확인을 입력해주세요")
+                                }
+                                password != confirmPassword -> {
+                                    viewModelAuth.setError("비밀번호가 일치하지 않습니다")
+                                }
+                                password.length < 6 -> {
+                                    viewModelAuth.setError("비밀번호는 최소 6자 이상이어야 합니다")
+                                }
                                 else -> {
                                     viewModelAuth.signup(name, email, password, selectedRole)
                                 }

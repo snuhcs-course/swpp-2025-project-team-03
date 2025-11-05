@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -17,9 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -51,7 +55,23 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    
+    val focusManager = LocalFocusManager.current
+
+    // 로그인 로직을 함수로 분리
+    val performLogin = {
+        when {
+            email.isBlank() -> {
+                viewModelAuth.setError("이메일을 입력해주세요")
+            }
+            password.isBlank() -> {
+                viewModelAuth.setError("비밀번호를 입력해주세요")
+            }
+            else -> {
+                viewModelAuth.login(email, password)
+            }
+        }
+    }
+
     // 자동 입력 정보가 있을 때 필드에 설정
     LaunchedEffect(autoFillCredentials) {
         autoFillCredentials?.let { (autoEmail, autoPassword) ->
@@ -137,6 +157,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -211,7 +232,15 @@ fun LoginScreen(
                                 tint = PrimaryIndigo
                             )
                         },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                focusManager.moveFocus(FocusDirection.Down)
+                            }
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -251,7 +280,16 @@ fun LoginScreen(
                             }
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                                performLogin()
+                            }
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -284,12 +322,17 @@ fun LoginScreen(
                     VTButton(
                         text = if (isLoading) "로그인 중..." else "로그인",
                         onClick = {
-                            if (email.isBlank() || password.isBlank()) {
-                                return@VTButton
+                            when {
+                                email.isBlank() -> {
+                                    viewModelAuth.setError("이메일을 입력해주세요")
+                                }
+                                password.isBlank() -> {
+                                    viewModelAuth.setError("비밀번호를 입력해주세요")
+                                }
+                                else -> {
+                                    viewModelAuth.login(email, password)
+                                }
                             }
-                            
-                            // Call actual login API
-                            viewModelAuth.login(email, password)
                         },
                         variant = ButtonVariant.Gradient,
                         size = ButtonSize.Large,
