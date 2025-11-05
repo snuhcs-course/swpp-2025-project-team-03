@@ -39,7 +39,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         VoiceTutorScreens.Assignment.route -> "과제"
         VoiceTutorScreens.AssignmentDetail.route -> "과제 상세"
         VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
-        VoiceTutorScreens.Progress.route -> "진도 리포트"
+        VoiceTutorScreens.Progress.route -> "학습 리포트"
         VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
         VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
         VoiceTutorScreens.AllAssignments.route -> "전체 과제"

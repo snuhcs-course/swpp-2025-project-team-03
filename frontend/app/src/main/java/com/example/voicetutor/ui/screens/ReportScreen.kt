@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,59 +61,118 @@ fun ReportScreen(
     }
     
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Loading indicator
-        if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = PrimaryIndigo
+        item {
+            // Welcome section (Header)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = PrimaryIndigo,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                    )
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
+                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
+                    )
+                    .padding(24.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "학습 리포트",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "완료한 과제 결과를 확인해보세요",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.9f)
                     )
                 }
             }
-        } else if (assignments.isEmpty()) {
-            item {
-                Box(
+        }
+
+        item {
+            // My completed assignments
+            Column {
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Assessment,
-                            contentDescription = null,
-                            tint = Gray400,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Column {
                         Text(
-                            text = "완료한 과제가 없습니다",
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = "완료한 과제 목록",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Text(
+                            text = "완료한 과제의 결과를 확인해보세요",
+                            style = MaterialTheme.typography.bodySmall,
                             color = Gray600
                         )
                     }
                 }
-            }
-        } else {
-            items(assignments) { assignment ->
-                AssignmentReportCard(
-                    assignment = assignment,
-                    onReportClick = { 
-                        // personalAssignmentId와 과제 제목을 전달
-                        assignment.personalAssignmentId?.let { personalAssignmentId ->
-                            onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Completed assignments from API
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo
+                        )
+                    }
+                } else if (assignments.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = null,
+                                tint = Gray400,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "완료한 과제가 없습니다",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Gray600
+                            )
                         }
                     }
-                )
+                } else {
+                    assignments.forEachIndexed { index, assignment ->
+                        AssignmentReportCard(
+                            assignment = assignment,
+                            onReportClick = {
+                                // personalAssignmentId와 과제 제목을 전달
+                                assignment.personalAssignmentId?.let { personalAssignmentId ->
+                                    onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
+                                }
+                            }
+                        )
+
+                        if (index < assignments.size - 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
             }
         }
     }
@@ -137,9 +197,9 @@ fun AssignmentReportCard(
                 fontWeight = FontWeight.SemiBold,
                 color = Gray800
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // 완료일
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -157,9 +217,9 @@ fun AssignmentReportCard(
                     color = Gray600
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // 리포트 보기 버튼
             VTButton(
                 text = "리포트 보기",
