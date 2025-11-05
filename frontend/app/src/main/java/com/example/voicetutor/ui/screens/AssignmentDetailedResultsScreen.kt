@@ -45,11 +45,13 @@ fun AssignmentDetailedResultsScreen(
     // API에서 정답 여부 데이터 로드
     LaunchedEffect(personalAssignmentId) {
         viewModel.loadAssignmentCorrectness(personalAssignmentId)
+        viewModel.loadPersonalAssignmentStatistics(personalAssignmentId)
     }
 
     val correctnessData by viewModel.assignmentCorrectness.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val statistics by viewModel.personalAssignmentStatistics.collectAsState()
 
     // API 데이터를 더미 데이터 형식으로 변환
     val detailedResults = remember(correctnessData) {
@@ -105,9 +107,9 @@ fun AssignmentDetailedResultsScreen(
     }
 
     val totalQuestions = detailedResults.size
-    val correctAnswers = detailedResults.count { it.isCorrect }
-    val totalScore = if (totalQuestions > 0) (correctAnswers * 100) / totalQuestions else 0
-    
+    // API에서 평균 점수를 가져옴 (0~100 사이의 값)
+    val averageScore = statistics?.averageScore?.toInt() ?: 0
+
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -195,10 +197,10 @@ fun AssignmentDetailedResultsScreen(
                 )
 
                 VTStatsCard(
-                    title = "정답률",
-                    value = "${totalScore}%",
+                    title = "평균 점수",
+                    value = "${averageScore}점",
                     icon = Icons.Filled.Grade,
-                    iconColor = if (totalScore >= 80) Success else Warning,
+                    iconColor = if (averageScore >= 80) Success else Warning,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Elevated
                 )
