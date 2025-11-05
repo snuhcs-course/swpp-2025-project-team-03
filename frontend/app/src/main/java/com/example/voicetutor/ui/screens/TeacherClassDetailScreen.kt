@@ -224,10 +224,8 @@ fun TeacherClassDetailScreen(
                     variant = ButtonVariant.Gradient,
                     size = ButtonSize.Small,
                     modifier = Modifier
-                        .weight(1.2f)
+                        .weight(1f)
                         .heightIn(min = 44.dp),
-                    maxLines = 2,
-                    lineHeightMultiplier = 1.2f
                 )
                 
                 VTButton(
