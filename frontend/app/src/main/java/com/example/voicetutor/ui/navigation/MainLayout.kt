@@ -29,8 +29,7 @@ import com.example.voicetutor.ui.theme.*
 
 data class RecentAssignment(
     val id: String, // personal_assignment_id
-    val title: String, // 과제 제목
-    val nextQuestionId: Int? = null // 다음 질문 ID (선택적)
+    val title: String // 과제 제목
 )
 
 // Helper function to get page title based on current destination

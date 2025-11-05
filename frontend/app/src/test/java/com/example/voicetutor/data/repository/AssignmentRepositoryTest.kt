@@ -113,8 +113,7 @@ class AssignmentRepositoryTest {
         val repo = AssignmentRepository(apiService)
         val stats = PersonalAssignmentStatistics(
             totalQuestions = 3, answeredQuestions = 1, correctAnswers = 1,
-            accuracy = 0.5f, totalProblem = 3, solvedProblem = 1, progress = 0.5f,
-            averageScore = 75.0f
+            accuracy = 0.5f, totalProblem = 3, solvedProblem = 1, progress = 0.5f, averageScore = 0.4f
         )
         whenever(apiService.getPersonalAssignmentStatistics(11)).thenReturn(
             Response.success(ApiResponse(success = true, data = stats, message = null, error = null))
@@ -377,8 +376,7 @@ class AssignmentRepositoryTest {
     fun getRecentPersonalAssignment_success_returnsId() = runTest {
         val repo = AssignmentRepository(apiService)
         val recentData = com.example.voicetutor.data.network.RecentAnswerData(
-            personalAssignmentId = 100,
-            nextQuestionId = null
+            personalAssignmentId = 100
         )
         whenever(apiService.getRecentPersonalAssignment(1)).thenReturn(
             Response.success(ApiResponse(success = true, data = recentData, message = null, error = null))

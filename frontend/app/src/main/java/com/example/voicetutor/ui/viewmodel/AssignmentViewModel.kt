@@ -1084,8 +1084,7 @@ class AssignmentViewModel @Inject constructor(
                         if (personalAssignment != null) {
                             val recent = RecentAssignment(
                                 id = personalAssignment.id.toString(),
-                                title = personalAssignment.assignment.title,
-                                nextQuestionId = null // 필요시 백엔드 API에서 받아올 수 있음
+                                title = personalAssignment.assignment.title
                             )
                             _recentAssignment.value = recent
                         } else {

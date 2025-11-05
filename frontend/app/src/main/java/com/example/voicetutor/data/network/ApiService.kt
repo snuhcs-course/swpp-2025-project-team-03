@@ -179,9 +179,7 @@ interface ApiService {
 
 // Minimal response model for recent personal assignment lookup
 data class RecentAnswerData(
-    @SerializedName("personal_assignment_id") val personalAssignmentId: Int,
-    // Optional next question preview fields if backend returns them (safe to ignore if absent)
-    @SerializedName("next_question_id") val nextQuestionId: Int? = null
+    @SerializedName("personal_assignment_id") val personalAssignmentId: Int
 )
 
 data class ApiResponse<T>(

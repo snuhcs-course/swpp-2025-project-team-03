@@ -28,29 +28,14 @@ class NetworkModelsTest {
     )
 
     @Test
-    fun recentAnswerData_withAllFields_containsCorrectValues() {
+    fun recentAnswerData_containsCorrectValues() {
         // Arrange
         val data = RecentAnswerData(
-            personalAssignmentId = 100,
-            nextQuestionId = 50
+            personalAssignmentId = 100
         )
 
         // Assert
         assertEquals(100, data.personalAssignmentId)
-        assertEquals(50, data.nextQuestionId)
-    }
-
-    @Test
-    fun recentAnswerData_withNullNextQuestionId_handlesNull() {
-        // Arrange
-        val data = RecentAnswerData(
-            personalAssignmentId = 100,
-            nextQuestionId = null
-        )
-
-        // Assert
-        assertEquals(100, data.personalAssignmentId)
-        assertNull(data.nextQuestionId)
     }
 
     @Test

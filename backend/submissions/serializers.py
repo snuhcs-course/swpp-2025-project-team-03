@@ -53,4 +53,3 @@ class PersonalAssignmentRecentSerializer(serializers.Serializer):
     """최근 답변한 개인 과제 정보를 위한 serializer"""
 
     personal_assignment_id = serializers.IntegerField(help_text="개인 과제 ID")
-    next_question_id = serializers.IntegerField(help_text="다음 질문 ID")
