@@ -28,38 +28,77 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 @Composable
 fun TeacherStudentAssignmentDetailScreen(
     studentId: String,
+    assignmentId: Int = 0,
     assignmentTitle: String = "과제"
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: com.example.voicetutor.ui.viewmodel.StudentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
-    // assignmentResults API가 제거되었으므로 빈 리스트 사용
-    val assignmentResults = remember { emptyList<StudentResult>() }
+    val assignmentResults by viewModel.assignmentResults.collectAsStateWithLifecycle()
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val currentStudent by studentViewModel.currentStudent.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
-    // Find assignment by title
-    val targetAssignment = remember(assignments, assignmentTitle) {
-        assignments.find { it.title == assignmentTitle }
+    // Find assignment: 우선 assignmentId 사용, 없으면 currentAssignment, 그것도 없으면 assignments 리스트에서 찾기
+    val targetAssignment = remember(currentAssignment, assignments, assignmentId, assignmentTitle) {
+        if (assignmentId > 0) {
+            currentAssignment?.takeIf { it.id == assignmentId } 
+                ?: assignments.find { it.id == assignmentId }
+        } else {
+            currentAssignment ?: assignments.find { 
+                it.title == assignmentTitle || 
+                it.title.contains(assignmentTitle) ||
+                assignmentTitle.contains(it.title)
+            }
+        }
     }
     
     // 동적 학생 이름 가져오기
     val studentName = currentStudent?.name ?: "학생"
     
     // 동적 과제 제목 가져오기
-    val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
+    val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle)
     
-    // Load assignment data, student data on first composition
-    LaunchedEffect(targetAssignment?.id, studentId) {
-        targetAssignment?.let { assignment ->
-            println("TeacherStudentAssignmentDetail - Loading assignment: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
-            viewModel.loadAssignmentById(assignment.id)
-            // loadAssignmentResults API가 제거되었으므로 주석 처리
-            // viewModel.loadAssignmentResults(assignment.id)
+    // Load assignment data, student data, and student result on first composition
+    LaunchedEffect(assignmentId, targetAssignment?.id, studentId) {
+        // assignmentId가 있으면 직접 로드
+        if (assignmentId > 0) {
+            println("TeacherStudentAssignmentDetail - Loading assignment by ID: $assignmentId for student: $studentId")
+            viewModel.loadAssignmentById(assignmentId)
+            viewModel.loadAssignmentStudentResults(assignmentId)
+        } else {
+            // targetAssignment가 있으면 그것을 사용
+            targetAssignment?.let { assignment ->
+                println("TeacherStudentAssignmentDetail - Loading assignment: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
+                viewModel.loadAssignmentById(assignment.id)
+                // 해당 학생과 과제의 Personal Assignment 결과 로드
+                viewModel.loadAssignmentStudentResults(assignment.id)
+            } ?: run {
+                // targetAssignment가 없으면 assignmentTitle로 직접 찾기 시도
+                // assignments 리스트가 비어있을 수 있으므로, 모든 과제를 먼저 로드
+                println("TeacherStudentAssignmentDetail - targetAssignment not found, loading all assignments to find: $assignmentTitle")
+                viewModel.loadAllAssignments()
+            }
         }
+        
         studentViewModel.loadStudentById(studentId.toIntOrNull() ?: 1)
+    }
+    
+    // assignments가 로드된 후에 다시 찾기 (assignmentId가 없는 경우)
+    LaunchedEffect(assignments, assignmentTitle, studentId, assignmentId) {
+        if (assignmentId == 0 && targetAssignment == null && assignments.isNotEmpty()) {
+            val foundAssignment = assignments.find { 
+                it.title == assignmentTitle || 
+                it.title.contains(assignmentTitle) ||
+                assignmentTitle.contains(it.title)
+            }
+            foundAssignment?.let { assignment ->
+                println("TeacherStudentAssignmentDetail - Found assignment after loading: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
+                viewModel.loadAssignmentById(assignment.id)
+                viewModel.loadAssignmentStudentResults(assignment.id)
+            }
+        }
     }
     
     // Handle error
@@ -70,7 +109,7 @@ fun TeacherStudentAssignmentDetailScreen(
         }
     }
     
-    // Find student's result (항상 null이 될 것임, API가 없으므로)
+    // Find student's result from loaded results
     val studentResult = assignmentResults.find { it.studentId == studentId }
     
     Column(
@@ -212,7 +251,11 @@ fun TeacherStudentAssignmentDetailScreen(
         ) {
             VTStatsCard(
                 title = "정답률",
-                value = "${(studentResult.detailedAnswers.count { it.isCorrect }.toFloat() / studentResult.detailedAnswers.size * 100).toInt()}%",
+                value = if (studentResult.detailedAnswers.isNotEmpty()) {
+                    "${(studentResult.detailedAnswers.count { it.isCorrect }.toFloat() / studentResult.detailedAnswers.size * 100).toInt()}%"
+                } else {
+                    "${studentResult.score}%"
+                },
                 icon = Icons.Filled.CheckCircle,
                 iconColor = Success,
                 variant = CardVariant.Elevated,
@@ -229,6 +272,54 @@ fun TeacherStudentAssignmentDetailScreen(
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Vertical
             )
+        }
+        
+        // Time info card
+        VTCard(variant = CardVariant.Elevated) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "소요 시간",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray600
+                    )
+                    Text(
+                        text = formatDuration(studentResult.startedAt, studentResult.submittedAt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                }
+                
+                Divider()
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "제출 시간",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray600
+                    )
+                    Text(
+                        text = formatSubmittedTime(studentResult.submittedAt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                }
+            }
         }
         
         // Detailed answers
@@ -435,6 +526,66 @@ private fun getGradeColor(grade: String): Color {
         "D" -> Color(0xFFFF9800)
         "F" -> Error
         else -> Gray600
+    }
+}
+
+// Helper function to format submitted time
+private fun formatSubmittedTime(isoTime: String): String {
+    return try {
+        // ISO 8601 형식 파싱: "2025-10-16T02:10:13.245620Z"
+        val parts = isoTime.split("T")
+        if (parts.size >= 2) {
+            val date = parts[0] // "2025-10-16"
+            val timePart = parts[1].split(".")[0] // "02:10:13"
+            val time = timePart.substring(0, 5) // "02:10"
+            "$date $time"
+        } else {
+            isoTime
+        }
+    } catch (e: Exception) {
+        isoTime
+    }
+}
+
+// Helper function to format duration between startedAt and submittedAt
+private fun formatDuration(startIso: String?, endIso: String?): String {
+    return try {
+        if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
+            return "정보 없음"
+        }
+        val start = parseIsoToMillis(startIso)
+        val end = parseIsoToMillis(endIso)
+        if (start == null || end == null || end <= start) {
+            return "정보 없음"
+        }
+        val diffMs = end - start
+        val totalSeconds = diffMs / 1000
+        val hours = (totalSeconds / 3600).toInt()
+        val minutes = ((totalSeconds % 3600) / 60).toInt()
+        val seconds = (totalSeconds % 60).toInt()
+        if (hours > 0) {
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format("%02d:%02d", minutes, seconds)
+        }
+    } catch (e: Exception) {
+        "정보 없음"
+    }
+}
+
+// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
+private fun parseIsoToMillis(iso: String): Long? {
+    return try {
+        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
+        val cleaned = iso.replace("Z", "").let { raw ->
+            val dotIdx = raw.indexOf('.')
+            if (dotIdx != -1) raw.substring(0, dotIdx) else raw
+        }
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        sdf.parse(cleaned)?.time
+    } catch (e: Exception) {
+        null
     }
 }
 
