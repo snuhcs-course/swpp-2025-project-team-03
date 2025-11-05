@@ -153,7 +153,7 @@ fun VoiceTutorNavigation(
                         navController.navigate(VoiceTutorScreens.PendingAssignments.createRoute(studentId))
                     },
                     onNavigateToCompletedAssignments = { studentId ->
-                        navController.navigate(VoiceTutorScreens.CompletedAssignments.createRoute(studentId))
+                        navController.navigate(VoiceTutorScreens.Progress.route)
                     },
                     onNavigateToAllStudentAssignments = { studentId ->
                         navController.navigate(VoiceTutorScreens.AllStudentAssignments.createRoute(studentId))
@@ -222,32 +222,7 @@ fun VoiceTutorNavigation(
                 )
             }
         }
-        
-        composable(
-            route = VoiceTutorScreens.CompletedAssignments.route,
-            arguments = listOf(
-                navArgument("studentId") {
-                    type = NavType.IntType
-                }
-            )
-        ) { backStackEntry ->
-            val studentId = backStackEntry.arguments?.getInt("studentId")
-            MainLayout(
-                navController = navController,
-                userRole = UserRole.STUDENT
-            ) {
-                CompletedAssignmentsScreen(
-                    studentId = studentId,
-                    onNavigateToAssignmentDetail = { assignmentId ->
-                        navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId.toString(), "과제"))
-                    },
-                    onNavigateToAssignmentReport = { personalAssignmentId: Int, assignmentTitle: String ->
-                        navController.navigate(VoiceTutorScreens.AssignmentDetailedResults.createRoute(personalAssignmentId, assignmentTitle))
-                    }
-                )
-            }
-        }
-        
+
         composable(
             route = VoiceTutorScreens.AllStudentAssignments.route,
             arguments = listOf(
@@ -909,9 +884,6 @@ sealed class VoiceTutorScreens(val route: String) {
         fun createRoute(personalAssignmentId: Int, title: String) = "assignment_detailed_results/$personalAssignmentId/$title"
     }
     object Progress : VoiceTutorScreens("progress")
-    object CompletedAssignments : VoiceTutorScreens("completed_assignments/{studentId}") {
-        fun createRoute(studentId: Int) = "completed_assignments/$studentId"
-    }
     object AllStudentAssignments : VoiceTutorScreens("all_student_assignments/{studentId}") {
         fun createRoute(studentId: Int) = "all_student_assignments/$studentId"
     }
