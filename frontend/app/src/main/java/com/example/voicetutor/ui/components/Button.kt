@@ -47,12 +47,13 @@ fun VTButton(
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    maxLines: Int = 1
+    maxLines: Int = 1,
+    lineHeightMultiplier: Float = 1.0f
 ) {
     val shape = RoundedCornerShape(16.dp)
     val contentPadding = when (size) {
         ButtonSize.Small -> PaddingValues(
-            horizontal = if (maxLines > 1) 8.dp else 12.dp, 
+            horizontal = 12.dp, 
             vertical = if (maxLines > 1) 6.dp else 8.dp
         )
         ButtonSize.Medium -> PaddingValues(horizontal = 20.dp, vertical = 10.dp)
@@ -172,7 +173,7 @@ fun VTButton(
     ) {
         Row(
             modifier = Modifier.padding(contentPadding),
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = if (maxLines > 1) Arrangement.Start else Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             leadingIcon?.let { 
@@ -187,7 +188,8 @@ fun VTButton(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = maxLines,
                 overflow = if (maxLines == 1) androidx.compose.ui.text.style.TextOverflow.Ellipsis else androidx.compose.ui.text.style.TextOverflow.Visible,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = (fontSize.value * lineHeightMultiplier).sp
             )
             
             trailingIcon?.let {

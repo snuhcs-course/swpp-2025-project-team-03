@@ -219,39 +219,25 @@ fun TeacherClassDetailScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 VTButton(
-                    text = "클래스\n메시지",
+                    text = "클래스 메시지",
                     onClick = onNavigateToClassMessage,
                     variant = ButtonVariant.Gradient,
                     size = ButtonSize.Small,
                     modifier = Modifier
                         .weight(1.2f)
-                        .heightIn(min = 52.dp),
+                        .heightIn(min = 44.dp),
                     maxLines = 2,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Message,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
+                    lineHeightMultiplier = 1.2f
                 )
                 
                 VTButton(
-                    text = "과제\n생성",
+                    text = "과제 생성",
                     onClick = onNavigateToCreateAssignment,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
                     modifier = Modifier
                         .weight(1f)
-                        .heightIn(min = 52.dp),
-                    maxLines = 2,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
+                        .height(44.dp)
                 )
 
                 VTButton(
@@ -266,7 +252,7 @@ fun TeacherClassDetailScreen(
                     size = ButtonSize.Small,
                     modifier = Modifier
                         .weight(1.3f)
-                        .height(52.dp),
+                        .height(44.dp),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.PersonAdd,
