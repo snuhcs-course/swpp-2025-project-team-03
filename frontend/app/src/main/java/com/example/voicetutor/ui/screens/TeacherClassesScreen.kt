@@ -98,13 +98,34 @@ fun TeacherClassesScreen(
         }
     }
     
+    // 각 클래스의 완료율을 저장하는 상태
+    var classCompletionRates by remember { mutableStateOf<Map<Int, Float>>(emptyMap()) }
+    
+    // 각 클래스의 완료율 로드
+    LaunchedEffect(classes.map { it.id }) {
+        if (classes.isNotEmpty()) {
+            val ratesMap = mutableMapOf<Int, Float>()
+            
+            classes.forEach { classData ->
+                classViewModel.loadClassCompletionRate(classData.id) { result ->
+                    result.onSuccess { completionRate ->
+                        ratesMap[classData.id] = completionRate.completionRate
+                        classCompletionRates = ratesMap.toMap() // 상태 업데이트
+                    }.onFailure {
+                        ratesMap[classData.id] = 0f
+                        classCompletionRates = ratesMap.toMap() // 상태 업데이트
+                    }
+                }
+            }
+        }
+    }
+    
     // Convert ClassData to ClassRoom for UI
     val classRooms = classes.map { classData ->
         // Calculate assignment count and completion rate from actual data
         val classAssignments = assignments.filter { it.courseClass.id == classData.id }
         val assignmentCount = classAssignments.size
-        val completedAssignments = 0 // 기본값으로 설정
-        val completionRate = if (assignmentCount > 0) completedAssignments.toFloat() / assignmentCount else 0.0f
+        val completionRate = classCompletionRates[classData.id] ?: 0f
         
         ClassRoom(
             id = classData.id,
@@ -310,7 +331,7 @@ fun ClassCard(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "${(classRoom.completionRate * 100).toInt()}%",
+                        text = "${classRoom.completionRate.toInt()}%",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = classRoom.color
@@ -356,7 +377,7 @@ fun ClassCard(
             
             // Progress bar
             VTProgressBar(
-                progress = classRoom.completionRate,
+                progress = (classRoom.completionRate / 100f).coerceIn(0f, 1f),
                 showPercentage = false,
                 color = classRoom.color,
                 height = 6

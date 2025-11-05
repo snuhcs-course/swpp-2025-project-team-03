@@ -84,6 +84,13 @@ data class StudentStatisticsItem(
 data class ClassStudentsStatistics(
     @SerializedName("overall_average_score")
     val overallAverageScore: Float,
+    @SerializedName("overall_completion_rate")
+    val overallCompletionRate: Float,
     @SerializedName("students")
     val students: List<StudentStatisticsItem>
+)
+
+data class ClassCompletionRate(
+    @SerializedName("completion_rate")
+    val completionRate: Float
 )

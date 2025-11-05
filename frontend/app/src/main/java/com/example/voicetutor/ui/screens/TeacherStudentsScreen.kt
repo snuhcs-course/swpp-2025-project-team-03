@@ -72,6 +72,7 @@ fun TeacherStudentsScreen(
     
     var studentsStatisticsMap by remember { mutableStateOf<Map<Int, StudentStats>>(emptyMap()) }
     var isLoadingStatistics by remember { mutableStateOf(true) }
+    var overallCompletionRate by remember { mutableStateOf(0f) }
     
     // Load students and class data on first composition
     LaunchedEffect(classId, currentUser?.id) {
@@ -86,6 +87,7 @@ fun TeacherStudentsScreen(
             isLoadingStatistics = true
             classViewModel.loadClassStudentsStatistics(classId) { result ->
                 result.onSuccess { stats ->
+                    overallCompletionRate = stats.overallCompletionRate
                     studentsStatisticsMap = stats.students.associate { 
                         it.studentId to StudentStats(
                             averageScore = it.averageScore,
@@ -96,6 +98,7 @@ fun TeacherStudentsScreen(
                     }
                     isLoadingStatistics = false
                 }.onFailure {
+                    overallCompletionRate = 0f
                     studentsStatisticsMap = emptyMap()
                     isLoadingStatistics = false
                 }
@@ -236,7 +239,7 @@ fun TeacherStudentsScreen(
         ) {
             VTStatsCard(
                 title = "평균 완료율",
-                value = "정보 없음",
+                value = if (isLoadingStatistics) "로딩 중..." else "${overallCompletionRate.toInt()}%",
                 icon = Icons.Filled.Done,
                 iconColor = Success,
                 modifier = Modifier.weight(1f)

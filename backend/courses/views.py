@@ -14,6 +14,7 @@ from .request_serializers import (
     StudentEditRequestSerializer,
 )
 from .serializers import (
+    ClassCompletionRateSerializer,
     ClassStudentsStatisticsSerializer,
     CourseClassSerializer,
     EnrollmentSerializer,
@@ -676,8 +677,16 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
             # 전체 평균 점수 계산
             overall_average_score = (total_all_scores / students_with_scores) if students_with_scores > 0 else 0
 
+            # 전체 평균 완료율 계산: 전체 학생 완료한 과제 수 / 전체 학생 과제 수
+            total_completed_assignments = sum(stat["completed_assignments"] for stat in students_statistics)
+            total_student_assignments = sum(stat["total_assignments"] for stat in students_statistics)
+            overall_completion_rate = (
+                (total_completed_assignments / total_student_assignments * 100) if total_student_assignments > 0 else 0
+            )
+
             data = {
                 "overall_average_score": round(overall_average_score, 1),
+                "overall_completion_rate": round(overall_completion_rate, 1),
                 "students": students_statistics,
             }
 
@@ -701,5 +710,79 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
                 success=False,
                 error=str(e),
                 message="반 학생 통계 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class ClassCompletionRateView(APIView):  # GET /classes/{id}/completion-rate
+    @swagger_auto_schema(
+        operation_id="반 완료율 조회",
+        operation_description="특정 반의 전체 완료율을 조회합니다. (전체 학생 완료한 과제 수 / 전체 학생 과제 수)",
+        responses={200: "Class completion rate"},
+    )
+    def get(self, request, id):
+        try:
+            from assignments.models import Assignment
+            from submissions.models import PersonalAssignment
+
+            # 클래스 확인
+            course_class = CourseClass.objects.get(id=id)
+
+            # 해당 반의 모든 학생
+            enrollments = Enrollment.objects.filter(course_class=course_class, status=Enrollment.Status.ENROLLED)
+            students = [enrollment.student for enrollment in enrollments]
+
+            if not students:
+                return create_api_response(
+                    data={"completion_rate": 0.0},
+                    message="반 완료율 조회 성공",
+                )
+
+            # 해당 반의 모든 과제
+            assignments = Assignment.objects.filter(course_class=course_class)
+            total_assignments = assignments.count()
+
+            if total_assignments == 0:
+                return create_api_response(
+                    data={"completion_rate": 0.0},
+                    message="반 완료율 조회 성공",
+                )
+
+            # 전체 학생 완료한 과제 수 계산
+            total_completed_assignments = 0
+            total_student_assignments = len(students) * total_assignments
+
+            for student in students:
+                personal_assignments = PersonalAssignment.objects.filter(assignment__in=assignments, student=student)
+                submitted_count = personal_assignments.filter(status=PersonalAssignment.Status.SUBMITTED).count()
+                total_completed_assignments += submitted_count
+
+            # 전체 평균 완료율 계산
+            completion_rate = (
+                (total_completed_assignments / total_student_assignments * 100) if total_student_assignments > 0 else 0
+            )
+
+            data = {"completion_rate": round(completion_rate, 1)}
+
+            serializer = ClassCompletionRateSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+
+            return create_api_response(
+                data=serializer.data, message="반 완료율 조회 성공", status_code=status.HTTP_200_OK
+            )
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassCompletionRateView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="반 완료율 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
