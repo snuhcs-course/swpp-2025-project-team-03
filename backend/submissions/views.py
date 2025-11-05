@@ -942,57 +942,42 @@ class PersonalAssignmentRecentView(APIView):
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # 최근 답변 조회
-            recent_answers = Answer.objects.filter(student_id=student_id).order_by("-submitted_at")
+            # 최근 답변 조회 (submitted_at이 NULL이 아닌 답변만, N+1 쿼리 방지)
+            recent_answers = (
+                Answer.objects.filter(student_id=student_id, submitted_at__isnull=False)
+                .select_related("question__personal_assignment")  # N+1 쿼리 방지
+                .order_by("-submitted_at")
+            )
             personal_assignment = None
-            recent_answer = None
 
             # 가장 최근에 풀이된 문제중 personal_assignment.status가 SUBMITTED가 아닌 것을 찾음
-            while recent_answers:
-                recent_answer = recent_answers.first()
-                personal_assignment = recent_answer.question.personal_assignment
-
-                if personal_assignment.status != PersonalAssignment.Status.SUBMITTED:
+            for answer in recent_answers:
+                if answer.question.personal_assignment.status != PersonalAssignment.Status.SUBMITTED:
+                    personal_assignment = answer.question.personal_assignment
                     break
-                else:
-                    recent_answers = recent_answers.exclude(id=recent_answer.id)
-                    recent_answer = None
 
-            if not recent_answer:
+            if not personal_assignment:
                 # 최근 답변이 없는 경우, 가장 최근에 생성된 personal_assignment 조회
-                personal_assignment = PersonalAssignment.objects.filter(student_id=student_id).order_by("-id").first()
+                # IN_PROGRESS 상태의 과제를 조회 , NOT STARTED 는 제외함.
+                personal_assignment = (
+                    PersonalAssignment.objects.filter(
+                        student_id=student_id,
+                        status__in=[PersonalAssignment.Status.IN_PROGRESS],
+                    )
+                    .order_by("-id")
+                    .first()
+                )
+
                 if not personal_assignment:
                     return create_api_response(
                         success=False,
                         error="No personal assignments found",
                         message="해당 학생의 개인 과제가 없습니다.",
                         status_code=status.HTTP_404_NOT_FOUND,
-                    )
-
-            # 다음 풀이할 문제 조회 (number, recalled_num 순으로 정렬하여 아직 풀이되지 않은 문제)
-            questions = personal_assignment.questions.order_by("number", "recalled_num")
-
-            next_question = None
-            for question in questions:
-                # 해당 question에 대한 답변이 존재하는지 확인
-                answered = Answer.objects.filter(question=question, student_id=student_id).exists()
-                if not answered:
-                    next_question = question
-                    break
-
-            if next_question:
-                # next_question
-                result = {
-                    "personal_assignment_id": personal_assignment.id,
-                    "next_question_id": next_question.id,
-                }
-            else:
-                return create_api_response(
-                    success=False,
-                    error="No personal assignments found",
-                    message="해당 학생의 개인 과제가 없습니다.",
-                    status_code=status.HTTP_404_NOT_FOUND,
-                )
+                    )  # personal_assignment_id만 반환
+            result = {
+                "personal_assignment_id": personal_assignment.id,
+            }
 
             serializer = PersonalAssignmentRecentSerializer(result)
 
