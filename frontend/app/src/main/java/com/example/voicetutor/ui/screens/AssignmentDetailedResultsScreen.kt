@@ -29,6 +29,12 @@ data class DetailedQuestionResult(
     val explanation: String? = null
 )
 
+// 그룹화된 질문 데이터 클래스
+data class QuestionGroup(
+    val baseQuestion: DetailedQuestionResult,
+    val tailQuestions: List<DetailedQuestionResult> = emptyList()
+)
+
 @Composable
 fun AssignmentDetailedResultsScreen(
     personalAssignmentId: Int,
@@ -59,6 +65,45 @@ fun AssignmentDetailedResultsScreen(
         }
     }
     
+    // base question과 tail question으로 그룹화
+    val questionGroups = remember(detailedResults) {
+        val grouped = mutableMapOf<String, MutableList<DetailedQuestionResult>>()
+
+        detailedResults.forEach { result ->
+            val baseNum = if (result.questionNumber.contains("-")) {
+                result.questionNumber.substringBefore("-")
+            } else {
+                result.questionNumber
+            }
+
+            if (!grouped.containsKey(baseNum)) {
+                grouped[baseNum] = mutableListOf()
+            }
+            grouped[baseNum]?.add(result)
+        }
+
+        // QuestionGroup 리스트로 변환
+        grouped.entries.sortedBy { it.key.toIntOrNull() ?: 0 }.map { (baseNum, questions) ->
+            val base = questions.find { it.questionNumber == baseNum }
+            val tails = questions.filter { it.questionNumber != baseNum }
+                .sortedBy { it.questionNumber }
+
+            QuestionGroup(
+                baseQuestion = base ?: questions.first(),
+                tailQuestions = tails
+            )
+        }
+    }
+
+    // 각 그룹의 토글 상태 관리
+    val expandedStates = remember(questionGroups) {
+        mutableStateMapOf<String, Boolean>().apply {
+            questionGroups.forEach { group ->
+                this[group.baseQuestion.questionNumber] = false
+            }
+        }
+    }
+
     val totalQuestions = detailedResults.size
     val correctAnswers = detailedResults.count { it.isCorrect }
     val totalScore = if (totalQuestions > 0) (correctAnswers * 100) / totalQuestions else 0
@@ -172,12 +217,199 @@ fun AssignmentDetailedResultsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                detailedResults.forEachIndexed { index, question ->
-                    DetailedQuestionResultCard(question = question)
+                questionGroups.forEachIndexed { index, group ->
+                    QuestionGroupCard(
+                        group = group,
+                        isExpanded = expandedStates[group.baseQuestion.questionNumber] ?: false,
+                        onToggle = {
+                            val currentState = expandedStates[group.baseQuestion.questionNumber] ?: false
+                            expandedStates[group.baseQuestion.questionNumber] = !currentState
+                        }
+                    )
 
-                    if (index < detailedResults.size - 1) {
+                    if (index < questionGroups.size - 1) {
                         Spacer(modifier = Modifier.height(12.dp))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun QuestionGroupCard(
+    group: QuestionGroup,
+    isExpanded: Boolean,
+    onToggle: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Base question card with toggle
+        VTCard(
+            variant = CardVariant.Outlined,
+            onClick = if (group.tailQuestions.isNotEmpty()) onToggle else null
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Question header with toggle icon
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "문제 ${group.baseQuestion.questionNumber}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Gray800
+                        )
+
+                        // Tail question count badge
+                        if (group.tailQuestions.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        color = PrimaryIndigo.copy(alpha = 0.1f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "+${group.tailQuestions.size}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryIndigo,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Result badge
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = if (group.baseQuestion.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (group.baseQuestion.isCorrect) "정답" else "오답",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (group.baseQuestion.isCorrect) Success else Error,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        // Toggle icon
+                        if (group.tailQuestions.isNotEmpty()) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                contentDescription = if (isExpanded) "접기" else "펼치기",
+                                tint = Gray600
+                            )
+                        }
+                    }
+                }
+
+                // Question text
+                Text(
+                    text = group.baseQuestion.question,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = Gray800
+                )
+
+                // My answer
+                if (group.baseQuestion.myAnswer.isNotEmpty()) {
+                    Column {
+                        Text(
+                            text = "내 답변",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = Gray600
+                        )
+                        Text(
+                            text = group.baseQuestion.myAnswer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray800,
+                            modifier = Modifier
+                                .background(
+                                    color = if (group.baseQuestion.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                )
+                                .padding(12.dp)
+                        )
+                    }
+                }
+
+                // Correct answer
+                Column {
+                    Text(
+                        text = "정답",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray600
+                    )
+                    Text(
+                        text = group.baseQuestion.correctAnswer,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray800,
+                        modifier = Modifier
+                            .background(
+                                color = Success.copy(alpha = 0.1f),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    )
+                }
+
+                // Explanation
+                group.baseQuestion.explanation?.let { explanation ->
+                    if (explanation.isNotEmpty()) {
+                        Column {
+                            Text(
+                                text = "해설",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = Gray600
+                            )
+                            Text(
+                                text = explanation,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Gray700,
+                                modifier = Modifier
+                                    .background(
+                                        color = PrimaryIndigo.copy(alpha = 0.1f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(12.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Tail questions (shown when expanded)
+        if (isExpanded && group.tailQuestions.isNotEmpty()) {
+            Column(
+                modifier = Modifier.padding(start = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                group.tailQuestions.forEach { tailQuestion ->
+                    DetailedQuestionResultCard(question = tailQuestion)
                 }
             }
         }
