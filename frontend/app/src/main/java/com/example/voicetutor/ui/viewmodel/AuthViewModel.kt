@@ -96,6 +96,10 @@ class AuthViewModel @Inject constructor(
         _error.value = null
     }
     
+    fun setError(message: String) {
+        _error.value = message
+    }
+
     // 자동 입력 정보 사용 후 초기화
     fun clearAutoFillCredentials() {
         _autoFillCredentials.value = null

@@ -334,12 +334,24 @@ fun SignupScreen(
                         text = if (isLoading) "계정 생성 중..." else "계정 만들기",
                         onClick = {
                             when {
-                                name.isBlank() -> return@VTButton
-                                email.isBlank() -> return@VTButton
-                                password.isBlank() -> return@VTButton
-                                confirmPassword.isBlank() -> return@VTButton
-                                password != confirmPassword -> return@VTButton
-                                password.length < 6 -> return@VTButton
+                                name.isBlank() -> {
+                                    viewModelAuth.setError("이름을 입력해주세요")
+                                }
+                                email.isBlank() -> {
+                                    viewModelAuth.setError("이메일을 입력해주세요")
+                                }
+                                password.isBlank() -> {
+                                    viewModelAuth.setError("비밀번호를 입력해주세요")
+                                }
+                                confirmPassword.isBlank() -> {
+                                    viewModelAuth.setError("비밀번호 확인을 입력해주세요")
+                                }
+                                password != confirmPassword -> {
+                                    viewModelAuth.setError("비밀번호가 일치하지 않습니다")
+                                }
+                                password.length < 6 -> {
+                                    viewModelAuth.setError("비밀번호는 최소 6자 이상이어야 합니다")
+                                }
                                 else -> {
                                     viewModelAuth.signup(name, email, password, selectedRole)
                                 }

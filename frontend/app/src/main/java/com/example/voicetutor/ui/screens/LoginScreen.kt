@@ -284,12 +284,17 @@ fun LoginScreen(
                     VTButton(
                         text = if (isLoading) "로그인 중..." else "로그인",
                         onClick = {
-                            if (email.isBlank() || password.isBlank()) {
-                                return@VTButton
+                            when {
+                                email.isBlank() -> {
+                                    viewModelAuth.setError("이메일을 입력해주세요")
+                                }
+                                password.isBlank() -> {
+                                    viewModelAuth.setError("비밀번호를 입력해주세요")
+                                }
+                                else -> {
+                                    viewModelAuth.login(email, password)
+                                }
                             }
-                            
-                            // Call actual login API
-                            viewModelAuth.login(email, password)
                         },
                         variant = ButtonVariant.Gradient,
                         size = ButtonSize.Large,
