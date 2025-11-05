@@ -162,7 +162,7 @@ class AuthIntegrationTest {
         Thread.sleep(3000)  // Allow time for API call and navigation
         
         // THEN - Verify we're on Teacher Dashboard by checking for teacher-specific UI elements
-        composeTestRule.onNodeWithText("환영합니다, 테스트선생님", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("환영합니다, 테스트 선생님", substring = true, useUnmergedTree = true).assertIsDisplayed()
     }
     /**
      * Test direct login flow for existing student.
