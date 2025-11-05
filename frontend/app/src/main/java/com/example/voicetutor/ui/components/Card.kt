@@ -35,69 +35,69 @@ fun VTCard(
     
     val cardModifier = modifier
         .fillMaxWidth()
-        .clip(shape)
         .then(
             when (variant) {
                 CardVariant.Default -> Modifier
-                    .background(Color.White)
                     .shadow(
                         elevation = 4.dp,
                         shape = shape,
                         ambientColor = Color.Black.copy(alpha = 0.04f),
                         spotColor = Color.Black.copy(alpha = 0.08f)
                     )
+                    .background(Color.White, shape)
 
                 CardVariant.Elevated -> Modifier
-                    .background(Color.White)
                     .shadow(
                         elevation = 12.dp,
                         shape = shape,
                         ambientColor = Color.Black.copy(alpha = 0.06f),
                         spotColor = Color.Black.copy(alpha = 0.12f)
                     )
+                    .background(Color.White, shape)
 
                 CardVariant.Outlined -> Modifier
-                    .background(Color.White)
-                    .border(
-                        width = 1.dp,
-                        color = Gray50,
-                        shape = shape
-                    )
                     .shadow(
                         elevation = 2.dp,
                         shape = shape,
                         ambientColor = Color.Black.copy(alpha = 0.02f),
                         spotColor = Color.Black.copy(alpha = 0.04f)
                     )
+                    .background(Color.White, shape)
+                    .border(
+                        width = 1.dp,
+                        color = Gray50,
+                        shape = shape
+                    )
 
                 CardVariant.Gradient -> Modifier
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                PrimaryIndigo,
-                                LightIndigo
-                            )
-                        )
-                    )
                     .shadow(
                         elevation = 16.dp,
                         shape = shape,
                         ambientColor = PrimaryIndigo.copy(alpha = 0.15f),
                         spotColor = PrimaryIndigo.copy(alpha = 0.3f)
                     )
-
-                CardVariant.Selected -> Modifier
-                    .background(Color.White)
-                    .border(
-                        width = 2.dp,
-                        color = PrimaryIndigo,
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                PrimaryIndigo,
+                                LightIndigo
+                            )
+                        ),
                         shape = shape
                     )
+
+                CardVariant.Selected -> Modifier
                     .shadow(
                         elevation = 8.dp,
                         shape = shape,
                         ambientColor = PrimaryIndigo.copy(alpha = 0.1f),
                         spotColor = PrimaryIndigo.copy(alpha = 0.2f)
+                    )
+                    .background(Color.White, shape)
+                    .border(
+                        width = 2.dp,
+                        color = PrimaryIndigo,
+                        shape = shape
                     )
             }
         )
@@ -109,10 +109,14 @@ fun VTCard(
             }
         )
 
-    Column(
-        modifier = cardModifier.padding(20.dp),
-        content = content
-    )
+    Box(
+        modifier = cardModifier
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            content = content
+        )
+    }
 }
 
 @Preview(showBackground = true)

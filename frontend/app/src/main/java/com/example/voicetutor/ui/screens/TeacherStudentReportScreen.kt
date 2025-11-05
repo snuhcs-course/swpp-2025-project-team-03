@@ -222,7 +222,7 @@ fun TeacherStudentReportScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     VTStatsCard(
                         title = "전체 문제",
@@ -230,7 +230,8 @@ fun TeacherStudentReportScreen(
                         icon = Icons.Filled.Quiz,
                         iconColor = PrimaryIndigo,
                         modifier = Modifier.weight(1f),
-                        variant = CardVariant.Gradient
+                        variant = CardVariant.Gradient,
+                        layout = StatsCardLayout.Vertical
                     )
                     
                     VTStatsCard(
@@ -239,7 +240,8 @@ fun TeacherStudentReportScreen(
                         icon = Icons.Filled.CheckCircle,
                         iconColor = Success,
                         modifier = Modifier.weight(1f),
-                        variant = CardVariant.Gradient
+                        variant = CardVariant.Gradient,
+                        layout = StatsCardLayout.Vertical
                     )
                     
                     VTStatsCard(
@@ -248,7 +250,8 @@ fun TeacherStudentReportScreen(
                         icon = Icons.Filled.Assessment,
                         iconColor = Warning,
                         modifier = Modifier.weight(1f),
-                        variant = CardVariant.Gradient
+                        variant = CardVariant.Gradient,
+                        layout = StatsCardLayout.Vertical
                     )
                 }
             }

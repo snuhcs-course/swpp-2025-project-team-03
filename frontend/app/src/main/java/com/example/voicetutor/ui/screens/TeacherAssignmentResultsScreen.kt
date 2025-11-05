@@ -394,22 +394,9 @@ fun TeacherAssignmentResultCard(
     }
 }
 
-// Helper function to format submitted time
+// Helper function to format submitted time - using common utility
 private fun formatSubmittedTime(isoTime: String): String {
-    return try {
-        // ISO 8601 형식 파싱: "2025-10-16T02:10:13.245620Z"
-        val parts = isoTime.split("T")
-        if (parts.size >= 2) {
-            val date = parts[0] // "2025-10-16"
-            val timePart = parts[1].split(".")[0] // "02:10:13"
-            val time = timePart.substring(0, 5) // "02:10"
-            "$date $time"
-        } else {
-            isoTime
-        }
-    } catch (e: Exception) {
-        isoTime
-    }
+    return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
 }
 
 // Helper function to convert score to grade

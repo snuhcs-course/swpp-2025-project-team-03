@@ -497,7 +497,7 @@ fun TeacherAssignmentCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = dueDate,
+                        text = com.example.voicetutor.utils.formatDueDate(dueDate),
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600,
                         fontWeight = FontWeight.Medium

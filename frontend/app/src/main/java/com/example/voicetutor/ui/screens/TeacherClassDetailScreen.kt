@@ -212,18 +212,19 @@ fun TeacherClassDetailScreen(
             // Quick actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 VTButton(
                     text = "클래스 메시지",
                     onClick = onNavigateToClassMessage,
                     variant = ButtonVariant.Gradient,
-                    modifier = Modifier.weight(1f),
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1.15f),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Message,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 )
@@ -232,12 +233,13 @@ fun TeacherClassDetailScreen(
                     text = "과제 생성",
                     onClick = onNavigateToCreateAssignment,
                     variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small,
                     modifier = Modifier.weight(1f),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Add,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 )
@@ -251,12 +253,13 @@ fun TeacherClassDetailScreen(
                         showEnrollSheet = true
                     },
                     variant = ButtonVariant.Primary,
-                    modifier = Modifier.weight(1f),
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1.25f),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.PersonAdd,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 )
@@ -523,7 +526,7 @@ fun ClassAssignmentCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "마감일: ${assignment.dueDate}",
+                    text = "마감일: ${com.example.voicetutor.utils.formatDueDate(assignment.dueDate)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600
                 )

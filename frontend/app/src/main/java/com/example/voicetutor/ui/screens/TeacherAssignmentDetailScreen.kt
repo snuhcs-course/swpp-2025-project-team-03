@@ -358,7 +358,7 @@ fun StudentSubmissionItem(
                     }
                 )
                 Text(
-                    text = submission.submittedAt,
+                    text = com.example.voicetutor.utils.formatSubmittedTime(submission.submittedAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600
                 )

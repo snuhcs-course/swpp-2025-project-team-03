@@ -19,19 +19,7 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
-// 날짜 포맷 유틸 함수
-private fun formatDueDate(dueDate: String): String {
-    return try {
-        val zonedDateTime = ZonedDateTime.parse(dueDate)
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        zonedDateTime.format(formatter)
-    } catch (e: Exception) {
-        dueDate
-    }
-}
+import com.example.voicetutor.utils.formatDueDate
 
 @Composable
 fun PendingAssignmentsScreen(
