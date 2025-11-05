@@ -139,3 +139,17 @@ class HealthView(APIView):
     def get(self, request):
         """Health check 엔드포인트 - Hello, World! 반환"""
         return Response({"message": "Hello, World!"}, status=status.HTTP_200_OK)
+
+
+class ErrorView(APIView):  # pragma: no cover
+    @swagger_auto_schema(
+        operation_id="Error Test",
+        operation_description="의도적으로 ZeroDivisionError를 발생시키는 테스트 엔드포인트입니다. (3/0 계산)",
+        responses={
+            500: openapi.Response(description="ZeroDivisionError 발생"),
+        },
+    )
+    def get(self, request):
+        """의도적으로 에러를 발생시키는 엔드포인트 - 3/0 계산"""
+        result = 3 / 0  # ZeroDivisionError 발생
+        return Response({"result": result}, status=status.HTTP_200_OK)
