@@ -296,6 +296,10 @@ fun TeacherStudentReportScreen(
             
             // Achievement statistics header
             item {
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+            
+            item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
