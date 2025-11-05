@@ -96,7 +96,31 @@ fun AllStudentsScreen(
     
     // Calculate stats
     val totalStudents = allStudents.size
-    val averageScore = 0 // 평균 점수 정보가 없으므로 0으로 설정
+    var overallAverageScore by remember { mutableStateOf(0f) }
+    var studentsStatisticsMap by remember { mutableStateOf<Map<Int, Pair<Float, Float>>>(emptyMap()) } // studentId -> (averageScore, completionRate)
+    var isLoadingStatistics by remember { mutableStateOf(true) }
+    
+    // Load statistics for selected class
+    LaunchedEffect(selectedClassId) {
+        if (selectedClassId != null) {
+            isLoadingStatistics = true
+            classViewModel.loadClassStudentsStatistics(selectedClassId) { result ->
+                result.onSuccess { stats ->
+                    overallAverageScore = stats.overallAverageScore
+                    studentsStatisticsMap = stats.students.associate { 
+                        it.studentId to Pair(it.averageScore, it.completionRate)
+                    }
+                    isLoadingStatistics = false
+                }.onFailure {
+                    overallAverageScore = 0f
+                    studentsStatisticsMap = emptyMap()
+                    isLoadingStatistics = false
+                }
+            }
+        } else {
+            isLoadingStatistics = false
+        }
+    }
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -159,7 +183,7 @@ fun AllStudentsScreen(
                 
                 VTStatsCard(
                     title = "평균 점수",
-                    value = "${averageScore}점",
+                    value = if (isLoadingStatistics) "로딩 중..." else "${overallAverageScore.toInt()}점",
                     icon = Icons.Filled.Star,
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
@@ -269,8 +293,12 @@ fun AllStudentsScreen(
                 items = allStudents,
                 key = { student -> student.id }  // 각 학생의 고유 ID를 키로 사용
             ) { student ->
+                val stats = studentsStatisticsMap[student.id]
                 AllStudentsCard(
                     student = student,
+                    averageScore = stats?.first ?: 0f,
+                    completionRate = stats?.second ?: 0f,
+                    isLoadingStats = isLoadingStatistics,
                     onStudentClick = { 
                         // 학생 상세 페이지로 이동
                         onNavigateToStudentInfo(student.id.toString(), student.name)
@@ -290,6 +318,9 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
+    averageScore: Float,
+    completionRate: Float,
+    isLoadingStats: Boolean,
     onStudentClick: () -> Unit,
     onMessageClick: () -> Unit,
     onReportClick: () -> Unit = onStudentClick
@@ -344,45 +375,36 @@ fun AllStudentsCard(
                 
             }
             
-            // Progress info
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Progress info - 평균 점수만 표시 (첫번째 과제 진행률 제거)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.End
             ) {
-                Column {
+                Text(
+                    text = "평균 점수",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Gray600
+                )
+                if (isLoadingStats) {
                     Text(
-                        text = "과제 진행률",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "정보 없음", // 과제 정보가 없으므로 기본값
+                        text = "로딩 중...",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = Gray500
                     )
-                }
-                
-                Column {
+                } else {
                     Text(
-                        text = "평균 점수",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "정보 없음", // 평균 점수 정보가 없으므로 기본값
+                        text = "${averageScore.toInt()}점",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Gray500
+                        color = PrimaryIndigo
                     )
                 }
             }
             
-            // Progress bar
+            // Progress bar - 진행률 표시
             VTProgressBar(
-                progress = 0f, // 과제 정보가 없으므로 0으로 설정
+                progress = (completionRate / 100f).coerceIn(0f, 1f),
                 showPercentage = true
             )
             

@@ -121,6 +121,12 @@ interface ApiService {
         @Query("email") email: String? = null
     ): Response<ApiResponse<EnrollmentData>>
     
+    // Class Students Statistics API
+    @GET("courses/classes/{classId}/students-statistics/")
+    suspend fun getClassStudentsStatistics(
+        @Path("classId") classId: Int
+    ): Response<ApiResponse<ClassStudentsStatistics>>
+    
     // Message APIs (Backend: /api/feedbacks/messages/)
     @POST("feedbacks/messages/send/")
     suspend fun sendMessage(@Body request: SendMessageRequest): Response<ApiResponse<SendMessageResponse>>
