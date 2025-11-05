@@ -426,6 +426,51 @@ class AssignmentViewModel @Inject constructor(
             }
         }
     }
+
+    fun loadAssignmentStudentResults(assignmentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                assignmentRepository.getPersonalAssignments(assignmentId = assignmentId)
+                    .onSuccess { personalAssignments ->
+                        viewModelScope.launch {
+                            val results = coroutineScope {
+                                personalAssignments.map { personalAssignment ->
+                                    async {
+                                        val stats = assignmentRepository.getPersonalAssignmentStatistics(personalAssignment.id).getOrNull()
+                                        val score = stats?.averageScore?.toInt() ?: 0
+                                        val confidence = stats?.accuracy?.toInt() ?: 0
+                                        StudentResult(
+                                            studentId = personalAssignment.student.id.toString(),
+                                            name = personalAssignment.student.displayName,
+                                            score = score,
+                                            confidenceScore = confidence,
+                                            status = when {
+                                                personalAssignment.status == PersonalAssignmentStatus.SUBMITTED -> "완료"
+                                                !personalAssignment.startedAt.isNullOrEmpty() -> "진행 중"
+                                                else -> "미시작"
+                                            },
+                                            startedAt = personalAssignment.startedAt,
+                                            submittedAt = personalAssignment.submittedAt ?: personalAssignment.startedAt ?: "",
+                                            answers = emptyList(),
+                                            detailedAnswers = emptyList()
+                                        )
+                                    }
+                                }.awaitAll()
+                            }
+                            _assignmentResults.value = results
+                        }
+                    }
+                    .onFailure { e ->
+                        _error.value = e.message
+                        _assignmentResults.value = emptyList()
+                    }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
     
     fun createAssignment(assignment: CreateAssignmentRequest) {
         viewModelScope.launch {

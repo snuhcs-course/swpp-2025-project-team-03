@@ -36,11 +36,11 @@ fun TeacherAssignmentResultsScreen(
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
-    // assignmentResults API가 제거되었으므로 빈 리스트 사용
-    val students = remember { emptyList<StudentResult>() }
+    val students by viewModel.assignmentResults.collectAsStateWithLifecycle()
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val assignmentStats by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
     
     // Find assignment by ID or title from the assignments list
     // "과목 - 제목" 형식도 처리 가능하도록 수정
@@ -62,19 +62,18 @@ fun TeacherAssignmentResultsScreen(
     val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle ?: "과제")
     
     // Load assignment data on first composition
-    // Note: loadAssignmentResults API가 제거되었으므로 assignmentResults는 빈 리스트일 수 있음
     LaunchedEffect(assignmentId, targetAssignment?.id) {
         if (assignmentId > 0) {
             println("TeacherAssignmentResults - Loading assignment by ID: $assignmentId")
             viewModel.loadAssignmentById(assignmentId)
+            viewModel.loadAssignmentStudentResults(assignmentId)
         } else {
         targetAssignment?.let { target ->
             println("TeacherAssignmentResults - Loading assignment: ${target.title} (ID: ${target.id})")
             viewModel.loadAssignmentById(target.id)
+            viewModel.loadAssignmentStudentResults(target.id)
             }
         }
-        // loadAssignmentResults API가 제거되었으므로 주석 처리
-        // viewModel.loadAssignmentResults(target.id)
     }
     
     // Handle error
@@ -133,19 +132,14 @@ fun TeacherAssignmentResultsScreen(
                 icon = Icons.Filled.CheckCircle,
                 iconColor = Success,
                 modifier = Modifier.weight(1f),
-                variant = CardVariant.Gradient,
-                trend = TrendDirection.Up,
-                trendValue = "+${students.count { it.status == "완료" }}"
+                variant = CardVariant.Gradient
             )
             
             VTStatsCard(
-                title = "평균 등급",
+                title = "평균 점수",
                 value = if (students.isNotEmpty() && students.any { it.status == "완료" }) {
-                    val avgScore = students.filter { it.status == "완료" }.map { it.score }.average().toInt()
-                    scoreToGrade(avgScore)
-                } else {
-                    "-"
-                },
+                    students.filter { it.status == "완료" }.map { it.score }.average().toInt().toString()
+                } else "-",
                 icon = Icons.Filled.Star,
                 iconColor = Warning,
                 modifier = Modifier.weight(1f),
@@ -327,7 +321,7 @@ fun TeacherAssignmentResultCard(
                         color = Gray600
                     )
                     Text(
-                        text = "정보 없음",
+                        text = formatDuration(student.startedAt, student.submittedAt),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = Gray800
@@ -395,10 +389,10 @@ private fun formatSubmittedTime(isoTime: String): String {
 // Helper function to convert score to grade
 private fun scoreToGrade(score: Int): String {
     return when {
-        score >= 90 -> "A"
-        score >= 80 -> "B"
-        score >= 70 -> "C"
-        score >= 60 -> "D"
+        score >= 80 -> "A"
+        score >= 60 -> "B"
+        score >= 40 -> "C"
+        score >= 20 -> "D"
         else -> "F"
     }
 }
@@ -412,6 +406,52 @@ private fun getGradeColor(grade: String): Color {
         "D" -> Color(0xFFFF9800)
         "F" -> Error
         else -> Gray600
+    }
+}
+
+// Helper function to format duration between startedAt and submittedAt
+private fun formatDuration(startIso: String?, endIso: String?): String {
+    return try {
+        println("formatDuration start!")
+        if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
+            println("startIso or endIso is null, $startIso || $endIso")
+            return "정보 없음"
+        }
+        val start = parseIsoToMillis(startIso)
+        val end = parseIsoToMillis(endIso)
+        if (start == null || end == null || end <= start) {
+            println("start or end is null $startIso ,$endIso")
+            return "정보 없음"
+        }
+        val diffMs = end - start
+        val totalSeconds = diffMs / 1000
+        val hours = (totalSeconds / 3600).toInt()
+        val minutes = ((totalSeconds % 3600) / 60).toInt()
+        val seconds = (totalSeconds % 60).toInt()
+        if (hours > 0) {
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format("%02d:%02d", minutes, seconds)
+        }
+    } catch (e: Exception) {
+        println("FormatDuration: Exception!! $startIso $endIso")
+        "정보 없음"
+    }
+}
+
+// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
+private fun parseIsoToMillis(iso: String): Long? {
+    return try {
+        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
+        val cleaned = iso.replace("Z", "").let { raw ->
+            val dotIdx = raw.indexOf('.')
+            if (dotIdx != -1) raw.substring(0, dotIdx) else raw
+        }
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        sdf.parse(cleaned)?.time
+    } catch (e: Exception) {
+        null
     }
 }
 

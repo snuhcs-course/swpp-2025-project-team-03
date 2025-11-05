@@ -180,6 +180,8 @@ data class StudentResult(
     val confidenceScore: Int,
     @SerializedName("status")
     val status: String,
+    @SerializedName("startedAt")
+    val startedAt: String? = null,
     @SerializedName("submittedAt")
     val submittedAt: String,
     @SerializedName("answers")
@@ -235,7 +237,9 @@ data class PersonalAssignmentStatistics(
     @SerializedName("solved_problem")
     val solvedProblem: Int,
     @SerializedName("progress")
-    val progress: Float
+    val progress: Float,
+    @SerializedName("average_score")
+    val averageScore: Float
 )
 
 data class TailQuestion(
