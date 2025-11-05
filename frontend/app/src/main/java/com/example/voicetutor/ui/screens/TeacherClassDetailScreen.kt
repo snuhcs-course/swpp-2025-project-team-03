@@ -215,21 +215,17 @@ fun TeacherClassDetailScreen(
             // Quick actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 VTButton(
                     text = "클래스 메시지",
                     onClick = onNavigateToClassMessage,
                     variant = ButtonVariant.Gradient,
                     size = ButtonSize.Small,
-                    modifier = Modifier.weight(1.2f),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Message,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 44.dp),
                 )
                 
                 VTButton(
@@ -237,14 +233,9 @@ fun TeacherClassDetailScreen(
                     onClick = onNavigateToCreateAssignment,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
                 )
 
                 VTButton(
@@ -257,7 +248,9 @@ fun TeacherClassDetailScreen(
                     },
                     variant = ButtonVariant.Primary,
                     size = ButtonSize.Small,
-                    modifier = Modifier.weight(1.3f),
+                    modifier = Modifier
+                        .weight(1.3f)
+                        .height(44.dp),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.PersonAdd,
@@ -342,7 +335,12 @@ fun TeacherClassDetailScreen(
     // 학생 등록 바텀시트
     if (showEnrollSheet) {
         ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
                 Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
 
