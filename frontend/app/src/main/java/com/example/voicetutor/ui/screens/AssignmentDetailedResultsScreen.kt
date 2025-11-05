@@ -260,6 +260,7 @@ fun QuestionGroupCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Left: Question number + Result badge
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -271,30 +272,6 @@ fun QuestionGroupCard(
                             color = Gray800
                         )
 
-                        // Tail question count badge
-                        if (group.tailQuestions.isNotEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        color = PrimaryIndigo.copy(alpha = 0.1f),
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-                                    )
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "+${group.tailQuestions.size}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = PrimaryIndigo,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
                         // Result badge
                         Box(
                             modifier = Modifier
@@ -311,13 +288,27 @@ fun QuestionGroupCard(
                                 fontWeight = FontWeight.Medium
                             )
                         }
+                    }
 
-                        // Toggle icon
-                        if (group.tailQuestions.isNotEmpty()) {
+                    // Right: Toggle with tail count (if exists)
+                    if (group.tailQuestions.isNotEmpty()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Tail question count
+                            Text(
+                                text = "+${group.tailQuestions.size}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = PrimaryIndigo,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            // Toggle icon
                             Icon(
                                 imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                                 contentDescription = if (isExpanded) "접기" else "펼치기",
-                                tint = Gray600
+                                tint = PrimaryIndigo
                             )
                         }
                     }
