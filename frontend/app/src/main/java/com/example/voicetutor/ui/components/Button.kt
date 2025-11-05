@@ -50,7 +50,7 @@ fun VTButton(
 ) {
     val shape = RoundedCornerShape(16.dp)
     val contentPadding = when (size) {
-        ButtonSize.Small -> PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ButtonSize.Small -> PaddingValues(horizontal = 12.dp, vertical = 8.dp)
         ButtonSize.Medium -> PaddingValues(horizontal = 20.dp, vertical = 10.dp)
         ButtonSize.Large -> PaddingValues(horizontal = 24.dp, vertical = 12.dp)
     }
