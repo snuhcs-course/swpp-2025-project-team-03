@@ -21,19 +21,7 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
-// 날짜 포맷 유틸 함수
-private fun formatDate(dateString: String): String {
-    return try {
-        val zonedDateTime = ZonedDateTime.parse(dateString)
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        zonedDateTime.format(formatter)
-    } catch (e: Exception) {
-        dateString
-    }
-}
+import com.example.voicetutor.utils.formatDateOnly
 
 @Composable
 fun ReportScreen(
@@ -164,7 +152,7 @@ fun AssignmentReportCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "완료일: ${formatDate(assignment.dueAt)}",
+                    text = "완료일: ${formatDateOnly(assignment.dueAt)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600
                 )

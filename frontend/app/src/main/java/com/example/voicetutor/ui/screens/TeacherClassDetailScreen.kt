@@ -526,7 +526,7 @@ fun ClassAssignmentCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "마감일: ${assignment.dueDate}",
+                    text = "마감일: ${com.example.voicetutor.utils.formatDueDate(assignment.dueDate)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600
                 )
