@@ -495,7 +495,7 @@ class AnswerSubmitView(APIView):
                         student_answer=transcript,
                         eval_grade=confidence_score,
                         recalled_time=question.recalled_num,
-                        high_thr=3.5,
+                        high_thr=3.45,
                     )
 
                     if not tail_payload:
