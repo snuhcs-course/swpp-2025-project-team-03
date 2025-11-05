@@ -236,7 +236,7 @@ class AssignmentViewModelFlowTest {
             .thenReturn(Result.success(
                 PersonalAssignmentStatistics(
                     totalQuestions = 3, answeredQuestions = 2, correctAnswers = 1,
-                    accuracy = 0.67f, totalProblem = 3, solvedProblem = 2, progress = 0.67f
+                    accuracy = 0.67f, totalProblem = 3, solvedProblem = 2, progress = 0.67f, averageScore = 0.89f
                 )
             ))
 
@@ -366,18 +366,45 @@ class AssignmentViewModelFlowTest {
     @Test
     fun loadRecentAssignment_success_setsRecentAssignment() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val assignments = listOf(
-            AssignmentData(6, "Title", "d", 1, null, "", "", course(), null, null)
+        val personalAssignmentId = 16
+        val studentId = 9
+
+        val personalAssignments = listOf(
+            PersonalAssignmentData(
+                id = personalAssignmentId,
+                student = com.example.voicetutor.data.models.StudentInfo(
+                    id = studentId,
+                    displayName = "Test Student",
+                    email = "test@test.com"
+                ),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    id = 6,
+                    title = "Title",
+                    description = "d",
+                    totalQuestions = 10,
+                    visibleFrom = "",
+                    dueAt = "",
+                    grade = "1"
+                ),
+                status = PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 3,
+                startedAt = "2025-01-01T10:00:00Z",
+                submittedAt = null
+            )
         )
-        Mockito.`when`(assignmentRepository.getAllAssignments())
-            .thenReturn(Result.success(assignments))
+
+        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
+            .thenReturn(Result.success(personalAssignmentId))
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
+            .thenReturn(Result.success(personalAssignments))
+
         vm.recentAssignment.test {
             awaitItem() // initial null
-            vm.loadRecentAssignment(9)
+            vm.loadRecentAssignment(studentId)
             advanceUntilIdle()
             val recent = awaitItem()
             assert(recent != null)
-            assert(recent?.id == "6")
+            assert(recent?.id == "16")
             assert(recent?.title == "Title")
             cancelAndIgnoreRemainingEvents()
         }
@@ -458,7 +485,7 @@ class AssignmentViewModelFlowTest {
             .thenReturn(Result.success(
                 PersonalAssignmentStatistics(
                     totalQuestions = 5, answeredQuestions = 3, correctAnswers = 2,
-                    accuracy = 0.67f, totalProblem = 5, solvedProblem = 3, progress = 0.6f
+                    accuracy = 0.67f, totalProblem = 5, solvedProblem = 3, progress = 0.6f, averageScore = 0.8f
                 )
             ))
 
@@ -772,7 +799,7 @@ class AssignmentViewModelFlowTest {
             .thenReturn(Result.success(
                 PersonalAssignmentStatistics(
                     totalQuestions = 5, answeredQuestions = 1, correctAnswers = 1,
-                    accuracy = 1.0f, totalProblem = 5, solvedProblem = 1, progress = 0.2f
+                    accuracy = 1.0f, totalProblem = 5, solvedProblem = 1, progress = 0.2f, averageScore = 0.8f
                 )
             ))
 
@@ -941,7 +968,8 @@ class AssignmentViewModelFlowTest {
             accuracy = 0.67f,
             totalProblem = 5,
             solvedProblem = 3,
-            progress = 0.6f
+            progress = 0.6f,
+            averageScore = 0.8f
         )
         // 실제 구현은 먼저 getPersonalAssignments를 호출한 후 getPersonalAssignmentStatistics를 호출
         Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
@@ -1008,12 +1036,36 @@ class AssignmentViewModelFlowTest {
     fun loadRecentAssignment_success_updatesRecentAssignment() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 7
-        val assignments = listOf(
-            AssignmentData(1, "Test Assignment", "desc", 0, null, "", "", course(), null, null)
+        val personalAssignmentId = 20
+
+        val personalAssignments = listOf(
+            PersonalAssignmentData(
+                id = personalAssignmentId,
+                student = com.example.voicetutor.data.models.StudentInfo(
+                    id = studentId,
+                    displayName = "Test Student",
+                    email = "test@test.com"
+                ),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    id = 1,
+                    title = "Test Assignment",
+                    description = "desc",
+                    totalQuestions = 10,
+                    visibleFrom = "",
+                    dueAt = "",
+                    grade = "1"
+                ),
+                status = PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 2,
+                startedAt = "2025-01-01T10:00:00Z",
+                submittedAt = null
+            )
         )
-        // 실제 구현은 getAllAssignments를 호출함
-        Mockito.`when`(assignmentRepository.getAllAssignments())
-            .thenReturn(Result.success(assignments))
+
+        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
+            .thenReturn(Result.success(personalAssignmentId))
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
+            .thenReturn(Result.success(personalAssignments))
 
         vm.recentAssignment.test {
             assert(awaitItem() == null)
@@ -1030,17 +1082,20 @@ class AssignmentViewModelFlowTest {
     fun loadRecentAssignment_failure_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 7
-        Mockito.`when`(assignmentRepository.getAllAssignments())
+        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
             .thenReturn(Result.failure(Exception("No assignments")))
 
-        vm.error.test {
-            awaitItem() // initial null
+        // 최근 과제가 없는 경우는 에러가 아니므로 recentAssignment만 null이 됨
+        vm.recentAssignment.test {
+            assert(awaitItem() == null)
             vm.loadRecentAssignment(studentId)
             advanceUntilIdle()
-            val error = awaitItem()
-            assert(error?.contains("No assignments") == true)
+            // recentAssignment는 여전히 null
             cancelAndIgnoreRemainingEvents()
         }
+
+        // error는 설정되지 않아야 함
+        assert(vm.error.value == null)
     }
 
     @Test
@@ -1430,11 +1485,36 @@ class AssignmentViewModelFlowTest {
     fun loadRecentAssignment_success_updatesRecentAssignment_withAssignmentId200() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 8
-        val assignments = listOf(
-            AssignmentData(200, "Test Assignment", "Description", 1, null, "", "", course(), null, null)
+        val personalAssignmentId = 200
+
+        val personalAssignments = listOf(
+            PersonalAssignmentData(
+                id = personalAssignmentId,
+                student = com.example.voicetutor.data.models.StudentInfo(
+                    id = studentId,
+                    displayName = "Test Student",
+                    email = "test@test.com"
+                ),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    id = 200,
+                    title = "Test Assignment",
+                    description = "Description",
+                    totalQuestions = 10,
+                    visibleFrom = "",
+                    dueAt = "",
+                    grade = "1"
+                ),
+                status = PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01T10:00:00Z",
+                submittedAt = null
+            )
         )
-        Mockito.`when`(assignmentRepository.getAllAssignments())
-            .thenReturn(Result.success(assignments))
+
+        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
+            .thenReturn(Result.success(personalAssignmentId))
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
+            .thenReturn(Result.success(personalAssignments))
 
         vm.recentAssignment.test {
             assert(awaitItem() == null)
@@ -1451,8 +1531,9 @@ class AssignmentViewModelFlowTest {
     fun loadRecentAssignment_noAssignments_doesNotSetError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 8
-        Mockito.`when`(assignmentRepository.getAllAssignments())
-            .thenReturn(Result.success(emptyList()))
+
+        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
+            .thenReturn(Result.failure(Exception("No recent assignment")))
 
         // 초기 상태 확인
         assert(vm.error.value == null)
@@ -1469,17 +1550,18 @@ class AssignmentViewModelFlowTest {
     fun loadRecentAssignment_networkError_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 8
-        Mockito.`when`(assignmentRepository.getAllAssignments())
+
+        Mockito.`when`(assignmentRepository.getRecentPersonalAssignment(studentId))
             .thenReturn(Result.failure(Exception("Network error")))
 
-        vm.error.test {
-            assert(awaitItem() == null)
-            vm.loadRecentAssignment(studentId)
-            advanceUntilIdle()
-            val error = awaitItem()
-            assert(error?.contains("Network error") == true)
-            cancelAndIgnoreRemainingEvents()
-        }
+        // 네트워크 에러여도 최근 과제는 중요하지 않으므로 error를 설정하지 않음
+        assert(vm.error.value == null)
+        vm.loadRecentAssignment(studentId)
+        advanceUntilIdle()
+
+        // error는 여전히 null
+        assert(vm.error.value == null)
+        assert(vm.recentAssignment.value == null)
     }
 
     @Test
@@ -1654,7 +1736,7 @@ class AssignmentViewModelFlowTest {
         // totalProblem == solvedProblem이면 모든 문제 완료, totalProblem != solvedProblem이면 아직 미완료
         val statistics = PersonalAssignmentStatistics(
             totalQuestions = 3, answeredQuestions = 2, correctAnswers = 1,
-            accuracy = 0.5f, totalProblem = 3, solvedProblem = 2, progress = 0.67f
+            accuracy = 0.5f, totalProblem = 3, solvedProblem = 2, progress = 0.67f, averageScore = 0.8f
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignmentQuestions(personalId))
             .thenReturn(Result.success(baseQuestions))

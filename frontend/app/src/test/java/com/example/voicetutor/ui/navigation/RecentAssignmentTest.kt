@@ -9,61 +9,38 @@ class RecentAssignmentTest {
     fun recentAssignment_defaultValues_areCorrect() {
         val assignment = RecentAssignment(
             id = "1",
-            title = "테스트 과제",
-            subject = "수학",
-            progress = 0.5f,
-            lastActivity = "2025-01-01",
-            isUrgent = false
+            title = "테스트 과제"
         )
         
         assertEquals("1", assignment.id)
         assertEquals("테스트 과제", assignment.title)
-        assertEquals("수학", assignment.subject)
-        assertEquals(0.5f, assignment.progress)
-        assertEquals("2025-01-01", assignment.lastActivity)
-        assertFalse(assignment.isUrgent)
+        assertNull(assignment.nextQuestionId)
     }
 
     @Test
-    fun recentAssignment_urgentFlag_isTrue() {
+    fun recentAssignment_withNextQuestionId() {
         val assignment = RecentAssignment(
             id = "1",
-            title = "긴급 과제",
-            subject = "수학",
-            progress = 0.3f,
-            lastActivity = "2025-01-01",
-            isUrgent = true
+            title = "진행 중 과제",
+            nextQuestionId = 42
         )
         
-        assertTrue(assignment.isUrgent)
+        assertEquals("1", assignment.id)
+        assertEquals("진행 중 과제", assignment.title)
+        assertEquals(42, assignment.nextQuestionId)
     }
 
     @Test
-    fun recentAssignment_progress_handlesFullProgress() {
+    fun recentAssignment_withoutNextQuestionId() {
         val assignment = RecentAssignment(
-            id = "1",
-            title = "완료 과제",
-            subject = "수학",
-            progress = 1.0f,
-            lastActivity = "2025-01-01",
-            isUrgent = false
+            id = "2",
+            title = "완료된 과제",
+            nextQuestionId = null
         )
         
-        assertEquals(1.0f, assignment.progress)
-    }
-
-    @Test
-    fun recentAssignment_progress_handlesZeroProgress() {
-        val assignment = RecentAssignment(
-            id = "1",
-            title = "시작 안 함",
-            subject = "수학",
-            progress = 0.0f,
-            lastActivity = "2025-01-01",
-            isUrgent = false
-        )
-        
-        assertEquals(0.0f, assignment.progress)
+        assertEquals("2", assignment.id)
+        assertEquals("완료된 과제", assignment.title)
+        assertNull(assignment.nextQuestionId)
     }
 
     @Test
@@ -71,18 +48,12 @@ class RecentAssignmentTest {
         val assignment = RecentAssignment(
             id = "100",
             title = "복잡한 과제",
-            subject = "과학",
-            progress = 0.75f,
-            lastActivity = "2025-12-31",
-            isUrgent = true
+            nextQuestionId = 999
         )
         
         assertEquals("100", assignment.id)
         assertEquals("복잡한 과제", assignment.title)
-        assertEquals("과학", assignment.subject)
-        assertEquals(0.75f, assignment.progress)
-        assertEquals("2025-12-31", assignment.lastActivity)
-        assertTrue(assignment.isUrgent)
+        assertEquals(999, assignment.nextQuestionId)
     }
 }
 

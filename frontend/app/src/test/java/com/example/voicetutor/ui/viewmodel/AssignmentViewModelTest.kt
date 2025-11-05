@@ -206,7 +206,8 @@ class AssignmentViewModelTest {
             accuracy = 0.71f,
             totalProblem = 8,
             solvedProblem = 6,
-            progress = 0.75f
+            progress = 0.75f,
+            averageScore = 0.8f
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(26))
             .thenReturn(Result.success(statistics))
