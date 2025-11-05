@@ -184,9 +184,26 @@ fun AllAssignmentsScreen(
                     }
                 }
             } else {
+                // 제출 현황을 저장하는 StateMap
+                val assignmentStatsMap = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
+                
+                // 각 과제의 제출 현황을 로드
                 assignments.forEach { assignment ->
+                    LaunchedEffect(assignment.id) {
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            val stats = viewModel.getAssignmentSubmissionStats(assignment.id)
+                            assignmentStatsMap[assignment.id] = stats.submittedStudents to stats.totalStudents
+                        }
+                    }
+                }
+                
+                assignments.forEach { assignment ->
+                    val stats = assignmentStatsMap[assignment.id] ?: (0 to assignment.courseClass.studentCount)
+                    
                     AssignmentCard(
                         assignment = assignment,
+                        submittedCount = stats.first,
+                        totalCount = stats.second,
                         onAssignmentClick = { onNavigateToAssignmentDetail(assignment.id) },
                         onEditClick = { onNavigateToEditAssignment(assignment.id) },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
@@ -201,6 +218,8 @@ fun AllAssignmentsScreen(
 @Composable
 fun AssignmentCard(
     assignment: AssignmentData,
+    submittedCount: Int = 0,
+    totalCount: Int = 0,
     onAssignmentClick: (Int) -> Unit,
     onEditClick: (Int) -> Unit,
     onDeleteClick: (Int) -> Unit,
@@ -278,10 +297,16 @@ fun AssignmentCard(
             Spacer(modifier = Modifier.height(12.dp))
             
             // Progress bar
+            val progress = if (totalCount > 0) {
+                submittedCount.toFloat() / totalCount
+            } else {
+                0f
+            }
+            
             VTProgressBar(
-                progress = 0f, // 제출 정보가 없으므로 0으로 설정
+                progress = progress,
                 showPercentage = false,
-                color = PrimaryIndigo, // 기본 색상으로 설정
+                color = PrimaryIndigo,
                 height = 6
             )
             
