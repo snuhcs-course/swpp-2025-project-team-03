@@ -378,7 +378,7 @@ fun ClassCard(
                 )
                 
                 VTButton(
-                    text = "학생 보기",
+                    text = "학생 상세",
                     onClick = { onViewStudents(classRoom.id) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,

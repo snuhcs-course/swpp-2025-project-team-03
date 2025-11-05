@@ -394,7 +394,7 @@ fun AllStudentsCard(
             ) {
                 // 리포트 버튼 (좌측 하단)
                 Box(
-                    modifier = Modifier.widthIn(max = 240.dp)
+                    modifier = Modifier.widthIn(max = 244.dp)
                 ) {
                     VTButton(
                         text = "리포트 보기",

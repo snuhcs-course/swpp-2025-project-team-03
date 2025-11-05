@@ -56,7 +56,7 @@ class UserModelsTest {
         val message = user.welcomeMessage
 
         // Assert
-        assertEquals("환영합니다, 김선생선생님!", message)
+        assertEquals("환영합니다, 김선생 선생님!", message)
     }
 
     @Test

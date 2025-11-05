@@ -5,7 +5,6 @@ import time
 from typing import List
 
 from django.conf import settings
-from langchain_core.output_parsers.json import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -97,23 +96,23 @@ These are too abstract or lack a clear conceptual target.
 {examples}
 
 ### Output Format (JSON)
-Return your output **only** as valid JSON with the following structure:
+Return your output **only** as a valid JSON array with the following structure:
 
-{{
-  "0": {{
+[
+  {{
     "question": "...",
     "model_answer": "...",
     "explanation": "...",
     "difficulty": "..."
   }},
-  "1": {{
+  {{
     "question": "...",
     "model_answer": "...",
     "explanation": "...",
     "difficulty": "..."
   }},
-...
-}}
+  ...
+]
 
 # Learning Materials:
 {learning_material}
@@ -145,17 +144,49 @@ def generate_base_quizzes(material_text: str, n: int = 3) -> List[Quiz]:
 
             # 동기적으로 처리
             response = llm.invoke(prompt).content
-            parser = JsonOutputParser()
 
             try:
                 # JSON 파싱 전에 LaTeX 백슬래시 이스케이프 문제 해결
                 # \( 와 \) 를 ( 와 ) 로 변환하여 유효한 JSON으로 만듦
                 cleaned_response = re.sub(r"\\([()])", r"\1", response)
 
-                parsed = parser.parse(cleaned_response)
-                result = [Quiz(**item) for item in parsed.values()]
+                # JSON 마크다운 코드 블록 제거 (```json ... ```)
+                cleaned_response = re.sub(r"```json\s*", "", cleaned_response, flags=re.IGNORECASE)
+                cleaned_response = re.sub(r"```\s*$", "", cleaned_response, flags=re.MULTILINE)
+                cleaned_response = cleaned_response.strip()
+
+                # 직접 JSON 파싱
+                parsed = json.loads(cleaned_response)
+
+                # 배열 형식이 우선, 하지만 숫자 키 객체도 지원 (하위 호환성)
+                if isinstance(parsed, list):
+                    # 배열인 경우 (표준 형식)
+                    result = [Quiz(**item) for item in parsed]
+                elif isinstance(parsed, dict):
+                    # 숫자 키 객체인 경우 (하위 호환성)
+                    items = []
+                    for key in sorted(parsed.keys(), key=lambda k: int(k) if k.isdigit() else 999):
+                        items.append(parsed[key])
+                    result = [Quiz(**item) for item in items]
+                else:
+                    raise ValueError(f"Unexpected JSON structure: {type(parsed)}")
+
                 return result
+            except json.JSONDecodeError as e:
+                # JSON 파싱 오류 시 실제 응답을 로깅
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.error(f"JSON 파싱 실패. 원본 응답:\n{response}")
+                logger.error(f"정리된 응답:\n{cleaned_response}")
+                raise ValueError(f"Invalid json output: {cleaned_response[:500]}") from e
             except Exception as e:
+                # 다른 오류도 로깅
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.error(f"문제 생성 중 오류: {e}")
+                logger.error(f"원본 응답:\n{response}")
                 raise
 
         except RuntimeError as e:

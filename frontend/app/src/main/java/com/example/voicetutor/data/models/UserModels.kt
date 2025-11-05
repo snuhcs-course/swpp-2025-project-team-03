@@ -50,7 +50,7 @@ data class User(
     // 환영 메시지 생성
     val welcomeMessage: String
         get() = when (role) {
-            UserRole.TEACHER -> "환영합니다, ${name}선생님!"
+            UserRole.TEACHER -> "환영합니다, ${name} 선생님!"
             UserRole.STUDENT -> "안녕하세요, ${name}님!"
         }
     

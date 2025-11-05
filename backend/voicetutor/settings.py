@@ -77,6 +77,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "core.middleware.ExceptionLoggingMiddleware",  # Exception logging with full traceback
 ]
 
 ROOT_URLCONF = "voicetutor.urls"
@@ -211,12 +212,21 @@ LOGGING = {
             "format": "[{levelname}] {asctime} {name} {message}",
             "style": "{",
         },
+        "detailed": {
+            "format": "[{levelname}] {asctime} {name} {pathname}:{lineno} {funcName}() {message}",
+            "style": "{",
+        },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stderr",  # stderr로 출력 (nohup.out에 기록됨)
             "formatter": "verbose",
+        },
+        "detailed_console": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",  # stderr로 출력 (nohup.out에 기록됨)
+            "formatter": "detailed",
         },
     },
     "root": {
@@ -227,6 +237,16 @@ LOGGING = {
         "django": {
             "handlers": ["console"],
             "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["detailed_console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["detailed_console"],
+            "level": "ERROR",
             "propagate": False,
         },
         "core": {
