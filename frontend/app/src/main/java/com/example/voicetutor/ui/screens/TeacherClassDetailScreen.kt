@@ -177,7 +177,7 @@ fun TeacherClassDetailScreen(
             // Stats overview
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 VTStatsCard(
                     title = "총 학생",
@@ -185,7 +185,8 @@ fun TeacherClassDetailScreen(
                     icon = Icons.Filled.People,
                     iconColor = PrimaryIndigo,
                     modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
+                    variant = CardVariant.Gradient,
+                    layout = StatsCardLayout.Vertical
                 )
                 
                 VTStatsCard(
@@ -194,7 +195,8 @@ fun TeacherClassDetailScreen(
                     icon = Icons.Filled.Assignment,
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
+                    variant = CardVariant.Gradient,
+                    layout = StatsCardLayout.Vertical
                 )
                 
                 VTStatsCard(
@@ -203,7 +205,8 @@ fun TeacherClassDetailScreen(
                     icon = Icons.Filled.Star,
                     iconColor = Success,
                     modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
+                    variant = CardVariant.Gradient,
+                    layout = StatsCardLayout.Vertical
                 )
             }
         }
@@ -212,19 +215,19 @@ fun TeacherClassDetailScreen(
             // Quick actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 VTButton(
                     text = "클래스 메시지",
                     onClick = onNavigateToClassMessage,
                     variant = ButtonVariant.Gradient,
                     size = ButtonSize.Small,
-                    modifier = Modifier.weight(1.15f),
+                    modifier = Modifier.weight(1.2f),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Message,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 )
@@ -239,7 +242,7 @@ fun TeacherClassDetailScreen(
                         Icon(
                             imageVector = Icons.Filled.Add,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 )
@@ -254,12 +257,12 @@ fun TeacherClassDetailScreen(
                     },
                     variant = ButtonVariant.Primary,
                     size = ButtonSize.Small,
-                    modifier = Modifier.weight(1.25f),
+                    modifier = Modifier.weight(1.3f),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.PersonAdd,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 )
