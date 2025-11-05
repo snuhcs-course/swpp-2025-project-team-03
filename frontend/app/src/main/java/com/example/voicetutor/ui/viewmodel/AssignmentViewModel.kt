@@ -1071,29 +1071,41 @@ class AssignmentViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             
-            assignmentRepository.getAllAssignments()
-                .onSuccess { assignments ->
-                    // 가장 최근 과제를 찾아서 RecentAssignment로 변환
-                    val recent = assignments.firstOrNull()?.let { assignment ->
-                        RecentAssignment(
-                            id = assignment.id.toString(),
-                            title = assignment.title,
-                            subject = assignment.courseClass.subject.name,
-                            progress = 0.3f, // 임시로 진행률 설정
-                            lastActivity = "방금 전", // TODO: 실제 마지막 활동 시간으로 변경
-                            isUrgent = assignment.dueAt.contains("오늘") || assignment.dueAt.contains("내일")
-                        )
+            // 백엔드 API를 사용하여 최근 개인 과제 조회
+            assignmentRepository.getRecentPersonalAssignment(studentId)
+                .onSuccess { personalAssignmentId ->
+                    // 개인 과제 정보 조회 (제목을 얻기 위해)
+                    val personalAssignmentsResult = assignmentRepository.getPersonalAssignments(studentId)
+
+                    personalAssignmentsResult.onSuccess { personalAssignments ->
+                        // personalAssignmentId와 일치하는 과제 찾기
+                        val personalAssignment = personalAssignments.find { it.id == personalAssignmentId }
+
+                        if (personalAssignment != null) {
+                            val recent = RecentAssignment(
+                                id = personalAssignment.id.toString(),
+                                title = personalAssignment.assignment.title,
+                                nextQuestionId = null // 필요시 백엔드 API에서 받아올 수 있음
+                            )
+                            _recentAssignment.value = recent
+                        } else {
+                            // 과제를 찾지 못한 경우
+                            _recentAssignment.value = null
+                        }
+                    }.onFailure {
+                        // 개인 과제 목록 조회 실패 시 최근 과제 없음으로 처리
+                        _recentAssignment.value = null
                     }
-                    _recentAssignment.value = recent
                 }
-                .onFailure { exception ->
-                    _error.value = exception.message
+                .onFailure {
+                    // 최근 과제가 없는 경우는 에러가 아니므로 null로 설정만 함
+                    _recentAssignment.value = null
                 }
             
             _isLoading.value = false
         }
     }
-    
+
     fun clearError() {
         _error.value = null
     }

@@ -260,7 +260,8 @@ class AssignmentModelsTest {
             accuracy = 0.75f,
             totalProblem = 5,
             solvedProblem = 4,
-            progress = 0.8f
+            progress = 0.8f,
+            averageScore = 85.5f
         )
 
         // Assert
@@ -271,6 +272,7 @@ class AssignmentModelsTest {
         assertEquals(5, statistics.totalProblem)
         assertEquals(4, statistics.solvedProblem)
         assertEquals(0.8f, statistics.progress)
+        assertEquals(85.5f, statistics.averageScore)
     }
 
     @Test
@@ -283,13 +285,15 @@ class AssignmentModelsTest {
             accuracy = 0f,
             totalProblem = 0,
             solvedProblem = 0,
-            progress = 0f
+            progress = 0f,
+            averageScore = 0f
         )
 
         // Assert
         assertEquals(0, statistics.totalQuestions)
         assertEquals(0f, statistics.accuracy)
         assertEquals(0f, statistics.progress)
+        assertEquals(0f, statistics.averageScore)
     }
 
     @Test

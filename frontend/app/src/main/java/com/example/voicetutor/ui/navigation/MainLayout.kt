@@ -28,12 +28,9 @@ import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.ui.theme.*
 
 data class RecentAssignment(
-    val id: String,
-    val title: String,
-    val subject: String,
-    val progress: Float,
-    val lastActivity: String,
-    val isUrgent: Boolean = false
+    val id: String, // personal_assignment_id
+    val title: String, // 과제 제목
+    val nextQuestionId: Int? = null // 다음 질문 ID (선택적)
 )
 
 // Helper function to get page title based on current destination
@@ -66,16 +63,17 @@ fun MainLayout(
     content: @Composable () -> Unit
 ) {
     val currentDestination = navController.currentDestination?.route
-    val currentRoute = when (currentDestination) {
-        VoiceTutorScreens.StudentDashboard.route -> "student_dashboard"
-        VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
-        VoiceTutorScreens.Assignment.route -> "assignment"
-        VoiceTutorScreens.Progress.route -> "progress"
-        VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
-        VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
-        VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
-        VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
-        VoiceTutorScreens.TeacherStudentDetail.route -> "teacher_students" // 학생 상세 페이지에서 학생 탭 선택
+    val currentRoute = when {
+        currentDestination == VoiceTutorScreens.StudentDashboard.route -> "student_dashboard"
+        currentDestination == VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
+        currentDestination == VoiceTutorScreens.Assignment.route -> "assignment"
+        currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route) == true -> "assignment" // 과제 상세 화면에서 이어하기/과제 탭 선택
+        currentDestination == VoiceTutorScreens.Progress.route -> "progress"
+        currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
+        currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
+        currentDestination == VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
+        currentDestination == VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
+        currentDestination == VoiceTutorScreens.TeacherStudentDetail.route -> "teacher_students" // 학생 상세 페이지에서 학생 탭 선택
         else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"
     }
     
@@ -422,7 +420,7 @@ fun BottomNavigation(
                     )
                 },
                 label = { Text(if (recentAssignment != null) "이어하기" else "과제") },
-                selected = false,
+                selected = currentRoute == "assignment",
                 onClick = {
                     if (recentAssignment != null) {
                         navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(recentAssignment.id, recentAssignment.title))
