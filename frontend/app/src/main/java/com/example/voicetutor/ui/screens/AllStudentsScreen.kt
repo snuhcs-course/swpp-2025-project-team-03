@@ -97,18 +97,32 @@ fun AllStudentsScreen(
     // Calculate stats
     val totalStudents = allStudents.size
     var overallAverageScore by remember { mutableStateOf(0f) }
-    var studentsStatisticsMap by remember { mutableStateOf<Map<Int, Pair<Float, Float>>>(emptyMap()) } // studentId -> (averageScore, completionRate)
+    
+    // 학생 통계 데이터 클래스
+    data class StudentStats(
+        val averageScore: Float,
+        val completionRate: Float,
+        val totalAssignments: Int,
+        val completedAssignments: Int
+    )
+    
+    var studentsStatisticsMap by remember { mutableStateOf<Map<Int, StudentStats>>(emptyMap()) }
     var isLoadingStatistics by remember { mutableStateOf(true) }
     
     // Load statistics for selected class
     LaunchedEffect(selectedClassId) {
-        if (selectedClassId != null) {
+        selectedClassId?.let { classId ->
             isLoadingStatistics = true
-            classViewModel.loadClassStudentsStatistics(selectedClassId) { result ->
+            classViewModel.loadClassStudentsStatistics(classId) { result ->
                 result.onSuccess { stats ->
                     overallAverageScore = stats.overallAverageScore
                     studentsStatisticsMap = stats.students.associate { 
-                        it.studentId to Pair(it.averageScore, it.completionRate)
+                        it.studentId to StudentStats(
+                            averageScore = it.averageScore,
+                            completionRate = it.completionRate,
+                            totalAssignments = it.totalAssignments,
+                            completedAssignments = it.completedAssignments
+                        )
                     }
                     isLoadingStatistics = false
                 }.onFailure {
@@ -117,7 +131,7 @@ fun AllStudentsScreen(
                     isLoadingStatistics = false
                 }
             }
-        } else {
+        } ?: run {
             isLoadingStatistics = false
         }
     }
@@ -296,8 +310,10 @@ fun AllStudentsScreen(
                 val stats = studentsStatisticsMap[student.id]
                 AllStudentsCard(
                     student = student,
-                    averageScore = stats?.first ?: 0f,
-                    completionRate = stats?.second ?: 0f,
+                    averageScore = stats?.averageScore ?: 0f,
+                    completionRate = stats?.completionRate ?: 0f,
+                    totalAssignments = stats?.totalAssignments ?: 0,
+                    completedAssignments = stats?.completedAssignments ?: 0,
                     isLoadingStats = isLoadingStatistics,
                     onStudentClick = { 
                         // 학생 상세 페이지로 이동
@@ -320,6 +336,8 @@ fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
     averageScore: Float,
     completionRate: Float,
+    totalAssignments: Int,
+    completedAssignments: Int,
     isLoadingStats: Boolean,
     onStudentClick: () -> Unit,
     onMessageClick: () -> Unit,
@@ -375,30 +393,59 @@ fun AllStudentsCard(
                 
             }
             
-            // Progress info - 평균 점수만 표시 (첫번째 과제 진행률 제거)
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.End
+            // Progress info - 과제 완료와 평균 점수 표시
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "평균 점수",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
-                )
-                if (isLoadingStats) {
+                Column {
                     Text(
-                        text = "로딩 중...",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray500
+                        text = "과제 완료",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
                     )
-                } else {
+                    if (isLoadingStats) {
+                        Text(
+                            text = "로딩 중...",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Gray500
+                        )
+                    } else {
+                        Text(
+                            text = "${completedAssignments}/${totalAssignments}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryIndigo
+                        )
+                    }
+                }
+                
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
                     Text(
-                        text = "${averageScore.toInt()}점",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
+                        text = "평균 점수",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
                     )
+                    if (isLoadingStats) {
+                        Text(
+                            text = "로딩 중...",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Gray500
+                        )
+                    } else {
+                        Text(
+                            text = "${averageScore.toInt()}점",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryIndigo
+                        )
+                    }
                 }
             }
             

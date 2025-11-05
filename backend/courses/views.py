@@ -663,6 +663,8 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
                         "student_id": student.id,
                         "average_score": round(average_score, 1),
                         "completion_rate": round(completion_rate, 1),
+                        "total_assignments": total_assignments,
+                        "completed_assignments": submitted_count,
                     }
                 )
 
@@ -679,7 +681,7 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
                 "students": students_statistics,
             }
 
-            serializer = ClassStudentsStatisticsSerializer(data)
+            serializer = ClassStudentsStatisticsSerializer(data=data)
             serializer.is_valid(raise_exception=True)
 
             return create_api_response(

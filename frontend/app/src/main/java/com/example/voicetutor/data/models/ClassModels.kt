@@ -74,7 +74,11 @@ data class StudentStatisticsItem(
     @SerializedName("average_score")
     val averageScore: Float,
     @SerializedName("completion_rate")
-    val completionRate: Float
+    val completionRate: Float,
+    @SerializedName("total_assignments")
+    val totalAssignments: Int,
+    @SerializedName("completed_assignments")
+    val completedAssignments: Int
 )
 
 data class ClassStudentsStatistics(
