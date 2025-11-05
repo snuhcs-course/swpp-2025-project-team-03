@@ -334,10 +334,10 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
-    averageScore: Float,
+    averageScore: Float,  // 사용하지 않지만 호환성을 위해 유지
     completionRate: Float,
-    totalAssignments: Int,
-    completedAssignments: Int,
+    totalAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
+    completedAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
     isLoadingStats: Boolean,
     onStudentClick: () -> Unit,
     onMessageClick: () -> Unit,
@@ -393,67 +393,14 @@ fun AllStudentsCard(
                 
             }
             
-            // Progress info - 과제 완료와 평균 점수 표시
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "과제 완료",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    if (isLoadingStats) {
-                        Text(
-                            text = "로딩 중...",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Gray500
-                        )
-                    } else {
-                        Text(
-                            text = "${completedAssignments}/${totalAssignments}",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryIndigo
-                        )
-                    }
-                }
-                
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = "평균 점수",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    if (isLoadingStats) {
-                        Text(
-                            text = "로딩 중...",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Gray500
-                        )
-                    } else {
-                        Text(
-                            text = "${averageScore.toInt()}점",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryIndigo
-                        )
-                    }
-                }
+            // Progress bar - 과제 진행률 표시
+            Column {
+                Spacer(modifier = Modifier.height(4.dp))
+                VTProgressBar(
+                    progress = (completionRate / 100f).coerceIn(0f, 1f),
+                    showPercentage = true
+                )
             }
-            
-            // Progress bar - 진행률 표시
-            VTProgressBar(
-                progress = (completionRate / 100f).coerceIn(0f, 1f),
-                showPercentage = true
-            )
             
             // Action buttons
             Row(

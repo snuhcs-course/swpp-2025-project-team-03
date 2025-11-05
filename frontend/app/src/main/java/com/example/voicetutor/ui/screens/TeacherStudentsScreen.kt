@@ -62,6 +62,17 @@ fun TeacherStudentsScreen(
     val description = currentClass?.description ?: "과목 설명"
     val teacherName = currentClass?.teacherName ?: currentUser?.name ?: "선생님"
     
+    // 학생 통계 데이터
+    data class StudentStats(
+        val averageScore: Float,
+        val completionRate: Float,
+        val totalAssignments: Int,
+        val completedAssignments: Int
+    )
+    
+    var studentsStatisticsMap by remember { mutableStateOf<Map<Int, StudentStats>>(emptyMap()) }
+    var isLoadingStatistics by remember { mutableStateOf(true) }
+    
     // Load students and class data on first composition
     LaunchedEffect(classId, currentUser?.id) {
         val actualTeacherId = teacherId ?: currentUser?.id?.toString()
@@ -70,6 +81,25 @@ fun TeacherStudentsScreen(
             viewModel.loadAllStudents(teacherId = actualTeacherId, classId = classId.toString())
             classViewModel.loadClassById(classId)
             classViewModel.loadClassStudents(classId)
+            
+            // 학생 통계 로드
+            isLoadingStatistics = true
+            classViewModel.loadClassStudentsStatistics(classId) { result ->
+                result.onSuccess { stats ->
+                    studentsStatisticsMap = stats.students.associate { 
+                        it.studentId to StudentStats(
+                            averageScore = it.averageScore,
+                            completionRate = it.completionRate,
+                            totalAssignments = it.totalAssignments,
+                            completedAssignments = it.completedAssignments
+                        )
+                    }
+                    isLoadingStatistics = false
+                }.onFailure {
+                    studentsStatisticsMap = emptyMap()
+                    isLoadingStatistics = false
+                }
+            }
         }
     }
     
@@ -326,8 +356,14 @@ fun TeacherStudentsScreen(
                 }
             } else {
                 students.forEach { student ->
+                    val stats = studentsStatisticsMap[student.id]
                     StudentCard(
                         student = student,
+                        averageScore = stats?.averageScore ?: 0f,
+                        completionRate = stats?.completionRate ?: 0f,
+                        totalAssignments = stats?.totalAssignments ?: 0,
+                        completedAssignments = stats?.completedAssignments ?: 0,
+                        isLoadingStats = isLoadingStatistics,
                         onViewStudent = { onNavigateToStudentDetail(student.id) },
                         onSendMessage = { onNavigateToMessage(student.id) }
                     )
@@ -463,6 +499,11 @@ fun TeacherStudentsScreen(
 @Composable
 fun StudentCard(
     student: Student,
+    averageScore: Float,
+    completionRate: Float,
+    totalAssignments: Int,
+    completedAssignments: Int,
+    isLoadingStats: Boolean,
     onViewStudent: (Int) -> Unit,
     onSendMessage: (Int) -> Unit
 ) {
@@ -542,18 +583,18 @@ fun StudentCard(
             ) {
                 StudentStatItem(
                     label = "과제 완료",
-                    value = "${0}/${0}",
-                    progress = 0.toFloat() / 0,
+                    value = if (isLoadingStats) "로딩 중..." else "${completedAssignments}/${totalAssignments}",
+                    progress = if (totalAssignments > 0) (completedAssignments.toFloat() / totalAssignments) else 0f,
                     color = PrimaryIndigo
                 )
                 
                 StudentStatItem(
                     label = "평균 점수",
-                    value = "${0}점",
-                    progress = 0 / 100f,
+                    value = if (isLoadingStats) "로딩 중..." else "${averageScore.toInt()}점",
+                    progress = (averageScore / 100f).coerceIn(0f, 1f),
                     color = when {
-                        0 >= 90 -> Success
-                        0 >= 80 -> Warning
+                        averageScore >= 90 -> Success
+                        averageScore >= 80 -> Warning
                         else -> Error
                     }
                 )
