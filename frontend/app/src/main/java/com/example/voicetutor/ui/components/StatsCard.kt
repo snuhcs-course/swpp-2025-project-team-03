@@ -47,15 +47,6 @@ fun VTStatsCard(
     
     val cardModifier = modifier
         .clip(shape)
-        .background(
-            when (variant) {
-                CardVariant.Default -> Color.White
-                CardVariant.Elevated -> Color.White
-                CardVariant.Outlined -> Color.White
-                CardVariant.Gradient -> Color.White
-                CardVariant.Selected -> Color.White
-            }
-        )
         .then(
             if (variant == CardVariant.Gradient) {
                 Modifier.background(
@@ -67,7 +58,15 @@ fun VTStatsCard(
                     )
                 )
             } else {
-                Modifier
+                Modifier.background(
+                    when (variant) {
+                        CardVariant.Default -> Color.White
+                        CardVariant.Elevated -> Color.White
+                        CardVariant.Outlined -> Color.White
+                        CardVariant.Selected -> Color.White
+                        CardVariant.Gradient -> Color.White // This case won't be reached
+                    }
+                )
             }
         )
         .shadow(

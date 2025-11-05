@@ -180,7 +180,9 @@ fun VTButton(
                 text = text,
                 color = if (enabled) textColor else textColor.copy(alpha = 0.5f),
                 fontSize = fontSize,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
             
             trailingIcon?.let {
