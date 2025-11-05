@@ -415,10 +415,10 @@ private fun formatSubmittedTime(isoTime: String): String {
 // Helper function to convert score to grade
 private fun scoreToGrade(score: Int): String {
     return when {
-        score >= 80 -> "A"
-        score >= 60 -> "B"
-        score >= 40 -> "C"
-        score >= 20 -> "D"
+        score >= 90 -> "A"
+        score >= 80 -> "B"
+        score >= 70 -> "C"
+        score >= 60 -> "D"
         else -> "F"
     }
 }
@@ -574,106 +574,106 @@ fun StudentResultDetailModal(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            VTCard(
-                variant = CardVariant.Elevated,
-                modifier = Modifier.weight(1f)
+            // 등급 섹션
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text(
+                    text = "등급",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                val grade = scoreToGrade(student.score)
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            color = getGradeColor(grade).copy(alpha = 0.15f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    val grade = scoreToGrade(student.score)
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(
-                                color = getGradeColor(grade).copy(alpha = 0.15f),
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = grade,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = getGradeColor(grade),
-                            fontSize = 32.sp
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "등급",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        text = grade,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = getGradeColor(grade),
+                        fontSize = 32.sp
                     )
                 }
             }
             
-            VTCard(
-                variant = CardVariant.Elevated,
-                modifier = Modifier.weight(1f)
+            // 점수 섹션
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "${student.score}점",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "점수",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                }
+                Text(
+                    text = "점수",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${student.score}점",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryIndigo
+                )
             }
         }
         
+        Divider()
+        
         // Time info
-        VTCard(variant = CardVariant.Elevated) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "소요 시간",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-                    Text(
-                        text = formatDuration(student.startedAt, student.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray800
-                    )
-                }
-                
-                Divider()
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "제출 시간",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-                    Text(
-                        text = formatSubmittedTime(student.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray800
-                    )
-                }
+                Text(
+                    text = "소요 시간",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = formatDuration(student.startedAt, student.submittedAt),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "제출 시간",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = formatSubmittedTime(student.submittedAt),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
             }
         }
         

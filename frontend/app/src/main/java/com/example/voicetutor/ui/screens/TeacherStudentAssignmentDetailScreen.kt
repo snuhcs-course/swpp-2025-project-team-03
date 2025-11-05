@@ -28,6 +28,7 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 @Composable
 fun TeacherStudentAssignmentDetailScreen(
     studentId: String,
+    assignmentId: Int = 0,
     assignmentTitle: String = "과제"
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
@@ -39,26 +40,65 @@ fun TeacherStudentAssignmentDetailScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
-    // Find assignment by title
-    val targetAssignment = remember(assignments, assignmentTitle) {
-        assignments.find { it.title == assignmentTitle }
+    // Find assignment: 우선 assignmentId 사용, 없으면 currentAssignment, 그것도 없으면 assignments 리스트에서 찾기
+    val targetAssignment = remember(currentAssignment, assignments, assignmentId, assignmentTitle) {
+        if (assignmentId > 0) {
+            currentAssignment?.takeIf { it.id == assignmentId } 
+                ?: assignments.find { it.id == assignmentId }
+        } else {
+            currentAssignment ?: assignments.find { 
+                it.title == assignmentTitle || 
+                it.title.contains(assignmentTitle) ||
+                assignmentTitle.contains(it.title)
+            }
+        }
     }
     
     // 동적 학생 이름 가져오기
     val studentName = currentStudent?.name ?: "학생"
     
     // 동적 과제 제목 가져오기
-    val dynamicAssignmentTitle = currentAssignment?.title ?: assignmentTitle
+    val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle)
     
     // Load assignment data, student data, and student result on first composition
-    LaunchedEffect(targetAssignment?.id, studentId) {
-        targetAssignment?.let { assignment ->
-            println("TeacherStudentAssignmentDetail - Loading assignment: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
-            viewModel.loadAssignmentById(assignment.id)
-            // 해당 학생과 과제의 Personal Assignment 결과 로드
-            viewModel.loadAssignmentStudentResults(assignment.id)
+    LaunchedEffect(assignmentId, targetAssignment?.id, studentId) {
+        // assignmentId가 있으면 직접 로드
+        if (assignmentId > 0) {
+            println("TeacherStudentAssignmentDetail - Loading assignment by ID: $assignmentId for student: $studentId")
+            viewModel.loadAssignmentById(assignmentId)
+            viewModel.loadAssignmentStudentResults(assignmentId)
+        } else {
+            // targetAssignment가 있으면 그것을 사용
+            targetAssignment?.let { assignment ->
+                println("TeacherStudentAssignmentDetail - Loading assignment: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
+                viewModel.loadAssignmentById(assignment.id)
+                // 해당 학생과 과제의 Personal Assignment 결과 로드
+                viewModel.loadAssignmentStudentResults(assignment.id)
+            } ?: run {
+                // targetAssignment가 없으면 assignmentTitle로 직접 찾기 시도
+                // assignments 리스트가 비어있을 수 있으므로, 모든 과제를 먼저 로드
+                println("TeacherStudentAssignmentDetail - targetAssignment not found, loading all assignments to find: $assignmentTitle")
+                viewModel.loadAllAssignments()
+            }
         }
+        
         studentViewModel.loadStudentById(studentId.toIntOrNull() ?: 1)
+    }
+    
+    // assignments가 로드된 후에 다시 찾기 (assignmentId가 없는 경우)
+    LaunchedEffect(assignments, assignmentTitle, studentId, assignmentId) {
+        if (assignmentId == 0 && targetAssignment == null && assignments.isNotEmpty()) {
+            val foundAssignment = assignments.find { 
+                it.title == assignmentTitle || 
+                it.title.contains(assignmentTitle) ||
+                assignmentTitle.contains(it.title)
+            }
+            foundAssignment?.let { assignment ->
+                println("TeacherStudentAssignmentDetail - Found assignment after loading: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
+                viewModel.loadAssignmentById(assignment.id)
+                viewModel.loadAssignmentStudentResults(assignment.id)
+            }
+        }
     }
     
     // Handle error
