@@ -60,3 +60,35 @@ data class MessageData(
     // @SerializedName("isRead")
     // val isRead: Boolean = false
 )
+
+data class StudentClassStatistics(
+    @SerializedName("average_score")
+    val averageScore: Float,
+    @SerializedName("completion_rate")
+    val completionRate: Float
+)
+
+data class StudentStatisticsItem(
+    @SerializedName("student_id")
+    val studentId: Int,
+    @SerializedName("average_score")
+    val averageScore: Float,
+    @SerializedName("completion_rate")
+    val completionRate: Float,
+    @SerializedName("total_assignments")
+    val totalAssignments: Int,
+    @SerializedName("completed_assignments")
+    val completedAssignments: Int
+)
+
+data class ClassStudentsStatistics(
+    @SerializedName("overall_completion_rate")
+    val overallCompletionRate: Float,
+    @SerializedName("students")
+    val students: List<StudentStatisticsItem>
+)
+
+data class ClassCompletionRate(
+    @SerializedName("completion_rate")
+    val completionRate: Float
+)

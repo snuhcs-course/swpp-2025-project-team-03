@@ -124,4 +124,18 @@ class ClassViewModel @Inject constructor(
     fun clearError() {
         _error.value = null
     }
+    
+    fun loadClassStudentsStatistics(classId: Int, callback: (Result<ClassStudentsStatistics>) -> Unit) {
+        viewModelScope.launch {
+            val result = classRepository.getClassStudentsStatistics(classId)
+            callback(result)
+        }
+    }
+    
+    fun loadClassCompletionRate(classId: Int, callback: (Result<ClassCompletionRate>) -> Unit) {
+        viewModelScope.launch {
+            val result = classRepository.getClassCompletionRate(classId)
+            callback(result)
+        }
+    }
 }

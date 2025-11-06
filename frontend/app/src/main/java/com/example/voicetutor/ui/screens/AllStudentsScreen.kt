@@ -96,7 +96,42 @@ fun AllStudentsScreen(
     
     // Calculate stats
     val totalStudents = allStudents.size
-    val averageScore = 0 // 평균 점수 정보가 없으므로 0으로 설정
+    
+    // 학생 통계 데이터 클래스
+    data class StudentStats(
+        val averageScore: Float,
+        val completionRate: Float,
+        val totalAssignments: Int,
+        val completedAssignments: Int
+    )
+    
+    var studentsStatisticsMap by remember { mutableStateOf<Map<Int, StudentStats>>(emptyMap()) }
+    var isLoadingStatistics by remember { mutableStateOf(true) }
+    
+    // Load statistics for selected class
+    LaunchedEffect(selectedClassId) {
+        selectedClassId?.let { classId ->
+            isLoadingStatistics = true
+            classViewModel.loadClassStudentsStatistics(classId) { result ->
+                result.onSuccess { stats ->
+                    studentsStatisticsMap = stats.students.associate { 
+                        it.studentId to StudentStats(
+                            averageScore = it.averageScore,
+                            completionRate = it.completionRate,
+                            totalAssignments = it.totalAssignments,
+                            completedAssignments = it.completedAssignments
+                        )
+                    }
+                    isLoadingStatistics = false
+                }.onFailure {
+                    studentsStatisticsMap = emptyMap()
+                    isLoadingStatistics = false
+                }
+            }
+        } ?: run {
+            isLoadingStatistics = false
+        }
+    }
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -142,30 +177,15 @@ fun AllStudentsScreen(
         }
         
         item {
-            // Stats cards
-            Row(
+            // Stats card
+            VTStatsCard(
+                title = "전체 학생",
+                value = "${totalStudents}명",
+                icon = Icons.Filled.People,
+                iconColor = PrimaryIndigo,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                VTStatsCard(
-                    title = "전체 학생",
-                    value = "${totalStudents}명",
-                    icon = Icons.Filled.People,
-                    iconColor = PrimaryIndigo,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
-                )
-                
-                
-                VTStatsCard(
-                    title = "평균 점수",
-                    value = "${averageScore}점",
-                    icon = Icons.Filled.Star,
-                    iconColor = Warning,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
-                )
-            }
+                variant = CardVariant.Gradient
+            )
         }
         
         item {
@@ -269,8 +289,14 @@ fun AllStudentsScreen(
                 items = allStudents,
                 key = { student -> student.id }  // 각 학생의 고유 ID를 키로 사용
             ) { student ->
+                val stats = studentsStatisticsMap[student.id]
                 AllStudentsCard(
                     student = student,
+                    averageScore = stats?.averageScore ?: 0f,
+                    completionRate = stats?.completionRate ?: 0f,
+                    totalAssignments = stats?.totalAssignments ?: 0,
+                    completedAssignments = stats?.completedAssignments ?: 0,
+                    isLoadingStats = isLoadingStatistics,
                     onStudentClick = { 
                         // 학생 상세 페이지로 이동
                         onNavigateToStudentInfo(student.id.toString(), student.name)
@@ -290,6 +316,11 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
+    averageScore: Float,  // 사용하지 않지만 호환성을 위해 유지
+    completionRate: Float,
+    totalAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
+    completedAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
+    isLoadingStats: Boolean,
     onStudentClick: () -> Unit,
     onMessageClick: () -> Unit,
     onReportClick: () -> Unit = onStudentClick
@@ -344,47 +375,14 @@ fun AllStudentsCard(
                 
             }
             
-            // Progress info
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "과제 진행률",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "정보 없음", // 과제 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray500
-                    )
-                }
-                
-                Column {
-                    Text(
-                        text = "평균 점수",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "정보 없음", // 평균 점수 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray500
-                    )
-                }
+            // Progress bar - 과제 진행률 표시
+            Column {
+                Spacer(modifier = Modifier.height(4.dp))
+                VTProgressBar(
+                    progress = (completionRate / 100f).coerceIn(0f, 1f),
+                    showPercentage = true
+                )
             }
-            
-            // Progress bar
-            VTProgressBar(
-                progress = 0f, // 과제 정보가 없으므로 0으로 설정
-                showPercentage = true
-            )
             
             // Action buttons
             Row(

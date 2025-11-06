@@ -14,6 +14,8 @@ from .request_serializers import (
     StudentEditRequestSerializer,
 )
 from .serializers import (
+    ClassCompletionRateSerializer,
+    ClassStudentsStatisticsSerializer,
     CourseClassSerializer,
     EnrollmentSerializer,
     StudentDetailSerializer,
@@ -527,5 +529,253 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
                 success=False,
                 error=str(e),
                 message="학생 등록 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-statistics
+    @swagger_auto_schema(
+        operation_id="반의 모든 학생 통계 조회",
+        operation_description="특정 반의 모든 학생에 대한 평균 점수와 완료율, 그리고 전체 평균 점수를 조회합니다.",
+        responses={200: "Class students statistics"},
+    )
+    def get(self, request, classId):
+        try:
+            from assignments.models import Assignment
+            from questions.models import Question
+            from submissions.models import Answer, PersonalAssignment
+
+            # 클래스 확인
+            course_class = CourseClass.objects.get(id=classId)
+
+            # 해당 반의 모든 학생
+            enrollments = Enrollment.objects.filter(course_class=course_class, status=Enrollment.Status.ENROLLED)
+            students = [enrollment.student for enrollment in enrollments]
+
+            if not students:
+                return create_api_response(
+                    data={"overall_average_score": 0.0, "students": []},
+                    message="반 학생 통계 조회 성공",
+                )
+
+            # 해당 반의 모든 과제
+            assignments = Assignment.objects.filter(course_class=course_class)
+            total_assignments = assignments.count()
+
+            if total_assignments == 0:
+                return create_api_response(
+                    data={
+                        "overall_average_score": 0.0,
+                        "students": [
+                            {"student_id": student.id, "average_score": 0.0, "completion_rate": 0.0}
+                            for student in students
+                        ],
+                    },
+                    message="반 학생 통계 조회 성공",
+                )
+
+            # 모든 학생의 통계 계산
+            students_statistics = []
+
+            for student in students:
+                # 해당 학생의 PersonalAssignment들
+                personal_assignments = PersonalAssignment.objects.filter(
+                    assignment__in=assignments, student=student
+                ).select_related("assignment")
+
+                # 완료율 계산
+                submitted_count = personal_assignments.filter(status=PersonalAssignment.Status.SUBMITTED).count()
+                completion_rate = (submitted_count / total_assignments * 100) if total_assignments > 0 else 0
+
+                # 평균 점수 계산
+                total_average_score = 0.0
+                assignments_with_scores = 0
+
+                for assignment in assignments:
+                    personal_assignment = personal_assignments.filter(assignment=assignment).first()
+                    if not personal_assignment:
+                        continue
+
+                    # 해당 과제의 모든 질문과 답변 가져오기
+                    all_questions = list(
+                        Question.objects.filter(personal_assignment=personal_assignment).order_by(
+                            "number", "recalled_num"
+                        )
+                    )
+
+                    if not all_questions:
+                        continue
+
+                    # 답변 가져오기
+                    answers_qs = Answer.objects.filter(question__in=all_questions, student=student).select_related(
+                        "question"
+                    )
+                    answers_by_question_id = {answer.question_id: answer for answer in answers_qs}
+
+                    # question_number별로 그룹화
+                    questions_by_number = {}
+                    base_question_count = 0
+
+                    for question in all_questions:
+                        if question.number not in questions_by_number:
+                            questions_by_number[question.number] = []
+                        questions_by_number[question.number].append(question)
+
+                        if question.recalled_num == 0:
+                            base_question_count += 1
+
+                    if base_question_count == 0:
+                        continue
+
+                    # 과제별 점수 계산
+                    total_score = 0
+                    for question_number, questions in questions_by_number.items():
+                        question_score = 0
+
+                        for question in questions:
+                            answer = answers_by_question_id.get(question.id)
+                            if answer is None:
+                                break
+
+                            if answer.state == Answer.State.CORRECT:
+                                if question.recalled_num == 0:
+                                    question_score = 100
+                                elif question.recalled_num == 1:
+                                    question_score = 75
+                                elif question.recalled_num == 2:
+                                    question_score = 50
+                                elif question.recalled_num == 3:
+                                    question_score = 25
+                                break
+
+                        total_score += question_score
+
+                    assignment_average_score = (total_score / base_question_count) if base_question_count > 0 else 0
+                    total_average_score += assignment_average_score
+                    assignments_with_scores += 1
+
+                # 학생별 평균 점수 계산
+                average_score = (total_average_score / assignments_with_scores) if assignments_with_scores > 0 else 0
+
+                students_statistics.append(
+                    {
+                        "student_id": student.id,
+                        "average_score": round(average_score, 1),
+                        "completion_rate": round(completion_rate, 1),
+                        "total_assignments": total_assignments,
+                        "completed_assignments": submitted_count,
+                    }
+                )
+
+            # 전체 평균 완료율 계산: 전체 학생 완료한 과제 수 / 전체 학생 과제 수
+            total_completed_assignments = sum(stat["completed_assignments"] for stat in students_statistics)
+            total_student_assignments = sum(stat["total_assignments"] for stat in students_statistics)
+            overall_completion_rate = (
+                (total_completed_assignments / total_student_assignments * 100) if total_student_assignments > 0 else 0
+            )
+
+            data = {
+                "overall_completion_rate": round(overall_completion_rate, 1),
+                "students": students_statistics,
+            }
+
+            serializer = ClassStudentsStatisticsSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+
+            return create_api_response(
+                data=serializer.data, message="반 학생 통계 조회 성공", status_code=status.HTTP_200_OK
+            )
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassStudentsStatisticsView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="반 학생 통계 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class ClassCompletionRateView(APIView):  # GET /classes/{id}/completion-rate
+    @swagger_auto_schema(
+        operation_id="반 완료율 조회 (최근 한 달)",
+        operation_description="특정 반의 최근 한 달간 전체 완료율을 조회합니다. (전체 학생 완료한 과제 수 / 전체 학생 과제 수)",
+        responses={200: "Class completion rate"},
+    )
+    def get(self, request, id):
+        try:
+            from datetime import timedelta
+
+            from assignments.models import Assignment
+            from django.utils import timezone
+            from submissions.models import PersonalAssignment
+
+            # 클래스 확인
+            course_class = CourseClass.objects.get(id=id)
+
+            # 해당 반의 모든 학생
+            enrollments = Enrollment.objects.filter(course_class=course_class, status=Enrollment.Status.ENROLLED)
+            students = [enrollment.student for enrollment in enrollments]
+
+            if not students:
+                return create_api_response(
+                    data={"completion_rate": 0.0},
+                    message="반 완료율 조회 성공",
+                )
+
+            # 최근 한 달간의 과제만 필터링
+            one_month_ago = timezone.now() - timedelta(days=30)
+            assignments = Assignment.objects.filter(course_class=course_class, created_at__gte=one_month_ago)
+            total_assignments = assignments.count()
+
+            if total_assignments == 0:
+                return create_api_response(
+                    data={"completion_rate": 0.0},
+                    message="반 완료율 조회 성공",
+                )
+
+            # 전체 학생 완료한 과제 수 계산
+            total_completed_assignments = 0
+            total_student_assignments = len(students) * total_assignments
+
+            for student in students:
+                personal_assignments = PersonalAssignment.objects.filter(assignment__in=assignments, student=student)
+                submitted_count = personal_assignments.filter(status=PersonalAssignment.Status.SUBMITTED).count()
+                total_completed_assignments += submitted_count
+
+            # 전체 평균 완료율 계산
+            completion_rate = (
+                (total_completed_assignments / total_student_assignments * 100) if total_student_assignments > 0 else 0
+            )
+
+            data = {"completion_rate": round(completion_rate, 1)}
+
+            serializer = ClassCompletionRateSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+
+            return create_api_response(
+                data=serializer.data, message="반 완료율 조회 성공", status_code=status.HTTP_200_OK
+            )
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassCompletionRateView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="반 완료율 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
