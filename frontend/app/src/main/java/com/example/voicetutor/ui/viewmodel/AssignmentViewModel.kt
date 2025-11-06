@@ -1084,7 +1084,8 @@ class AssignmentViewModel @Inject constructor(
                         if (personalAssignment != null) {
                             val recent = RecentAssignment(
                                 id = personalAssignment.id.toString(),
-                                title = personalAssignment.assignment.title
+                                title = personalAssignment.assignment.title,
+                                // nextQuestionId = null // 필요시 백엔드 API에서 받아올 수 있음
                             )
                             _recentAssignment.value = recent
                         } else {
@@ -1674,6 +1675,33 @@ class AssignmentViewModel @Inject constructor(
                 }
 
             _isLoading.value = false
+        }
+    }
+
+    // Helper: find personalAssignment by (studentId, assignmentId) and load its correctness
+    fun loadAssignmentCorrectnessFor(studentId: Int, assignmentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId)
+                    .onSuccess { list ->
+                        val pa = list.firstOrNull()
+                        if (pa == null) {
+                            _error.value = "Personal assignment not found for student $studentId and assignment $assignmentId"
+                        } else {
+                            // then load correctness
+                            assignmentRepository.getAssignmentCorrectness(pa.id)
+                                .onSuccess { correctnessData ->
+                                    _assignmentCorrectness.value = correctnessData
+                                }
+                                .onFailure { e -> _error.value = e.message }
+                        }
+                    }
+                    .onFailure { e -> _error.value = e.message }
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }
