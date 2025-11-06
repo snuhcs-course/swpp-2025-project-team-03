@@ -25,6 +25,53 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
+// Helper function to format submitted time - using common utility
+private fun formatSubmittedTime(isoTime: String): String {
+    return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
+}
+
+// Helper function to format duration between startedAt and submittedAt
+private fun formatDuration(startIso: String?, endIso: String?): String {
+    return try {
+        if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
+            return "정보 없음"
+        }
+        val start = parseIsoToMillis(startIso)
+        val end = parseIsoToMillis(endIso)
+        if (start == null || end == null || end <= start) {
+            return "정보 없음"
+        }
+        val diffMs = end - start
+        val totalSeconds = diffMs / 1000
+        val hours = (totalSeconds / 3600).toInt()
+        val minutes = ((totalSeconds % 3600) / 60).toInt()
+        val seconds = (totalSeconds % 60).toInt()
+        if (hours > 0) {
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format("%02d:%02d", minutes, seconds)
+        }
+    } catch (e: Exception) {
+        "정보 없음"
+    }
+}
+
+// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
+private fun parseIsoToMillis(iso: String): Long? {
+    return try {
+        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
+        val cleaned = iso.replace("Z", "").let { raw ->
+            val dotIdx = raw.indexOf('.')
+            if (dotIdx != -1) raw.substring(0, dotIdx) else raw
+        }
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        sdf.parse(cleaned)?.time
+    } catch (e: Exception) {
+        null
+    }
+}
+
 @Composable
 fun TeacherStudentAssignmentDetailScreen(
     studentId: String,
@@ -39,6 +86,8 @@ fun TeacherStudentAssignmentDetailScreen(
     val currentStudent by studentViewModel.currentStudent.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val paStats by viewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
+    val correctnessData by viewModel.assignmentCorrectness.collectAsStateWithLifecycle()
     
     // Find assignment: 우선 assignmentId 사용, 없으면 currentAssignment, 그것도 없으면 assignments 리스트에서 찾기
     val targetAssignment = remember(currentAssignment, assignments, assignmentId, assignmentTitle) {
@@ -67,6 +116,9 @@ fun TeacherStudentAssignmentDetailScreen(
             println("TeacherStudentAssignmentDetail - Loading assignment by ID: $assignmentId for student: $studentId")
             viewModel.loadAssignmentById(assignmentId)
             viewModel.loadAssignmentStudentResults(assignmentId)
+            // Load personal assignment statistics and correctness
+            viewModel.loadPersonalAssignmentStatisticsFor(studentId.toIntOrNull() ?: 1, assignmentId)
+            viewModel.loadAssignmentCorrectnessFor(studentId.toIntOrNull() ?: 1, assignmentId)
         } else {
             // targetAssignment가 있으면 그것을 사용
             targetAssignment?.let { assignment ->
@@ -74,6 +126,9 @@ fun TeacherStudentAssignmentDetailScreen(
                 viewModel.loadAssignmentById(assignment.id)
                 // 해당 학생과 과제의 Personal Assignment 결과 로드
                 viewModel.loadAssignmentStudentResults(assignment.id)
+                // Load personal assignment statistics and correctness
+                viewModel.loadPersonalAssignmentStatisticsFor(studentId.toIntOrNull() ?: 1, assignment.id)
+                viewModel.loadAssignmentCorrectnessFor(studentId.toIntOrNull() ?: 1, assignment.id)
             } ?: run {
                 // targetAssignment가 없으면 assignmentTitle로 직접 찾기 시도
                 // assignments 리스트가 비어있을 수 있으므로, 모든 과제를 먼저 로드
@@ -97,6 +152,9 @@ fun TeacherStudentAssignmentDetailScreen(
                 println("TeacherStudentAssignmentDetail - Found assignment after loading: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
                 viewModel.loadAssignmentById(assignment.id)
                 viewModel.loadAssignmentStudentResults(assignment.id)
+                // Load personal assignment statistics and correctness
+                viewModel.loadPersonalAssignmentStatisticsFor(studentId.toIntOrNull() ?: 1, assignment.id)
+                viewModel.loadAssignmentCorrectnessFor(studentId.toIntOrNull() ?: 1, assignment.id)
             }
         }
     }
@@ -168,47 +226,32 @@ fun TeacherStudentAssignmentDetailScreen(
                     spotColor = PrimaryIndigo.copy(alpha = 0.3f)
                 )
                 .padding(24.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = studentResult.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    val grade = scoreToGrade(studentResult.score)
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = studentResult.studentId,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
+                            text = studentResult.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
-                        Text(
-                            text = " • 등급: ",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .background(
-                                    color = Color.White.copy(alpha = 0.2f),
-                                    shape = androidx.compose.foundation.shape.CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = grade,
+                                text = " 평균 점수: ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                            Text(
+                                text = paStats?.averageScore?.toInt()?.let { "$it 점" } ?: "-",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
@@ -216,66 +259,181 @@ fun TeacherStudentAssignmentDetailScreen(
                             )
                         }
                     }
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(
-                            color = Color.White.copy(alpha = 0.15f),
-                            shape = androidx.compose.foundation.shape.CircleShape
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(
+                                color = Color.White.copy(alpha = 0.15f),
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            )
+                            .shadow(
+                                elevation = 4.dp,
+                                shape = androidx.compose.foundation.shape.CircleShape,
+                                ambientColor = Color.Black.copy(alpha = 0.1f),
+                                spotColor = Color.Black.copy(alpha = 0.1f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = studentResult.name.first().toString(),
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
                         )
-                        .shadow(
-                            elevation = 4.dp,
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            ambientColor = Color.Black.copy(alpha = 0.1f),
-                            spotColor = Color.Black.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
+                    }
+                }
+            }
+            
+            // Overall stats
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                VTStatsCard(
+                    title = "정답률",
+                    value = paStats?.let { "${it.accuracy.toInt()}%" } ?: "-",
+                    icon = Icons.Filled.CheckCircle,
+                    iconColor = Success,
+                    variant = CardVariant.Elevated,
+                    modifier = Modifier.weight(1f),
+                    layout = StatsCardLayout.Vertical
+                )
+                
+                VTStatsCard(
+                    title = "평균 점수",
+                    value = paStats?.averageScore?.toInt()?.toString() ?: "-",
+                    icon = Icons.Filled.Star,
+                    iconColor = Warning,
+                    variant = CardVariant.Elevated,
+                    modifier = Modifier.weight(1f),
+                    layout = StatsCardLayout.Vertical
+                )
+            }
+            
+            // Time info card
+            VTCard(variant = CardVariant.Elevated) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "소요 시간",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Gray600
+                        )
+                        Text(
+                            text = formatDuration(studentResult.startedAt, studentResult.submittedAt),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                    }
+                    
+                    Divider()
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "제출 시간",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Gray600
+                        )
+                        Text(
+                            text = formatSubmittedTime(studentResult.submittedAt),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                    }
+                }
+            }
+            
+            // Questions list grouped (기본문항/꼬리문항) with toggle cards
+            if (correctnessData.isNotEmpty()) {
+                Column {
                     Text(
-                        text = studentResult.name.first().toString(),
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        text = "문제별 상세 결과",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Build groups from correctness
+                    val detailedResults = remember(correctnessData) {
+                        correctnessData.map { item ->
+                            DetailedQuestionResult(
+                                questionNumber = item.questionNum,
+                                question = item.questionContent,
+                                myAnswer = item.studentAnswer,
+                                correctAnswer = item.questionModelAnswer,
+                                isCorrect = item.isCorrect,
+                                explanation = item.explanation
+                            )
+                        }
+                    }
+                    val questionGroups = remember(detailedResults) {
+                        val grouped = mutableMapOf<String, MutableList<DetailedQuestionResult>>()
+                        detailedResults.forEach { result ->
+                            val baseNum = if (result.questionNumber.contains("-")) result.questionNumber.substringBefore("-") else result.questionNumber
+                            grouped.getOrPut(baseNum) { mutableListOf() }.add(result)
+                        }
+                        grouped.entries.sortedBy { it.key.toIntOrNull() ?: 0 }.map { (baseNum, questions) ->
+                            val base = questions.find { it.questionNumber == baseNum } ?: questions.first()
+                            val tails = questions.filter { it.questionNumber != baseNum }.sortedBy { it.questionNumber }
+                            QuestionGroup(baseQuestion = base, tailQuestions = tails)
+                        }
+                    }
+                    val expandedStates = remember(questionGroups) {
+                        mutableStateMapOf<String, Boolean>().apply {
+                            questionGroups.forEach { group -> this[group.baseQuestion.questionNumber] = false }
+                        }
+                    }
+
+                    questionGroups.forEachIndexed { index, group ->
+                        QuestionGroupCard2(
+                            group = group,
+                            isExpanded = expandedStates[group.baseQuestion.questionNumber] ?: false,
+                            onToggle = {
+                                val current = expandedStates[group.baseQuestion.questionNumber] ?: false
+                                expandedStates[group.baseQuestion.questionNumber] = !current
+                            }
+                        )
+                        if (index < questionGroups.size - 1) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
                 }
             }
         }
-        
-        // Overall stats
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+    }
+}
+
+@Composable
+private fun QuestionGroupCard2(
+    group: QuestionGroup,
+    isExpanded: Boolean,
+    onToggle: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        VTCard(
+            variant = CardVariant.Outlined,
+            onClick = if (group.tailQuestions.isNotEmpty()) onToggle else null
         ) {
-            VTStatsCard(
-                title = "정답률",
-                value = if (studentResult.detailedAnswers.isNotEmpty()) {
-                    "${(studentResult.detailedAnswers.count { it.isCorrect }.toFloat() / studentResult.detailedAnswers.size * 100).toInt()}%"
-                } else {
-                    "${studentResult.score}%"
-                },
-                icon = Icons.Filled.CheckCircle,
-                iconColor = Success,
-                variant = CardVariant.Elevated,
-                modifier = Modifier.weight(1f),
-                layout = StatsCardLayout.Vertical
-            )
-            
-            VTStatsCard(
-                title = "등급",
-                value = scoreToGrade(studentResult.score),
-                icon = Icons.Filled.Star,
-                iconColor = getGradeColor(scoreToGrade(studentResult.score)),
-                variant = CardVariant.Elevated,
-                modifier = Modifier.weight(1f),
-                layout = StatsCardLayout.Vertical
-            )
-        }
-        
-        // Time info card
-        VTCard(variant = CardVariant.Elevated) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -285,99 +443,129 @@ fun TeacherStudentAssignmentDetailScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "소요 시간",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray600
-                    )
-                    Text(
-                        text = formatDuration(studentResult.startedAt, studentResult.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-                
-                Divider()
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "제출 시간",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray600
-                    )
-                    Text(
-                        text = formatSubmittedTime(studentResult.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-            }
-        }
-        
-        // Detailed answers
-        Column {
-            Text(
-                text = "상세 답변 분석",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // studentResult가 null이므로 빈 리스트 처리
-            val detailedAnswers = studentResult?.detailedAnswers ?: emptyList()
-            detailedAnswers.forEachIndexed { index, answer ->
-                VTCard(
-                    variant = CardVariant.Elevated
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "질문: ${answer.question}",
+                            text = "문제 ${group.baseQuestion.questionNumber}",
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             color = Gray800
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "답변: ${answer.studentAnswer}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Correctness indicator
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = if (group.baseQuestion.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (group.baseQuestion.isCorrect) "정답" else "오답",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (group.baseQuestion.isCorrect) Success else Error,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                    if (group.tailQuestions.isNotEmpty()) {
                         Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = if (answer.isCorrect) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
-                                contentDescription = null,
-                                tint = if (answer.isCorrect) Success else Error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (answer.isCorrect) "정답" else "오답",
+                                text = "+${group.tailQuestions.size}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = if (answer.isCorrect) Success else Error
+                                color = PrimaryIndigo,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                contentDescription = if (isExpanded) "접기" else "펼치기",
+                                tint = PrimaryIndigo
                             )
                         }
                     }
                 }
-                if (index < detailedAnswers.size - 1) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = group.baseQuestion.question,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = Gray800
+                )
+                if (group.baseQuestion.myAnswer.isNotEmpty()) {
+                    Column {
+                        Text(
+                            text = "내 답변",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = Gray600
+                        )
+                        Text(
+                            text = group.baseQuestion.myAnswer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray800,
+                            modifier = Modifier
+                                .background(
+                                    color = if (group.baseQuestion.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                )
+                                .padding(12.dp)
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = "정답",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray600
+                    )
+                    Text(
+                        text = group.baseQuestion.correctAnswer,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray800,
+                        modifier = Modifier
+                            .background(
+                                color = Success.copy(alpha = 0.1f),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    )
+                }
+                group.baseQuestion.explanation?.let { explanation ->
+                    if (explanation.isNotEmpty()) {
+                        Column {
+                            Text(
+                                text = "해설",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = Gray600
+                            )
+                            Text(
+                                text = explanation,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Gray700,
+                                modifier = Modifier
+                                    .background(
+                                        color = PrimaryIndigo.copy(alpha = 0.1f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(12.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        if (isExpanded && group.tailQuestions.isNotEmpty()) {
+            Column(
+                modifier = Modifier.padding(start = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                group.tailQuestions.forEach { tail ->
+                    DetailedQuestionResultCard2(question = tail)
                 }
             }
         }
@@ -385,204 +573,111 @@ fun TeacherStudentAssignmentDetailScreen(
 }
 
 @Composable
-fun DetailedAnswerCard(
-    answer: DetailedAnswer
+private fun DetailedQuestionResultCard2(
+    question: DetailedQuestionResult
 ) {
     VTCard(
-        variant = CardVariant.Elevated
+        variant = CardVariant.Outlined
     ) {
-        Column {
-            // Question header
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "문제 ${answer.questionNumber}",
+                    text = "문제 ${question.questionNumber}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = PrimaryIndigo
+                    color = Gray800
                 )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Correctness badge
-                    Box(
-                        modifier = Modifier
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                            .background(
-                                if (answer.isCorrect) Success.copy(alpha = 0.1f) 
-                                else Error.copy(alpha = 0.1f)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = if (answer.isCorrect) "정답" else "오답",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (answer.isCorrect) Success else Error,
-                            fontWeight = FontWeight.Medium
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = if (question.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                         )
-                    }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (question.isCorrect) "정답" else "오답",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (question.isCorrect) Success else Error,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Question
             Text(
-                text = "질문:",
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                color = Gray600
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = answer.question,
+                text = question.question,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Gray800,
-                lineHeight = 20.sp
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Student answer
-            Text(
-                text = "학생 답변:",
-                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
-                color = Gray600
+                color = Gray800
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = answer.studentAnswer,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray800,
-                lineHeight = 20.sp
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Correct answer (if wrong)
-            if (!answer.isCorrect) {
+            if (question.myAnswer.isNotEmpty()) {
+                Column {
+                    Text(
+                        text = "학생 답변: ",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray600
+                    )
+                    Text(
+                        text = question.myAnswer,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray800,
+                        modifier = Modifier
+                            .background(
+                                color = if (question.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    )
+                }
+            }
+            Column {
                 Text(
                     text = "정답:",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = Gray600
                 )
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = answer.correctAnswer,
+                    text = question.correctAnswer,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Success,
-                    lineHeight = 20.sp
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            
-            // Response time
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.AccessTime,
-                    contentDescription = null,
-                    tint = Gray600,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "응답 시간: ${answer.responseTime}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
+                    color = Gray800,
+                    modifier = Modifier
+                        .background(
+                            color = Success.copy(alpha = 0.1f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                        )
+                        .padding(12.dp)
                 )
             }
+            question.explanation?.let { explanation ->
+                if (explanation.isNotEmpty()) {
+                    Column {
+                        Text(
+                            text = "해설",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = Gray600
+                        )
+                        Text(
+                            text = explanation,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray700,
+                            modifier = Modifier
+                                .background(
+                                    color = PrimaryIndigo.copy(alpha = 0.1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                )
+                                .padding(12.dp)
+                        )
+                    }
+                }
+            }
         }
-        }
-    }
-}
-
-// Helper function to convert score to grade
-private fun scoreToGrade(score: Int): String {
-    return when {
-        score >= 90 -> "A"
-        score >= 80 -> "B"
-        score >= 70 -> "C"
-        score >= 60 -> "D"
-        else -> "F"
-    }
-}
-
-// Helper function to get grade color
-private fun getGradeColor(grade: String): Color {
-    return when (grade) {
-        "A" -> Success
-        "B" -> Color(0xFF4CAF50)
-        "C" -> Warning
-        "D" -> Color(0xFFFF9800)
-        "F" -> Error
-        else -> Gray600
-    }
-}
-
-// Helper function to format submitted time - using common utility
-private fun formatSubmittedTime(isoTime: String): String {
-    return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
-}
-
-// Helper function to format duration between startedAt and submittedAt
-private fun formatDuration(startIso: String?, endIso: String?): String {
-    return try {
-        if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
-            return "정보 없음"
-        }
-        val start = parseIsoToMillis(startIso)
-        val end = parseIsoToMillis(endIso)
-        if (start == null || end == null || end <= start) {
-            return "정보 없음"
-        }
-        val diffMs = end - start
-        val totalSeconds = diffMs / 1000
-        val hours = (totalSeconds / 3600).toInt()
-        val minutes = ((totalSeconds % 3600) / 60).toInt()
-        val seconds = (totalSeconds % 60).toInt()
-        if (hours > 0) {
-            String.format("%02d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            String.format("%02d:%02d", minutes, seconds)
-        }
-    } catch (e: Exception) {
-        "정보 없음"
-    }
-}
-
-// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
-private fun parseIsoToMillis(iso: String): Long? {
-    return try {
-        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
-        val cleaned = iso.replace("Z", "").let { raw ->
-            val dotIdx = raw.indexOf('.')
-            if (dotIdx != -1) raw.substring(0, dotIdx) else raw
-        }
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
-        sdf.parse(cleaned)?.time
-    } catch (e: Exception) {
-        null
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TeacherStudentAssignmentDetailScreenPreview() {
-    VoiceTutorTheme {
-        TeacherStudentAssignmentDetailScreen(
-            studentId = "8",
-            assignmentTitle = "화학 기초 퀴즈"
-        )
     }
 }

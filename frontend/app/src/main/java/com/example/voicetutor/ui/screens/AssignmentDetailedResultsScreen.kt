@@ -15,25 +15,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.voicetutor.data.models.DetailedQuestionResult
+import com.example.voicetutor.data.models.QuestionGroup
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-
-// 더미 데이터 클래스
-data class DetailedQuestionResult(
-    val questionNumber: String,
-    val question: String,
-    val myAnswer: String,
-    val correctAnswer: String,
-    val isCorrect: Boolean,
-    val explanation: String? = null
-)
-
-// 그룹화된 질문 데이터 클래스
-data class QuestionGroup(
-    val baseQuestion: DetailedQuestionResult,
-    val tailQuestions: List<DetailedQuestionResult> = emptyList()
-)
 
 @Composable
 fun AssignmentDetailedResultsScreen(
