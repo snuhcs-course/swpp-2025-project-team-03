@@ -47,6 +47,8 @@ fun TeacherStudentReportScreen(
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     
     var selectedClassId by remember { mutableStateOf(classId) }
+    var completionRate by remember { mutableStateOf(0f) }
+    var isLoadingCompletion by remember { mutableStateOf(true) }
     
     // Load classes if classId is 0
     LaunchedEffect(classId, currentUser) {
@@ -70,6 +72,19 @@ fun TeacherStudentReportScreen(
     LaunchedEffect(selectedClassId, studentId) {
         if (selectedClassId > 0 && studentId > 0) {
             reportViewModel.loadCurriculumReport(selectedClassId, studentId)
+            
+            // Load completion rate
+            isLoadingCompletion = true
+            classViewModel.loadClassStudentsStatistics(selectedClassId) { result ->
+                result.onSuccess { stats ->
+                    val studentStat = stats.students.find { it.studentId == studentId }
+                    completionRate = studentStat?.completionRate ?: 0f
+                    isLoadingCompletion = false
+                }.onFailure {
+                    completionRate = 0f
+                    isLoadingCompletion = false
+                }
+            }
         }
     }
     
@@ -93,8 +108,8 @@ fun TeacherStudentReportScreen(
                     )
                 )
             )
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Header
         item {
@@ -111,7 +126,7 @@ fun TeacherStudentReportScreen(
                         ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
                         spotColor = PrimaryIndigo.copy(alpha = 0.3f)
                     )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Column {
                     Text(
@@ -137,7 +152,7 @@ fun TeacherStudentReportScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
@@ -191,7 +206,7 @@ fun TeacherStudentReportScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
@@ -245,9 +260,9 @@ fun TeacherStudentReportScreen(
                     )
                     
                     VTStatsCard(
-                        title = "전체 정답률",
-                        value = "${String.format("%.1f", reportData.overallAccuracy)}%",
-                        icon = Icons.Filled.Assessment,
+                        title = "과제 이행률",
+                        value = if (isLoadingCompletion) "..." else "${completionRate.toInt()}%",
+                        icon = Icons.Filled.Done,
                         iconColor = Warning,
                         modifier = Modifier.weight(1f),
                         variant = CardVariant.Gradient,
@@ -263,7 +278,7 @@ fun TeacherStudentReportScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
+                        modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(
@@ -271,12 +286,23 @@ fun TeacherStudentReportScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "전체 정답률",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Gray800
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Assessment,
+                                    contentDescription = null,
+                                    tint = PrimaryIndigo,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "전체 정답률",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Gray800
+                                )
+                            }
                             Text(
                                 text = "${String.format("%.1f", reportData.overallAccuracy)}%",
                                 style = MaterialTheme.typography.titleLarge,
@@ -331,7 +357,7 @@ fun TeacherStudentReportScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
@@ -433,7 +459,7 @@ fun AchievementStatisticCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Achievement code header

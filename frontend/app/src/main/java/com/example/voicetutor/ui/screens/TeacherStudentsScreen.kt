@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -237,13 +238,52 @@ fun TeacherStudentsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            VTStatsCard(
-                title = "평균 완료율",
-                value = if (isLoadingStatistics) "로딩 중..." else "${overallCompletionRate.toInt()}%",
-                icon = Icons.Filled.Done,
-                iconColor = Success,
+            VTCard(
+                variant = CardVariant.Elevated,
                 modifier = Modifier.weight(1f)
-            )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "과제 이행률",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Gray600,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Text(
+                            text = "(최근 1달)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray500,
+                            fontSize = 11.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (isLoadingStatistics) "로딩 중..." else "${overallCompletionRate.toInt()}%",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryIndigo
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Filled.Done,
+                        contentDescription = null,
+                        tint = PrimaryIndigo.copy(alpha = 0.3f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
             
             VTStatsCard(
                 title = "학생",
