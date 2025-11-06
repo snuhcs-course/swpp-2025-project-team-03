@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -94,18 +95,18 @@ fun StudentDashboardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                PrimaryIndigo.copy(alpha = 0.9f),
+                                PrimaryPurple.copy(alpha = 0.85f)
+                            )
+                        ),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
+                    // shadow 제거!
                     .padding(24.dp)
             ) {
-                Column {
+            Column {
                     Text(
                         text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
                         style = MaterialTheme.typography.titleLarge,
