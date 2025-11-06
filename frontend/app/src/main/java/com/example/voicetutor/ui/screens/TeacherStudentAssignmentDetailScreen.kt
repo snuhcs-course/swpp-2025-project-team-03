@@ -245,11 +245,6 @@ fun TeacherStudentAssignmentDetailScreen(
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-//                            Text(
-//                                text = studentResult.studentId,
-//                                style = MaterialTheme.typography.bodyMedium,
-//                                color = Color.White.copy(alpha = 0.9f)
-//                            )
                             Text(
                                 text = " 평균 점수: ",
                                 style = MaterialTheme.typography.bodyMedium,

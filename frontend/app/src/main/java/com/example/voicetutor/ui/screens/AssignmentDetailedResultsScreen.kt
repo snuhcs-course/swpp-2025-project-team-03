@@ -21,22 +21,6 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
-// 더미 데이터 클래스
-//data class DetailedQuestionResult(
-//    val questionNumber: String,
-//    val question: String,
-//    val myAnswer: String,
-//    val correctAnswer: String,
-//    val isCorrect: Boolean,
-//    val explanation: String? = null
-//)
-//
-//// 그룹화된 질문 데이터 클래스
-//data class QuestionGroup(
-//    val baseQuestion: DetailedQuestionResult,
-//    val tailQuestions: List<DetailedQuestionResult> = emptyList()
-//)
-
 @Composable
 fun AssignmentDetailedResultsScreen(
     personalAssignmentId: Int,
