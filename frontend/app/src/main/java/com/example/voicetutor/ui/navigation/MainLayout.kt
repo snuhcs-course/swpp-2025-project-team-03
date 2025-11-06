@@ -67,6 +67,7 @@ fun MainLayout(
         currentDestination == VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
         currentDestination == VoiceTutorScreens.Assignment.route -> "assignment"
         currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route) == true -> "assignment" // 과제 상세 화면에서 이어하기/과제 탭 선택
+        currentDestination?.startsWith(VoiceTutorScreens.PendingAssignments.route.split("{").first()) == true -> "assignment" // 해야 할 과제 목록에서 과제 탭 선택
         currentDestination == VoiceTutorScreens.Progress.route -> "progress"
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
@@ -309,7 +310,8 @@ fun MainLayout(
             navController = navController,
             userRole = userRole,
             currentRoute = currentRoute,
-            recentAssignment = recentAssignment
+            recentAssignment = recentAssignment,
+            currentUserId = currentUser?.id
         )
     }
 }
@@ -319,7 +321,8 @@ fun BottomNavigation(
     navController: NavHostController,
     userRole: UserRole,
     currentRoute: String,
-    recentAssignment: RecentAssignment? = null
+    recentAssignment: RecentAssignment? = null,
+    currentUserId: Int? = null
 ) {
     NavigationBar(
         containerColor = Color.White.copy(alpha = 0.95f),
@@ -422,9 +425,13 @@ fun BottomNavigation(
                 selected = currentRoute == "assignment",
                 onClick = {
                     if (recentAssignment != null) {
+                        // 이어하기: 최근 과제 상세 화면으로 이동
                         navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(recentAssignment.id, recentAssignment.title))
                     } else {
-                        navController.navigate(VoiceTutorScreens.Assignment.route)
+                        // 과제: 해야 할 과제 목록 화면으로 이동
+                        currentUserId?.let { studentId ->
+                            navController.navigate(VoiceTutorScreens.PendingAssignments.createRoute(studentId))
+                        }
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
