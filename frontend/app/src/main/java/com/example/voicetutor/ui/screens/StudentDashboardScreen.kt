@@ -164,7 +164,7 @@ fun StudentDashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     VTStatsCard(
-                        title = "해야\u00A0할\u00A0과제",
+                        title = "남은 과제",
                         value = studentStats?.totalAssignments?.toString() ?: "0",
                         icon = Icons.Filled.List,
                         iconColor = PrimaryIndigo,

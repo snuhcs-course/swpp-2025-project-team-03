@@ -207,7 +207,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "말하기로 배우고, 듣기로 완성하세요",
+                        text = "말하는 순간, 나만의 AI 튜터가 시작됩니다",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray600,
                         textAlign = TextAlign.Center,

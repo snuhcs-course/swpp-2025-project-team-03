@@ -183,7 +183,7 @@ fun AssignmentDetailedResultsScreen(
                 )
 
                 VTStatsCard(
-                    title = "평균 점수",
+                    title = "점수",
                     value = "${averageScore}점",
                     icon = Icons.Filled.Grade,
                     iconColor = if (averageScore >= 80) Success else Warning,
