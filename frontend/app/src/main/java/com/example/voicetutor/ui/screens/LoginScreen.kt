@@ -262,7 +262,7 @@ fun LoginScreen(
                             viewModelAuth.clearError()
                         },
                         label = { Text("비밀번호") },
-                        placeholder = { Text("••••••••") },
+                        placeholder = { Text("비밀번호를 입력하세요") },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Filled.Lock,
