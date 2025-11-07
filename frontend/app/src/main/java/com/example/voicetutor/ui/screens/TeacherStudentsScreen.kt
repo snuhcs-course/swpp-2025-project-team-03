@@ -39,9 +39,7 @@ import kotlinx.coroutines.delay
 fun TeacherStudentsScreen(
     classId: Int? = null,
     teacherId: String? = null,
-    onNavigateToSendMessage: () -> Unit = {},
     onNavigateToStudentDetail: (Int) -> Unit = {},
-    onNavigateToMessage: (Int) -> Unit = {},
     onNavigateToAttendance: () -> Unit = {},
     navController: androidx.navigation.NavHostController? = null
 ) {
@@ -294,42 +292,23 @@ fun TeacherStudentsScreen(
             )
         }
         
-        // Action buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            VTButton(
-                text = "메시지 보내기",
-                onClick = onNavigateToSendMessage,
-                variant = ButtonVariant.Primary,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Message,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                },
-                modifier = Modifier.weight(1f)
-            )
-            
-            VTButton(
-                text = "학생 등록하기",
-                onClick = {
-                    selectedToEnroll.clear()
-                    showEnrollSheet = true
-                },
-                variant = ButtonVariant.Outline,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.PersonAdd,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
+        // Action button
+        VTButton(
+            text = "학생 등록하기",
+            onClick = {
+                selectedToEnroll.clear()
+                showEnrollSheet = true
+            },
+            variant = ButtonVariant.Outline,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.PersonAdd,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
         
         // Students list
         Column {
@@ -408,7 +387,6 @@ fun TeacherStudentsScreen(
                         completedAssignments = stats?.completedAssignments ?: 0,
                         isLoadingStats = isLoadingStatistics,
                         onViewStudent = { onNavigateToStudentDetail(student.id) },
-                        onSendMessage = { onNavigateToMessage(student.id) }
                     )
                     
                     if (student != students.last()) {
@@ -547,8 +525,7 @@ fun StudentCard(
     totalAssignments: Int,
     completedAssignments: Int,
     isLoadingStats: Boolean,
-    onViewStudent: (Int) -> Unit,
-    onSendMessage: (Int) -> Unit
+    onViewStudent: (Int) -> Unit
 ) {
     VTCard(
         variant = CardVariant.Elevated,
@@ -557,7 +534,7 @@ fun StudentCard(
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.Top
             ) {
                 Row(
@@ -607,15 +584,6 @@ fun StudentCard(
                     }
                 }
                 
-                IconButton(
-                    onClick = { onSendMessage(student.id) }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Message,
-                        contentDescription = "메시지 보내기",
-                        tint = PrimaryIndigo
-                    )
-                }
             }
             
             Spacer(modifier = Modifier.height(12.dp))

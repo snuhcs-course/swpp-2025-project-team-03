@@ -32,7 +32,6 @@ fun TeacherStudentDetailScreen(
     studentId: Int = 1, // 임시로 기본값 설정
     onNavigateToAllAssignments: () -> Unit = {},
     onNavigateToAssignmentDetail: (Int) -> Unit = {},
-    onNavigateToMessage: (Int) -> Unit = {},
     onNavigateToEdit: (Int) -> Unit = {}
 ) {
     val viewModel: StudentViewModel = hiltViewModel()
@@ -265,39 +264,20 @@ fun TeacherStudentDetailScreen(
             }
         }
         
-        // Action buttons
-        Row(
+        // Action button
+        VTButton(
+            text = "학생 편집",
+            onClick = { onNavigateToEdit(studentId) },
+            variant = ButtonVariant.Primary,
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            VTButton(
-                text = "메시지 보내기",
-                onClick = { onNavigateToMessage(studentId) },
-                variant = ButtonVariant.Outline,
-                modifier = Modifier.weight(1f),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Message,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
-            
-            VTButton(
-                text = "학생 편집",
-                onClick = { onNavigateToEdit(studentId) },
-                variant = ButtonVariant.Primary,
-                modifier = Modifier.weight(1f),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
-        }
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        )
     }
 }
 

@@ -133,13 +133,6 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<ApiResponse<ClassCompletionRate>>
     
-    // Message APIs (Backend: /api/feedbacks/messages/)
-    @POST("feedbacks/messages/send/")
-    suspend fun sendMessage(@Body request: SendMessageRequest): Response<ApiResponse<SendMessageResponse>>
-    
-    @GET("feedbacks/messages/{classId}/")
-    suspend fun getClassMessages(@Path("classId") classId: Int): Response<ApiResponse<List<MessageData>>>
-    
     // Progress Report APIs
     @GET("reports/progress/")
     suspend fun getProgressReport(
@@ -178,14 +171,6 @@ interface ApiService {
     ): Response<ApiResponse<com.example.voicetutor.data.models.DashboardStats>>
     
     // AI/Quiz APIs removed
-    
-    @GET("messages/")
-    suspend fun getMessages(
-        @Query("userId") userId: Int,
-        @Query("messageType") messageType: String? = null,
-        @Query("limit") limit: Int = 50,
-        @Query("offset") offset: Int = 0
-    ): Response<ApiResponse<MessageListResponse>>
     
 }
 
