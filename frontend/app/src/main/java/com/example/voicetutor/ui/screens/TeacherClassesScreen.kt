@@ -31,8 +31,7 @@ data class ClassRoom(
     val studentCount: Int,
     val assignmentCount: Int,
     val completionRate: Float,
-    val color: Color,
-    val recentActivity: String = "2시간 전"
+    val color: Color
 )
 
 @Composable
@@ -42,7 +41,7 @@ fun TeacherClassesScreen(
     teacherId: String? = null, // 파라미터로 받거나 현재 로그인한 사용자 ID 사용
     onNavigateToClassDetail: (String, Int) -> Unit = { _, _ -> },
     onNavigateToCreateClass: () -> Unit = {},
-    onNavigateToCreateAssignment: () -> Unit = {},
+    onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
     onNavigateToStudents: (Int) -> Unit = {}
 ) {
     val classViewModel: ClassViewModel = hiltViewModel()
@@ -158,13 +157,13 @@ fun TeacherClassesScreen(
         ) {
             Column {
                 Text(
-                    text = "내 반 관리",
+                    text = "수업 관리",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Gray800
                 )
                 Text(
-                    text = "반을 관리하고 과제를 생성하세요",
+                    text = "내 수업을 관리하고 과제를 생성하세요",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600
                 )
@@ -255,7 +254,7 @@ fun TeacherClassesScreen(
                     ClassCard(
                         classRoom = classRoom,
                         onClassClick = { onNavigateToClassDetail(classRoom.name, classRoom.id) },
-                        onCreateAssignment = { onNavigateToCreateAssignment() },
+                        onCreateAssignment = { classId -> onNavigateToCreateAssignment(classId) },
                         onViewStudents = { onNavigateToStudents(classRoom.id) }
                     )
                     
@@ -342,14 +341,7 @@ fun ClassCard(
                     value = classRoom.assignmentCount.toString(),
                     label = "과제",
                     color = Gray600
-                )
-                
-                ClassStatItem(
-                    icon = Icons.Filled.Schedule,
-                    value = classRoom.recentActivity,
-                    label = "최근 활동",
-                    color = Gray600
-                )
+                )                
             }
             
             Spacer(modifier = Modifier.height(16.dp))

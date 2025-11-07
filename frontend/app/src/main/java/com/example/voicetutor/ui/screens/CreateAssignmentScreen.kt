@@ -46,6 +46,7 @@ fun CreateAssignmentScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null,
+    initialClassId: Int? = null,
     onCreateAssignment: (String) -> Unit = {} // Pass assignment title on success
 ) {
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
@@ -141,6 +142,20 @@ fun CreateAssignmentScreen(
     LaunchedEffect(actualTeacherId) {
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
+    }
+    
+    // Set initial class when classes are loaded and initialClassId is provided
+    // Use a flag to ensure it only happens once to avoid animation issues
+    var hasSetInitialClass by remember { mutableStateOf(false) }
+    LaunchedEffect(classes.size, initialClassId) {
+        if (initialClassId != null && classes.isNotEmpty() && !hasSetInitialClass) {
+            val targetClass = classes.find { it.id == initialClassId }
+            targetClass?.let { classData ->
+                selectedClassId = classData.id
+                selectedClass = "${classData.name} - ${classData.subject.name}"
+                hasSetInitialClass = true
+            }
+        }
     }
     // Navigate to assignment detail when creation succeeds (after upload, not waiting for question generation)
     LaunchedEffect(currentAssignment, assignmentCreated, uploadSuccess) {

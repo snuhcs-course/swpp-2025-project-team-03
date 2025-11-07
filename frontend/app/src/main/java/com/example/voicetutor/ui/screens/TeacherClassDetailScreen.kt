@@ -47,8 +47,7 @@ fun TeacherClassDetailScreen(
     classId: Int? = null, // 실제 클래스 ID 사용
     className: String? = null, // 실제 클래스 이름 사용
     subject: String? = null, // 실제 과목명 사용
-    onNavigateToClassMessage: () -> Unit = {},
-    onNavigateToCreateAssignment: () -> Unit = {},
+    onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
     onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     val assignmentViewModel: AssignmentViewModel = hiltViewModel()
@@ -177,36 +176,26 @@ fun TeacherClassDetailScreen(
             // Stats overview
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 VTStatsCard(
-                    title = "총 학생",
+                    title = "학생",
                     value = "${classStudents.size}명",
                     icon = Icons.Filled.People,
                     iconColor = PrimaryIndigo,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Vertical
+                    layout = StatsCardLayout.Horizontal
                 )
                 
                 VTStatsCard(
-                    title = "진행 중인 과제",
-                    value = "${classAssignments.count { it.completionRate < 1.0f }}개",
+                    title = "과제",
+                    value = "${classAssignments.size}개",
                     icon = Icons.Filled.Assignment,
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Vertical
-                )
-                
-                VTStatsCard(
-                    title = "평균 점수",
-                    value = "${if (classAssignments.isNotEmpty()) classAssignments.map { it.averageScore }.average().toInt() else 0}점",
-                    icon = Icons.Filled.Star,
-                    iconColor = Success,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Vertical
+                    layout = StatsCardLayout.Horizontal
                 )
             }
         }
@@ -219,18 +208,8 @@ fun TeacherClassDetailScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 VTButton(
-                    text = "클래스 메시지",
-                    onClick = onNavigateToClassMessage,
-                    variant = ButtonVariant.Gradient,
-                    size = ButtonSize.Small,
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 44.dp),
-                )
-                
-                VTButton(
                     text = "과제 생성",
-                    onClick = onNavigateToCreateAssignment,
+                    onClick = { onNavigateToCreateAssignment(classId) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
                     modifier = Modifier
@@ -264,23 +243,17 @@ fun TeacherClassDetailScreen(
         
         item {
             // Assignments section header
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "과제 목록",
+                    text = " 과제 목록",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
-                )
-                
-                Text(
-                    text = "${classAssignments.size}개",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PrimaryIndigo,
-                    fontWeight = FontWeight.Medium
                 )
             }
         }

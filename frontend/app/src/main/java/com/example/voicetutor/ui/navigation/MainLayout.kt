@@ -34,22 +34,23 @@ data class RecentAssignment(
 
 // Helper function to get page title based on current destination
 fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
-    return when (currentDestination) {
-        VoiceTutorScreens.Assignment.route -> "과제"
-        VoiceTutorScreens.AssignmentDetail.route -> "과제 상세"
-        VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
-        VoiceTutorScreens.Progress.route -> "학습 리포트"
-        VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
-        VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
-        VoiceTutorScreens.AllAssignments.route -> "전체 과제"
-        VoiceTutorScreens.AllStudents.route -> "전체 학생"
-        VoiceTutorScreens.CreateAssignment.route -> "과제 생성"
-        VoiceTutorScreens.EditAssignment.route -> "과제 편집"
-        VoiceTutorScreens.TeacherAssignmentResults.route -> "과제 결과"
-        VoiceTutorScreens.TeacherAssignmentDetail.route -> "과제 상세"
-        VoiceTutorScreens.TeacherStudentDetail.route -> "학생 상세"
-        VoiceTutorScreens.TeacherStudentAssignmentDetail.route -> "과제 결과"
-        VoiceTutorScreens.Settings.route -> "설정"
+    return when {
+        currentDestination == VoiceTutorScreens.Assignment.route -> "과제"
+        currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route.split("{").first()) == true -> "과제 상세"
+        currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
+        currentDestination == VoiceTutorScreens.Progress.route -> "학습 리포트"
+        currentDestination == VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
+        currentDestination == VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
+        currentDestination == VoiceTutorScreens.AllAssignments.route -> "전체 과제"
+        currentDestination == VoiceTutorScreens.AllStudents.route -> "전체 학생"
+        currentDestination?.startsWith("create_assignment") == true -> "과제 생성"
+        currentDestination?.startsWith(VoiceTutorScreens.EditAssignment.route.split("{").first()) == true -> "과제 편집"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherAssignmentResults.route.split("{").first()) == true -> "과제 결과"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherAssignmentDetail.route.split("{").first()) == true -> "과제 상세"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentDetail.route.split("{").first()) == true -> "학생 상세"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentAssignmentDetail.route.split("{").first()) == true -> "과제 결과"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "수업 관리"
+        currentDestination == VoiceTutorScreens.Settings.route -> "설정"
         else -> if (userRole == UserRole.TEACHER) "선생님 페이지" else "학생 페이지"
     }
 }
@@ -71,6 +72,7 @@ fun MainLayout(
         currentDestination == VoiceTutorScreens.Progress.route -> "progress"
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "teacher_classes" // 수업 탭 선택
         currentDestination == VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
         currentDestination == VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
         currentDestination == VoiceTutorScreens.TeacherStudentDetail.route -> "teacher_students" // 학생 상세 페이지에서 학생 탭 선택
@@ -102,8 +104,11 @@ fun MainLayout(
     // Check if current page is a dashboard (should show logo) or other page (should show back button)
     // Remove query parameters for comparison (e.g., "teacher_dashboard?refresh=123" -> "teacher_dashboard")
     val baseDestination = currentDestination?.split("?")?.first()
-    val isDashboard = baseDestination == VoiceTutorScreens.StudentDashboard.route || 
-                     baseDestination == VoiceTutorScreens.TeacherDashboard.route
+    val isDashboard = baseDestination == VoiceTutorScreens.StudentDashboard.route ||
+                     baseDestination == VoiceTutorScreens.Progress.route ||
+                     baseDestination == VoiceTutorScreens.TeacherDashboard.route ||
+                     baseDestination == VoiceTutorScreens.TeacherClasses.route ||
+                     baseDestination == VoiceTutorScreens.AllStudents.route
     
     val userName = currentUser?.name ?: "사용자"
     val userInitial = currentUser?.initial ?: "?"
