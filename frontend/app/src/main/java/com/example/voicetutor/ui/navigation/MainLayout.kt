@@ -49,6 +49,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         VoiceTutorScreens.TeacherAssignmentDetail.route -> "과제 상세"
         VoiceTutorScreens.TeacherStudentDetail.route -> "학생 상세"
         VoiceTutorScreens.TeacherStudentAssignmentDetail.route -> "과제 결과"
+        VoiceTutorScreens.TeacherClassDetail.route -> "수업 관리"
         VoiceTutorScreens.Settings.route -> "설정"
         else -> if (userRole == UserRole.TEACHER) "선생님 페이지" else "학생 페이지"
     }
