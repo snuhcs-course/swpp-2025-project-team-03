@@ -31,8 +31,7 @@ data class ClassRoom(
     val studentCount: Int,
     val assignmentCount: Int,
     val completionRate: Float,
-    val color: Color,
-    val recentActivity: String = "2시간 전"
+    val color: Color
 )
 
 @Composable
@@ -342,14 +341,7 @@ fun ClassCard(
                     value = classRoom.assignmentCount.toString(),
                     label = "과제",
                     color = Gray600
-                )
-                
-                ClassStatItem(
-                    icon = Icons.Filled.Schedule,
-                    value = classRoom.recentActivity,
-                    label = "최근 활동",
-                    color = Gray600
-                )
+                )                
             }
             
             Spacer(modifier = Modifier.height(16.dp))
