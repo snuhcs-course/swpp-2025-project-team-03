@@ -735,7 +735,7 @@ fun VoiceTutorNavigation(
                         navController.navigate(VoiceTutorScreens.CreateAssignment.route)
                     },
                     onNavigateToAssignmentDetail = { assignmentId ->
-                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentId))
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     }
                 )
             }
