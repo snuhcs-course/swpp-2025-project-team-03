@@ -47,7 +47,6 @@ fun TeacherClassDetailScreen(
     classId: Int? = null, // 실제 클래스 ID 사용
     className: String? = null, // 실제 클래스 이름 사용
     subject: String? = null, // 실제 과목명 사용
-    onNavigateToClassMessage: () -> Unit = {},
     onNavigateToCreateAssignment: () -> Unit = {},
     onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
@@ -208,16 +207,6 @@ fun TeacherClassDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                VTButton(
-                    text = "클래스 메시지",
-                    onClick = onNavigateToClassMessage,
-                    variant = ButtonVariant.Gradient,
-                    size = ButtonSize.Small,
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 44.dp),
-                )
-                
                 VTButton(
                     text = "과제 생성",
                     onClick = onNavigateToCreateAssignment,
