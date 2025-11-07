@@ -240,7 +240,7 @@ fun TeacherDashboardScreen(
                 iconColor = Success,
                 variant = CardVariant.Elevated,
                 trend = TrendDirection.None,
-                trendValue = "${dashboardStats?.totalClasses ?: currentUser?.totalClasses ?: 0}개 클래스",
+                trendValue = "${dashboardStats?.totalClasses ?: currentUser?.totalClasses ?: 0}개 수업",
                 onClick = { onNavigateToAllStudents() },
                 modifier = Modifier.weight(1f),
                 layout = StatsCardLayout.Horizontal

@@ -62,8 +62,9 @@ fun CreateClassScreen(
             .padding(16.dp)
     ) {
         VTHeader(
-            title = "새 클래스 만들기",
-            onBackClick = onBackClick
+            title = "새 수업 만들기",
+            onBackClick = onBackClick,
+            showBackButton = false
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -72,7 +73,7 @@ fun CreateClassScreen(
         VTCard(variant = CardVariant.Outlined) {
             Column {
                 Text(
-                    text = "클래스 이름",
+                    text = "수업 이름",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
@@ -134,7 +135,7 @@ fun CreateClassScreen(
         VTCard(variant = CardVariant.Outlined) {
             Column {
                 Text(
-                    text = "클래스 설명",
+                    text = "수업 설명",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
@@ -144,7 +145,7 @@ fun CreateClassScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    placeholder = { Text("클래스에 대한 간단한 설명을 입력하세요...") },
+                    placeholder = { Text("수업에 대한 간단한 설명을 입력하세요...") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(100.dp),
@@ -166,7 +167,7 @@ fun CreateClassScreen(
         
         // Create button
         VTButton(
-            text = if (isLoading) "생성 중..." else "클래스 만들기",
+            text = if (isLoading) "생성 중..." else "수업 만들기",
             onClick = {
                 // 현재 시간을 ISO 형식으로 변환
                 val now = LocalDateTime.now()
