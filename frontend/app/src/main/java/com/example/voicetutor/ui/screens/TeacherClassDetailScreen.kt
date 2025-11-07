@@ -180,7 +180,7 @@ fun TeacherClassDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 VTStatsCard(
-                    title = "총 학생",
+                    title = "학생",
                     value = "${classStudents.size}명",
                     icon = Icons.Filled.People,
                     iconColor = PrimaryIndigo,
@@ -190,8 +190,8 @@ fun TeacherClassDetailScreen(
                 )
                 
                 VTStatsCard(
-                    title = "진행 과제",
-                    value = "${classAssignments.count}개",
+                    title = "과제",
+                    value = "${classAssignments.size}개",
                     icon = Icons.Filled.Assignment,
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
@@ -254,23 +254,17 @@ fun TeacherClassDetailScreen(
         
         item {
             // Assignments section header
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "과제 목록",
+                    text = " 과제 목록",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
-                )
-                
-                Text(
-                    text = "${classAssignments.size}개",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PrimaryIndigo,
-                    fontWeight = FontWeight.Medium
                 )
             }
         }
