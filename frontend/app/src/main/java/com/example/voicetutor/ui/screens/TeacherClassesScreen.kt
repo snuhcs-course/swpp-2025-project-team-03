@@ -158,13 +158,13 @@ fun TeacherClassesScreen(
         ) {
             Column {
                 Text(
-                    text = "내 반 관리",
+                    text = "수업 관리",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Gray800
                 )
                 Text(
-                    text = "반을 관리하고 과제를 생성하세요",
+                    text = "내 수업을 관리하고 과제를 생성하세요",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600
                 )
