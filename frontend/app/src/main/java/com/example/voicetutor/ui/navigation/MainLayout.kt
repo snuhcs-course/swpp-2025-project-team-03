@@ -72,6 +72,7 @@ fun MainLayout(
         currentDestination == VoiceTutorScreens.Progress.route -> "progress"
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "teacher_classes" // 수업 탭 선택
         currentDestination == VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
         currentDestination == VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
         currentDestination == VoiceTutorScreens.TeacherStudentDetail.route -> "teacher_students" // 학생 상세 페이지에서 학생 탭 선택
@@ -103,8 +104,11 @@ fun MainLayout(
     // Check if current page is a dashboard (should show logo) or other page (should show back button)
     // Remove query parameters for comparison (e.g., "teacher_dashboard?refresh=123" -> "teacher_dashboard")
     val baseDestination = currentDestination?.split("?")?.first()
-    val isDashboard = baseDestination == VoiceTutorScreens.StudentDashboard.route || 
-                     baseDestination == VoiceTutorScreens.TeacherDashboard.route
+    val isDashboard = baseDestination == VoiceTutorScreens.StudentDashboard.route ||
+                     baseDestination == VoiceTutorScreens.Progress.route ||
+                     baseDestination == VoiceTutorScreens.TeacherDashboard.route ||
+                     baseDestination == VoiceTutorScreens.TeacherClasses.route ||
+                     baseDestination == VoiceTutorScreens.AllStudents.route
     
     val userName = currentUser?.name ?: "사용자"
     val userInitial = currentUser?.initial ?: "?"
