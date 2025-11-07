@@ -40,6 +40,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
         currentDestination == VoiceTutorScreens.Progress.route -> "학습 리포트"
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
+        currentDestination == VoiceTutorScreens.CreateClass.route -> "수업 관리"
         currentDestination == VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
         currentDestination == VoiceTutorScreens.AllAssignments.route -> "전체 과제"
         currentDestination == VoiceTutorScreens.AllStudents.route -> "전체 학생"

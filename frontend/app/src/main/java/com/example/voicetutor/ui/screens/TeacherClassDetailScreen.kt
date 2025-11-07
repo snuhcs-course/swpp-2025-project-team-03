@@ -158,7 +158,7 @@ fun TeacherClassDetailScreen(
             ) {
                 Column {
                     Text(
-                        text = dynamicClassName ?: "클래스",
+                        text = dynamicClassName ?: "수업",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
