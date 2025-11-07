@@ -49,6 +49,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         currentDestination?.startsWith(VoiceTutorScreens.TeacherAssignmentDetail.route.split("{").first()) == true -> "과제 상세"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentDetail.route.split("{").first()) == true -> "학생 상세"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentAssignmentDetail.route.split("{").first()) == true -> "과제 결과"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentReport.route.split("{").first()) == true -> "리포트"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "수업 관리"
         currentDestination == VoiceTutorScreens.Settings.route -> "설정"
         else -> if (userRole == UserRole.TEACHER) "선생님 페이지" else "학생 페이지"

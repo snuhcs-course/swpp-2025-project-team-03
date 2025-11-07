@@ -146,16 +146,18 @@ fun TeacherClassesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 6.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Spacer(modifier = Modifier.height(0.5.dp))
                 Text(
                     text = "수업 관리",
                     style = MaterialTheme.typography.titleLarge,
@@ -170,7 +172,7 @@ fun TeacherClassesScreen(
             }
             
             VTButton(
-                text = "새 반 만들기",
+                text = "새 수업 만들기",
                 onClick = onNavigateToCreateClass,
                 variant = ButtonVariant.Primary,
                 size = ButtonSize.Small,
@@ -184,38 +186,30 @@ fun TeacherClassesScreen(
             )
         }
         
-        // Quick stats
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            VTStatsCard(
-                title = "총 반",
-                value = classRooms.size.toString(),
-                icon = Icons.Filled.School,
-                iconColor = PrimaryIndigo,
-                modifier = Modifier.weight(1f)
-            )
-            
-            VTStatsCard(
-                title = "총 학생",
-                value = classRooms.sumOf { it.studentCount }.toString(),
-                icon = Icons.Filled.People,
-                iconColor = Success,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        Spacer(modifier = Modifier.height(1.dp))
         
         // Classes list
-        Column {
-            Text(
-                text = "반 목록",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "수업 목록",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Text(
+                    text = "${classRooms.size}개",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PrimaryIndigo,
+                    fontWeight = FontWeight.Medium
+                )
+            }
             
             // Loading indicator
             if (isLoading) {
@@ -257,10 +251,6 @@ fun TeacherClassesScreen(
                         onCreateAssignment = { classId -> onNavigateToCreateAssignment(classId) },
                         onViewStudents = { onNavigateToStudents(classRoom.id) }
                     )
-                    
-                    if (classRoom != classRooms.last()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
                 }
             }
         }
@@ -278,51 +268,49 @@ fun ClassCard(
         variant = CardVariant.Elevated,
         onClick = { onClassClick(classRoom.id) }
     ) {
-        Column {
+        Column(
+            modifier = Modifier.padding(3.5.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                        .background(classRoom.color.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                            .background(classRoom.color.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.MenuBook,
-                            contentDescription = null,
-                            tint = classRoom.color,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    Column {
-                        Text(
-                            text = classRoom.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = classRoom.subject,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = classRoom.color,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Filled.MenuBook,
+                        contentDescription = null,
+                        tint = classRoom.color,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = classRoom.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                    Text(
+                        text = classRoom.subject,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = classRoom.color,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
             
             // Stats row
             Row(
@@ -344,11 +332,9 @@ fun ClassCard(
                 )                
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
             // Action buttons
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 VTButton(
@@ -378,30 +364,21 @@ fun ClassStatItem(
     label: String,
     color: Color
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = Gray800
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(16.dp)
+        )
         Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = color
+            text = "$label: $value",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = Gray800
         )
     }
 }
