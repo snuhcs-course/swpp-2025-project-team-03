@@ -1,6 +1,9 @@
 package com.example.voicetutor.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,10 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
@@ -150,66 +155,76 @@ fun TeacherClassesScreen(
             .padding(horizontal = 6.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        // Header Banner
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                )
+                .shadow(
+                    elevation = 8.dp,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                    ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
+                    spotColor = PrimaryIndigo.copy(alpha = 0.3f)
+                )
+                .padding(24.dp)
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Spacer(modifier = Modifier.height(0.5.dp))
                 Text(
                     text = "수업 관리",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Gray800
+                    color = Color.White
                 )
                 Text(
                     text = "내 수업을 관리하고 과제를 생성하세요",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
+                    color = Color.White.copy(alpha = 0.9f)
                 )
             }
-            
-            VTButton(
-                text = "새 수업 만들기",
-                onClick = onNavigateToCreateClass,
-                variant = ButtonVariant.Primary,
-                size = ButtonSize.Small,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            )
         }
         
-        Spacer(modifier = Modifier.height(1.dp))
+        // Action section with button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "수업 목록",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Gray800
+            )
+            
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                VTButton(
+                    text = "새 수업 만들기",
+                    onClick = onNavigateToCreateClass,
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                )
+            }
+        }
         
         // Classes list
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "수업 목록",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Text(
-                    text = "${classRooms.size}개",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PrimaryIndigo,
-                    fontWeight = FontWeight.Medium
-                )
-            }
             
             // Loading indicator
             if (isLoading) {
