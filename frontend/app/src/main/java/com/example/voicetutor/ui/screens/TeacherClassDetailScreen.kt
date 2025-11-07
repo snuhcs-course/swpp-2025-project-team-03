@@ -177,7 +177,7 @@ fun TeacherClassDetailScreen(
             // Stats overview
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 VTStatsCard(
                     title = "총 학생",
@@ -186,27 +186,17 @@ fun TeacherClassDetailScreen(
                     iconColor = PrimaryIndigo,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Vertical
+                    layout = StatsCardLayout.Horizontal
                 )
                 
                 VTStatsCard(
-                    title = "진행 중인 과제",
-                    value = "${classAssignments.count { it.completionRate < 1.0f }}개",
+                    title = "진행 과제",
+                    value = "${classAssignments.count}개",
                     icon = Icons.Filled.Assignment,
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Vertical
-                )
-                
-                VTStatsCard(
-                    title = "평균 점수",
-                    value = "${if (classAssignments.isNotEmpty()) classAssignments.map { it.averageScore }.average().toInt() else 0}점",
-                    icon = Icons.Filled.Star,
-                    iconColor = Success,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Vertical
+                    layout = StatsCardLayout.Horizontal
                 )
             }
         }
