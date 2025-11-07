@@ -41,7 +41,7 @@ fun TeacherClassesScreen(
     teacherId: String? = null, // 파라미터로 받거나 현재 로그인한 사용자 ID 사용
     onNavigateToClassDetail: (String, Int) -> Unit = { _, _ -> },
     onNavigateToCreateClass: () -> Unit = {},
-    onNavigateToCreateAssignment: () -> Unit = {},
+    onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
     onNavigateToStudents: (Int) -> Unit = {}
 ) {
     val classViewModel: ClassViewModel = hiltViewModel()
@@ -254,7 +254,7 @@ fun TeacherClassesScreen(
                     ClassCard(
                         classRoom = classRoom,
                         onClassClick = { onNavigateToClassDetail(classRoom.name, classRoom.id) },
-                        onCreateAssignment = { onNavigateToCreateAssignment() },
+                        onCreateAssignment = { classId -> onNavigateToCreateAssignment(classId) },
                         onViewStudents = { onNavigateToStudents(classRoom.id) }
                     )
                     

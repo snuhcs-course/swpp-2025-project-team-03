@@ -345,7 +345,7 @@ fun VoiceTutorNavigation(
                         navController.navigate(VoiceTutorScreens.AllStudents.route)
                     },
                     onCreateNewAssignment = {
-                        navController.navigate(VoiceTutorScreens.CreateAssignment.route)
+                        navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(null))
                     },
                     onNavigateToAssignmentDetail = { assignmentId ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
@@ -382,8 +382,8 @@ fun VoiceTutorNavigation(
                         navController.navigate(VoiceTutorScreens.CreateClass.route)
                         println("Navigate to create class")
                     },
-                    onNavigateToCreateAssignment = {
-                        navController.navigate(VoiceTutorScreens.CreateAssignment.route)
+                    onNavigateToCreateAssignment = { classId ->
+                        navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(classId))
                     },
                     onNavigateToStudents = { classId ->
                         navController.navigate(VoiceTutorScreens.TeacherStudents.createRoute(classId.toString()))
@@ -541,7 +541,16 @@ fun VoiceTutorNavigation(
         }
         
         // Create assignment screen
-        composable(VoiceTutorScreens.CreateAssignment.route) {
+        composable(
+            route = VoiceTutorScreens.CreateAssignment.route,
+            arguments = listOf(
+                navArgument("classId") {
+                    type = NavType.IntType
+                    defaultValue = 0
+                }
+            )
+        ) { backStackEntry ->
+            val classId = backStackEntry.arguments?.getInt("classId") ?: 0
             val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             
@@ -552,6 +561,7 @@ fun VoiceTutorNavigation(
                 CreateAssignmentScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
+                    initialClassId = if (classId > 0) classId else null,
                     onCreateAssignment = { assignmentTitle ->
                         // Navigate back to teacher dashboard with refresh flag
                         val timestamp = System.currentTimeMillis()
@@ -731,8 +741,8 @@ fun VoiceTutorNavigation(
                 TeacherClassDetailScreen(
                     classId = classId,
                     className = className,
-                    onNavigateToCreateAssignment = {
-                        navController.navigate(VoiceTutorScreens.CreateAssignment.route)
+                    onNavigateToCreateAssignment = { classId ->
+                        navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(classId))
                     },
                     onNavigateToAssignmentDetail = { assignmentId ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
@@ -874,7 +884,9 @@ sealed class VoiceTutorScreens(val route: String) {
     }
     object AllAssignments : VoiceTutorScreens("all_assignments")
     object AllStudents : VoiceTutorScreens("all_students")
-    object CreateAssignment : VoiceTutorScreens("create_assignment")
+    object CreateAssignment : VoiceTutorScreens("create_assignment/{classId}") {
+        fun createRoute(classId: Int? = null) = if (classId != null && classId > 0) "create_assignment/$classId" else "create_assignment/0"
+    }
     object EditAssignment : VoiceTutorScreens("edit_assignment/{assignment_id}") {
         fun createRoute(assignmentId: Int) = "edit_assignment/$assignmentId"
     }

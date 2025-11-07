@@ -47,7 +47,7 @@ fun TeacherClassDetailScreen(
     classId: Int? = null, // 실제 클래스 ID 사용
     className: String? = null, // 실제 클래스 이름 사용
     subject: String? = null, // 실제 과목명 사용
-    onNavigateToCreateAssignment: () -> Unit = {},
+    onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
     onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     val assignmentViewModel: AssignmentViewModel = hiltViewModel()
@@ -209,7 +209,7 @@ fun TeacherClassDetailScreen(
             ) {
                 VTButton(
                     text = "과제 생성",
-                    onClick = onNavigateToCreateAssignment,
+                    onClick = { onNavigateToCreateAssignment(classId) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
                     modifier = Modifier

@@ -34,23 +34,23 @@ data class RecentAssignment(
 
 // Helper function to get page title based on current destination
 fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
-    return when (currentDestination) {
-        VoiceTutorScreens.Assignment.route -> "과제"
-        VoiceTutorScreens.AssignmentDetail.route -> "과제 상세"
-        VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
-        VoiceTutorScreens.Progress.route -> "학습 리포트"
-        VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
-        VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
-        VoiceTutorScreens.AllAssignments.route -> "전체 과제"
-        VoiceTutorScreens.AllStudents.route -> "전체 학생"
-        VoiceTutorScreens.CreateAssignment.route -> "과제 생성"
-        VoiceTutorScreens.EditAssignment.route -> "과제 편집"
-        VoiceTutorScreens.TeacherAssignmentResults.route -> "과제 결과"
-        VoiceTutorScreens.TeacherAssignmentDetail.route -> "과제 상세"
-        VoiceTutorScreens.TeacherStudentDetail.route -> "학생 상세"
-        VoiceTutorScreens.TeacherStudentAssignmentDetail.route -> "과제 결과"
-        VoiceTutorScreens.TeacherClassDetail.route -> "수업 관리"
-        VoiceTutorScreens.Settings.route -> "설정"
+    return when {
+        currentDestination == VoiceTutorScreens.Assignment.route -> "과제"
+        currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route.split("{").first()) == true -> "과제 상세"
+        currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
+        currentDestination == VoiceTutorScreens.Progress.route -> "학습 리포트"
+        currentDestination == VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
+        currentDestination == VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
+        currentDestination == VoiceTutorScreens.AllAssignments.route -> "전체 과제"
+        currentDestination == VoiceTutorScreens.AllStudents.route -> "전체 학생"
+        currentDestination?.startsWith("create_assignment") == true -> "과제 생성"
+        currentDestination?.startsWith(VoiceTutorScreens.EditAssignment.route.split("{").first()) == true -> "과제 편집"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherAssignmentResults.route.split("{").first()) == true -> "과제 결과"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherAssignmentDetail.route.split("{").first()) == true -> "과제 상세"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentDetail.route.split("{").first()) == true -> "학생 상세"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentAssignmentDetail.route.split("{").first()) == true -> "과제 결과"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "수업 관리"
+        currentDestination == VoiceTutorScreens.Settings.route -> "설정"
         else -> if (userRole == UserRole.TEACHER) "선생님 페이지" else "학생 페이지"
     }
 }
