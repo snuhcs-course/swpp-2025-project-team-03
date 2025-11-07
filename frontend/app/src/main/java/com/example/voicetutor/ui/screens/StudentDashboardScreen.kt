@@ -31,8 +31,6 @@ fun StudentDashboardScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
     onNavigateToAllAssignments: (Int) -> Unit = {},
-    onNavigateToCompletedAssignments: (Int) -> Unit = {},
-    onNavigateToAllStudentAssignments: (Int) -> Unit = {},
     onNavigateToProgressReport: () -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
@@ -118,77 +116,6 @@ fun StudentDashboardScreen(
                         text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-        }
-        
-        item {
-            // Progress overview
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "완료 현황",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "이번 주 과제 완료 현황을 확인해보세요",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                    
-                    VTButton(
-                        text = "전체 보기",
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                // 전체 과제 보기 (AllStudentAssignments)
-                                onNavigateToAllStudentAssignments(studentId)
-                            }
-                        },
-                        variant = ButtonVariant.Ghost,
-                        size = ButtonSize.Small
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    VTStatsCard(
-                        title = "남은 과제",
-                        value = studentStats?.totalAssignments?.toString() ?: "0",
-                        icon = Icons.Filled.List,
-                        iconColor = PrimaryIndigo,
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                // PendingAssignmentsScreen으로 네비게이트
-                                onNavigateToAllAssignments(studentId)
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    VTStatsCard(
-                        title = "완료한 과제",
-                        value = studentStats?.completedAssignments?.toString() ?: "0",
-                        icon = Icons.Filled.Done,
-                        iconColor = Success,
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                onNavigateToCompletedAssignments(studentId)
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
                     )
                 }
             }

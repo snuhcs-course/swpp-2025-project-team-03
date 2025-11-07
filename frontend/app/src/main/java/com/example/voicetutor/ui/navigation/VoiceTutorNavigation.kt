@@ -152,12 +152,6 @@ fun VoiceTutorNavigation(
                         // 학생은 PendingAssignments로 이동 (해야 할 과제)
                         navController.navigate(VoiceTutorScreens.PendingAssignments.createRoute(studentId))
                     },
-                    onNavigateToCompletedAssignments = { studentId ->
-                        navController.navigate(VoiceTutorScreens.Progress.route)
-                    },
-                    onNavigateToAllStudentAssignments = { studentId ->
-                        navController.navigate(VoiceTutorScreens.AllStudentAssignments.createRoute(studentId))
-                    },
                     onNavigateToProgressReport = {
                         navController.navigate(VoiceTutorScreens.Progress.route)
                     },
@@ -223,36 +217,6 @@ fun VoiceTutorNavigation(
             }
         }
 
-        composable(
-            route = VoiceTutorScreens.AllStudentAssignments.route,
-            arguments = listOf(
-                navArgument("studentId") {
-                    type = NavType.IntType
-                }
-            )
-        ) { backStackEntry ->
-            val studentId = backStackEntry.arguments?.getInt("studentId")
-            if (studentId != null) {
-                MainLayout(
-                    navController = navController,
-                    userRole = UserRole.STUDENT
-                ) {
-                    AllStudentAssignmentsScreen(
-                        studentId = studentId,
-                        onNavigateToAssignmentDetail = { assignmentId ->
-                            navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId, "과제"))
-                        },
-                        onNavigateToAssignment = { assignmentId ->
-                            navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
-                        },
-                        onNavigateToAssignmentReport = { personalAssignmentId: Int, assignmentTitle: String ->
-                            navController.navigate(VoiceTutorScreens.AssignmentDetailedResults.createRoute(personalAssignmentId, assignmentTitle))
-                        }
-                    )
-                }
-            }
-        }
-        
         // Pending Assignments Screen (해야 할 과제)
         composable(
             route = VoiceTutorScreens.PendingAssignments.route,
@@ -884,9 +848,6 @@ sealed class VoiceTutorScreens(val route: String) {
         fun createRoute(personalAssignmentId: Int, title: String) = "assignment_detailed_results/$personalAssignmentId/$title"
     }
     object Progress : VoiceTutorScreens("progress")
-    object AllStudentAssignments : VoiceTutorScreens("all_student_assignments/{studentId}") {
-        fun createRoute(studentId: Int) = "all_student_assignments/$studentId"
-    }
     object PendingAssignments : VoiceTutorScreens("pending_assignments/{studentId}") {
         fun createRoute(studentId: Int) = "pending_assignments/$studentId"
     }
