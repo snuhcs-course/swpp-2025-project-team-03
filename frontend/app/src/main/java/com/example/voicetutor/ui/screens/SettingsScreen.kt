@@ -15,11 +15,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.UserRole
+import com.example.voicetutor.utils.TutorialPreferences
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun SettingsScreen(
@@ -69,6 +75,11 @@ fun SettingsScreen(
     } else {
         currentUser
     }
+    
+    // 튜토리얼 관리
+    val context = LocalContext.current
+    val tutorialPrefs = remember { TutorialPreferences(context) }
+    var showResetDialog by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -286,6 +297,20 @@ fun SettingsScreen(
                 )
                 
                 SettingsItem(
+                    icon = Icons.Filled.Lightbulb,
+                    title = "튜토리얼 다시 보기",
+                    subtitle = "앱 사용법을 다시 확인하세요",
+                    onClick = { 
+                        showResetDialog = true
+                    }
+                )
+                
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = Gray200
+                )
+                
+                SettingsItem(
                     icon = Icons.Filled.Info,
                     title = "앱 정보",
                     subtitle = "버전 1.0.0",
@@ -309,6 +334,52 @@ fun SettingsScreen(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
+                )
+            }
+        )
+    }
+    
+    // 튜토리얼 초기화 확인 다이얼로그
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Lightbulb,
+                    contentDescription = null,
+                    tint = PrimaryIndigo
+                )
+            },
+            title = {
+                Text(
+                    text = "튜토리얼 초기화",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "튜토리얼을 초기화하면 다음 로그인 시 다시 볼 수 있습니다.\n계속하시겠습니까?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                VTButton(
+                    text = "초기화",
+                    onClick = {
+                        tutorialPrefs.resetAllTutorials()
+                        showResetDialog = false
+                    },
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Small
+                )
+            },
+            dismissButton = {
+                VTButton(
+                    text = "취소",
+                    onClick = { showResetDialog = false },
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small
                 )
             }
         )

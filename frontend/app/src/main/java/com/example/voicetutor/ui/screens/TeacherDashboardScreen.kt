@@ -17,12 +17,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.utils.TutorialPreferences
 
 @Composable
 fun TeacherDashboardScreen(
@@ -52,6 +54,25 @@ fun TeacherDashboardScreen(
     // Recent activities are not supported by current backend API
     
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
+    
+    // 튜토리얼 상태 관리
+    val context = LocalContext.current
+    val tutorialPrefs = remember { TutorialPreferences(context) }
+    var showTutorial by remember { mutableStateOf(false) }
+    
+    // 테스트용: 항상 튜토리얼 표시
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            showTutorial = true
+        }
+    }
+    
+    // 실제 배포시 사용할 코드 (현재 주석 처리)
+    // LaunchedEffect(currentUser) {
+    //     if (currentUser != null && !tutorialPrefs.isTeacherTutorialCompleted()) {
+    //         showTutorial = true
+    //     }
+    // }
     
     // Compute actual teacher ID
     val actualTeacherId = teacherId ?: currentUser?.id?.toString()
@@ -137,6 +158,20 @@ fun TeacherDashboardScreen(
             // Show error message
             actualAssignmentViewModel.clearError()
         }
+    }
+    
+    // 인터랙티브 튜토리얼 오버레이
+    if (showTutorial) {
+        InteractiveTutorialOverlay(
+            spots = InteractiveTutorialData.teacherInteractiveTutorialSpots,
+            onComplete = {
+                tutorialPrefs.setTeacherTutorialCompleted()
+                showTutorial = false
+            },
+            onSkip = {
+                tutorialPrefs.setTeacherTutorialCompleted()
+            }
+        )
     }
     
     // 필터링된 과제 목록 (API에서 이미 필터링된 결과 사용)

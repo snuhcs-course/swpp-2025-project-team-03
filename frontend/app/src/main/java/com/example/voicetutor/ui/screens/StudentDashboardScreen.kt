@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
@@ -23,6 +24,7 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.utils.formatDueDate
+import com.example.voicetutor.utils.TutorialPreferences
 
 @Composable
 fun StudentDashboardScreen(
@@ -46,6 +48,25 @@ fun StudentDashboardScreen(
     val studentStats by viewModelAssignment.studentStats.collectAsStateWithLifecycle()
     
     val studentName = currentUser?.name ?: "학생"
+    
+    // 튜토리얼 상태 관리
+    val context = LocalContext.current
+    val tutorialPrefs = remember { TutorialPreferences(context) }
+    var showTutorial by remember { mutableStateOf(false) }
+    
+    // 테스트용: 항상 튜토리얼 표시
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            showTutorial = true
+        }
+    }
+    
+    // 실제 배포시 사용할 코드 (현재 주석 처리)
+    // LaunchedEffect(currentUser) {
+    //     if (currentUser != null && !tutorialPrefs.isStudentTutorialCompleted()) {
+    //         showTutorial = true
+    //     }
+    // }
     
     LaunchedEffect(assignments) {
         println("StudentDashboard - currentUser: ${currentUser?.email}, id: ${currentUser?.id}, role: ${currentUser?.role}")
@@ -83,6 +104,21 @@ fun StudentDashboardScreen(
             viewModelAssignment.clearError()
         }
     }
+    
+    // 인터랙티브 튜토리얼 오버레이
+    if (showTutorial) {
+        InteractiveTutorialOverlay(
+            spots = InteractiveTutorialData.studentInteractiveTutorialSpots,
+            onComplete = {
+                tutorialPrefs.setStudentTutorialCompleted()
+                showTutorial = false
+            },
+            onSkip = {
+                tutorialPrefs.setStudentTutorialCompleted()
+            }
+        )
+    }
+    
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
