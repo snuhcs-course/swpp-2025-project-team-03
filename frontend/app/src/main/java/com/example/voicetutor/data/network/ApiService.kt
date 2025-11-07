@@ -191,6 +191,7 @@ data class CreateAssignmentRequest(
     val subject: String,
     @SerializedName("class_id") val class_id: Int,
     @SerializedName("due_at") val due_at: String,
+    @SerializedName("visible_from") val visible_from: String? = null,
     val grade: String?,
     val type: String,
     val description: String?,

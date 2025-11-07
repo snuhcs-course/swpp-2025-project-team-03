@@ -140,14 +140,20 @@ fun CreateAssignmentScreen(
     var dueDateText by remember { mutableStateOf("") }
     var dueDateRequest by remember { mutableStateOf("") }
     var dueDateTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var visibleDateText by remember { mutableStateOf("") }
+    var visibleDateRequest by remember { mutableStateOf("") }
+    var visibleDateTime by remember { mutableStateOf<LocalDateTime?>(null) }
     var questionCount by remember { mutableStateOf("5") }
     var assignToAll by remember { mutableStateOf(true) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
     var gradeSelectionExpanded by remember { mutableStateOf(false) }
     var subjectSelectionExpanded by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
-    var pendingDate by remember { mutableStateOf<LocalDate?>(null) }
+    var dueShowDatePicker by remember { mutableStateOf(false) }
+    var dueShowTimePicker by remember { mutableStateOf(false) }
+    var duePendingDate by remember { mutableStateOf<LocalDate?>(null) }
+    var visibleShowDatePicker by remember { mutableStateOf(false) }
+    var visibleShowTimePicker by remember { mutableStateOf(false) }
+    var visiblePendingDate by remember { mutableStateOf<LocalDate?>(null) }
 
     val displayDateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") }
     val zoneId = remember { ZoneId.systemDefault() }
@@ -444,7 +450,7 @@ fun CreateAssignmentScreen(
                     LaunchedEffect(dueDateInteractionSource) {
                         dueDateInteractionSource.interactions.collect { interaction ->
                             if (interaction is PressInteraction.Release) {
-                    showDatePicker = true
+                                dueShowDatePicker = true
                             }
                         }
                     }
@@ -465,6 +471,43 @@ fun CreateAssignmentScreen(
                         },
                         singleLine = true,
                         interactionSource = dueDateInteractionSource,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryIndigo,
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Visible from date
+                    val visibleDateInteractionSource = remember { MutableInteractionSource() }
+                    LaunchedEffect(visibleDateInteractionSource) {
+                        visibleDateInteractionSource.interactions.collect { interaction ->
+                            if (interaction is PressInteraction.Release) {
+                                visibleShowDatePicker = true
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = visibleDateText,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("공개일") },
+                        placeholder = { Text("날짜와 시간을 선택하세요") },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Event,
+                                contentDescription = null,
+                                tint = PrimaryIndigo
+                            )
+                        },
+                        singleLine = true,
+                        interactionSource = visibleDateInteractionSource,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
                             focusedLabelColor = PrimaryIndigo,
@@ -788,7 +831,7 @@ fun CreateAssignmentScreen(
         val isFormValid = assignmentTitle.isNotBlank() && assignmentDescription.isNotBlank() && 
             selectedClass.isNotBlank() && selectedClassId != null && 
             selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
-            dueDateRequest.isNotBlank() && 
+            dueDateRequest.isNotBlank() && visibleDateRequest.isNotBlank() && 
             questionCount.isNotBlank() && selectedFiles.isNotEmpty()
         
         VTButton(
@@ -960,6 +1003,7 @@ fun CreateAssignmentScreen(
                         subject = selectedSubject,
                         class_id = selectedClassId!!,
                         due_at = dueDateRequest,
+                        visible_from = visibleDateRequest,
                         grade = selectedGrade,
                         type = "Quiz",  // PDF 과제는 항상 Quiz 타입
                         description = assignmentDescription,
@@ -971,6 +1015,7 @@ fun CreateAssignmentScreen(
                     println("Grade: $selectedGrade, Subject: $selectedSubject")
                     println("PDF files: ${selectedFiles.map { it.name }}")
                     println("Sample questions: ${sampleQuestions.size}개 생성")
+                    println("Visible from: $visibleDateRequest")
                     println("selectedPdfFile: ${selectedPdfFile?.name}")
                     println("selectedPdfFile != null: ${selectedPdfFile != null}")
                     println("selectedFiles.size: ${selectedFiles.size}")
@@ -1009,7 +1054,7 @@ fun CreateAssignmentScreen(
         }
     }
 
-    if (showDatePicker) {
+    if (dueShowDatePicker) {
         val initialDateMillis = dueDateTime
             ?.atZone(zoneId)
             ?.toInstant()
@@ -1019,19 +1064,19 @@ fun CreateAssignmentScreen(
 
         DatePickerDialog(
             onDismissRequest = {
-                showDatePicker = false
-                pendingDate = null
+                dueShowDatePicker = false
+                duePendingDate = null
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         val selectedMillis = datePickerState.selectedDateMillis
                         if (selectedMillis != null) {
-                            pendingDate = Instant.ofEpochMilli(selectedMillis)
+                            duePendingDate = Instant.ofEpochMilli(selectedMillis)
                                 .atZone(zoneId)
                                 .toLocalDate()
-                            showDatePicker = false
-                            showTimePicker = true
+                            dueShowDatePicker = false
+                            dueShowTimePicker = true
                         }
                     },
                     enabled = datePickerState.selectedDateMillis != null,
@@ -1043,8 +1088,8 @@ fun CreateAssignmentScreen(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        showDatePicker = false
-                        pendingDate = null
+                        dueShowDatePicker = false
+                        duePendingDate = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
                 ) {
@@ -1068,7 +1113,7 @@ fun CreateAssignmentScreen(
         }
     }
 
-    if (showTimePicker) {
+    if (dueShowTimePicker) {
         val initialHour = dueDateTime?.hour ?: LocalTime.now().hour
         val initialMinute = dueDateTime?.minute ?: LocalTime.now().minute
         val timePickerState = rememberTimePickerState(
@@ -1079,13 +1124,13 @@ fun CreateAssignmentScreen(
 
         AlertDialog(
             onDismissRequest = {
-                showTimePicker = false
-                pendingDate = null
+                dueShowTimePicker = false
+                duePendingDate = null
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val selectedDate = pendingDate ?: dueDateTime?.toLocalDate() ?: LocalDate.now()
+                        val selectedDate = duePendingDate ?: dueDateTime?.toLocalDate() ?: LocalDate.now()
                         val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
                         val finalDateTime = LocalDateTime.of(selectedDate, selectedTime)
                         dueDateTime = finalDateTime
@@ -1094,8 +1139,8 @@ fun CreateAssignmentScreen(
                             .atZone(zoneId)
                             .toOffsetDateTime()
                             .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                        showTimePicker = false
-                        pendingDate = null
+                        dueShowTimePicker = false
+                        duePendingDate = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
                 ) {
@@ -1105,8 +1150,125 @@ fun CreateAssignmentScreen(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        showTimePicker = false
-                        pendingDate = null
+                        dueShowTimePicker = false
+                        duePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            },
+            title = {
+                Text(
+                    text = "시간 선택",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Gray800
+                )
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
+    }
+
+    if (visibleShowDatePicker) {
+        val initialDateMillis = visibleDateTime
+            ?.atZone(zoneId)
+            ?.toInstant()
+            ?.toEpochMilli()
+            ?: Instant.now().toEpochMilli()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
+
+        DatePickerDialog(
+            onDismissRequest = {
+                visibleShowDatePicker = false
+                visiblePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            visiblePendingDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(zoneId)
+                                .toLocalDate()
+                            visibleShowDatePicker = false
+                            visibleShowTimePicker = true
+                        }
+                    },
+                    enabled = datePickerState.selectedDateMillis != null,
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("시간 선택")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        visibleShowDatePicker = false
+                        visiblePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = Color.White,
+                    titleContentColor = Gray800,
+                    headlineContentColor = Gray800,
+                    weekdayContentColor = Gray600,
+                    dayContentColor = Gray800,
+                    selectedDayContainerColor = PrimaryIndigo,
+                    selectedDayContentColor = Color.White,
+                    todayDateBorderColor = PrimaryIndigo
+                )
+            )
+        }
+    }
+
+    if (visibleShowTimePicker) {
+        val initialHour = visibleDateTime?.hour ?: LocalTime.now().hour
+        val initialMinute = visibleDateTime?.minute ?: LocalTime.now().minute
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            is24Hour = true
+        )
+
+        AlertDialog(
+            onDismissRequest = {
+                visibleShowTimePicker = false
+                visiblePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedDate = visiblePendingDate ?: visibleDateTime?.toLocalDate() ?: LocalDate.now()
+                        val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        val finalDateTime = LocalDateTime.of(selectedDate, selectedTime)
+                        visibleDateTime = finalDateTime
+                        visibleDateText = finalDateTime.format(displayDateFormatter)
+                        visibleDateRequest = finalDateTime
+                            .atZone(zoneId)
+                            .toOffsetDateTime()
+                            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                        visibleShowTimePicker = false
+                        visiblePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("확인")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        visibleShowTimePicker = false
+                        visiblePendingDate = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
                 ) {
