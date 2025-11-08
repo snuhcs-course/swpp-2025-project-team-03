@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,8 +23,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.automirrored.filled.*
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.ui.theme.*
+import kotlinx.coroutines.delay
 
 data class RecentAssignment(
     val id: String, // personal_assignment_id
@@ -92,6 +93,34 @@ fun MainLayout(
     // Get question generation status for floating progress indicator
     val isGeneratingQuestions by assignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
     val generatingAssignmentTitle by assignmentViewModel.generatingAssignmentTitle.collectAsStateWithLifecycle()
+    val questionGenerationSuccess by assignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
+    
+    var lastGeneratingAssignmentTitle by remember { mutableStateOf<String?>(null) }
+    var showGenerationCompletedToast by remember { mutableStateOf(false) }
+    var generationCompletedMessage by remember { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(generatingAssignmentTitle) {
+        if (generatingAssignmentTitle != null) {
+            lastGeneratingAssignmentTitle = generatingAssignmentTitle
+        }
+    }
+    
+    LaunchedEffect(questionGenerationSuccess) {
+        if (questionGenerationSuccess) {
+            val title = lastGeneratingAssignmentTitle
+            generationCompletedMessage = if (title != null) {
+                "$title: 질문 생성이 완료되었어요!"
+            } else {
+                "질문 생성이 완료되었어요!"
+            }
+            showGenerationCompletedToast = true
+            delay(3000)
+            showGenerationCompletedToast = false
+            generationCompletedMessage = null
+            lastGeneratingAssignmentTitle = null
+            assignmentViewModel.clearQuestionGenerationStatus()
+        }
+    }
     
     // Load recent assignment for students
     LaunchedEffect(userRole, currentUser?.id) {
@@ -306,6 +335,46 @@ fun MainLayout(
                             color = PrimaryIndigo,
                             strokeWidth = 3.dp,
                             modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        if (showGenerationCompletedToast && generationCompletedMessage != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .shadow(8.dp, RoundedCornerShape(12.dp))
+                        .wrapContentWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White,
+                    tonalElevation = 8.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = "질문 생성 완료",
+                            tint = PrimaryIndigo
+                        )
+                        Text(
+                            text = generationCompletedMessage ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray800,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 220.dp)
                         )
                     }
                 }
