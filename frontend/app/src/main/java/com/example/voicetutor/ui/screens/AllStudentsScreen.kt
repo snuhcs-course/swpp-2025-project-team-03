@@ -35,7 +35,6 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 fun AllStudentsScreen(
     teacherId: String = "1", // 임시로 기본값 설정
     onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> },  // 리포트용
-    onNavigateToStudentInfo: (String, String) -> Unit = { _, _ -> },  // 학생 상세용
     onNavigateToMessage: (String) -> Unit = {}
 ) {
     val studentViewModel: StudentViewModel = hiltViewModel()
@@ -297,10 +296,6 @@ fun AllStudentsScreen(
                     totalAssignments = stats?.totalAssignments ?: 0,
                     completedAssignments = stats?.completedAssignments ?: 0,
                     isLoadingStats = isLoadingStatistics,
-                    onStudentClick = { 
-                        // 학생 상세 페이지로 이동
-                        onNavigateToStudentInfo(student.id.toString(), student.name)
-                    },
                     onMessageClick = { onNavigateToMessage(student.name) },
                     onReportClick = {
                         // 리포트 페이지로 이동
@@ -321,13 +316,11 @@ fun AllStudentsCard(
     totalAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
     completedAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
     isLoadingStats: Boolean,
-    onStudentClick: () -> Unit,
     onMessageClick: () -> Unit,
-    onReportClick: () -> Unit = onStudentClick
+    onReportClick: () -> Unit
 ) {
     VTCard(
-        variant = CardVariant.Elevated,
-        onClick = onStudentClick
+        variant = CardVariant.Elevated
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)

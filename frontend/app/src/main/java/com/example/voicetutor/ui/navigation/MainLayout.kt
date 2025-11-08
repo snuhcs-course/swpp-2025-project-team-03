@@ -48,7 +48,6 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         currentDestination?.startsWith(VoiceTutorScreens.EditAssignment.route.split("{").first()) == true -> "과제 편집"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherAssignmentResults.route.split("{").first()) == true -> "과제 결과"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherAssignmentDetail.route.split("{").first()) == true -> "과제 상세"
-        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentDetail.route.split("{").first()) == true -> "학생 상세"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentAssignmentDetail.route.split("{").first()) == true -> "과제 결과"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentReport.route.split("{").first()) == true -> "리포트"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "수업 관리"
@@ -77,7 +76,6 @@ fun MainLayout(
         currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "teacher_classes" // 수업 탭 선택
         currentDestination == VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
         currentDestination == VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
-        currentDestination == VoiceTutorScreens.TeacherStudentDetail.route -> "teacher_students" // 학생 상세 페이지에서 학생 탭 선택
         else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"
     }
     

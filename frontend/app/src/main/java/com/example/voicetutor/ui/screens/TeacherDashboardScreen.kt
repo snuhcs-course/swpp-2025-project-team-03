@@ -35,8 +35,7 @@ fun TeacherDashboardScreen(
     onCreateNewAssignment: () -> Unit = {},
     onNavigateToAssignmentDetail: (Int) -> Unit = {},
     onNavigateToAssignmentResults: (Int) -> Unit = {},
-    onNavigateToEditAssignment: (Int) -> Unit = {},
-    onNavigateToStudentDetail: (String) -> Unit = {}
+    onNavigateToEditAssignment: (Int) -> Unit = {}
 ) {
     val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()

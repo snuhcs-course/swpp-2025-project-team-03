@@ -40,7 +40,6 @@ fun TeacherStudentsScreen(
     classId: Int? = null,
     teacherId: String? = null,
     onNavigateToSendMessage: () -> Unit = {},
-    onNavigateToStudentDetail: (Int) -> Unit = {},
     onNavigateToMessage: (Int) -> Unit = {},
     onNavigateToAttendance: () -> Unit = {},
     navController: androidx.navigation.NavHostController? = null
@@ -407,7 +406,6 @@ fun TeacherStudentsScreen(
                         totalAssignments = stats?.totalAssignments ?: 0,
                         completedAssignments = stats?.completedAssignments ?: 0,
                         isLoadingStats = isLoadingStatistics,
-                        onViewStudent = { onNavigateToStudentDetail(student.id) },
                         onSendMessage = { onNavigateToMessage(student.id) }
                     )
                     
@@ -547,12 +545,10 @@ fun StudentCard(
     totalAssignments: Int,
     completedAssignments: Int,
     isLoadingStats: Boolean,
-    onViewStudent: (Int) -> Unit,
     onSendMessage: (Int) -> Unit
 ) {
     VTCard(
-        variant = CardVariant.Elevated,
-        onClick = { onViewStudent(student.id) }
+        variant = CardVariant.Elevated
     ) {
         Column {
             Row(

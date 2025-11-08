@@ -79,12 +79,6 @@ class GetPageTitleTest {
     }
 
     @Test
-    fun getPageTitle_teacherStudentDetail_returnsCorrectTitle() {
-        val title = getPageTitle(VoiceTutorScreens.TeacherStudentDetail.route, UserRole.TEACHER)
-        assertEquals("학생 상세", title)
-    }
-
-    @Test
     fun getPageTitle_teacherStudentAssignmentDetail_returnsCorrectTitle() {
         val title = getPageTitle(VoiceTutorScreens.TeacherStudentAssignmentDetail.route, UserRole.TEACHER)
         assertEquals("과제 결과", title)
