@@ -155,6 +155,10 @@ fun VoiceTutorNavigation(
                     onNavigateToProgressReport = {
                         navController.navigate(VoiceTutorScreens.Progress.route)
                     },
+                    onNavigateToAssignment = { assignmentId ->
+                        // personalAssignmentId를 사용하여 과제 시작
+                        navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
+                    },
                     onNavigateToAssignmentDetail = { assignmentId ->
                         // assignmentId는 PersonalAssignment ID (String 형태로 전달됨)
                         navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId, "과제"))
