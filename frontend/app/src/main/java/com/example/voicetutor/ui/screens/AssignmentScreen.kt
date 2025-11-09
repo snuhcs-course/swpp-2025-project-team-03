@@ -111,6 +111,7 @@ fun AssignmentContinuousScreen(
     val answerSubmissionResponse by viewModel.answerSubmissionResponse.collectAsStateWithLifecycle()
     val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isSubmitting by viewModel.isSubmitting.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
@@ -892,6 +893,32 @@ fun AssignmentContinuousScreen(
                             enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording
                         )
                     }
+                }
+            }
+        }
+
+        // 채점 중 오버레이 로딩
+        if (isSubmitting) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Text(
+                        text = "채점 중...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
