@@ -822,7 +822,8 @@ class AssignmentViewModel @Inject constructor(
                             // Personal Assignment 정보 추가
                             personalAssignmentStatus = personalAssignment.status,
                             solvedNum = personalAssignment.solvedNum,
-                            personalAssignmentId = personalAssignment.id  // PersonalAssignment ID 설정
+                            personalAssignmentId = personalAssignment.id,  // PersonalAssignment ID 설정
+                            submittedAt = personalAssignment.submittedAt
                         )
                     }
                     

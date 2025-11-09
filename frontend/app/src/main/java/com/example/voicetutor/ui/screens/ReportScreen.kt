@@ -224,7 +224,7 @@ fun AssignmentReportCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 완료일
+                    // 제출일
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -236,7 +236,7 @@ fun AssignmentReportCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "마감일: ${formatDateOnly(assignment.dueAt)}",
+                            text = "제출일: ${formatDateOnly(assignment.submittedAt ?: assignment.dueAt)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray500
                         )

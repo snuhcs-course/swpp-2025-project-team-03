@@ -62,7 +62,8 @@ data class AssignmentData(
     // Personal Assignment 관련 정보 (변환 시 추가)
     val personalAssignmentStatus: PersonalAssignmentStatus? = null,
     val solvedNum: Int? = null,
-    val personalAssignmentId: Int? = null  // PersonalAssignment ID 추가
+    val personalAssignmentId: Int? = null,  // PersonalAssignment ID 추가
+    val submittedAt: String? = null  // 제출 일시
 )
 
 data class CourseClass(
