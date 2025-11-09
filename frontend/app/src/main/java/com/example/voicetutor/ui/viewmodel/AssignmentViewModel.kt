@@ -822,7 +822,8 @@ class AssignmentViewModel @Inject constructor(
                             // Personal Assignment 정보 추가
                             personalAssignmentStatus = personalAssignment.status,
                             solvedNum = personalAssignment.solvedNum,
-                            personalAssignmentId = personalAssignment.id  // PersonalAssignment ID 설정
+                            personalAssignmentId = personalAssignment.id,  // PersonalAssignment ID 설정
+                            submittedAt = personalAssignment.submittedAt
                         )
                     }
                     
@@ -1550,6 +1551,18 @@ class AssignmentViewModel @Inject constructor(
         _audioRecordingState.value = RecordingState()
     }
     
+    fun setAudioFilePath(filePath: String) {
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            audioFilePath = filePath
+        )
+    }
+
+    fun setRecordingComplete(isComplete: Boolean) {
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            isRecordingComplete = isComplete
+        )
+    }
+
     fun clearAnswerSubmissionResponse() {
         _answerSubmissionResponse.value = null
     }
