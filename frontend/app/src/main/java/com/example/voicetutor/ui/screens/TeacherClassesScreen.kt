@@ -60,37 +60,28 @@ fun TeacherClassesScreen(
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     
     // Load classes and assignments on first composition
-    LaunchedEffect(currentUser?.id, assignments.isEmpty(), classes.isEmpty()) {
+    LaunchedEffect(currentUser?.id) {
         val actualTeacherId = teacherId ?: currentUser?.id?.toString()
         
-        // 이미 assignments가 있으면 재호출하지 않음
-        if (assignments.isNotEmpty()) {
-            println("TeacherClassesScreen - Already have ${assignments.size} assignments from login")
-        } else if (actualTeacherId != null) {
-            println("TeacherClassesScreen - Loading assignments for teacher ID: $actualTeacherId")
-            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
-        }
-        
-        // Classes는 항상 로드 필요
         if (actualTeacherId == null) {
             println("TeacherClassesScreen - Waiting for user to be loaded...")
             return@LaunchedEffect
         }
         
+        // 이미 assignments가 있으면 재호출하지 않음
+        if (assignments.isEmpty()) {
+            println("TeacherClassesScreen - Loading assignments for teacher ID: $actualTeacherId")
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+        } else {
+            println("TeacherClassesScreen - Already have ${assignments.size} assignments from login")
+        }
+        
+        // 이미 classes가 있으면 재호출하지 않음
         if (classes.isEmpty()) {
             println("TeacherClassesScreen - Loading classes for teacher ID: $actualTeacherId")
             classViewModel.loadClasses(actualTeacherId)
         } else {
             println("TeacherClassesScreen - Already have ${classes.size} classes")
-        }
-    }
-    
-    // 클래스 목록이 변경될 때마다 새로고침
-    LaunchedEffect(classes.size) {
-        val actualTeacherId = teacherId ?: currentUser?.id?.toString()
-        if (actualTeacherId != null && classes.isNotEmpty()) {
-            println("TeacherClassesScreen - Classes updated, refreshing...")
-            classViewModel.refreshClasses(actualTeacherId)
         }
     }
     
@@ -102,34 +93,11 @@ fun TeacherClassesScreen(
         }
     }
     
-    // 각 클래스의 완료율을 저장하는 상태
-    var classCompletionRates by remember { mutableStateOf<Map<Int, Float>>(emptyMap()) }
-    
-    // 각 클래스의 완료율 로드
-    LaunchedEffect(classes.map { it.id }) {
-        if (classes.isNotEmpty()) {
-            val ratesMap = mutableMapOf<Int, Float>()
-            
-            classes.forEach { classData ->
-                classViewModel.loadClassCompletionRate(classData.id) { result ->
-                    result.onSuccess { completionRate ->
-                        ratesMap[classData.id] = completionRate.completionRate
-                        classCompletionRates = ratesMap.toMap() // 상태 업데이트
-                    }.onFailure {
-                        ratesMap[classData.id] = 0f
-                        classCompletionRates = ratesMap.toMap() // 상태 업데이트
-                    }
-                }
-            }
-        }
-    }
-    
     // Convert ClassData to ClassRoom for UI
     val classRooms = classes.map { classData ->
-        // Calculate assignment count and completion rate from actual data
+        // Calculate assignment count from actual data
         val classAssignments = assignments.filter { it.courseClass.id == classData.id }
         val assignmentCount = classAssignments.size
-        val completionRate = classCompletionRates[classData.id] ?: 0f
         
         ClassRoom(
             id = classData.id,
@@ -138,7 +106,7 @@ fun TeacherClassesScreen(
             description = classData.description,
             studentCount = classData.actualStudentCount,
             assignmentCount = assignmentCount,
-            completionRate = completionRate,
+            completionRate = 0f, // Not used in UI, kept for data model compatibility
             color = when (classData.id % 4) {
                 0 -> PrimaryIndigo
                 1 -> Success
