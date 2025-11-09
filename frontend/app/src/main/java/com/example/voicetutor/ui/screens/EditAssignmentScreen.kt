@@ -21,6 +21,9 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,8 +63,11 @@ fun EditAssignmentScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedClass by remember { mutableStateOf("고등학교 1학년 A반") }
     var dueDate by remember { mutableStateOf("2024-01-20 23:59") }
+    var visibleFrom by remember { mutableStateOf("") }
     var assignmentType by remember { mutableStateOf("연속형") }
-    var isPublished by remember { mutableStateOf(true) }
+    var dueDateError by remember { mutableStateOf<String?>(null) }
+    var visibleDateError by remember { mutableStateOf<String?>(null) }
+    var validationDialogMessage by remember { mutableStateOf<String?>(null) }
     
     // Load data on first composition
     LaunchedEffect(assignmentId, targetAssignment?.id, teacherId) {
@@ -85,9 +91,11 @@ fun EditAssignmentScreen(
             title = assignment.title
             description = assignment.description ?: ""
             selectedClass = assignment.courseClass.name
-            dueDate = assignment.dueAt
+            dueDate = normalizeDateTime(assignment.dueAt) ?: assignment.dueAt
+            visibleFrom = assignment.visibleFrom?.let { normalizeDateTime(it) } ?: ""
             assignmentType = "연속형" // type 속성이 없으므로 기본값
-            isPublished = true // 기본값으로 설정
+            dueDateError = null
+            visibleDateError = null
         }
     }
     
@@ -228,7 +236,10 @@ fun EditAssignmentScreen(
                 // Due date
                 OutlinedTextField(
                     value = dueDate,
-                    onValueChange = { dueDate = it },
+                    onValueChange = {
+                        dueDate = it
+                        dueDateError = null
+                    },
                     label = { Text("마감일") },
                     placeholder = { Text("예: 2024-01-20 23:59") },
                     modifier = Modifier.fillMaxWidth(),
@@ -238,7 +249,15 @@ fun EditAssignmentScreen(
                             contentDescription = null,
                             tint = PrimaryIndigo
                         )
-                    }
+                    },
+                    supportingText = {
+                        Text(
+                            text = dueDateError ?: "yyyy-MM-dd HH:mm 형식으로 입력하세요",
+                            color = if (dueDateError != null) Error else Gray500,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    },
+                    isError = dueDateError != null
                 )
             }
         }
@@ -247,43 +266,38 @@ fun EditAssignmentScreen(
         VTCard(variant = CardVariant.Elevated) {
             Column {
                 Text(
-                    text = "과제 설정",
+                    text = "공개 설정",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                Row(
+                OutlinedTextField(
+                    value = visibleFrom,
+                    onValueChange = {
+                        visibleFrom = it
+                        visibleDateError = null
+                    },
+                    label = { Text("공개 일시") },
+                    placeholder = { Text("예: 2024-01-10 09:00") },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Visibility,
+                            contentDescription = null,
+                            tint = PrimaryIndigo
+                        )
+                    },
+                    supportingText = {
                         Text(
-                            text = "과제 공개",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = Gray800
+                            text = visibleDateError ?: "비워두면 기존 값이 반영됩니다. (yyyy-MM-dd HH:mm)",
+                            color = if (visibleDateError != null) Error else Gray500,
+                            style = MaterialTheme.typography.bodySmall
                         )
-                        Text(
-                            text = "학생들이 과제를 볼 수 있습니다",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                    
-                    Switch(
-                        checked = isPublished,
-                        onCheckedChange = { isPublished = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Success,
-                            uncheckedThumbColor = Color.White,
-                            uncheckedTrackColor = Gray300
-                        )
-                    )
-                }
+                    },
+                    isError = visibleDateError != null
+                )
             }
         }
         
@@ -357,9 +371,18 @@ fun EditAssignmentScreen(
         VTButton(
             text = "저장",
             onClick = {
+                dueDateError = validateDateTime(dueDate)
+                visibleDateError = if (visibleFrom.isBlank()) null else validateDateTime(visibleFrom)
+                
                 if (title.isNotBlank() && description.isNotBlank() && 
-                    selectedClass.isNotBlank() && dueDate.isNotBlank()) {
+                    selectedClass.isNotBlank() && dueDate.isNotBlank() &&
+                    dueDateError == null && visibleDateError == null) {
                     onSaveAssignment()
+                } else {
+                    val message = listOfNotNull(dueDateError, visibleDateError)
+                        .joinToString("\n")
+                        .ifBlank { "필수 항목을 모두 입력하고 올바른 형식인지 확인해주세요." }
+                    validationDialogMessage = message
                 }
             },
             variant = ButtonVariant.Gradient,
@@ -390,7 +413,7 @@ fun EditAssignmentScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "위험 구역",
+                        text = "경고",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = Error
@@ -464,6 +487,33 @@ fun EditAssignmentScreen(
                 }
             )
         }
+        
+        validationDialogMessage?.let { message ->
+            AlertDialog(
+                onDismissRequest = { validationDialogMessage = null },
+                title = {
+                    Text(
+                        text = "입력 오류",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                confirmButton = {
+                    VTButton(
+                        text = "확인",
+                        onClick = { validationDialogMessage = null },
+                        variant = ButtonVariant.Primary,
+                        size = ButtonSize.Small
+                    )
+                }
+            )
+        }
         }
     }
 }
@@ -474,4 +524,42 @@ fun EditAssignmentScreenPreview() {
     VoiceTutorTheme {
         EditAssignmentScreen()
     }
+}
+
+private fun validateDateTime(input: String): String? {
+    if (input.isBlank()) return "날짜와 시간을 입력해주세요"
+    return try {
+        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        formatter.isLenient = false
+        formatter.parse(input)
+        null
+    } catch (e: ParseException) {
+        "유효한 날짜가 아닙니다. 형식: yyyy-MM-dd HH:mm"
+    }
+}
+
+private fun normalizeDateTime(input: String?): String? {
+    if (input.isNullOrBlank()) return null
+    val targetFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).apply {
+        isLenient = false
+    }
+    val patterns = listOf(
+        "yyyy-MM-dd HH:mm",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        "yyyy-MM-dd"
+    )
+    for (pattern in patterns) {
+        try {
+            val parser = SimpleDateFormat(pattern, Locale.getDefault()).apply { isLenient = false }
+            val date = parser.parse(input)
+            if (date != null) {
+                return targetFormat.format(date)
+            }
+        } catch (_: ParseException) {
+        }
+    }
+    return null
 }
