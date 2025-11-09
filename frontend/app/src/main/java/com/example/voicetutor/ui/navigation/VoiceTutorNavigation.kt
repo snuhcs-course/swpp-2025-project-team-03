@@ -361,9 +361,9 @@ fun VoiceTutorNavigation(
                 TeacherStudentsScreen(
                     classId = classId,
                     teacherId = currentUser?.id?.toString(),
-                    onNavigateToStudentDetail = { studentId ->
-                        navController.navigate(VoiceTutorScreens.TeacherStudentDetail.createRoute(studentId))
-                    },
+//                    onNavigateToStudentDetail = { studentId ->
+//                        navController.navigate(VoiceTutorScreens.TeacherStudentDetail.createRoute(studentId))
+//                    },
                     navController = navController
                 )
             }
