@@ -449,7 +449,11 @@ class AnswerSubmitView(APIView):
 
                 # features 에서 음성 파일 길이 구해서 timezone.now()에 빼는 로직
                 audio_duration_sec = features.get("total_length", 0.0)
-                started_at = timezone.now() - timedelta(seconds=audio_duration_sec)
+                if audio_duration_sec is None or audio_duration_sec <= 0:
+                    # fallback: 현재 시간 사용
+                    started_at = timezone.now()
+                else:
+                    started_at = timezone.now() - timedelta(seconds=audio_duration_sec)
                 logger.info(f"[AnswerSubmitView] 음성 길이: {audio_duration_sec:.2f}초, 시작 시간: {started_at}")
 
                 # STT 결과 (transcript) 확인
@@ -525,6 +529,7 @@ class AnswerSubmitView(APIView):
                     # plan 이 ONLY_CORRECT 면 STATUS: SUBMITTED 로 변경, solved_num +1
                     if personal_assignment.status == PersonalAssignment.Status.NOT_STARTED:
                         personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
+                        personal_assignment.started_at = started_at
 
                     plan = tail_payload.get("plan")
                     old_solved_num = personal_assignment.solved_num
@@ -633,6 +638,12 @@ class AnswerSubmitView(APIView):
                             f"[AnswerSubmitView] 다음 base Question이 존재하지 않음 - PersonalAssignment ID: {personal_assignment.id}, Number: {question.number + 1}"
                         )
                         tail_question_obj = None
+                        personal_assignment.status = PersonalAssignment.Status.SUBMITTED
+                        personal_assignment.submitted_at = timezone.now()
+                        personal_assignment.save()
+                        logger.info(
+                            f"[AnswerSubmitView] PersonalAssignment 상태를 SUBMITTED로 변경 - ID: {personal_assignment.id}"
+                        )
 
                 # Step 6: 응답 데이터 준비
                 # TailQuestionSerializer 사용

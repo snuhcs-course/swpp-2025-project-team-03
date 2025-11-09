@@ -844,11 +844,11 @@ fun AssignmentContinuousScreen(
                                 VTButton(
                                     text = "완료",
                                     onClick = {
-                                        println("AssignmentScreen - Completion button pressed")
+                                        // println("AssignmentScreen - Completion button pressed")
                                         // 과제 완료 API 호출
-                                        assignmentId?.let { id ->
-                                            viewModel.completeAssignment(id)
-                                        }
+//                                        assignmentId?.let { id ->
+//                                            viewModel.completeAssignment(id)
+//                                        }
                                         // 과제 완료 상태로 설정하여 완료 화면 표시
                                         viewModel.setAssignmentCompleted(true)
                                     },
