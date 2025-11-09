@@ -105,11 +105,11 @@ class ClassViewModel @Inject constructor(
         loadClasses(teacherId)
     }
     
-    fun enrollStudentToClass(classId: Int, studentId: Int? = null, name: String? = null, email: String? = null) {
+    fun enrollStudentToClass(classId: Int, studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            classRepository.enrollStudentToClass(classId, studentId, name, email)
+            classRepository.enrollStudentToClass(classId, studentId)
                 .onSuccess {
                     // 등록 성공 후 해당 반 학생 목록 갱신
                     loadClassStudents(classId)

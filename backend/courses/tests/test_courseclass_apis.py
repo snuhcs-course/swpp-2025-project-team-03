@@ -346,47 +346,32 @@ class TestClassStudentsView:
         assert response.data["data"]["student_name"] == student.display_name
         assert response.data["data"]["class_name"] == course_class.name
 
-    def test_enroll_student_with_student_name(self, api_client, course_class, student):
-        """name으로 학생 등록 성공 테스트"""
-        url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?name={student.display_name}")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["success"] is True
-        assert response.data["data"]["student_name"] == student.display_name
-        assert response.data["data"]["class_name"] == course_class.name
-
-    def test_enroll_student_with_student_email(self, api_client, course_class, student):
-        """email로 학생 등록 성공 테스트"""
-        url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?email={student.email}")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["success"] is True
-        assert response.data["data"]["student_name"] == student.display_name
-        assert response.data["data"]["class_name"] == course_class.name
-
-    def test_enroll_student_with_multiple_params(self, api_client, course_class, student):
-        """여러 파라미터로 학생 등록 성공 테스트"""
-        url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?studentId={student.id}&name={student.display_name}&email={student.email}")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["success"] is True
-        assert response.data["data"]["student_name"] == student.display_name
-        assert response.data["data"]["class_name"] == course_class.name
-
-    def test_enroll_student_no_params(self, api_client, course_class):
-        """파라미터 없이 학생 등록 시도 시 에러 테스트"""
+    def test_enroll_student_no_student_id(self, api_client, course_class):
+        """studentId 없이 학생 등록 시도 시 에러 테스트"""
         url = reverse("class-students", kwargs={"id": course_class.id})
         response = api_client.put(url)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.data["success"] is False
-        assert "must be provided" in response.data["message"]
+        assert "학생 ID는 필수입니다" in response.data["message"]
+
+    def test_enroll_student_invalid_student_id_format(self, api_client, course_class):
+        """잘못된 형식의 studentId로 학생 등록 시도 시 에러 테스트"""
+        url = reverse("class-students", kwargs={"id": course_class.id})
+        response = api_client.put(f"{url}?studentId=abc")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["success"] is False
+        assert "학생 ID는 정수여야 합니다" in response.data["message"]
+
+    def test_enroll_student_invalid_student_id_value(self, api_client, course_class):
+        """음수 또는 0인 studentId로 학생 등록 시도 시 에러 테스트"""
+        url = reverse("class-students", kwargs={"id": course_class.id})
+        response = api_client.put(f"{url}?studentId=0")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["success"] is False
+        assert "학생 ID는 양수여야 합니다" in response.data["message"]
 
     def test_enroll_student_not_found(self, api_client, course_class):
         """존재하지 않는 학생 등록 시도 시 에러 테스트"""
@@ -423,18 +408,11 @@ class TestClassStudentsView:
         enrollments_count = Enrollment.objects.filter(student=student, course_class=course_class).count()
         assert enrollments_count == 1
 
-    def test_enroll_student_multiple_students_matched(self, api_client, course_class):
-        """여러 학생이 검색되는 경우 에러 테스트"""
-        # 같은 display_name을 가진 학생들 생성
-        student1 = StudentFactory(display_name="John Doe")
-        student2 = StudentFactory(display_name="John Doe")
-
+    def test_enroll_student_not_a_student(self, api_client, course_class, teacher):
+        """교사 계정을 studentId로 등록 시도 시 에러 테스트"""
         url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?name=John%20Doe")
+        response = api_client.put(f"{url}?studentId={teacher.id}")
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.data["success"] is False
-        # error 또는 message에 "Multiple students found" 메시지 확인
-        error_message = response.data.get("error") or response.data.get("message") or ""
-        assert "Multiple students found" in error_message
+        assert "학생을 찾을 수 없습니다" in response.data["message"]

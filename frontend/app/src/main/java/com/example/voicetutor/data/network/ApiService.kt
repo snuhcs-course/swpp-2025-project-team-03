@@ -119,9 +119,7 @@ interface ApiService {
     @PUT("courses/classes/{id}/students/")
     suspend fun enrollStudentToClass(
         @Path("id") id: Int,
-        @Query("studentId") studentId: Int? = null,
-        @Query("name") name: String? = null,
-        @Query("email") email: String? = null
+        @Query("studentId") studentId: Int
     ): Response<ApiResponse<EnrollmentData>>
     
     // Class Students Statistics API

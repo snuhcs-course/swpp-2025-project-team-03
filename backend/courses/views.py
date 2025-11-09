@@ -443,16 +443,10 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
 
     @swagger_auto_schema(
         operation_id="클래스에 학생 등록",
-        operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId, name, email 중 최소 하나를 제공해야 합니다.",
+        operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId는 필수입니다.",
         manual_parameters=[
             openapi.Parameter(
-                "studentId", openapi.IN_QUERY, description="학생 ID", type=openapi.TYPE_STRING, required=False
-            ),
-            openapi.Parameter(
-                "name", openapi.IN_QUERY, description="학생 이름", type=openapi.TYPE_STRING, required=False
-            ),
-            openapi.Parameter(
-                "email", openapi.IN_QUERY, description="학생 이메일", type=openapi.TYPE_STRING, required=False
+                "studentId", openapi.IN_QUERY, description="학생 ID", type=openapi.TYPE_INTEGER, required=True
             ),
         ],
         responses={200: "Student enrolled in class"},
@@ -460,42 +454,46 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
     def put(self, request, id):
         try:
             course_class = CourseClass.objects.get(id=id)
-            student_id = request.query_params.get("studentId")
-            student_display_name = request.query_params.get("name")
-            student_email = request.query_params.get("email")
+            student_id_param = request.query_params.get("studentId")
 
-            # 모든 파라미터가 없으면 에러
-            if not student_id and not student_display_name and not student_email:
+            # studentId 파라미터 검증
+            if not student_id_param:
                 return create_api_response(
                     success=False,
-                    message="At least one of studentId, name, or email must be provided",
+                    error="studentId is required",
+                    message="학생 ID는 필수입니다.",
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # id, display_name, email을 이용해서 Account 찾기
-            query_filter = {}
-            if student_id:
-                query_filter["id"] = student_id
-            if student_display_name:
-                query_filter["display_name"] = student_display_name
-            if student_email:
-                query_filter["email"] = student_email
-
+            # studentId가 정수인지 검증
             try:
-                student = Account.objects.get(**query_filter, is_student=True)
+                student_id = int(student_id_param)
+            except (ValueError, TypeError):
+                return create_api_response(
+                    success=False,
+                    error="Invalid studentId format",
+                    message="학생 ID는 정수여야 합니다.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # studentId가 양수인지 검증
+            if student_id <= 0:
+                return create_api_response(
+                    success=False,
+                    error="Invalid studentId value",
+                    message="학생 ID는 양수여야 합니다.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 학생 존재 여부 및 학생 여부 검증
+            try:
+                student = Account.objects.get(id=student_id, is_student=True)
             except Account.DoesNotExist:
                 return create_api_response(
                     success=False,
                     error="Student not found",
-                    message="해당 조건에 맞는 학생을 찾을 수 없습니다.",
+                    message="해당 ID의 학생을 찾을 수 없습니다.",
                     status_code=status.HTTP_404_NOT_FOUND,
-                )
-            except Account.MultipleObjectsReturned:
-                return create_api_response(
-                    success=False,
-                    error="Multiple students found",
-                    message="조건에 맞는 학생이 여러 명입니다. 더 구체적인 정보를 제공해주세요.",
-                    status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
             # 중복 등록 방지
