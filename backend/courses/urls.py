@@ -6,6 +6,7 @@ from .views import (
     ClassListView,
     ClassStudentsStatisticsView,
     ClassStudentsView,
+    StudentClassesView,
     StudentDetailView,
     StudentListView,
     StudentStatisticsView,
@@ -26,4 +27,5 @@ urlpatterns = [
         name="class-students-statistics",
     ),
     path("classes/<int:id>/completion-rate/", ClassCompletionRateView.as_view(), name="class-completion-rate"),
+    path("students/<int:id>/classes/", StudentClassesView.as_view(), name="student-classes"),
 ]
