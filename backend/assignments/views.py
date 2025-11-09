@@ -424,6 +424,8 @@ class AssignmentResultsView(APIView):  # GET /assignments/{id}/results
                 }
             )
 
+            serializer.is_valid(raise_exception=True)
+
             return create_api_response(
                 success=True,
                 data=serializer.data,

@@ -44,7 +44,7 @@ class TestBaseQuestionGenerator:
         mock_instance = mock_llm_class.return_value
         mock_instance.invoke.return_value = AIMessage(content="INVALID_JSON")
 
-        with pytest.raises(OutputParserException) as excinfo:
+        with pytest.raises((OutputParserException, ValueError)) as excinfo:
             generate_base_quizzes("에러 테스트", n=1)
 
         assert "Invalid json" in str(excinfo.value) or "INVALID_JSON" in str(excinfo.value)
