@@ -133,13 +133,6 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<ApiResponse<ClassCompletionRate>>
     
-    // Message APIs (Backend: /api/feedbacks/messages/)
-    @POST("feedbacks/messages/send/")
-    suspend fun sendMessage(@Body request: SendMessageRequest): Response<ApiResponse<SendMessageResponse>>
-    
-    @GET("feedbacks/messages/{classId}/")
-    suspend fun getClassMessages(@Path("classId") classId: Int): Response<ApiResponse<List<MessageData>>>
-    
     // Progress Report APIs
     @GET("reports/progress/")
     suspend fun getProgressReport(
@@ -179,14 +172,6 @@ interface ApiService {
     
     // AI/Quiz APIs removed
     
-    @GET("messages/")
-    suspend fun getMessages(
-        @Query("userId") userId: Int,
-        @Query("messageType") messageType: String? = null,
-        @Query("limit") limit: Int = 50,
-        @Query("offset") offset: Int = 0
-    ): Response<ApiResponse<MessageListResponse>>
-    
 }
 
 // Minimal response model for recent personal assignment lookup
@@ -206,6 +191,7 @@ data class CreateAssignmentRequest(
     val subject: String,
     @SerializedName("class_id") val class_id: Int,
     @SerializedName("due_at") val due_at: String,
+    @SerializedName("visible_from") val visible_from: String? = null,
     val grade: String?,
     val type: String,
     val description: String?,

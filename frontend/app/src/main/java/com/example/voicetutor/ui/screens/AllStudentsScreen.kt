@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,8 +34,7 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 fun AllStudentsScreen(
     teacherId: String = "1", // 임시로 기본값 설정
     onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> },  // 리포트용
-    onNavigateToStudentInfo: (String, String) -> Unit = { _, _ -> },  // 학생 상세용
-    onNavigateToMessage: (String) -> Unit = {}
+    onNavigateToStudentInfo: (String, String) -> Unit = { _, _ -> }  // 학생 상세용
 ) {
     val studentViewModel: StudentViewModel = hiltViewModel()
     val classViewModel: ClassViewModel = hiltViewModel()
@@ -301,7 +299,6 @@ fun AllStudentsScreen(
                         // 학생 상세 페이지로 이동
                         onNavigateToStudentInfo(student.id.toString(), student.name)
                     },
-                    onMessageClick = { onNavigateToMessage(student.name) },
                     onReportClick = {
                         // 리포트 페이지로 이동
                         val classId = selectedClassId ?: 0
@@ -322,7 +319,6 @@ fun AllStudentsCard(
     completedAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
     isLoadingStats: Boolean,
     onStudentClick: () -> Unit,
-    onMessageClick: () -> Unit,
     onReportClick: () -> Unit = onStudentClick
 ) {
     VTCard(
@@ -384,46 +380,22 @@ fun AllStudentsCard(
                 )
             }
             
-            // Action buttons
-            Row(
+            // Action button
+            VTButton(
+                text = "리포트 보기",
+                onClick = {
+                    onReportClick()
+                },
+                variant = ButtonVariant.Outline,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 리포트 버튼 (좌측 하단)
-                Box(
-                    modifier = Modifier.widthIn(max = 244.dp)
-                ) {
-                    VTButton(
-                        text = "리포트 보기",
-                        onClick = {
-                            onReportClick()
-                        },
-                        variant = ButtonVariant.Outline,
-                        modifier = Modifier.fillMaxWidth(),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Assessment,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // 메시지 버튼 (우측)
-                IconButton(
-                    onClick = onMessageClick
-                ) {
+                leadingIcon = {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Message,
-                        contentDescription = "메시지 보내기",
-                        tint = PrimaryIndigo
+                        imageVector = Icons.Filled.Assessment,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
-            }
+            )
         }
     }
 }
