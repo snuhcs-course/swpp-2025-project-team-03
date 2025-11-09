@@ -317,10 +317,10 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
-    averageScore: Float,  // 사용하지 않지만 호환성을 위해 유지
+    averageScore: Float,
     completionRate: Float,
-    totalAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
-    completedAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
+    totalAssignments: Int,
+    completedAssignments: Int,
     isLoadingStats: Boolean,
     onReportClick: () -> Unit
 ) {
@@ -358,7 +358,6 @@ fun AllStudentsCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(
-                    modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
@@ -371,26 +370,6 @@ fun AllStudentsCard(
                         text = student.email,
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
-                    )
-                }
-
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    StatBadge(
-                        label = "이행률",
-                        value = if (isLoadingStats) "로딩 중..." else "${completionRate.toInt()}%",
-                        valueColor = PrimaryIndigo
-                    )
-                    StatBadge(
-                        label = "평균 점수",
-                        value = if (isLoadingStats) "로딩 중..." else "${averageScore.toInt()}점",
-                        valueColor = when {
-                            averageScore >= 90 -> Success
-                            averageScore >= 80 -> Warning
-                            else -> Gray600
-                        }
                     )
                 }
             }
@@ -417,13 +396,15 @@ fun AllStudentsCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 VTButton(
                     text = "리포트 보기",
                     onClick = onReportClick,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
+                    modifier = Modifier.widthIn(min = 165.dp),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Assessment,
@@ -431,6 +412,24 @@ fun AllStudentsCard(
                             modifier = Modifier.size(16.dp)
                         )
                     }
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                StatBadge(
+                    label = "평균 점수",
+                    value = if (isLoadingStats) "로딩 중..." else "${averageScore.toInt()}점",
+                    valueColor = when {
+                        averageScore >= 90 -> Success
+                        averageScore >= 80 -> Warning
+                        else -> Gray600
+                    }
+                )
+
+                StatBadge(
+                    label = "완료율",
+                    value = if (isLoadingStats) "로딩 중..." else "${completionRate.toInt()}%",
+                    valueColor = PrimaryIndigo
                 )
             }
         }
@@ -444,8 +443,8 @@ private fun StatBadge(
     valueColor: Color
 ) {
     Column(
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = value,
