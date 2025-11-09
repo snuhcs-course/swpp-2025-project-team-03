@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.repository.AuthRepository
+import com.example.voicetutor.data.repository.SignupException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,9 @@ class AuthViewModel @Inject constructor(
     
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _signupError = MutableStateFlow<SignupError?>(null)
+    val signupError: StateFlow<SignupError?> = _signupError.asStateFlow()
     
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
@@ -65,6 +69,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
+            _signupError.value = null
             
             // 실제 API 호출
             authRepository.signup(name, email, password, role)
@@ -75,11 +80,30 @@ class AuthViewModel @Inject constructor(
                     _currentUser.value = user
                     _isLoggedIn.value = true
                     _error.value = null
+                    _signupError.value = null
                     println("AuthViewModel - ✅ User set: ${_currentUser.value?.email}, isLoggedIn: ${_isLoggedIn.value}")
                 }
                 .onFailure { exception ->
                     println("AuthViewModel - Signup failed: ${exception.message}")
-                    _error.value = exception.message
+                    val signupError = when (exception) {
+                        is SignupException.DuplicateEmail -> SignupError.General.DuplicateEmail(
+                            exception.message ?: "이미 사용 중인 이메일입니다. 다른 이메일을 사용하거나 로그인하세요."
+                        )
+                        is SignupException.Server -> SignupError.General.Server(
+                            exception.message ?: "서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+                        )
+                        is SignupException.Network -> SignupError.General.Network(
+                            exception.message ?: "네트워크 연결을 확인하고 다시 시도해주세요."
+                        )
+                        is SignupException.Unknown -> SignupError.General.Unknown(
+                            exception.message ?: "회원가입 중 알 수 없는 오류가 발생했습니다."
+                        )
+                        else -> SignupError.General.Unknown(
+                            exception.message ?: "회원가입 중 알 수 없는 오류가 발생했습니다."
+                        )
+                    }
+                    _signupError.value = signupError
+                    _error.value = signupError.message
                 }
             
             _isLoading.value = false
@@ -90,14 +114,34 @@ class AuthViewModel @Inject constructor(
         _currentUser.value = null
         _isLoggedIn.value = false
         _error.value = null
+        _signupError.value = null
     }
     
     fun clearError() {
         _error.value = null
+        _signupError.value = null
     }
     
     fun setError(message: String) {
         _error.value = message
+    }
+
+    fun setSignupInputError(field: SignupField, message: String) {
+        _signupError.value = SignupError.Input(field, message)
+        _error.value = message
+    }
+
+    fun clearSignupError() {
+        _signupError.value = null
+        _error.value = null
+    }
+
+    fun clearFieldError(field: SignupField) {
+        val current = _signupError.value
+        if (current is SignupError.Input && current.field == field) {
+            _signupError.value = null
+            _error.value = null
+        }
     }
 
     // 자동 입력 정보 사용 후 초기화
