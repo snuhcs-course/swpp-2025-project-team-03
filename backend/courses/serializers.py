@@ -126,3 +126,14 @@ class ClassStudentsStatisticsSerializer(serializers.Serializer):
 
     overall_completion_rate = serializers.FloatField()  # 전체 평균 완료율
     students = StudentStatisticsItemSerializer(many=True)
+
+
+class ClassInfoSerializer(serializers.ModelSerializer):
+    """학생이 수강 중인 클래스 정보를 위한 serializer"""
+
+    class Meta:
+        model = CourseClass
+        fields = [
+            "id",
+            "name",
+        ]

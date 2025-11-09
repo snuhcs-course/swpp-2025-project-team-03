@@ -698,3 +698,35 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
                 message="반 학생 통계 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class StudentClassesView(APIView):  # GET /students/{id}/classes
+    @swagger_auto_schema(
+        operation_id="학생 클래스 목록 조회",
+        operation_description="특정 학생이 속한 클래스 목록을 조회합니다.",
+        responses={200: "Student classes"},
+    )
+    def get(self, request, id):
+        try:
+            student = Account.objects.get(id=id, is_student=True)
+            enrollments = Enrollment.objects.filter(student=student, status=Enrollment.Status.ENROLLED)
+            classes = [enrollment.course_class for enrollment in enrollments]
+
+            serializer = CourseClassSerializer(classes, many=True)
+            return create_api_response(data=serializer.data, message="학생 클래스 목록 조회 성공")
+
+        except Account.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Student not found",
+                message="해당 학생을 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[StudentClassesView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="학생 클래스 목록 조회 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
