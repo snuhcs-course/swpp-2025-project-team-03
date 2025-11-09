@@ -628,6 +628,64 @@ fun AssignmentContinuousScreen(
                                 )
                             }
                         )
+
+                        // 건너뛰기 버튼 - 녹음이 없고 녹음 중이 아닐 때만 표시
+                        if (audioRecordingState.audioFilePath == null && !audioRecordingState.isRecording) {
+                            VTButton(
+                                text = "건너뛰기",
+                                onClick = {
+                                    println("AssignmentScreen - Skip button clicked")
+                                    scope.launch {
+                                        try {
+                                            // 빈 WAV 파일 생성
+                                            val emptyFile = audioRecorder.createEmptyWavFile()
+                                            if (emptyFile != null && currentUser != null && currentQuestion != null) {
+                                                println("AssignmentScreen - Empty WAV file created: ${emptyFile.absolutePath}")
+
+                                                // 꼬리 질문이면 꼬리 질문의 ID를, 아니면 현재 질문의 ID를 사용
+                                                val questionIdToSubmit = if (currentTailQuestionNumber != null && savedTailQuestion != null) {
+                                                    savedTailQuestion!!.id
+                                                } else {
+                                                    currentQuestion.id
+                                                }
+
+                                                println("AssignmentScreen - Submitting skip answer with questionId: $questionIdToSubmit")
+
+                                                // 바로 전송
+                                                val personalAssignmentId = assignmentId
+                                                if (personalAssignmentId != null) {
+                                                    viewModel.submitAnswer(
+                                                        personalAssignmentId = personalAssignmentId,
+                                                        studentId = currentUser!!.id,
+                                                        questionId = questionIdToSubmit,
+                                                        audioFile = emptyFile
+                                                    )
+
+                                                    // 녹음 상태 초기화
+                                                    viewModel.resetAudioRecording()
+                                                    println("AssignmentScreen - Skip answer submitted successfully")
+                                                } else {
+                                                    println("AssignmentScreen - Cannot submit: personalAssignmentId is null")
+                                                }
+                                            } else {
+                                                println("AssignmentScreen - Failed to create empty WAV file or missing required data")
+                                            }
+                                        } catch (e: Exception) {
+                                            println("AssignmentScreen - Error in skip: ${e.message}")
+                                        }
+                                    }
+                                },
+                                variant = ButtonVariant.Outline,
+                                enabled = !isSubmitting,
+                                fullWidth = true,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.SkipNext,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }
                     }
 
                     // 음성 다시 듣기 버튼 - 녹음이 완료되었고 녹음 중이 아닐 때만 표시
@@ -729,8 +787,8 @@ fun AssignmentContinuousScreen(
                                         assignmentId?.let { id ->
                                             viewModel.completeAssignment(id)
                                         }
-                                        // 홈으로 돌아가기
-                                        onNavigateToHome()
+                                        // 과제 완료 상태로 설정하여 완료 화면 표시
+                                        viewModel.setAssignmentCompleted(true)
                                     },
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true

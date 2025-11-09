@@ -1550,6 +1550,18 @@ class AssignmentViewModel @Inject constructor(
         _audioRecordingState.value = RecordingState()
     }
     
+    fun setAudioFilePath(filePath: String) {
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            audioFilePath = filePath
+        )
+    }
+
+    fun setRecordingComplete(isComplete: Boolean) {
+        _audioRecordingState.value = _audioRecordingState.value.copy(
+            isRecordingComplete = isComplete
+        )
+    }
+
     fun clearAnswerSubmissionResponse() {
         _answerSubmissionResponse.value = null
     }
