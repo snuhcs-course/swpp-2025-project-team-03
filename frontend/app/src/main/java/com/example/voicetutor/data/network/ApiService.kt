@@ -42,7 +42,10 @@ interface ApiService {
     @DELETE("assignments/{id}/")
     suspend fun deleteAssignment(@Path("id") id: Int): Response<ApiResponse<Unit>>
     
-    // removed: saveAssignmentDraft, getAssignmentResults
+    @GET("assignments/{id}/results/")
+    suspend fun getAssignmentResult(@Path("id") id: Int): Response<ApiResponse<AssignmentResultData>>
+
+    // removed: saveAssignmentDraft
     
     // Student APIs (Backend: /api/courses/students/)
     @GET("courses/students/")

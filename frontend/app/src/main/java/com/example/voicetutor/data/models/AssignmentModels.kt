@@ -291,3 +291,15 @@ data class AssignmentCorrectnessItem(
     @SerializedName("explanation")
     val explanation: String
 )
+
+// 과제 제출 통계 결과
+data class AssignmentResultData(
+    @SerializedName("assignment_id")
+    val assignmentId: Int,
+    @SerializedName("total_students")
+    val totalStudents: Int,
+    @SerializedName("submitted_students")
+    val submittedStudents: Int,
+    @SerializedName("submission_rate")
+    val submissionRate: Float
+)
