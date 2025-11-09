@@ -30,7 +30,6 @@ fun StudentDashboardScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
-    onNavigateToAllAssignments: (Int) -> Unit = {},
     onNavigateToProgressReport: () -> Unit = {},
     onNavigateToAssignment: (String) -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {}
@@ -47,9 +46,27 @@ fun StudentDashboardScreen(
     
     val studentName = currentUser?.name ?: "학생"
     
-    // 질문이 생성된 과제만 필터링 (totalQuestions > 0)
-    val validAssignments = remember(assignments) {
-        assignments.filter { it.totalQuestions > 0 }
+    // 필터 상태 추가
+    var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
+
+    // 질문이 생성된 과제만 필터링 + 선택된 필터 적용
+    val validAssignments = remember(assignments, selectedFilter) {
+        val filtered = assignments.filter {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus != null &&
+            it.personalAssignmentId != null
+        }
+
+        when (selectedFilter) {
+            PersonalAssignmentFilter.ALL -> filtered
+            PersonalAssignmentFilter.NOT_STARTED -> filtered.filter {
+                it.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED
+            }
+            PersonalAssignmentFilter.IN_PROGRESS -> filtered.filter {
+                it.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS
+            }
+            else -> filtered
+        }
     }
 
     LaunchedEffect(assignments) {
@@ -130,35 +147,50 @@ fun StudentDashboardScreen(
         item {
             // My assignments
             Column {
+                Column {
+                    Text(
+                        text = "나에게 할당된 과제 ${validAssignments.size}개",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                    Text(
+                        text = "진행 중인 과제와 새로 배정된 과제를 확인해보세요",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Filter tabs
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = "나에게 할당된 과제 ${validAssignments.size}개",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "진행 중인 과제와 새로 배정된 과제를 확인해보세요",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                    
-                    VTButton(
-                        text = "전체 보기",
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                // 전체 과제 보기 (PendingAssignments - 해야 할 과제)
-                                onNavigateToAllAssignments(studentId)
-                            }
-                        },
-                        variant = ButtonVariant.Ghost,
-                        size = ButtonSize.Small
+                    FilterChip(
+                        selected = selectedFilter == PersonalAssignmentFilter.ALL,
+                        onClick = { selectedFilter = PersonalAssignmentFilter.ALL },
+                        label = { Text("전체") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.List,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+
+                    FilterChip(
+                        selected = selectedFilter == PersonalAssignmentFilter.NOT_STARTED,
+                        onClick = { selectedFilter = PersonalAssignmentFilter.NOT_STARTED },
+                        label = { Text("시작 안함") }
+                    )
+
+                    FilterChip(
+                        selected = selectedFilter == PersonalAssignmentFilter.IN_PROGRESS,
+                        onClick = { selectedFilter = PersonalAssignmentFilter.IN_PROGRESS },
+                        label = { Text("진행 중") }
                     )
                 }
                 

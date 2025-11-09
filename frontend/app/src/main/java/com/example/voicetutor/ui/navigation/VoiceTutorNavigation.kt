@@ -148,10 +148,6 @@ fun VoiceTutorNavigation(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
                     dashboardViewModel = dashboardViewModel,
-                    onNavigateToAllAssignments = { studentId ->
-                        // 학생은 PendingAssignments로 이동 (해야 할 과제)
-                        navController.navigate(VoiceTutorScreens.PendingAssignments.createRoute(studentId))
-                    },
                     onNavigateToProgressReport = {
                         navController.navigate(VoiceTutorScreens.Progress.route)
                     },
