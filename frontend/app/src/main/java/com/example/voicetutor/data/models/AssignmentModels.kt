@@ -207,6 +207,17 @@ data class DetailedAnswer(
     val responseTime: String
 )
 
+data class AssignmentResultData(
+    @SerializedName("submitted_students")
+    val submittedStudents: Int? = null,
+    @SerializedName("total_students")
+    val totalStudents: Int? = null,
+    @SerializedName("average_score")
+    val averageScore: Double? = null,
+    @SerializedName("completion_rate")
+    val completionRate: Double? = null
+)
+
 // Personal Assignment API용 데이터 모델들
 data class PersonalAssignmentQuestion(
     @SerializedName("id")
@@ -292,14 +303,3 @@ data class AssignmentCorrectnessItem(
     val explanation: String
 )
 
-// 과제 제출 통계 결과
-data class AssignmentResultData(
-    @SerializedName("assignment_id")
-    val assignmentId: Int,
-    @SerializedName("total_students")
-    val totalStudents: Int,
-    @SerializedName("submitted_students")
-    val submittedStudents: Int,
-    @SerializedName("submission_rate")
-    val submissionRate: Float
-)

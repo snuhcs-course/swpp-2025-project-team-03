@@ -236,13 +236,19 @@ data class CreateClassRequest(
 )
 
 data class UpdateAssignmentRequest(
-    val title: String?,
-    val subject: String?,
-    val classId: Int?,
-    val dueDate: String?,
-    val type: String?,
-    val description: String?,
-    val questions: List<QuestionData>?
+    val title: String? = null,
+    val description: String? = null,
+    @SerializedName("total_questions") val totalQuestions: Int? = null,
+    @SerializedName("visible_from") val visibleFrom: String? = null,
+    @SerializedName("due_at") val dueAt: String? = null,
+    val grade: String? = null,
+    val subject: SubjectUpdateRequest? = null
+)
+
+data class SubjectUpdateRequest(
+    val id: Int? = null,
+    val name: String? = null,
+    val code: String? = null
 )
 
 

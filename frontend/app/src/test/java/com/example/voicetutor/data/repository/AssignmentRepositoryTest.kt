@@ -22,6 +22,7 @@ import com.example.voicetutor.data.models.Subject
 import com.example.voicetutor.data.models.PersonalAssignmentQuestion
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.AnswerSubmissionResponse
+import com.example.voicetutor.data.models.AssignmentResultData
 
 @RunWith(MockitoJUnitRunner::class)
 class AssignmentRepositoryTest {
@@ -178,11 +179,11 @@ class AssignmentRepositoryTest {
             com.example.voicetutor.data.network.UpdateAssignmentRequest(
                 title = "t",
                 subject = null,
-                classId = null,
-                dueDate = null,
-                type = null,
+                visibleFrom = null,
+                dueAt = null,
+                grade = null,
                 description = null,
-                questions = null
+                totalQuestions = null
             )
         )
         assert(r.isFailure)
@@ -321,12 +322,11 @@ class AssignmentRepositoryTest {
         val repo = AssignmentRepository(apiService)
         val request = com.example.voicetutor.data.network.UpdateAssignmentRequest(
             title = "Updated",
-            subject = null,
-            classId = null,
-            dueDate = null,
-            type = null,
             description = "New desc",
-            questions = null
+            totalQuestions = 5,
+            dueAt = "2025-12-31T00:00:00Z",
+            grade = "A",
+            subject = com.example.voicetutor.data.network.SubjectUpdateRequest(id = 1, name = "Math")
         )
         val updated = AssignmentData(1, "Updated", "New desc", 0, null, "", "", course(), null, null)
         whenever(apiService.updateAssignment(eq(1), any())).thenReturn(
@@ -335,6 +335,23 @@ class AssignmentRepositoryTest {
         val r = repo.updateAssignment(1, request)
         assert(r.isSuccess)
         assert(r.getOrNull()?.title == "Updated")
+    }
+    
+    @Test
+    fun getAssignmentResult_success_returnsData() = runTest {
+        val repo = AssignmentRepository(apiService)
+        val resultData = AssignmentResultData(
+            submittedStudents = 5,
+            totalStudents = 10,
+            averageScore = 85.0,
+            completionRate = 50.0
+        )
+        whenever(apiService.getAssignmentResult(1)).thenReturn(
+            Response.success(ApiResponse(success = true, data = resultData, message = null, error = null))
+        )
+        val r = repo.getAssignmentResult(1)
+        assert(r.isSuccess)
+        assert(r.getOrNull()?.totalStudents == 10)
     }
 
     @Test

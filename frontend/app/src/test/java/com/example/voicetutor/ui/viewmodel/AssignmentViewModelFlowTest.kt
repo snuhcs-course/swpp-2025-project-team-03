@@ -7,6 +7,7 @@ import com.example.voicetutor.testing.MainDispatcherRule
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,6 +68,12 @@ class AssignmentViewModelFlowTest {
         solvedNum = null,
         personalAssignmentId = null
     )
+
+    @Before
+    fun setup() {
+        whenever(assignmentRepository.getAssignmentResult(any()))
+            .thenReturn(Result.success(AssignmentResultData()))
+    }
 
     // Basic init and simple flows
     @Test

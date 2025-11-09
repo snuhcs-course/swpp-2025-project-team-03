@@ -23,7 +23,9 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +44,7 @@ fun EditAssignmentScreen(
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val assignmentStats by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
     
     // Find assignment by ID or title from the assignments list
     val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
@@ -305,7 +308,7 @@ fun EditAssignmentScreen(
         VTCard(variant = CardVariant.Outlined) {
             Column {
                 Text(
-                    text = "과제 통계",
+                    text = "과제 진행 현황",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
@@ -320,7 +323,7 @@ fun EditAssignmentScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "18명",
+                            text = "${assignmentStats?.totalStudents ?: 0}명",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryIndigo
@@ -336,7 +339,7 @@ fun EditAssignmentScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "15명",
+                            text = "${assignmentStats?.submittedStudents ?: 0}명",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Success
@@ -352,7 +355,7 @@ fun EditAssignmentScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "83%",
+                            text = "${assignmentStats?.completionRate ?: 0}%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Warning
@@ -377,6 +380,39 @@ fun EditAssignmentScreen(
                 if (title.isNotBlank() && description.isNotBlank() && 
                     selectedClass.isNotBlank() && dueDate.isNotBlank() &&
                     dueDateError == null && visibleDateError == null) {
+                    val isoDue = formatToIso8601(dueDate)
+                    val isoVisible = if (visibleFrom.isBlank()) null else formatToIso8601(visibleFrom)
+                    val existingVisibleIso = currentAssignment?.visibleFrom
+                    val visibleForRequest = if (visibleFrom.isBlank()) existingVisibleIso else isoVisible
+                    
+                    if (isoDue == null || (visibleFrom.isNotBlank() && isoVisible == null)) {
+                        validationDialogMessage = "날짜 형식이 올바르지 않습니다."
+                        return@VTButton
+                    }
+                    
+                    val assignmentIdToUpdate = if (assignmentId > 0) assignmentId else targetAssignment?.id
+                    if (assignmentIdToUpdate == null) {
+                        validationDialogMessage = "수정할 과제 ID를 찾을 수 없습니다."
+                        return@VTButton
+                    }
+                    
+                    val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
+                        title = title,
+                        description = description,
+                        totalQuestions = currentAssignment?.totalQuestions,
+                        visibleFrom = visibleForRequest,
+                        dueAt = isoDue,
+                        grade = currentAssignment?.grade,
+                        subject = currentAssignment?.courseClass?.subject?.let {
+                            com.example.voicetutor.data.network.SubjectUpdateRequest(
+                                id = it.id,
+                                name = it.name,
+                                code = it.code
+                            )
+                        }
+                    )
+                    
+                    viewModel.updateAssignment(assignmentIdToUpdate, updateRequest)
                     onSaveAssignment()
                 } else {
                     val message = listOfNotNull(dueDateError, visibleDateError)
@@ -562,4 +598,21 @@ private fun normalizeDateTime(input: String?): String? {
         }
     }
     return null
+}
+
+private fun formatToIso8601(input: String): String? {
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).apply {
+            isLenient = false
+            timeZone = TimeZone.getTimeZone("Asia/Seoul")
+        }
+        val date = parser.parse(input) ?: return null
+        val adjustedDate = Date(date.time + 9 * 60 * 60 * 1000L)
+        val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        isoFormatter.format(adjustedDate)
+    } catch (e: ParseException) {
+        null
+    }
 }
