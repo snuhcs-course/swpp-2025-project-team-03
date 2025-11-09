@@ -3,6 +3,7 @@ package com.example.voicetutor.ui.viewmodel
 import app.cash.turbine.test
 import com.example.voicetutor.data.models.AssignmentData
 import com.example.voicetutor.data.models.CourseClass
+import com.example.voicetutor.data.models.AssignmentResultData
 import com.example.voicetutor.data.models.Subject
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.network.CreateAssignmentRequest
@@ -179,6 +180,8 @@ class AssignmentViewModelTest {
         val assignment = buildAssignment(1)
         Mockito.`when`(assignmentRepository.getAssignmentById(1))
             .thenReturn(Result.success(assignment))
+        Mockito.`when`(assignmentRepository.getAssignmentResult(1))
+            .thenReturn(Result.success(AssignmentResultData(submittedStudents = 5, totalStudents = 10, averageScore = 80.0, completionRate = 50.0)))
 
         val viewModel = AssignmentViewModel(assignmentRepository)
 
@@ -194,6 +197,7 @@ class AssignmentViewModelTest {
         }
 
         Mockito.verify(assignmentRepository, times(1)).getAssignmentById(1)
+        Mockito.verify(assignmentRepository, times(1)).getAssignmentResult(1)
     }
 
     @Test

@@ -269,14 +269,34 @@ class AssignmentViewModel @Inject constructor(
             assignmentRepository.getAssignmentById(id)
                 .onSuccess { assignment ->
                     _currentAssignment.value = assignment
-                    // 과제 통계도 함께 로드
-                    loadAssignmentStatistics(id, assignment.courseClass.studentCount)
+                    loadAssignmentResult(id, assignment.courseClass.studentCount)
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
                 }
             
             _isLoading.value = false
+        }
+    }
+    
+    private fun loadAssignmentResult(assignmentId: Int, fallbackTotalStudents: Int) {
+        viewModelScope.launch {
+            assignmentRepository.getAssignmentResult(assignmentId)
+                .onSuccess { result ->
+                    val submitted = result.submittedStudents ?: 0
+                    val total = result.totalStudents ?: fallbackTotalStudents
+                    val average = result.averageScore?.toInt() ?: 0
+                    val completionRate = result.completionRate?.toInt() ?: if (total > 0) (submitted * 100) / total else 0
+                    _assignmentStatistics.value = AssignmentStatistics(
+                        submittedStudents = submitted,
+                        totalStudents = total,
+                        averageScore = average,
+                        completionRate = completionRate
+                    )
+                }
+                .onFailure {
+                    loadAssignmentStatistics(assignmentId, fallbackTotalStudents)
+                }
         }
     }
     
@@ -968,6 +988,7 @@ class AssignmentViewModel @Inject constructor(
                     _assignments.value = _assignments.value.map { 
                         if (it.id == id) updatedAssignment else it 
                     }
+                    loadAssignmentResult(id, updatedAssignment.courseClass.studentCount)
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
