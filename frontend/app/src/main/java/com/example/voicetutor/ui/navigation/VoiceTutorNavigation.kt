@@ -347,6 +347,9 @@ fun VoiceTutorNavigation(
                     onCreateNewAssignment = {
                         navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(null))
                     },
+                    onNavigateToCreateClass = {
+                        navController.navigate(VoiceTutorScreens.CreateClass.route)
+                    },
                     onNavigateToAssignmentDetail = { assignmentId ->
                         navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     },
@@ -408,9 +411,6 @@ fun VoiceTutorNavigation(
                 TeacherStudentsScreen(
                     classId = classId,
                     teacherId = currentUser?.id?.toString(),
-                    onNavigateToMessage = { studentId ->
-                        navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentId.toString()))
-                    },
                     navController = navController
                 )
             }
@@ -454,9 +454,6 @@ fun VoiceTutorNavigation(
                     onNavigateToStudentDetail = { classId, studentId, studentName ->
                         // 리포트 버튼 클릭 시 리포트로 이동 (선택된 반의 클래스 ID 전달)
                         navController.navigate(VoiceTutorScreens.TeacherStudentReport.createRoute(classId, studentId, studentName))
-                    },
-                    onNavigateToMessage = { studentName ->
-                        navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentName))
                     }
                 )
             }
@@ -650,29 +647,6 @@ fun VoiceTutorNavigation(
             }
         }
         
-        // Teacher message screen
-        composable(
-            route = VoiceTutorScreens.TeacherMessage.route,
-            arguments = listOf(
-                navArgument("studentName") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val unusedStudentName = backStackEntry.arguments?.getString("studentName") ?: "학생"
-            MainLayout(
-                navController = navController,
-                userRole = UserRole.TEACHER
-            ) {
-                TeacherMessageScreen(
-                    studentId = 1, // TODO: studentName으로부터 studentId를 조회
-                    onBackClick = {
-                        navController.popBackStack()
-                    }
-                )
-            }
-        }
-        
         // Teacher class detail screen
         composable(
             route = VoiceTutorScreens.TeacherClassDetail.route,
@@ -851,9 +825,6 @@ sealed class VoiceTutorScreens(val route: String) {
     }
     object TeacherStudentAssignmentDetail : VoiceTutorScreens("teacher_student_assignment_detail/{studentId}/{assignmentId}/{assignmentTitle}") {
         fun createRoute(studentId: String, assignmentId: Int, assignmentTitle: String) = "teacher_student_assignment_detail/$studentId/$assignmentId/${assignmentTitle.replace("/", "_")}"
-    }
-    object TeacherMessage : VoiceTutorScreens("teacher_message/{studentName}") {
-        fun createRoute(studentName: String) = "teacher_message/$studentName"
     }
     object TeacherClassDetail : VoiceTutorScreens("teacher_class_detail/{className}/{classId}") {
         fun createRoute(className: String, classId: Int) = "teacher_class_detail/$className/$classId"
