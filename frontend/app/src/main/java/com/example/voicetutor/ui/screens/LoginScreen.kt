@@ -36,6 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
+import com.example.voicetutor.ui.viewmodel.LoginError
+import com.example.voicetutor.ui.viewmodel.LoginField
 
 @Composable
 fun LoginScreen(
@@ -48,7 +50,7 @@ fun LoginScreen(
     val viewModelAuth = authViewModel ?: hiltViewModel()
     val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
     val isLoading by viewModelAuth.isLoading.collectAsStateWithLifecycle()
-    val error by viewModelAuth.error.collectAsStateWithLifecycle()
+    val loginError by viewModelAuth.loginError.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val autoFillCredentials by viewModelAuth.autoFillCredentials.collectAsStateWithLifecycle()
     
@@ -57,14 +59,20 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
+    val inputError = loginError as? LoginError.Input
+    val emailErrorMessage = if (inputError?.field == LoginField.EMAIL) inputError.message else null
+    val passwordErrorMessage = if (inputError?.field == LoginField.PASSWORD) inputError.message else null
+    val generalError = loginError as? LoginError.General
+
     // 로그인 로직을 함수로 분리
     val performLogin = {
+        viewModelAuth.clearLoginError()
         when {
             email.isBlank() -> {
-                viewModelAuth.setError("이메일을 입력해주세요")
+                viewModelAuth.setLoginInputError(LoginField.EMAIL, "이메일을 입력해주세요")
             }
             password.isBlank() -> {
-                viewModelAuth.setError("비밀번호를 입력해주세요")
+                viewModelAuth.setLoginInputError(LoginField.PASSWORD, "비밀번호를 입력해주세요")
             }
             else -> {
                 viewModelAuth.login(email, password)
@@ -97,13 +105,6 @@ fun LoginScreen(
             }
             
             onLoginSuccess()
-        }
-    }
-    
-    // Handle error
-    LaunchedEffect(error) {
-        error?.let {
-            // Error is already handled by AuthViewModel
         }
     }
 
@@ -221,7 +222,7 @@ fun LoginScreen(
                         value = email,
                         onValueChange = { 
                             email = it
-                            viewModelAuth.clearError()
+                            viewModelAuth.clearLoginFieldError(LoginField.EMAIL)
                         },
                         label = { Text("이메일") },
                         placeholder = { Text("이메일을 입력하세요") },
@@ -243,13 +244,23 @@ fun LoginScreen(
                         ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
+                        isError = emailErrorMessage != null,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
                             focusedLabelColor = PrimaryIndigo,
                             focusedTextColor = Color.Black,
                             unfocusedTextColor = Color.Black,
                             cursorColor = Color.Black
-                        )
+                        ),
+                        supportingText = {
+                            if (emailErrorMessage != null) {
+                                Text(
+                                    text = emailErrorMessage,
+                                    color = Error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
@@ -259,7 +270,7 @@ fun LoginScreen(
                         value = password,
                         onValueChange = { 
                             password = it
-                            viewModelAuth.clearError()
+                            viewModelAuth.clearLoginFieldError(LoginField.PASSWORD)
                         },
                         label = { Text("비밀번호") },
                         placeholder = { Text("비밀번호를 입력하세요") },
@@ -292,27 +303,111 @@ fun LoginScreen(
                         ),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
+                        isError = passwordErrorMessage != null,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
                             focusedLabelColor = PrimaryIndigo,
                             focusedTextColor = Color.Black,
                             unfocusedTextColor = Color.Black,
                             cursorColor = Color.Black
-                        )
+                        ),
+                        supportingText = {
+                            if (passwordErrorMessage != null) {
+                                Text(
+                                    text = passwordErrorMessage,
+                                    color = Error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                     )
                     
-                    if (error != null) {
+                    if (generalError != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         VTCard(
                             variant = CardVariant.Outlined,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = error ?: "",
-                                color = Error,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = generalError.message,
+                                    color = Error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                when (generalError) {
+                                    is LoginError.General.InvalidCredentials -> {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            VTButton(
+                                                text = "다시 시도",
+                                                onClick = {
+                                                    focusManager.clearFocus()
+                                                    performLogin()
+                                                },
+                                                variant = ButtonVariant.Outline,
+                                                size = ButtonSize.Medium,
+                                                fullWidth = false,
+                                                enabled = !isLoading
+                                            )
+                                            VTButton(
+                                                text = "비밀번호 재설정",
+                                                onClick = onForgotPasswordClick,
+                                                variant = ButtonVariant.Outline,
+                                                size = ButtonSize.Medium,
+                                                fullWidth = false,
+                                                enabled = !isLoading
+                                            )
+                                        }
+                                    }
+                                    is LoginError.General.AccountNotFound -> {
+                                        VTButton(
+                                            text = "계정 만들기",
+                                            onClick = onSignupClick,
+                                            variant = ButtonVariant.Outline,
+                                            size = ButtonSize.Medium,
+                                            fullWidth = false,
+                                            enabled = !isLoading
+                                        )
+                                    }
+                                    is LoginError.General.AccountLocked -> {
+                                        VTButton(
+                                            text = "비밀번호 재설정",
+                                            onClick = onForgotPasswordClick,
+                                            variant = ButtonVariant.Outline,
+                                            size = ButtonSize.Medium,
+                                            fullWidth = false,
+                                            enabled = !isLoading
+                                        )
+                                    }
+                                    is LoginError.General.Network,
+                                    is LoginError.General.Server,
+                                    is LoginError.General.Unknown -> {
+                                        VTButton(
+                                            text = "다시 시도",
+                                            onClick = {
+                                                focusManager.clearFocus()
+                                                performLogin()
+                                            },
+                                            variant = ButtonVariant.Outline,
+                                            size = ButtonSize.Medium,
+                                            fullWidth = false,
+                                            enabled = !isLoading
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                     
@@ -322,17 +417,8 @@ fun LoginScreen(
                     VTButton(
                         text = if (isLoading) "로그인 중..." else "로그인",
                         onClick = {
-                            when {
-                                email.isBlank() -> {
-                                    viewModelAuth.setError("이메일을 입력해주세요")
-                                }
-                                password.isBlank() -> {
-                                    viewModelAuth.setError("비밀번호를 입력해주세요")
-                                }
-                                else -> {
-                                    viewModelAuth.login(email, password)
-                                }
-                            }
+                            focusManager.clearFocus()
+                            performLogin()
                         },
                         variant = ButtonVariant.Gradient,
                         size = ButtonSize.Large,
