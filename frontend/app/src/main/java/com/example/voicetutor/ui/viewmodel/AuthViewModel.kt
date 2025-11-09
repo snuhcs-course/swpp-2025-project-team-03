@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.repository.AuthRepository
+import com.example.voicetutor.data.repository.LoginException
 import com.example.voicetutor.data.repository.SignupException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,9 @@ class AuthViewModel @Inject constructor(
 
     private val _signupError = MutableStateFlow<SignupError?>(null)
     val signupError: StateFlow<SignupError?> = _signupError.asStateFlow()
+
+    private val _loginError = MutableStateFlow<LoginError?>(null)
+    val loginError: StateFlow<LoginError?> = _loginError.asStateFlow()
     
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
@@ -45,6 +49,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
+            _loginError.value = null
             
             // 실제 API 호출
             authRepository.login(email, password)
@@ -58,7 +63,31 @@ class AuthViewModel @Inject constructor(
                     }
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    val loginError = when (exception) {
+                        is LoginException.InvalidCredentials -> LoginError.General.InvalidCredentials(
+                            exception.message ?: "이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요."
+                        )
+                        is LoginException.AccountNotFound -> LoginError.General.AccountNotFound(
+                            exception.message ?: "해당 이메일로 등록된 계정을 찾을 수 없습니다. 회원가입을 진행하거나 이메일을 다시 확인해주세요."
+                        )
+                        is LoginException.AccountLocked -> LoginError.General.AccountLocked(
+                            exception.message ?: "보안상의 이유로 계정이 잠겨 있습니다. 관리자에게 문의해주세요."
+                        )
+                        is LoginException.Server -> LoginError.General.Server(
+                            exception.message ?: "서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+                        )
+                        is LoginException.Network -> LoginError.General.Network(
+                            exception.message ?: "네트워크 연결을 확인하고 다시 시도해주세요."
+                        )
+                        is LoginException.Unknown -> LoginError.General.Unknown(
+                            exception.message ?: "로그인 중 알 수 없는 오류가 발생했습니다."
+                        )
+                        else -> LoginError.General.Unknown(
+                            exception.message ?: "로그인 중 알 수 없는 오류가 발생했습니다."
+                        )
+                    }
+                    _loginError.value = loginError
+                    _error.value = loginError.message
                 }
             
             _isLoading.value = false
@@ -115,11 +144,13 @@ class AuthViewModel @Inject constructor(
         _isLoggedIn.value = false
         _error.value = null
         _signupError.value = null
+        _loginError.value = null
     }
     
     fun clearError() {
         _error.value = null
         _signupError.value = null
+        _loginError.value = null
     }
     
     fun setError(message: String) {
@@ -140,6 +171,24 @@ class AuthViewModel @Inject constructor(
         val current = _signupError.value
         if (current is SignupError.Input && current.field == field) {
             _signupError.value = null
+            _error.value = null
+        }
+    }
+
+    fun setLoginInputError(field: LoginField, message: String) {
+        _loginError.value = LoginError.Input(field, message)
+        _error.value = message
+    }
+
+    fun clearLoginError() {
+        _loginError.value = null
+        _error.value = null
+    }
+
+    fun clearLoginFieldError(field: LoginField) {
+        val current = _loginError.value
+        if (current is LoginError.Input && current.field == field) {
+            _loginError.value = null
             _error.value = null
         }
     }
