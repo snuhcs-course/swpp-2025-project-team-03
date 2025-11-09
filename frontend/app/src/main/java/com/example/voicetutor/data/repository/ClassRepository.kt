@@ -69,16 +69,12 @@ class ClassRepository @Inject constructor(
 
     suspend fun enrollStudentToClass(
         classId: Int,
-        studentId: Int? = null,
-        name: String? = null,
-        email: String? = null
+        studentId: Int
     ): Result<EnrollmentData> {
         return try {
             val response = apiService.enrollStudentToClass(
                 id = classId,
-                studentId = studentId,
-                name = name,
-                email = email
+                studentId = studentId
             )
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()?.data ?: throw Exception("No data"))
@@ -93,20 +89,6 @@ class ClassRepository @Inject constructor(
     suspend fun getClassStudentsStatistics(classId: Int): Result<ClassStudentsStatistics> {
         return try {
             val response = apiService.getClassStudentsStatistics(classId)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()?.data ?: throw Exception("No data"))
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    suspend fun getClassCompletionRate(classId: Int): Result<ClassCompletionRate> {
-        return try {
-            val response = apiService.getClassCompletionRate(classId)
             
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()?.data ?: throw Exception("No data"))

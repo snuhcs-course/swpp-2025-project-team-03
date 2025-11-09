@@ -103,16 +103,34 @@ WSGI_APPLICATION = "voicetutor.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+# 테스트 환경 또는 환경 변수가 없을 때는 SQLite 사용
+# 환경 변수가 모두 설정되어 있을 때만 PostgreSQL 사용
+db_name = os.getenv("DB_NAME")
+db_user = os.getenv("DB_USER")
+db_password = os.getenv("DB_PASSWORD")
+db_host = os.getenv("DB_HOST")
+db_port = os.getenv("DB_PORT")
+
+if db_name and db_user and db_password and db_host:
+    # PostgreSQL 설정이 모두 있으면 PostgreSQL 사용
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_name,
+            "USER": db_user,
+            "PASSWORD": db_password,
+            "HOST": db_host,
+            "PORT": db_port or "5432",
+        }
     }
-}
+else:
+    # 환경 변수가 없거나 테스트 환경일 때는 SQLite 사용
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
