@@ -240,48 +240,6 @@ fun EditAssignmentScreen(
                         )
                     }
                 )
-                
-                // Assignment type
-                var typeExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = typeExpanded,
-                    onExpandedChange = { typeExpanded = !typeExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = assignmentType,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("과제 유형") },
-                        placeholder = { Text("과제 유형을 선택해주세요") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded)
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Quiz,
-                                contentDescription = null,
-                                tint = PrimaryIndigo
-                            )
-                        },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = typeExpanded,
-                        onDismissRequest = { typeExpanded = false }
-                    ) {
-                        assignmentTypes.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type) },
-                                onClick = {
-                                    assignmentType = type
-                                    typeExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
             }
         }
         
