@@ -120,10 +120,26 @@ fun AssignmentContinuousScreen(
     // MediaPlayer 추가
     var mediaPlayer by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
+    var playbackDuration by remember { mutableStateOf(0) } // 총 재생 시간 (초)
+    var playbackCurrentPosition by remember { mutableStateOf(0) } // 현재 재생 위치 (초)
 
     // AudioRecorder 상태 관찰
     val audioRecorderState by audioRecorder.recordingState.collectAsStateWithLifecycle()
     
+    // 재생 진행 시간 업데이트
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            delay(100) // 0.1초마다 업데이트
+            mediaPlayer?.let { player ->
+                try {
+                    playbackCurrentPosition = player.currentPosition / 1000
+                } catch (e: Exception) {
+                    println("AssignmentScreen - Error getting playback position: ${e.message}")
+                }
+            }
+        }
+    }
+
     // 응답 결과 표시를 위한 상태
     var showResult by remember { mutableStateOf(false) }
     var isAnswerCorrect by remember { mutableStateOf(false) }
@@ -540,213 +556,259 @@ fun AssignmentContinuousScreen(
                         } else if (audioRecordingState.audioFilePath != null) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Filled.CheckCircle,
-                                    contentDescription = null,
-                                    tint = Success,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "녹음 완료 (${String.format("%02d:%02d", audioRecordingState.recordingTime / 60, audioRecordingState.recordingTime % 60)})",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = Success,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                // 녹음 완료 표시
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Success,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "녹음 완료 (${String.format("%02d:%02d", audioRecordingState.recordingTime / 60, audioRecordingState.recordingTime % 60)})",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Success,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                // 음성 다시 듣기 아이콘 버튼
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    if (isPlaying) {
+                                        Text(
+                                            text = "${String.format("%02d:%02d", playbackCurrentPosition / 60, playbackCurrentPosition % 60)} / ${String.format("%02d:%02d", playbackDuration / 60, playbackDuration % 60)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Error,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "다시 듣기",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = PrimaryIndigo,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            val audioFilePath = audioRecordingState.audioFilePath
+                                            if (audioFilePath != null) {
+                                                if (isPlaying) {
+                                                    // 재생 중지
+                                                    println("AssignmentScreen - Stopping audio playback")
+                                                    mediaPlayer?.stop()
+                                                    mediaPlayer?.release()
+                                                    mediaPlayer = null
+                                                    isPlaying = false
+                                                    playbackCurrentPosition = 0
+                                                } else {
+                                                    // 재생 시작
+                                                    println("AssignmentScreen - Starting audio playback: $audioFilePath")
+                                                    try {
+                                                        mediaPlayer?.release()
+                                                        mediaPlayer = android.media.MediaPlayer().apply {
+                                                            setDataSource(audioFilePath)
+                                                            prepare()
+                                                            playbackDuration = duration / 1000
+                                                            playbackCurrentPosition = 0
+                                                            start()
+                                                            isPlaying = true
+
+                                                            setOnCompletionListener {
+                                                                println("AssignmentScreen - Audio playback completed")
+                                                                isPlaying = false
+                                                                playbackCurrentPosition = 0
+                                                                release()
+                                                                mediaPlayer = null
+                                                            }
+
+                                                            setOnErrorListener { _, what, extra ->
+                                                                println("AssignmentScreen - Audio playback error: what=$what, extra=$extra")
+                                                                isPlaying = false
+                                                                playbackCurrentPosition = 0
+                                                                release()
+                                                                mediaPlayer = null
+                                                                true
+                                                            }
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        println("AssignmentScreen - Error starting audio playback: ${e.message}")
+                                                        isPlaying = false
+                                                        playbackCurrentPosition = 0
+                                                        mediaPlayer?.release()
+                                                        mediaPlayer = null
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .background(
+                                                color = if (isPlaying) Error.copy(alpha = 0.15f) else PrimaryIndigo.copy(alpha = 0.15f),
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                            .size(40.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                            contentDescription = if (isPlaying) "재생 중지" else "음성 재생",
+                                            tint = if (isPlaying) Error else PrimaryIndigo,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
-                        
-                        // Voice recorder button
-                        VTButton(
-                            text = when {
-                                audioRecordingState.isRecording -> "녹음 중지"
-                                audioRecordingState.audioFilePath != null -> "다시 녹음하기"
-                                else -> "녹음 시작"
-                            },
-                            onClick = {
-                                if (audioRecordingState.isRecording) {
-                                    // 녹음 중지 - 간단하게 처리
-                                    println("AssignmentScreen - Stopping recording")
-                                    try {
-                                        // 먼저 ViewModel 상태를 즉시 중지로 변경
-                                        viewModel.stopRecordingImmediately()
-                                        
-                                        // 그 다음 AudioRecorder 중지 (비동기로 처리)
-                                        scope.launch {
-                                            try {
-                                                audioRecorder.stopRecording()
-                                                println("AssignmentScreen - AudioRecorder stopped successfully")
-                                            } catch (e: Exception) {
-                                                println("AssignmentScreen - Error in AudioRecorder.stopRecording(): ${e.message}")
+
+                        // 녹음 버튼 - 녹음 시작과 건너뛰기를 한 줄에 배치
+                        if (audioRecordingState.audioFilePath == null && !audioRecordingState.isRecording) {
+                            // 녹음 전: 녹음 시작 + 건너뛰기
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                VTButton(
+                                    text = "녹음 시작",
+                                    onClick = {
+                                        // 녹음 시작 전 권한 체크
+                                        if (!PermissionUtils.hasAudioPermission(context)) {
+                                            println("AssignmentScreen - Requesting audio permission")
+                                            permissionLauncher.launch(PermissionUtils.getRequiredPermissions())
+                                        } else {
+                                            println("AssignmentScreen - Starting recording")
+                                            val success = audioRecorder.startRecording()
+                                            if (success) {
+                                                viewModel.startRecording()
+                                            } else {
+                                                println("AssignmentScreen - Failed to start recording")
                                             }
                                         }
-                                    } catch (e: Exception) {
-                                        println("AssignmentScreen - Error stopping recording: ${e.message}")
-                                        // 에러가 발생해도 강제로 상태 초기화
-                                        viewModel.resetAudioRecording()
+                                    },
+                                    variant = ButtonVariant.Gradient,
+                                    enabled = true,
+                                    modifier = Modifier.weight(1f),
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.Mic,
+                                            contentDescription = null
+                                        )
                                     }
-                                } else {
-                                    // 녹음 시작 또는 다시 녹음하기
-                                    if (audioRecordingState.audioFilePath != null) {
-                                        // 기존 녹음이 있으면 초기화 후 새로 녹음
+                                )
+
+                                VTButton(
+                                    text = "건너뛰기",
+                                    onClick = {
+                                        println("AssignmentScreen - Skip button clicked")
+                                        scope.launch {
+                                            try {
+                                                // 빈 WAV 파일 생성
+                                                val emptyFile = audioRecorder.createEmptyWavFile()
+                                                if (emptyFile != null && currentUser != null && currentQuestion != null) {
+                                                    println("AssignmentScreen - Empty WAV file created: ${emptyFile.absolutePath}")
+
+                                                    // 꼬리 질문이면 꼬리 질문의 ID를, 아니면 현재 질문의 ID를 사용
+                                                    val questionIdToSubmit = if (currentTailQuestionNumber != null && savedTailQuestion != null) {
+                                                        savedTailQuestion!!.id
+                                                    } else {
+                                                        currentQuestion.id
+                                                    }
+
+                                                    println("AssignmentScreen - Submitting skip answer with questionId: $questionIdToSubmit")
+
+                                                    // 바로 전송
+                                                    val personalAssignmentId = assignmentId
+                                                    if (personalAssignmentId != null) {
+                                                        viewModel.submitAnswer(
+                                                            personalAssignmentId = personalAssignmentId,
+                                                            studentId = currentUser!!.id,
+                                                            questionId = questionIdToSubmit,
+                                                            audioFile = emptyFile
+                                                        )
+
+                                                        // 녹음 상태 초기화
+                                                        viewModel.resetAudioRecording()
+                                                        println("AssignmentScreen - Skip answer submitted successfully")
+                                                    } else {
+                                                        println("AssignmentScreen - Cannot submit: personalAssignmentId is null")
+                                                    }
+                                                } else {
+                                                    println("AssignmentScreen - Failed to create empty WAV file or missing required data")
+                                                }
+                                            } catch (e: Exception) {
+                                                println("AssignmentScreen - Error in skip: ${e.message}")
+                                            }
+                                        }
+                                    },
+                                    variant = ButtonVariant.Outline,
+                                    enabled = !isSubmitting,
+                                    modifier = Modifier.weight(1f),
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.SkipNext,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                            }
+                        } else {
+                            // 녹음 중 또는 녹음 완료: 단일 버튼
+                            VTButton(
+                                text = when {
+                                    audioRecordingState.isRecording -> "녹음 중지"
+                                    audioRecordingState.audioFilePath != null -> "다시 녹음하기"
+                                    else -> "녹음 시작"
+                                },
+                                onClick = {
+                                    if (audioRecordingState.isRecording) {
+                                        // 녹음 중지
+                                        println("AssignmentScreen - Stopping recording")
+                                        try {
+                                            viewModel.stopRecordingImmediately()
+                                            scope.launch {
+                                                try {
+                                                    audioRecorder.stopRecording()
+                                                    println("AssignmentScreen - AudioRecorder stopped successfully")
+                                                } catch (e: Exception) {
+                                                    println("AssignmentScreen - Error in AudioRecorder.stopRecording(): ${e.message}")
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            println("AssignmentScreen - Error stopping recording: ${e.message}")
+                                            viewModel.resetAudioRecording()
+                                        }
+                                    } else {
+                                        // 다시 녹음하기
                                         println("AssignmentScreen - Clearing existing recording and starting new one")
                                         viewModel.resetAudioRecording()
                                     }
-                                    
-                                    // 녹음 시작 전 권한 체크
-                                    if (!PermissionUtils.hasAudioPermission(context)) {
-                                        println("AssignmentScreen - Requesting audio permission")
-                                        permissionLauncher.launch(PermissionUtils.getRequiredPermissions())
-                                    } else {
-                                        println("AssignmentScreen - Starting recording")
-                                        val success = audioRecorder.startRecording()
-                                        if (success) {
-                                            viewModel.startRecording()
-                                        } else {
-                                            println("AssignmentScreen - Failed to start recording")
-                                        }
-                                    }
-                                }
-                            },
-                            variant = when {
-                                audioRecordingState.isRecording -> ButtonVariant.Outline
-                                else -> ButtonVariant.Gradient
-                            },
-                            enabled = true,
-                            fullWidth = true,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = when {
-                                        audioRecordingState.isRecording -> Icons.Filled.Stop
-                                        audioRecordingState.audioFilePath != null -> Icons.Filled.Refresh
-                                        else -> Icons.Filled.Mic
-                                    },
-                                    contentDescription = null
-                                )
-                            }
-                        )
-
-                        // 건너뛰기 버튼 - 녹음이 없고 녹음 중이 아닐 때만 표시
-                        if (audioRecordingState.audioFilePath == null && !audioRecordingState.isRecording) {
-                            VTButton(
-                                text = "건너뛰기",
-                                onClick = {
-                                    println("AssignmentScreen - Skip button clicked")
-                                    scope.launch {
-                                        try {
-                                            // 빈 WAV 파일 생성
-                                            val emptyFile = audioRecorder.createEmptyWavFile()
-                                            if (emptyFile != null && currentUser != null && currentQuestion != null) {
-                                                println("AssignmentScreen - Empty WAV file created: ${emptyFile.absolutePath}")
-
-                                                // 꼬리 질문이면 꼬리 질문의 ID를, 아니면 현재 질문의 ID를 사용
-                                                val questionIdToSubmit = if (currentTailQuestionNumber != null && savedTailQuestion != null) {
-                                                    savedTailQuestion!!.id
-                                                } else {
-                                                    currentQuestion.id
-                                                }
-
-                                                println("AssignmentScreen - Submitting skip answer with questionId: $questionIdToSubmit")
-
-                                                // 바로 전송
-                                                val personalAssignmentId = assignmentId
-                                                if (personalAssignmentId != null) {
-                                                    viewModel.submitAnswer(
-                                                        personalAssignmentId = personalAssignmentId,
-                                                        studentId = currentUser!!.id,
-                                                        questionId = questionIdToSubmit,
-                                                        audioFile = emptyFile
-                                                    )
-
-                                                    // 녹음 상태 초기화
-                                                    viewModel.resetAudioRecording()
-                                                    println("AssignmentScreen - Skip answer submitted successfully")
-                                                } else {
-                                                    println("AssignmentScreen - Cannot submit: personalAssignmentId is null")
-                                                }
-                                            } else {
-                                                println("AssignmentScreen - Failed to create empty WAV file or missing required data")
-                                            }
-                                        } catch (e: Exception) {
-                                            println("AssignmentScreen - Error in skip: ${e.message}")
-                                        }
-                                    }
                                 },
-                                variant = ButtonVariant.Outline,
-                                enabled = !isSubmitting,
+                                variant = when {
+                                    audioRecordingState.isRecording -> ButtonVariant.Outline
+                                    else -> ButtonVariant.Gradient
+                                },
+                                enabled = true,
                                 fullWidth = true,
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Filled.SkipNext,
+                                        imageVector = when {
+                                            audioRecordingState.isRecording -> Icons.Filled.Stop
+                                            audioRecordingState.audioFilePath != null -> Icons.Filled.Refresh
+                                            else -> Icons.Filled.Mic
+                                        },
                                         contentDescription = null
                                     )
                                 }
                             )
                         }
-                    }
-
-                    // 음성 다시 듣기 버튼 - 녹음이 완료되었고 녹음 중이 아닐 때만 표시
-                    if (audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording) {
-                        VTButton(
-                            text = if (isPlaying) "재생 중지" else "음성 다시 듣기",
-                            onClick = {
-                                val audioFilePath = audioRecordingState.audioFilePath
-                                if (audioFilePath != null) {
-                                    if (isPlaying) {
-                                        // 재생 중지
-                                        println("AssignmentScreen - Stopping audio playback")
-                                        mediaPlayer?.stop()
-                                        mediaPlayer?.release()
-                                        mediaPlayer = null
-                                        isPlaying = false
-                                    } else {
-                                        // 재생 시작
-                                        println("AssignmentScreen - Starting audio playback: $audioFilePath")
-                                        try {
-                                            mediaPlayer?.release()
-                                            mediaPlayer = android.media.MediaPlayer().apply {
-                                                setDataSource(audioFilePath)
-                                                prepare()
-                                                start()
-                                                isPlaying = true
-
-                                                setOnCompletionListener {
-                                                    println("AssignmentScreen - Audio playback completed")
-                                                    isPlaying = false
-                                                    release()
-                                                    mediaPlayer = null
-                                                }
-
-                                                setOnErrorListener { _, what, extra ->
-                                                    println("AssignmentScreen - Audio playback error: what=$what, extra=$extra")
-                                                    isPlaying = false
-                                                    release()
-                                                    mediaPlayer = null
-                                                    true
-                                                }
-                                            }
-                                        } catch (e: Exception) {
-                                            println("AssignmentScreen - Error starting audio playback: ${e.message}")
-                                            isPlaying = false
-                                            mediaPlayer?.release()
-                                            mediaPlayer = null
-                                        }
-                                    }
-                                }
-                            },
-                            variant = ButtonVariant.Outline,
-                            enabled = true,
-                            fullWidth = true,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = if (isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                                    contentDescription = null
-                                )
-                            }
-                        )
                     }
 
                     // Send button - 응답 결과에 따라 다른 버튼 표시
