@@ -70,7 +70,7 @@ fun MainLayout(
         currentDestination == VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
         currentDestination == VoiceTutorScreens.Assignment.route -> "assignment"
         currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route) == true -> "assignment" // 과제 상세 화면에서 이어하기/과제 탭 선택
-        currentDestination?.startsWith(VoiceTutorScreens.PendingAssignments.route.split("{").first()) == true -> "assignment" // 해야 할 과제 목록에서 과제 탭 선택
+        currentDestination?.startsWith(VoiceTutorScreens.NoRecentAssignment.route.split("{").first()) == true -> "assignment" // NoRecentAssignment 화면에서 이어하기 탭 선택
         currentDestination == VoiceTutorScreens.Progress.route -> "progress"
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
@@ -487,24 +487,24 @@ fun BottomNavigation(
                 )
             )
             
-            // Recent assignment or regular assignment
+            // Recent assignment (always shows "이어하기")
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = if (recentAssignment != null) Icons.Filled.PlayArrow else Icons.Filled.Book,
-                        contentDescription = if (recentAssignment != null) "이어하기" else "과제"
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = "이어하기"
                     )
                 },
-                label = { Text(if (recentAssignment != null) "이어하기" else "과제") },
+                label = { Text("이어하기") },
                 selected = currentRoute == "assignment",
                 onClick = {
                     if (recentAssignment != null) {
                         // 이어하기: 최근 과제 상세 화면으로 이동
                         navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(recentAssignment.id, recentAssignment.title))
                     } else {
-                        // 과제: 해야 할 과제 목록 화면으로 이동
+                        // 진행할 과제가 없는 경우: NoRecentAssignmentScreen으로 이동
                         currentUserId?.let { studentId ->
-                            navController.navigate(VoiceTutorScreens.PendingAssignments.createRoute(studentId))
+                            navController.navigate(VoiceTutorScreens.NoRecentAssignment.createRoute(studentId))
                         }
                     }
                 },

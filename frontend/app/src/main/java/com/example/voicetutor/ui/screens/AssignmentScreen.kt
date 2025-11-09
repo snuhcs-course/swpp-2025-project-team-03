@@ -39,7 +39,7 @@ import java.io.File
 
 @Composable
 fun AssignmentScreen(
-    assignmentId: Int? = null, // PersonalAssignment ID 사용 (PendingAssignmentsScreen에서 전달)
+    assignmentId: Int? = null, // PersonalAssignment ID 사용
     assignmentTitle: String? = null, // 실제 과제 제목 사용
     authViewModel: AuthViewModel? = null, // 전달받은 AuthViewModel 사용
     onNavigateToHome: () -> Unit = {} // 홈으로 돌아가기 콜백
@@ -93,7 +93,7 @@ private val mockChemistryQuestions = listOf(
 
 @Composable
 fun AssignmentContinuousScreen(
-    assignmentId: Int = 1, // PersonalAssignment ID (PendingAssignmentsScreen에서 전달)
+    assignmentId: Int = 1, // PersonalAssignment ID
     assignmentTitle: String,
     authViewModel: AuthViewModel? = null,
     onNavigateToHome: () -> Unit = {}
