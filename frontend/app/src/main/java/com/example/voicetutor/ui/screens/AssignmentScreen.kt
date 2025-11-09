@@ -327,9 +327,9 @@ fun AssignmentContinuousScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.CheckCircle,
+                        imageVector = Icons.Filled.AssignmentTurnedIn,
                         contentDescription = null,
-                        tint = Success,
+                        tint = PrimaryIndigo,
                         modifier = Modifier.size(80.dp)
                     )
                     Text(
