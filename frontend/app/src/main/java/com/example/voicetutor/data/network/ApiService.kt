@@ -128,12 +128,6 @@ interface ApiService {
         @Path("classId") classId: Int
     ): Response<ApiResponse<ClassStudentsStatistics>>
     
-    // Class Completion Rate API
-    @GET("courses/classes/{id}/completion-rate/")
-    suspend fun getClassCompletionRate(
-        @Path("id") id: Int
-    ): Response<ApiResponse<ClassCompletionRate>>
-    
     // Progress Report APIs
     @GET("reports/progress/")
     suspend fun getProgressReport(

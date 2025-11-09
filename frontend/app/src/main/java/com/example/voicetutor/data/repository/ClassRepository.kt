@@ -99,18 +99,4 @@ class ClassRepository @Inject constructor(
             Result.failure(e)
         }
     }
-    
-    suspend fun getClassCompletionRate(classId: Int): Result<ClassCompletionRate> {
-        return try {
-            val response = apiService.getClassCompletionRate(classId)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()?.data ?: throw Exception("No data"))
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 }

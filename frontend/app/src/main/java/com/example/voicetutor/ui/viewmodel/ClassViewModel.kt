@@ -131,11 +131,4 @@ class ClassViewModel @Inject constructor(
             callback(result)
         }
     }
-    
-    fun loadClassCompletionRate(classId: Int, callback: (Result<ClassCompletionRate>) -> Unit) {
-        viewModelScope.launch {
-            val result = classRepository.getClassCompletionRate(classId)
-            callback(result)
-        }
-    }
 }

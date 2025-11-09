@@ -87,8 +87,3 @@ data class ClassStudentsStatistics(
     @SerializedName("students")
     val students: List<StudentStatisticsItem>
 )
-
-data class ClassCompletionRate(
-    @SerializedName("completion_rate")
-    val completionRate: Float
-)
