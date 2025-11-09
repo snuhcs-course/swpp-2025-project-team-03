@@ -292,11 +292,9 @@ fun AllStudentsCard(
     isLoadingClasses: Boolean,
     onReportClick: () -> Unit
 ) {
-    Surface(
+    VTCard2(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.Transparent,
-        shadowElevation = 0.dp,
-        tonalElevation = 0.dp
+        variant = CardVariant.Elevated
     ) {
         Column(
             modifier = Modifier
@@ -392,7 +390,7 @@ fun AllStudentsCard(
                     onClick = onReportClick,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
-                    modifier = Modifier.widthIn(min = 165.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Assessment,
@@ -401,7 +399,6 @@ fun AllStudentsCard(
                         )
                     }
                 )
-
             }
         }
     }
