@@ -133,7 +133,7 @@ fun AllAssignmentsScreen(
             FilterChip(
                 selected = selectedFilter == AssignmentFilter.COMPLETED,
                 onClick = { selectedFilter = AssignmentFilter.COMPLETED },
-                label = { Text("완료") }
+                label = { Text("마감") }
             )
         }
         
