@@ -142,6 +142,8 @@ fun MainLayout(
     val userName = currentUser?.name ?: "사용자"
     val userInitial = currentUser?.initial ?: "?"
     
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -270,10 +272,7 @@ fun MainLayout(
                     // Logout button
                     IconButton(
                         onClick = {
-                            authViewModel.logout()
-                            navController.navigate(VoiceTutorScreens.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
+                            showLogoutDialog = true
                         }
                     ) {
                         Icon(
@@ -288,6 +287,32 @@ fun MainLayout(
                 containerColor = Color.White.copy(alpha = 0.95f)
             )
         )
+        
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                title = { Text(text = "로그아웃") },
+                text = { Text(text = "로그아웃하시겠습니까?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showLogoutDialog = false
+                            authViewModel.logout()
+                            navController.navigate(VoiceTutorScreens.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    ) {
+                        Text("로그아웃")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showLogoutDialog = false }) {
+                        Text("취소")
+                    }
+                }
+            )
+        }
         
         // Main content
         Box(
