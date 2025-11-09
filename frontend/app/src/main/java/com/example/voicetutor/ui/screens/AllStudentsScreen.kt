@@ -1,10 +1,12 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -282,11 +284,18 @@ fun AllStudentsScreen(
                 }
             }
         } else {
-            items(
+            itemsIndexed(
                 items = allStudents,
-                key = { student -> student.id }  // 각 학생의 고유 ID를 키로 사용
-            ) { student ->
+                key = { _, student -> student.id }  // 각 학생의 고유 ID를 키로 사용
+            ) { index, student ->
                 val stats = studentsStatisticsMap[student.id]
+
+                if (index > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Divider(color = Gray200.copy(alpha = 0.6f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 AllStudentsCard(
                     student = student,
                     averageScore = stats?.averageScore ?: 0f,
@@ -308,42 +317,49 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
-    averageScore: Float,  // 사용하지 않지만 호환성을 위해 유지
+    averageScore: Float,
     completionRate: Float,
-    totalAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
-    completedAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
+    totalAssignments: Int,
+    completedAssignments: Int,
     isLoadingStats: Boolean,
     onReportClick: () -> Unit
 ) {
-    VTCard(
-        variant = CardVariant.Elevated
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.Transparent,
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Student info header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(PrimaryIndigo.copy(alpha = 0.1f)),
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryIndigo.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = student.name.first().toString(),
+                        text = student.name.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
                         color = PrimaryIndigo,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
                         text = student.name,
                         style = MaterialTheme.typography.titleSmall,
@@ -355,41 +371,92 @@ fun AllStudentsCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
-                    Text(
-                        text = "학생", // 클래스 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
-                    )
                 }
-                
             }
-            
-            // Progress bar - 과제 진행률 표시
-            Column {
-                Spacer(modifier = Modifier.height(4.dp))
-                VTProgressBar(
+
+            if (isLoadingStats) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = PrimaryIndigo
+                )
+            } else {
+                LinearProgressIndicator(
                     progress = (completionRate / 100f).coerceIn(0f, 1f),
-                    showPercentage = true
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = PrimaryIndigo,
+                    trackColor = Gray200
                 )
             }
-            
-            // Action button
-            VTButton(
-                text = "리포트 보기",
-                onClick = {
-                    onReportClick()
-                },
-                variant = ButtonVariant.Outline,
+
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Assessment,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                VTButton(
+                    text = "리포트 보기",
+                    onClick = onReportClick,
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small,
+                    modifier = Modifier.widthIn(min = 165.dp),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Assessment,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                StatBadge(
+                    label = "평균 점수",
+                    value = if (isLoadingStats) "로딩 중..." else "${averageScore.toInt()}점",
+                    valueColor = when {
+                        averageScore >= 90 -> Success
+                        averageScore >= 80 -> Warning
+                        else -> Gray600
+                    }
+                )
+
+                StatBadge(
+                    label = "완료율",
+                    value = if (isLoadingStats) "로딩 중..." else "${completionRate.toInt()}%",
+                    valueColor = PrimaryIndigo
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun StatBadge(
+    label: String,
+    value: String,
+    valueColor: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = valueColor
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Gray500
+        )
     }
 }
 
