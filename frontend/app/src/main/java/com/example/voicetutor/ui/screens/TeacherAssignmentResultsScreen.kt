@@ -32,8 +32,7 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun TeacherAssignmentResultsScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentId: Int = 0,
-    assignmentTitle: String? = null, // For backward compatibility
-    onNavigateToStudentDetail: (Int) -> Unit = {}
+    assignmentTitle: String? = null // For backward compatibility
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -236,11 +235,7 @@ fun TeacherAssignmentResultsScreen(
             StudentResultDetailModal(
                 student = student,
                 assignmentTitle = dynamicAssignmentTitle,
-                onDismiss = { selectedStudent = null },
-                onNavigateToFullDetail = {
-                    selectedStudent = null
-                    onNavigateToStudentDetail(student.studentId.toIntOrNull() ?: 1)
-                }
+                onDismiss = { selectedStudent = null }
             )
         }
     }
@@ -472,8 +467,7 @@ private fun parseIsoToMillis(iso: String): Long? {
 fun StudentResultDetailModal(
     student: StudentResult,
     assignmentTitle: String,
-    onDismiss: () -> Unit,
-    onNavigateToFullDetail: () -> Unit
+    onDismiss: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -665,12 +659,7 @@ fun StudentResultDetailModal(
         }
         
         // Full detail button
-        VTButton(
-            text = "상세 결과 보기",
-            onClick = onNavigateToFullDetail,
-            variant = ButtonVariant.Primary,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // 상세 페이지 삭제로 버튼 제거
     }
 }
 

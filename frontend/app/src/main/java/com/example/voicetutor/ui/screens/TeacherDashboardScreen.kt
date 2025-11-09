@@ -38,8 +38,7 @@ fun TeacherDashboardScreen(
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToAssignmentDetail: (Int) -> Unit = {},
     onNavigateToAssignmentResults: (Int) -> Unit = {},
-    onNavigateToEditAssignment: (Int) -> Unit = {},
-    onNavigateToStudentDetail: (String) -> Unit = {}
+    onNavigateToEditAssignment: (Int) -> Unit = {}
 ) {
     val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
@@ -219,7 +218,7 @@ fun TeacherDashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             DashboardSummaryCard(
-                label = "반",
+                label = "수업",
                 value = dashboardStats?.totalAssignments?.toString() ?: (currentUser?.totalAssignments ?: assignments.size).toString(),
                 icon = Icons.Filled.List,
                 tint = PrimaryIndigo,
@@ -259,7 +258,7 @@ fun TeacherDashboardScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 VTButton(
-                    text = "+ 새 반",
+                    text = "+ 수업 생성하기",
                     onClick = onNavigateToCreateClass,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Medium,
@@ -267,7 +266,7 @@ fun TeacherDashboardScreen(
                 )
                 
                 VTButton(
-                    text = "+ 새 과제",
+                    text = "+ 과제 생성하기",
                     onClick = onCreateNewAssignment,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Medium,

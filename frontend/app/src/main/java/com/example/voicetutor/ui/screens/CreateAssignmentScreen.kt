@@ -5,9 +5,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,7 +24,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,8 +36,15 @@ import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.file.FileManager
 import com.example.voicetutor.file.FileType
 import com.example.voicetutor.file.FileInfo
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,12 +137,26 @@ fun CreateAssignmentScreen(
     var selectedClassId by remember { mutableStateOf<Int?>(null) }
     var selectedGrade by remember { mutableStateOf("") }
     var selectedSubject by remember { mutableStateOf("") }
-    var dueDate by remember { mutableStateOf("") }
+    var dueDateText by remember { mutableStateOf("") }
+    var dueDateRequest by remember { mutableStateOf("") }
+    var dueDateTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var visibleDateText by remember { mutableStateOf("") }
+    var visibleDateRequest by remember { mutableStateOf("") }
+    var visibleDateTime by remember { mutableStateOf<LocalDateTime?>(null) }
     var questionCount by remember { mutableStateOf("5") }
     var assignToAll by remember { mutableStateOf(true) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
     var gradeSelectionExpanded by remember { mutableStateOf(false) }
     var subjectSelectionExpanded by remember { mutableStateOf(false) }
+    var dueShowDatePicker by remember { mutableStateOf(false) }
+    var dueShowTimePicker by remember { mutableStateOf(false) }
+    var duePendingDate by remember { mutableStateOf<LocalDate?>(null) }
+    var visibleShowDatePicker by remember { mutableStateOf(false) }
+    var visibleShowTimePicker by remember { mutableStateOf(false) }
+    var visiblePendingDate by remember { mutableStateOf<LocalDate?>(null) }
+
+    val displayDateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") }
+    val zoneId = remember { ZoneId.systemDefault() }
     
     // Load data on first composition
     LaunchedEffect(actualTeacherId) {
@@ -426,17 +446,68 @@ fun CreateAssignmentScreen(
                     )
                     
                     // Due date
+                    val dueDateInteractionSource = remember { MutableInteractionSource() }
+                    LaunchedEffect(dueDateInteractionSource) {
+                        dueDateInteractionSource.interactions.collect { interaction ->
+                            if (interaction is PressInteraction.Release) {
+                                dueShowDatePicker = true
+                            }
+                        }
+                    }
                     OutlinedTextField(
-                        value = dueDate,
-                        onValueChange = { dueDate = it },
+                        value = dueDateText,
+                        onValueChange = {},
+                        readOnly = true,
                         label = { Text("마감일") },
-                        placeholder = { Text("2024-01-15") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
+                        placeholder = { Text("날짜와 시간을 선택하세요") },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Event,
+                                contentDescription = null,
+                                tint = PrimaryIndigo
+                            )
+                        },
                         singleLine = true,
+                        interactionSource = dueDateInteractionSource,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryIndigo,
+                            focusedLabelColor = PrimaryIndigo,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Visible from date
+                    val visibleDateInteractionSource = remember { MutableInteractionSource() }
+                    LaunchedEffect(visibleDateInteractionSource) {
+                        visibleDateInteractionSource.interactions.collect { interaction ->
+                            if (interaction is PressInteraction.Release) {
+                                visibleShowDatePicker = true
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = visibleDateText,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("공개일") },
+                        placeholder = { Text("날짜와 시간을 선택하세요") },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Event,
+                                contentDescription = null,
+                                tint = PrimaryIndigo
+                            )
+                        },
+                        singleLine = true,
+                        interactionSource = visibleDateInteractionSource,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
                             focusedLabelColor = PrimaryIndigo,
@@ -760,7 +831,7 @@ fun CreateAssignmentScreen(
         val isFormValid = assignmentTitle.isNotBlank() && assignmentDescription.isNotBlank() && 
             selectedClass.isNotBlank() && selectedClassId != null && 
             selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
-            dueDate.isNotBlank() && 
+            dueDateRequest.isNotBlank() && visibleDateRequest.isNotBlank() && 
             questionCount.isNotBlank() && selectedFiles.isNotEmpty()
         
         VTButton(
@@ -931,7 +1002,8 @@ fun CreateAssignmentScreen(
                         title = assignmentTitle,
                         subject = selectedSubject,
                         class_id = selectedClassId!!,
-                        due_at = dueDate,
+                        due_at = dueDateRequest,
+                        visible_from = visibleDateRequest,
                         grade = selectedGrade,
                         type = "Quiz",  // PDF 과제는 항상 Quiz 타입
                         description = assignmentDescription,
@@ -943,6 +1015,7 @@ fun CreateAssignmentScreen(
                     println("Grade: $selectedGrade, Subject: $selectedSubject")
                     println("PDF files: ${selectedFiles.map { it.name }}")
                     println("Sample questions: ${sampleQuestions.size}개 생성")
+                    println("Visible from: $visibleDateRequest")
                     println("selectedPdfFile: ${selectedPdfFile?.name}")
                     println("selectedPdfFile != null: ${selectedPdfFile != null}")
                     println("selectedFiles.size: ${selectedFiles.size}")
@@ -980,8 +1053,242 @@ fun CreateAssignmentScreen(
         )
         }
     }
-        
-        // Loading overlay for PDF upload only (not for question generation)
+
+    if (dueShowDatePicker) {
+        val initialDateMillis = dueDateTime
+            ?.atZone(zoneId)
+            ?.toInstant()
+            ?.toEpochMilli()
+            ?: Instant.now().toEpochMilli()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
+
+        DatePickerDialog(
+            onDismissRequest = {
+                dueShowDatePicker = false
+                duePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            duePendingDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(zoneId)
+                                .toLocalDate()
+                            dueShowDatePicker = false
+                            dueShowTimePicker = true
+                        }
+                    },
+                    enabled = datePickerState.selectedDateMillis != null,
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("시간 선택")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        dueShowDatePicker = false
+                        duePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = Color.White,
+                    titleContentColor = Gray800,
+                    headlineContentColor = Gray800,
+                    weekdayContentColor = Gray600,
+                    dayContentColor = Gray800,
+                    selectedDayContainerColor = PrimaryIndigo,
+                    selectedDayContentColor = Color.White,
+                    todayDateBorderColor = PrimaryIndigo
+                )
+            )
+        }
+    }
+
+    if (dueShowTimePicker) {
+        val initialHour = dueDateTime?.hour ?: LocalTime.now().hour
+        val initialMinute = dueDateTime?.minute ?: LocalTime.now().minute
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            is24Hour = true
+        )
+
+        AlertDialog(
+            onDismissRequest = {
+                dueShowTimePicker = false
+                duePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedDate = duePendingDate ?: dueDateTime?.toLocalDate() ?: LocalDate.now()
+                        val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        val finalDateTime = LocalDateTime.of(selectedDate, selectedTime)
+                        dueDateTime = finalDateTime
+                        dueDateText = finalDateTime.format(displayDateFormatter)
+                        dueDateRequest = finalDateTime
+                            .atZone(zoneId)
+                            .toOffsetDateTime()
+                            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                        dueShowTimePicker = false
+                        duePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("확인")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        dueShowTimePicker = false
+                        duePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            },
+            title = {
+                Text(
+                    text = "시간 선택",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Gray800
+                )
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
+    }
+
+    if (visibleShowDatePicker) {
+        val initialDateMillis = visibleDateTime
+            ?.atZone(zoneId)
+            ?.toInstant()
+            ?.toEpochMilli()
+            ?: Instant.now().toEpochMilli()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
+
+        DatePickerDialog(
+            onDismissRequest = {
+                visibleShowDatePicker = false
+                visiblePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            visiblePendingDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(zoneId)
+                                .toLocalDate()
+                            visibleShowDatePicker = false
+                            visibleShowTimePicker = true
+                        }
+                    },
+                    enabled = datePickerState.selectedDateMillis != null,
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("시간 선택")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        visibleShowDatePicker = false
+                        visiblePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = Color.White,
+                    titleContentColor = Gray800,
+                    headlineContentColor = Gray800,
+                    weekdayContentColor = Gray600,
+                    dayContentColor = Gray800,
+                    selectedDayContainerColor = PrimaryIndigo,
+                    selectedDayContentColor = Color.White,
+                    todayDateBorderColor = PrimaryIndigo
+                )
+            )
+        }
+    }
+
+    if (visibleShowTimePicker) {
+        val initialHour = visibleDateTime?.hour ?: LocalTime.now().hour
+        val initialMinute = visibleDateTime?.minute ?: LocalTime.now().minute
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            is24Hour = true
+        )
+
+        AlertDialog(
+            onDismissRequest = {
+                visibleShowTimePicker = false
+                visiblePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedDate = visiblePendingDate ?: visibleDateTime?.toLocalDate() ?: LocalDate.now()
+                        val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        val finalDateTime = LocalDateTime.of(selectedDate, selectedTime)
+                        visibleDateTime = finalDateTime
+                        visibleDateText = finalDateTime.format(displayDateFormatter)
+                        visibleDateRequest = finalDateTime
+                            .atZone(zoneId)
+                            .toOffsetDateTime()
+                            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                        visibleShowTimePicker = false
+                        visiblePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("확인")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        visibleShowTimePicker = false
+                        visiblePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            },
+            title = {
+                Text(
+                    text = "시간 선택",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Gray800
+                )
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
+    }
+
+    // Loading overlay for PDF upload only (not for question generation)
         if (isUploading) {
             Box(
                 modifier = Modifier

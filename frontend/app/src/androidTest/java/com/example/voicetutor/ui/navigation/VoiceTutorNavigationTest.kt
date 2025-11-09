@@ -103,12 +103,6 @@ class VoiceTutorNavigationTest {
     }
 
     @Test
-    fun voiceTutorScreens_teacherStudentDetail_createRoute_worksCorrectly() {
-        val route = VoiceTutorScreens.TeacherStudentDetail.createRoute("홍길동")
-        assertEquals("teacher_student_detail/홍길동", route)
-    }
-
-    @Test
     fun voiceTutorScreens_teacherStudentAssignmentDetail_createRoute_worksCorrectly() {
         val route = VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute("1", "테스트 과제")
         assertEquals("teacher_student_assignment_detail/1/테스트 과제", route)
@@ -121,21 +115,9 @@ class VoiceTutorNavigationTest {
     }
 
     @Test
-    fun voiceTutorScreens_teacherMessage_createRoute_worksCorrectly() {
-        val route = VoiceTutorScreens.TeacherMessage.createRoute("홍길동")
-        assertEquals("teacher_message/홍길동", route)
-    }
-
-    @Test
     fun voiceTutorScreens_teacherClassDetail_createRoute_worksCorrectly() {
         val route = VoiceTutorScreens.TeacherClassDetail.createRoute("수학", 1)
         assertEquals("teacher_class_detail/수학/1", route)
-    }
-
-    @Test
-    fun voiceTutorScreens_classMessage_createRoute_worksCorrectly() {
-        val route = VoiceTutorScreens.ClassMessage.createRoute("수학")
-        assertEquals("class_message/수학", route)
     }
 
     @Test
@@ -223,24 +205,6 @@ class VoiceTutorNavigationTest {
     fun voiceTutorScreens_attendanceManagement_createRoute_handlesZero() {
         val route = VoiceTutorScreens.AttendanceManagement.createRoute(0)
         assertEquals("attendance_management/0", route)
-    }
-
-    @Test
-    fun voiceTutorScreens_teacherMessage_createRoute_handlesEmptyName() {
-        val route = VoiceTutorScreens.TeacherMessage.createRoute("")
-        assertEquals("teacher_message/", route)
-    }
-
-    @Test
-    fun voiceTutorScreens_classMessage_createRoute_handlesEmptyClassName() {
-        val route = VoiceTutorScreens.ClassMessage.createRoute("")
-        assertEquals("class_message/", route)
-    }
-
-    @Test
-    fun voiceTutorScreens_teacherStudentDetail_createRoute_handlesEmptyName() {
-        val route = VoiceTutorScreens.TeacherStudentDetail.createRoute("")
-        assertEquals("teacher_student_detail/", route)
     }
 
     @Test
@@ -372,11 +336,8 @@ class VoiceTutorNavigationTest {
             VoiceTutorScreens.EditAssignment.route,
             VoiceTutorScreens.TeacherAssignmentResults.route,
             VoiceTutorScreens.TeacherAssignmentDetail.route,
-            VoiceTutorScreens.TeacherStudentDetail.route,
             VoiceTutorScreens.TeacherStudentAssignmentDetail.route,
-            VoiceTutorScreens.TeacherMessage.route,
             VoiceTutorScreens.TeacherClassDetail.route,
-            VoiceTutorScreens.ClassMessage.route,
             VoiceTutorScreens.AttendanceManagement.route,
             VoiceTutorScreens.Settings.route,
             VoiceTutorScreens.CreateClass.route,

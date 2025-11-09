@@ -1124,6 +1124,11 @@ class AssignmentViewModel @Inject constructor(
         _generatingAssignmentTitle.value = null
     }
     
+    fun clearQuestionGenerationStatus() {
+        _questionGenerationSuccess.value = false
+        _questionGenerationError.value = null
+    }
+    
     fun checkS3UploadStatus(assignmentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
