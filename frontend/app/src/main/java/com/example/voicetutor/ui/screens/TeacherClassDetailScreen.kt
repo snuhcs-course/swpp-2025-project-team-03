@@ -396,11 +396,6 @@ fun ClassAssignmentCard(
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
                     )
-                    Text(
-                        text = assignment.subject,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
                 }
                 
                 // Status badge
