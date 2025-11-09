@@ -124,6 +124,10 @@ class AssignmentViewModel @Inject constructor(
     private val _answerSubmissionResponse = MutableStateFlow<AnswerSubmissionResponse?>(null)
     val answerSubmissionResponse: StateFlow<AnswerSubmissionResponse?> = _answerSubmissionResponse.asStateFlow()
     
+    // 답변 제출 중 상태 (채점 중)
+    private val _isSubmitting = MutableStateFlow(false)
+    val isSubmitting: StateFlow<Boolean> = _isSubmitting.asStateFlow()
+
     // 과제 완료 상태
     private val _isAssignmentCompleted = MutableStateFlow(false)
     val isAssignmentCompleted: StateFlow<Boolean> = _isAssignmentCompleted.asStateFlow()
@@ -1417,7 +1421,7 @@ class AssignmentViewModel @Inject constructor(
     
     fun submitAnswer(personalAssignmentId: Int, studentId: Int, questionId: Int, audioFile: File) {
         viewModelScope.launch {
-            _isLoading.value = true
+            _isSubmitting.value = true
             _error.value = null
             
             // 오디오 녹음 상태를 처리 중으로 설정 (SimpleRecordingState에는 isProcessing 필드가 없음)
@@ -1446,7 +1450,7 @@ class AssignmentViewModel @Inject constructor(
                     println("AssignmentViewModel - Failed to submit answer: ${exception.message}")
                 }
             
-            _isLoading.value = false
+            _isSubmitting.value = false
         }
     }
     

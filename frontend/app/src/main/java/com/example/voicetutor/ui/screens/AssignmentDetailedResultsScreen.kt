@@ -281,22 +281,29 @@ fun QuestionGroupCard(
                     // Right: Toggle with tail count (if exists)
                     if (group.tailQuestions.isNotEmpty()) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .background(
+                                    color = PrimaryIndigo.copy(alpha = 0.1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                                )
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Tail question count
+                            // Tail question toggle text
                             Text(
-                                text = "+${group.tailQuestions.size}",
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = if (isExpanded) "꼬리질문 접기" else "꼬리질문 펼치기",
+                                style = MaterialTheme.typography.bodySmall,
                                 color = PrimaryIndigo,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.Bold
                             )
 
                             // Toggle icon
                             Icon(
                                 imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                                 contentDescription = if (isExpanded) "접기" else "펼치기",
-                                tint = PrimaryIndigo
+                                tint = PrimaryIndigo,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }

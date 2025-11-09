@@ -111,11 +111,16 @@ fun AssignmentContinuousScreen(
     val answerSubmissionResponse by viewModel.answerSubmissionResponse.collectAsStateWithLifecycle()
     val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isSubmitting by viewModel.isSubmitting.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
     val audioRecorder = remember { AudioRecorder(context) }
     
+    // MediaPlayer 추가
+    var mediaPlayer by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
+    var isPlaying by remember { mutableStateOf(false) }
+
     // AudioRecorder 상태 관찰
     val audioRecorderState by audioRecorder.recordingState.collectAsStateWithLifecycle()
     
@@ -128,6 +133,14 @@ fun AssignmentContinuousScreen(
     var savedTailQuestion by remember { mutableStateOf<com.example.voicetutor.data.models.TailQuestion?>(null) }
     var lastProcessedResponseNumberStr by remember { mutableStateOf<String?>(null) }
     
+    // MediaPlayer cleanup
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer?.release()
+            mediaPlayer = null
+        }
+    }
+
     // 권한 요청 런처
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -314,9 +327,9 @@ fun AssignmentContinuousScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.CheckCircle,
+                        imageVector = Icons.Filled.AssignmentTurnedIn,
                         contentDescription = null,
-                        tint = Success,
+                        tint = PrimaryIndigo,
                         modifier = Modifier.size(80.dp)
                     )
                     Text(
@@ -616,7 +629,68 @@ fun AssignmentContinuousScreen(
                             }
                         )
                     }
-                    
+
+                    // 음성 다시 듣기 버튼 - 녹음이 완료되었고 녹음 중이 아닐 때만 표시
+                    if (audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording) {
+                        VTButton(
+                            text = if (isPlaying) "재생 중지" else "음성 다시 듣기",
+                            onClick = {
+                                val audioFilePath = audioRecordingState.audioFilePath
+                                if (audioFilePath != null) {
+                                    if (isPlaying) {
+                                        // 재생 중지
+                                        println("AssignmentScreen - Stopping audio playback")
+                                        mediaPlayer?.stop()
+                                        mediaPlayer?.release()
+                                        mediaPlayer = null
+                                        isPlaying = false
+                                    } else {
+                                        // 재생 시작
+                                        println("AssignmentScreen - Starting audio playback: $audioFilePath")
+                                        try {
+                                            mediaPlayer?.release()
+                                            mediaPlayer = android.media.MediaPlayer().apply {
+                                                setDataSource(audioFilePath)
+                                                prepare()
+                                                start()
+                                                isPlaying = true
+
+                                                setOnCompletionListener {
+                                                    println("AssignmentScreen - Audio playback completed")
+                                                    isPlaying = false
+                                                    release()
+                                                    mediaPlayer = null
+                                                }
+
+                                                setOnErrorListener { _, what, extra ->
+                                                    println("AssignmentScreen - Audio playback error: what=$what, extra=$extra")
+                                                    isPlaying = false
+                                                    release()
+                                                    mediaPlayer = null
+                                                    true
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            println("AssignmentScreen - Error starting audio playback: ${e.message}")
+                                            isPlaying = false
+                                            mediaPlayer?.release()
+                                            mediaPlayer = null
+                                        }
+                                    }
+                                }
+                            },
+                            variant = ButtonVariant.Outline,
+                            enabled = true,
+                            fullWidth = true,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = if (isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
+
                     // Send button - 응답 결과에 따라 다른 버튼 표시
                     if (showResult) {
                         // 응답 결과가 있을 때
@@ -819,6 +893,32 @@ fun AssignmentContinuousScreen(
                             enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording
                         )
                     }
+                }
+            }
+        }
+
+        // 채점 중 오버레이 로딩
+        if (isSubmitting) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Text(
+                        text = "채점 중...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
