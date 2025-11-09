@@ -92,6 +92,8 @@ pre_commit==4.3.0
 proglog==0.1.12
 proto-plus==1.26.1
 protobuf==4.25.8
+psycopg==3.2.12
+psycopg2-binary==2.9.11
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.23
