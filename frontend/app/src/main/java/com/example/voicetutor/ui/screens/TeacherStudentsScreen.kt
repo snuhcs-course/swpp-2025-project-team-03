@@ -2,6 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,7 +40,7 @@ import kotlinx.coroutines.delay
 fun TeacherStudentsScreen(
     classId: Int? = null,
     teacherId: String? = null,
-    onNavigateToAttendance: () -> Unit = {},
+    onNavigateToStudentDetail: (Int) -> Unit = {},
     navController: androidx.navigation.NavHostController? = null
 ) {
     val viewModel: StudentViewModel = hiltViewModel()
@@ -253,18 +254,12 @@ fun TeacherStudentsScreen(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "과제 이행률",
+                                text = "과제 완료률",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Gray600,
                                 fontWeight = FontWeight.Medium
                             )
                         }
-                        Text(
-                            text = "(최근 1달)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray500,
-                            fontSize = 11.sp
-                        )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = if (isLoadingStatistics) "로딩 중..." else "${overallCompletionRate.toInt()}%",
@@ -291,29 +286,34 @@ fun TeacherStudentsScreen(
             )
         }
         
-        // Action button
-        VTButton(
-            text = "학생 등록하기",
-            onClick = {
-                selectedToEnroll.clear()
-                showEnrollSheet = true
-            },
-            variant = ButtonVariant.Outline,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.PersonAdd,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Action buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            VTButton(
+                text = "학생 등록하기",
+                onClick = {
+                    selectedToEnroll.clear()
+                    showEnrollSheet = true
+                },
+                variant = ButtonVariant.Outline,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.PersonAdd,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                modifier = Modifier.weight(1f)
+            )
+        }
         
         // Students list
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -322,23 +322,6 @@ fun TeacherStudentsScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.FilterList,
-                        contentDescription = null,
-                        tint = Gray500,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "정렬",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
-                    )
-                }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -376,56 +359,16 @@ fun TeacherStudentsScreen(
                     }
                 }
             } else {
-                students.forEach { student ->
+                students.forEachIndexed { index, student ->
                     val stats = studentsStatisticsMap[student.id]
-                    StudentCard(
+                    StudentListItem(
                         student = student,
                         averageScore = stats?.averageScore ?: 0f,
                         completionRate = stats?.completionRate ?: 0f,
                         totalAssignments = stats?.totalAssignments ?: 0,
                         completedAssignments = stats?.completedAssignments ?: 0,
-                        isLoadingStats = isLoadingStatistics
-                    )
-                    
-                    if (student != students.last()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-        }
-        
-        // Quick actions
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
-                Text(
-                    text = "빠른 작업",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    QuickActionCard(
-                        title = "성과 분석",
-                        description = "반 전체 성과 보기",
-                        icon = Icons.Filled.Analytics,
-                        color = PrimaryIndigo,
-                        onClick = { navController?.navigate("analytics") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    QuickActionCard(
-                        title = "출석 관리",
-                        description = "출석 현황 확인",
-                        icon = Icons.Filled.EventAvailable,
-                        color = Success,
-                        onClick = onNavigateToAttendance,
-                        modifier = Modifier.weight(1f)
+                        isLoadingStats = isLoadingStatistics,
+                        isLastItem = index == students.lastIndex
                     )
                 }
             }
@@ -516,39 +459,48 @@ fun TeacherStudentsScreen(
 }
 
 @Composable
-fun StudentCard(
+fun StudentListItem(
     student: Student,
     averageScore: Float,
     completionRate: Float,
     totalAssignments: Int,
     completedAssignments: Int,
-    isLoadingStats: Boolean
+    isLoadingStats: Boolean,
+    isLastItem: Boolean
 ) {
-    VTCard(
-        variant = CardVariant.Elevated
+    androidx.compose.material3.Surface(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        color = Color.White,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Gray200.copy(alpha = 0.6f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.Top
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(32.dp)
                             .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(
-                                PrimaryIndigo.copy(alpha = 0.1f)
-                            ),
+                            .background(PrimaryIndigo.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = student.name?.takeIf { it.isNotBlank() }?.firstOrNull()?.toString() ?: "?",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryIndigo
                         )
@@ -557,134 +509,62 @@ fun StudentCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     
                     Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = student.name ?: "이름 없음",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Gray800
-                            )
-                        }
+                        Text(
+                            text = student.name ?: "이름 없음",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
                         Text(
                             text = student.email ?: "이메일 없음",
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray600
                         )
-                        Text(
-                            text = "최근 활동: ${"활동 없음"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray500
-                        )
                     }
                 }
                 
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StudentStatItem(
-                    label = "과제 완료",
-                    value = if (isLoadingStats) "로딩 중..." else "${completedAssignments}/${totalAssignments}",
-                    progress = if (totalAssignments > 0) (completedAssignments.toFloat() / totalAssignments) else 0f,
-                    color = PrimaryIndigo
-                )
-                
-                StudentStatItem(
-                    label = "평균 점수",
-                    value = if (isLoadingStats) "로딩 중..." else "${averageScore.toInt()}점",
-                    progress = (averageScore / 100f).coerceIn(0f, 1f),
-                    color = when {
-                        averageScore >= 90 -> Success
-                        averageScore >= 80 -> Warning
-                        else -> Error
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    val completionText = if (isLoadingStats) "과제 완료: 로딩 중" else {
+                        if (totalAssignments > 0) "과제 완료: $completedAssignments/$totalAssignments" else "과제 완료: -"
                     }
-                )
+                    val scoreText = if (isLoadingStats) "평균 점수: 로딩 중" else "평균 점수: ${averageScore.toInt()}점"
+                    
+                    Text(
+                        text = completionText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray700
+                    )
+                    Text(
+                        text = scoreText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray700
+                    )
+                    if (!isLoadingStats) {
+                        Text(
+                            text = "완료율: ${(completionRate).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray700
+                        )
+                    }
+                }
             }
         }
     }
-}
-
-
-@Composable
-fun StudentStatItem(
-    label: String,
-    value: String,
-    progress: Float,
-    color: Color
-) {
+    
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
     ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = Gray600
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Box(
-            modifier = Modifier
-                .width(60.dp)
-                .height(4.dp)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                .background(Gray200)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                    .background(color)
-            )
-        }
-    }
-}
-
-@Composable
-fun QuickActionCard(
-    title: String,
-    description: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    VTCard(
-        variant = CardVariant.Outlined,
-        onClick = onClick,
-        modifier = modifier
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
+        if (!isLastItem) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Divider(
+                modifier = Modifier.fillMaxWidth(),
+                color = Gray200,
+                thickness = 0.5.dp
             )
         }
     }
