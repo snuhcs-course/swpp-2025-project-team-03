@@ -217,9 +217,8 @@ fun VoiceTutorNavigation(
             }
         }
 
-        // Pending Assignments Screen (해야 할 과제)
         composable(
-            route = VoiceTutorScreens.PendingAssignments.route,
+            route = VoiceTutorScreens.NoRecentAssignment.route,
             arguments = listOf(
                 navArgument("studentId") {
                     type = NavType.IntType
@@ -232,24 +231,11 @@ fun VoiceTutorNavigation(
                     navController = navController,
                     userRole = UserRole.STUDENT
                 ) {
-                    val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
-                    PendingAssignmentsScreen(
-                        studentId = studentId,
-                        onNavigateToAssignment = { assignmentId ->
-                            // assignmentId는 Assignment ID가 아니라 Personal Assignment ID
-                            // AssignmentScreen에서 Personal Assignment ID를 사용해야 함
-                            navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
-                        },
-                        onNavigateToAssignmentDetail = { assignmentId ->
-                            // assignmentId는 Assignment ID
-                            navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId, "과제"))
-                        },
-                        assignmentViewModel = assignmentViewModel
-                    )
+                    NoRecentAssignmentScreen()
                 }
             }
         }
-        
+
         composable(
             route = VoiceTutorScreens.AssignmentDetailedResults.route,
             arguments = listOf(
@@ -848,8 +834,8 @@ sealed class VoiceTutorScreens(val route: String) {
         fun createRoute(personalAssignmentId: Int, title: String) = "assignment_detailed_results/$personalAssignmentId/$title"
     }
     object Progress : VoiceTutorScreens("progress")
-    object PendingAssignments : VoiceTutorScreens("pending_assignments/{studentId}") {
-        fun createRoute(studentId: Int) = "pending_assignments/$studentId"
+    object NoRecentAssignment : VoiceTutorScreens("no_recent_assignment/{studentId}") {
+        fun createRoute(studentId: Int) = "no_recent_assignment/$studentId"
     }
     object CreateClass : VoiceTutorScreens("create_class")
     object AppInfo : VoiceTutorScreens("app_info")

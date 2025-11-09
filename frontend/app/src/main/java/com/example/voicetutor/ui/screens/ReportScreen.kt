@@ -71,16 +71,10 @@ fun ReportScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -90,7 +84,7 @@ fun ReportScreen(
                         modifier = Modifier
                             .size(48.dp)
                             .background(
-                                color = Color.White.copy(alpha = 0.2f),
+                                color = PrimaryIndigo.copy(alpha = 0.15f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                             ),
                         contentAlignment = Alignment.Center
@@ -98,7 +92,7 @@ fun ReportScreen(
                         Icon(
                             imageVector = Icons.Filled.Assessment,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = PrimaryIndigo,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -107,14 +101,14 @@ fun ReportScreen(
                         Text(
                             text = "학습 리포트",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "완료한 과제 결과를 확인해보세요",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = Gray600
                         )
                     }
                 }

@@ -116,29 +116,23 @@ fun StudentDashboardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                PrimaryIndigo.copy(alpha = 0.9f),
-                                PrimaryPurple.copy(alpha = 0.85f)
-                            )
-                        ),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    // shadow 제거!
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
-            Column {
+                Column {
                     Text(
                         text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Gray600
                     )
                 }
             }
