@@ -70,6 +70,6 @@ class AssignmentResultSerializer(serializers.Serializer):
     """과제 제출 결과를 위한 serializer"""
 
     assignment_id = serializers.IntegerField()
-    total_questions = serializers.IntegerField()
-    correct_answers = serializers.IntegerField()
-    score_percentage = serializers.FloatField()
+    total_students = serializers.IntegerField()
+    submitted_students = serializers.IntegerField()
+    submission_rate = serializers.FloatField()

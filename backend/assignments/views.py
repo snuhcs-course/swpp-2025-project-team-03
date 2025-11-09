@@ -396,7 +396,7 @@ class AssignmentSubmitView(APIView):  # POST /assignments/{id}/submit
 class AssignmentResultsView(APIView):  # GET /assignments/{id}/results
     @swagger_auto_schema(
         operation_id="과제 결과 조회",
-        operation_description="특정 과제의 제출 결과를 조회합니다.",
+        operation_description="특정 과제의 제출 결과(총 개인 과제 수, 제출 수, 완료율)를 조회합니다.",
         responses={200: "Assignment results"},
     )
     def get(self, request, id):
@@ -418,9 +418,9 @@ class AssignmentResultsView(APIView):  # GET /assignments/{id}/results
             serializer = AssignmentResultSerializer(
                 data={
                     "assignment_id": id,
-                    "total_questions": total,
-                    "correct_answers": submitted,
-                    "score_percentage": completion_rate,
+                    "total_students": total,
+                    "submitted_students": submitted,
+                    "submission_rate": completion_rate,
                 }
             )
 
@@ -442,15 +442,9 @@ class AssignmentResultsView(APIView):  # GET /assignments/{id}/results
             logger.error(f"[AssignmentResultsView] {e}", exc_info=True)
             # 결과 집계 실패 시에도 500 반환 대신 기본 구조로 응답(기존 단위 테스트 호환)
             return create_api_response(
-                success=True,
-                data={
-                    "assignment_id": id,
-                    "total_personal_assignments": 0,
-                    "submitted_count": 0,
-                    "completion_rate": 0.0,
-                },
+                success=False,
                 message="과제 결과 조회",
-                status_code=status.HTTP_200_OK,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
