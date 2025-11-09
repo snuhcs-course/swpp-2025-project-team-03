@@ -290,9 +290,9 @@ fun QuestionGroupCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Tail question count
+                            // Tail question toggle text
                             Text(
-                                text = "꼬리질문 ${group.tailQuestions.size}개",
+                                text = if (isExpanded) "꼬리질문 접기" else "꼬리질문 펼치기",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = PrimaryIndigo,
                                 fontWeight = FontWeight.Bold
