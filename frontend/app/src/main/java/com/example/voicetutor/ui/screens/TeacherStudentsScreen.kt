@@ -39,7 +39,6 @@ import kotlinx.coroutines.delay
 fun TeacherStudentsScreen(
     classId: Int? = null,
     teacherId: String? = null,
-    onNavigateToStudentDetail: (Int) -> Unit = {},
     onNavigateToAttendance: () -> Unit = {},
     navController: androidx.navigation.NavHostController? = null
 ) {
@@ -385,8 +384,7 @@ fun TeacherStudentsScreen(
                         completionRate = stats?.completionRate ?: 0f,
                         totalAssignments = stats?.totalAssignments ?: 0,
                         completedAssignments = stats?.completedAssignments ?: 0,
-                        isLoadingStats = isLoadingStatistics,
-                        onViewStudent = { onNavigateToStudentDetail(student.id) },
+                        isLoadingStats = isLoadingStatistics
                     )
                     
                     if (student != students.last()) {
@@ -524,12 +522,10 @@ fun StudentCard(
     completionRate: Float,
     totalAssignments: Int,
     completedAssignments: Int,
-    isLoadingStats: Boolean,
-    onViewStudent: (Int) -> Unit
+    isLoadingStats: Boolean
 ) {
     VTCard(
-        variant = CardVariant.Elevated,
-        onClick = { onViewStudent(student.id) }
+        variant = CardVariant.Elevated
     ) {
         Column {
             Row(
