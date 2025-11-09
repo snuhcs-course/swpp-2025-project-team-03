@@ -1,5 +1,6 @@
 package com.example.voicetutor.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,7 @@ fun EditAssignmentScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val assignmentStats by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     
     // Find assignment by ID or title from the assignments list
     val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
@@ -413,6 +416,7 @@ fun EditAssignmentScreen(
                     )
                     
                     viewModel.updateAssignment(assignmentIdToUpdate, updateRequest)
+                    Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
                     onSaveAssignment()
                 } else {
                     val message = listOfNotNull(dueDateError, visibleDateError)
@@ -549,6 +553,13 @@ fun EditAssignmentScreen(
                     )
                 }
             )
+        }
+        
+        LaunchedEffect(error) {
+            error?.let {
+                Toast.makeText(context, "과제 수정에 문제가 발생했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                viewModel.clearError()
+            }
         }
         }
     }
