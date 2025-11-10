@@ -409,7 +409,12 @@ fun TeacherStudentsScreen(
     // 학생 등록 바텀시트
     if (showEnrollSheet) {
         ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
                 Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
 
@@ -491,7 +496,12 @@ fun TeacherStudentsScreen(
     // 학생 삭제 바텀시트
     if (showDeleteSheet) {
         ModalBottomSheet(onDismissRequest = { showDeleteSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
                 Text("학생 삭제", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
 

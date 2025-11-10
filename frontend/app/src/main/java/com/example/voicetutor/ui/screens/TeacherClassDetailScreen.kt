@@ -231,43 +231,15 @@ fun TeacherClassDetailScreen(
         
         item {
             // Quick actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                VTButton(
-                    text = "과제 생성",
-                    onClick = { onNavigateToCreateAssignment(classId) },
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp)
-                )
-
-                VTButton(
-                    text = "학생 등록하기",
-                    onClick = {
-                        // 전체 학생 목록 로드 후 시트 오픈
-                        studentViewModel.loadAllStudents()
-                        selectedToEnroll.clear()
-                        showEnrollSheet = true
-                    },
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small,
-                    modifier = Modifier
-                        .weight(1.3f)
-                        .height(44.dp),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.PersonAdd,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                )
-            }
+            VTButton(
+                text = "과제 생성",
+                onClick = { onNavigateToCreateAssignment(classId) },
+                variant = ButtonVariant.Outline,
+                size = ButtonSize.Small,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+            )
         }
         
         item {
