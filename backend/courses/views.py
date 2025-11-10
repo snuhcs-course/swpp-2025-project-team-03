@@ -8,11 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import CourseClass, Enrollment
-from .request_serializers import (
-    ClassCreateRequestSerializer,
-    StudentDeleteRequestSerializer,
-    StudentEditRequestSerializer,
-)
+from .request_serializers import ClassCreateRequestSerializer, StudentEditRequestSerializer
 from .serializers import (
     ClassStudentsStatisticsSerializer,
     CourseClassSerializer,
@@ -154,50 +150,6 @@ class StudentDetailView(APIView):  # GET /students/{id}
                 success=False,
                 error=str(e),
                 message="학생 정보 수정 중 오류가 발생했습니다.",
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-    # DELETE /students/{id}/
-    @swagger_auto_schema(
-        operation_id="학생 삭제",
-        operation_description="특정 학생을 삭제합니다.",
-        request_body=StudentDeleteRequestSerializer,
-        responses={200: "Student deleted"},
-    )
-    def delete(self, request, id):
-        try:
-            student = Account.objects.get(id=id, is_student=True)
-            serializer = StudentDeleteRequestSerializer(data=request.data)
-
-            if serializer.is_valid():
-                student.delete()
-
-                return create_api_response(
-                    data={"success": True, "message": "학생이 성공적으로 삭제되었습니다."},
-                    message="학생 삭제 성공",
-                    status_code=status.HTTP_200_OK,
-                )
-            else:
-                return create_api_response(
-                    success=False,
-                    error=serializer.errors,
-                    message="입력값 오류",
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
-
-        except Account.DoesNotExist:
-            return create_api_response(
-                success=False,
-                error="Student not found",
-                message="해당 학생을 찾을 수 없습니다.",
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
-        except Exception as e:
-            logger.error(f"[StudentDeleteView] {e}", exc_info=True)
-            return create_api_response(
-                success=False,
-                error=str(e),
-                message="학생 삭제 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -526,6 +478,84 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
                 success=False,
                 error=str(e),
                 message="학생 등록 중 오류가 발생했습니다.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class ClassStudentDeleteView(APIView):  # DELETE /classes/{id}/students/{student_id}/
+    @swagger_auto_schema(
+        operation_id="반에서 학생 제거",
+        operation_description="특정 반에서 특정 학생을 제거합니다. 해당 학생의 personal assignment, questions, answers가 모두 삭제됩니다.",
+        responses={200: "Student removed from class"},
+    )
+    def delete(self, request, id, student_id):
+        try:
+            from assignments.models import Assignment
+            from questions.models import Question
+            from submissions.models import Answer, PersonalAssignment
+
+            # 클래스 확인
+            course_class = CourseClass.objects.get(id=id)
+
+            # 학생 확인
+            student = Account.objects.get(id=student_id, is_student=True)
+
+            # Enrollment 확인
+            try:
+                enrollment = Enrollment.objects.get(course_class=course_class, student=student)
+            except Enrollment.DoesNotExist:
+                return create_api_response(
+                    success=False,
+                    error="Enrollment not found",
+                    message="해당 학생이 이 반에 등록되어 있지 않습니다.",
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            # 해당 반의 모든 Assignment 가져오기
+            assignments = Assignment.objects.filter(course_class=course_class)
+
+            # 해당 학생의 PersonalAssignment들 가져오기 (이 반의 과제들에 대한 것만)
+            personal_assignments = PersonalAssignment.objects.filter(student=student, assignment__in=assignments)
+
+            # PersonalAssignment의 Questions 가져오기
+            questions = Question.objects.filter(personal_assignment__in=personal_assignments)
+
+            # Questions의 Answers 가져오기
+            answers = Answer.objects.filter(question__in=questions, student=student)
+
+            # 삭제 순서: Answers -> Questions -> PersonalAssignments -> Enrollment
+            # (CASCADE로 자동 삭제되지만 명시적으로 삭제)
+            answers.delete()
+            questions.delete()
+            personal_assignments.delete()
+            enrollment.delete()
+
+            return create_api_response(
+                data={"class_id": id, "student_id": student_id},
+                message="학생이 반에서 성공적으로 제거되었습니다.",
+                status_code=status.HTTP_200_OK,
+            )
+
+        except CourseClass.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Class not found",
+                message="해당 클래스를 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Account.DoesNotExist:
+            return create_api_response(
+                success=False,
+                error="Student not found",
+                message="해당 학생을 찾을 수 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[ClassStudentDeleteView] {e}", exc_info=True)
+            return create_api_response(
+                success=False,
+                error=str(e),
+                message="학생 제거 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

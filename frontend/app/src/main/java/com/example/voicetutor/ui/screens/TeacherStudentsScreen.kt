@@ -118,6 +118,15 @@ fun TeacherStudentsScreen(
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     val allStudentsForEnroll = remember { mutableStateListOf<Student>() }
     var isLoadingAllStudents by remember { mutableStateOf(false) }
+    var enrollSearchQuery by remember { mutableStateOf("") }
+    
+    // 학생 삭제 바텀시트 상태
+    var showDeleteSheet by remember { mutableStateOf(false) }
+    val selectedToDelete = remember { mutableStateListOf<Int>() }
+    var deleteSearchQuery by remember { mutableStateOf("") }
+    
+    // 학생 삭제 재확인 다이얼로그 상태
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     
     // EntryPoint를 통해 ApiService 주입받기 (바텀시트 독립적 데이터 로딩용)
     val context = LocalContext.current
@@ -128,6 +137,14 @@ fun TeacherStudentsScreen(
         )
         val apiService = entryPoint.apiService()
         StudentRepository(apiService)
+    }
+    val classRepository = remember {
+        val entryPoint = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            ApiServiceEntryPoint::class.java
+        )
+        val apiService = entryPoint.apiService()
+        com.example.voicetutor.data.repository.ClassRepository(apiService)
     }
     
     // 바텀시트 열 때 전체 학생 목록을 별도로 로드 (viewModel.students와 완전히 독립)
@@ -158,6 +175,7 @@ fun TeacherStudentsScreen(
             // 바텀시트가 닫히면 바텀시트용 목록만 클리어 (viewModel.students는 건드리지 않음)
             allStudentsForEnroll.clear()
             selectedToEnroll.clear()
+            enrollSearchQuery = ""
         }
     }
     
@@ -292,7 +310,7 @@ fun TeacherStudentsScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             VTButton(
-                text = "학생 등록하기",
+                text = "학생 등록",
                 onClick = {
                     selectedToEnroll.clear()
                     showEnrollSheet = true
@@ -301,6 +319,22 @@ fun TeacherStudentsScreen(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.PersonAdd,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                modifier = Modifier.weight(1f)
+            )
+            VTButton(
+                text = "학생 삭제",
+                onClick = {
+                    selectedToDelete.clear()
+                    showDeleteSheet = true
+                },
+                variant = ButtonVariant.Outline,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -377,9 +411,65 @@ fun TeacherStudentsScreen(
     
     // 학생 등록 바텀시트
     if (showEnrollSheet) {
-        ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        ModalBottomSheet(onDismissRequest = { 
+            showEnrollSheet = false
+            enrollSearchQuery = ""
+        }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "학생 등록", 
+                    style = MaterialTheme.typography.titleLarge, 
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(12.dp))
+                
+                // 검색 입력 필드
+                OutlinedTextField(
+                    value = enrollSearchQuery,
+                    onValueChange = { enrollSearchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    placeholder = { 
+                        Text(
+                            "이름 또는 이메일로 검색", 
+                            color = Gray500,
+                            style = MaterialTheme.typography.bodyMedium
+                        ) 
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "검색",
+                            tint = Gray600,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (enrollSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { enrollSearchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "검색어 지우기",
+                                    tint = Gray600,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        unfocusedBorderColor = Gray300
+                    )
+                )
                 Spacer(Modifier.height(12.dp))
 
                 // 로딩 중일 때
@@ -395,27 +485,41 @@ fun TeacherStudentsScreen(
                 } else {
                     // 이미 등록된 학생 제외 목록
                     val enrolledIds = classStudents.map { it.id }.toSet()
-                    val candidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
-
-                    if (candidates.isEmpty()) {
-                        Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                    val allCandidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
+                    
+                    // 검색어로 필터링 (이름 또는 이메일)
+                    val searchQueryLower = enrollSearchQuery.lowercase()
+                    val candidates = if (searchQueryLower.isBlank()) {
+                        allCandidates
                     } else {
-                        candidates.forEach { student ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
-                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
-                            }
-                            val checked = selectedToEnroll.contains(student.id)
-                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
-                                if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
-                            })
+                        allCandidates.filter { student ->
+                            val name = student.name?.lowercase() ?: ""
+                            val email = student.email?.lowercase() ?: ""
+                            name.contains(searchQueryLower) || email.contains(searchQueryLower)
                         }
                     }
+
+                    if (allCandidates.isEmpty()) {
+                        Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                    } else if (candidates.isEmpty()) {
+                        Text("검색 결과가 없습니다.", color = Gray600)
+                    } else {
+                        candidates.forEach { student ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                    Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                                }
+                                val checked = selectedToEnroll.contains(student.id)
+                                Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                    if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
+                                })
+                            }
+                        }
                     }
                 }
 
@@ -455,6 +559,212 @@ fun TeacherStudentsScreen(
                 Spacer(Modifier.height(8.dp))
             }
         }
+    }
+    
+    // 학생 삭제 바텀시트
+    if (showDeleteSheet) {
+        ModalBottomSheet(onDismissRequest = { 
+            showDeleteSheet = false
+            deleteSearchQuery = ""
+        }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "학생 삭제", 
+                    style = MaterialTheme.typography.titleLarge, 
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(12.dp))
+                
+                // 검색 입력 필드
+                OutlinedTextField(
+                    value = deleteSearchQuery,
+                    onValueChange = { deleteSearchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    placeholder = { 
+                        Text(
+                            "이름 또는 이메일로 검색", 
+                            color = Gray500,
+                            style = MaterialTheme.typography.bodyMedium
+                        ) 
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "검색",
+                            tint = Gray600,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (deleteSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { deleteSearchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "검색어 지우기",
+                                    tint = Gray600,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        unfocusedBorderColor = Gray300
+                    )
+                )
+                Spacer(Modifier.height(12.dp))
+
+                // 이미 등록된 학생 목록
+                val enrolledStudents = classStudents
+                
+                // 검색어로 필터링 (이름 또는 이메일)
+                val searchQueryLower = deleteSearchQuery.lowercase()
+                val filteredStudents = if (searchQueryLower.isBlank()) {
+                    enrolledStudents
+                } else {
+                    enrolledStudents.filter { student ->
+                        val name = student.name?.lowercase() ?: ""
+                        val email = student.email?.lowercase() ?: ""
+                        name.contains(searchQueryLower) || email.contains(searchQueryLower)
+                    }
+                }
+
+                if (enrolledStudents.isEmpty()) {
+                    Text("삭제할 학생이 없습니다.", color = Gray600)
+                } else if (filteredStudents.isEmpty()) {
+                    Text("검색 결과가 없습니다.", color = Gray600)
+                } else {
+                    filteredStudents.forEach { student ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                            }
+                            val checked = selectedToDelete.contains(student.id)
+                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                if (isChecked) selectedToDelete.add(student.id) else selectedToDelete.remove(student.id)
+                            })
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    VTButton(
+                        text = "취소",
+                        onClick = { showDeleteSheet = false },
+                        variant = ButtonVariant.Outline,
+                        modifier = Modifier.weight(1f)
+                    )
+                    VTButton(
+                        text = "삭제",
+                        onClick = {
+                            if (selectedToDelete.isNotEmpty()) {
+                                showDeleteConfirmDialog = true
+                            }
+                        },
+                        variant = ButtonVariant.Primary,
+                        modifier = Modifier.weight(1f),
+                        enabled = selectedToDelete.isNotEmpty()
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+    
+    // 학생 삭제 재확인 다이얼로그
+    if (showDeleteConfirmDialog && selectedToDelete.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = {
+                Text(
+                    text = "학생 제거",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "선택한 ${selectedToDelete.size}명의 학생을 이 반에서 제거하시겠습니까?\n제거된 학생의 과제, 질문, 답변이 모두 삭제됩니다.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                VTButton(
+                    text = "제거",
+                    onClick = {
+                        classId?.let { id ->
+                            coroutineScope.launch {
+                                try {
+                                    println("[DELETE] Starting to remove ${selectedToDelete.size} students from class $id")
+                                    // 각 학생을 순차적으로 삭제
+                                    withContext(Dispatchers.IO) {
+                                        for (studentId in selectedToDelete) {
+                                            println("[DELETE] Removing student $studentId from class $id")
+                                            val result = classRepository.removeStudentFromClass(id, studentId)
+                                            result.onSuccess {
+                                                println("[DELETE] Successfully removed student $studentId")
+                                            }.onFailure { e ->
+                                                println("[DELETE] Failed to remove student $studentId: ${e.message}")
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                    }
+                                    println("[DELETE] All deletions completed. Refreshing lists...")
+                                    // 완료 후 갱신
+                                    withContext(Dispatchers.Main) {
+                                        classViewModel.loadClassStudents(id)
+                                        val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+                                        actualTeacherId?.let {
+                                            viewModel.loadAllStudents(teacherId = it, classId = id.toString())
+                                        }
+                                        // 다이얼로그와 시트 닫기
+                                        showDeleteConfirmDialog = false
+                                        showDeleteSheet = false
+                                        selectedToDelete.clear()
+                                    }
+                                } catch (e: Exception) {
+                                    println("[DELETE] Error removing students: ${e.message}")
+                                    e.printStackTrace()
+                                    withContext(Dispatchers.Main) {
+                                        showDeleteConfirmDialog = false
+                                        showDeleteSheet = false
+                                        selectedToDelete.clear()
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Small
+                )
+            },
+            dismissButton = {
+                VTButton(
+                    text = "취소",
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                    },
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small
+                )
+            }
+        )
     }
 }
 

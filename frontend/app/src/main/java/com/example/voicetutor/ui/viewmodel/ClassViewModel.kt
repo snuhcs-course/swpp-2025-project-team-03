@@ -120,6 +120,22 @@ class ClassViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+    
+    fun removeStudentFromClass(classId: Int, studentId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            classRepository.removeStudentFromClass(classId, studentId)
+                .onSuccess {
+                    // 제거 성공 후 해당 반 학생 목록 갱신
+                    loadClassStudents(classId)
+                }
+                .onFailure { e ->
+                    _error.value = e.message
+                }
+            _isLoading.value = false
+        }
+    }
 
     fun clearError() {
         _error.value = null

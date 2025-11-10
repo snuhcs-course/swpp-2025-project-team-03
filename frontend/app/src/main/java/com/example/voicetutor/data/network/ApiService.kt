@@ -128,6 +128,13 @@ interface ApiService {
         @Query("studentId") studentId: Int
     ): Response<ApiResponse<EnrollmentData>>
     
+    // Remove student from class (Backend: DELETE /api/courses/classes/{id}/students/{student_id}/)
+    @DELETE("courses/classes/{id}/students/{student_id}/")
+    suspend fun removeStudentFromClass(
+        @Path("id") id: Int,
+        @Path("student_id") student_id: Int
+    ): Response<ApiResponse<Unit>>
+    
     // Class Students Statistics API
     @GET("courses/classes/{classId}/students-statistics/")
     suspend fun getClassStudentsStatistics(
