@@ -2,6 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
@@ -46,6 +48,8 @@ fun AllStudentsScreen(
     
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
+    val studentClasses by studentViewModel.studentClasses.collectAsStateWithLifecycle()
+    val loadingStudentClasses by studentViewModel.loadingStudentClasses.collectAsStateWithLifecycle()
     
     var selectedClassId by rememberSaveable(stateSaver = Saver(
         save = { it ?: -1 },
@@ -95,42 +99,6 @@ fun AllStudentsScreen(
     
     // Calculate stats
     val totalStudents = allStudents.size
-    
-    // 학생 통계 데이터 클래스
-    data class StudentStats(
-        val averageScore: Float,
-        val completionRate: Float,
-        val totalAssignments: Int,
-        val completedAssignments: Int
-    )
-    
-    var studentsStatisticsMap by remember { mutableStateOf<Map<Int, StudentStats>>(emptyMap()) }
-    var isLoadingStatistics by remember { mutableStateOf(true) }
-    
-    // Load statistics for selected class
-    LaunchedEffect(selectedClassId) {
-        selectedClassId?.let { classId ->
-            isLoadingStatistics = true
-            classViewModel.loadClassStudentsStatistics(classId) { result ->
-                result.onSuccess { stats ->
-                    studentsStatisticsMap = stats.students.associate { 
-                        it.studentId to StudentStats(
-                            averageScore = it.averageScore,
-                            completionRate = it.completionRate,
-                            totalAssignments = it.totalAssignments,
-                            completedAssignments = it.completedAssignments
-                        )
-                    }
-                    isLoadingStatistics = false
-                }.onFailure {
-                    studentsStatisticsMap = emptyMap()
-                    isLoadingStatistics = false
-                }
-            }
-        } ?: run {
-            isLoadingStatistics = false
-        }
-    }
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -288,7 +256,13 @@ fun AllStudentsScreen(
                 items = allStudents,
                 key = { _, student -> student.id }  // 각 학생의 고유 ID를 키로 사용
             ) { index, student ->
-                val stats = studentsStatisticsMap[student.id]
+                val classesForStudent = studentClasses[student.id]
+                val isClassesLoading = loadingStudentClasses.contains(student.id)
+                LaunchedEffect(student.id) {
+                    if (classesForStudent == null && !isClassesLoading) {
+                        studentViewModel.loadStudentClasses(student.id)
+                    }
+                }
 
                 if (index > 0) {
                     Spacer(modifier = Modifier.height(12.dp))
@@ -298,11 +272,8 @@ fun AllStudentsScreen(
 
                 AllStudentsCard(
                     student = student,
-                    averageScore = stats?.averageScore ?: 0f,
-                    completionRate = stats?.completionRate ?: 0f,
-                    totalAssignments = stats?.totalAssignments ?: 0,
-                    completedAssignments = stats?.completedAssignments ?: 0,
-                    isLoadingStats = isLoadingStatistics,
+                    classNames = classesForStudent?.map { it.name } ?: emptyList(),
+                    isLoadingClasses = classesForStudent == null || isClassesLoading,
                     onReportClick = {
                         // 리포트 페이지로 이동
                         val classId = selectedClassId ?: 0
@@ -317,18 +288,13 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
-    averageScore: Float,
-    completionRate: Float,
-    totalAssignments: Int,
-    completedAssignments: Int,
-    isLoadingStats: Boolean,
+    classNames: List<String>,
+    isLoadingClasses: Boolean,
     onReportClick: () -> Unit
 ) {
-    Surface(
+    VTCard2(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.Transparent,
-        shadowElevation = 0.dp,
-        tonalElevation = 0.dp
+        variant = CardVariant.Elevated
     ) {
         Column(
             modifier = Modifier
@@ -374,24 +340,44 @@ fun AllStudentsCard(
                 }
             }
 
-            if (isLoadingStats) {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp)),
-                    color = PrimaryIndigo
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "반: ",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = Gray600
                 )
-            } else {
-                LinearProgressIndicator(
-                    progress = (completionRate / 100f).coerceIn(0f, 1f),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp)),
-                    color = PrimaryIndigo,
-                    trackColor = Gray200
-                )
+                when {
+                    isLoadingClasses -> Text(
+                        text = "불러오는 중...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray500
+                    )
+                    classNames.isEmpty() -> Text(
+                        text = "배정된 반이 없습니다",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray500
+                    )
+                    else -> classNames.forEachIndexed { index, name ->
+                        if (index > 0) {
+                            Text(
+                                text = ", ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Gray500
+                            )
+                        }
+                        Text(
+                            text = "($name)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray700
+                        )
+                    }
+                }
             }
 
             Row(
@@ -404,7 +390,7 @@ fun AllStudentsCard(
                     onClick = onReportClick,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
-                    modifier = Modifier.widthIn(min = 165.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Assessment,
@@ -413,50 +399,8 @@ fun AllStudentsCard(
                         )
                     }
                 )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                StatBadge(
-                    label = "평균 점수",
-                    value = if (isLoadingStats) "로딩 중..." else "${averageScore.toInt()}점",
-                    valueColor = when {
-                        averageScore >= 90 -> Success
-                        averageScore >= 80 -> Warning
-                        else -> Gray600
-                    }
-                )
-
-                StatBadge(
-                    label = "완료율",
-                    value = if (isLoadingStats) "로딩 중..." else "${completionRate.toInt()}%",
-                    valueColor = PrimaryIndigo
-                )
             }
         }
-    }
-}
-
-@Composable
-private fun StatBadge(
-    label: String,
-    value: String,
-    valueColor: Color
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = valueColor
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Gray500
-        )
     }
 }
 

@@ -115,6 +115,12 @@ interface ApiService {
     @GET("courses/classes/{id}/students/")
     suspend fun getClassStudents(@Path("id") id: Int): Response<ApiResponse<List<Student>>>
     
+    // Student's enrolled classes (Backend: GET /api/courses/students/{id}/classes/)
+    @GET("courses/students/{id}/classes/")
+    suspend fun getStudentClasses(
+        @Path("id") id: Int
+    ): Response<ApiResponse<List<ClassInfo>>>
+    
     // Enroll student to class (Backend: PUT /api/courses/classes/{id}/students/)
     @PUT("courses/classes/{id}/students/")
     suspend fun enrollStudentToClass(
