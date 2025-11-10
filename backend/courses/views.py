@@ -14,7 +14,6 @@ from .request_serializers import (
     StudentEditRequestSerializer,
 )
 from .serializers import (
-    ClassCompletionRateSerializer,
     ClassStudentsStatisticsSerializer,
     CourseClassSerializer,
     EnrollmentSerializer,
@@ -443,16 +442,10 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
 
     @swagger_auto_schema(
         operation_id="클래스에 학생 등록",
-        operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId, name, email 중 최소 하나를 제공해야 합니다.",
+        operation_description="클래스 id를 받아서 학생을 해당 클래스에 등록합니다. studentId는 필수입니다.",
         manual_parameters=[
             openapi.Parameter(
-                "studentId", openapi.IN_QUERY, description="학생 ID", type=openapi.TYPE_STRING, required=False
-            ),
-            openapi.Parameter(
-                "name", openapi.IN_QUERY, description="학생 이름", type=openapi.TYPE_STRING, required=False
-            ),
-            openapi.Parameter(
-                "email", openapi.IN_QUERY, description="학생 이메일", type=openapi.TYPE_STRING, required=False
+                "studentId", openapi.IN_QUERY, description="학생 ID", type=openapi.TYPE_INTEGER, required=True
             ),
         ],
         responses={200: "Student enrolled in class"},
@@ -460,42 +453,46 @@ class ClassStudentsView(APIView):  # GET /classes/{id}/students
     def put(self, request, id):
         try:
             course_class = CourseClass.objects.get(id=id)
-            student_id = request.query_params.get("studentId")
-            student_display_name = request.query_params.get("name")
-            student_email = request.query_params.get("email")
+            student_id_param = request.query_params.get("studentId")
 
-            # 모든 파라미터가 없으면 에러
-            if not student_id and not student_display_name and not student_email:
+            # studentId 파라미터 검증
+            if not student_id_param:
                 return create_api_response(
                     success=False,
-                    message="At least one of studentId, name, or email must be provided",
+                    error="studentId is required",
+                    message="학생 ID는 필수입니다.",
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # id, display_name, email을 이용해서 Account 찾기
-            query_filter = {}
-            if student_id:
-                query_filter["id"] = student_id
-            if student_display_name:
-                query_filter["display_name"] = student_display_name
-            if student_email:
-                query_filter["email"] = student_email
-
+            # studentId가 정수인지 검증
             try:
-                student = Account.objects.get(**query_filter, is_student=True)
+                student_id = int(student_id_param)
+            except (ValueError, TypeError):
+                return create_api_response(
+                    success=False,
+                    error="Invalid studentId format",
+                    message="학생 ID는 정수여야 합니다.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # studentId가 양수인지 검증
+            if student_id <= 0:
+                return create_api_response(
+                    success=False,
+                    error="Invalid studentId value",
+                    message="학생 ID는 양수여야 합니다.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 학생 존재 여부 및 학생 여부 검증
+            try:
+                student = Account.objects.get(id=student_id, is_student=True)
             except Account.DoesNotExist:
                 return create_api_response(
                     success=False,
                     error="Student not found",
-                    message="해당 조건에 맞는 학생을 찾을 수 없습니다.",
+                    message="해당 ID의 학생을 찾을 수 없습니다.",
                     status_code=status.HTTP_404_NOT_FOUND,
-                )
-            except Account.MultipleObjectsReturned:
-                return create_api_response(
-                    success=False,
-                    error="Multiple students found",
-                    message="조건에 맞는 학생이 여러 명입니다. 더 구체적인 정보를 제공해주세요.",
-                    status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
             # 중복 등록 방지
@@ -699,84 +696,6 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
                 success=False,
                 error=str(e),
                 message="반 학생 통계 조회 중 오류가 발생했습니다.",
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-
-class ClassCompletionRateView(APIView):  # GET /classes/{id}/completion-rate
-    @swagger_auto_schema(
-        operation_id="반 완료율 조회 (최근 한 달)",
-        operation_description="특정 반의 최근 한 달간 전체 완료율을 조회합니다. (전체 학생 완료한 과제 수 / 전체 학생 과제 수)",
-        responses={200: "Class completion rate"},
-    )
-    def get(self, request, id):
-        try:
-            from datetime import timedelta
-
-            from assignments.models import Assignment
-            from django.utils import timezone
-            from submissions.models import PersonalAssignment
-
-            # 클래스 확인
-            course_class = CourseClass.objects.get(id=id)
-
-            # 해당 반의 모든 학생
-            enrollments = Enrollment.objects.filter(course_class=course_class, status=Enrollment.Status.ENROLLED)
-            students = [enrollment.student for enrollment in enrollments]
-
-            if not students:
-                return create_api_response(
-                    data={"completion_rate": 0.0},
-                    message="반 완료율 조회 성공",
-                )
-
-            # 최근 한 달간의 과제만 필터링
-            one_month_ago = timezone.now() - timedelta(days=30)
-            assignments = Assignment.objects.filter(course_class=course_class, created_at__gte=one_month_ago)
-            total_assignments = assignments.count()
-
-            if total_assignments == 0:
-                return create_api_response(
-                    data={"completion_rate": 0.0},
-                    message="반 완료율 조회 성공",
-                )
-
-            # 전체 학생 완료한 과제 수 계산
-            total_completed_assignments = 0
-            total_student_assignments = len(students) * total_assignments
-
-            for student in students:
-                personal_assignments = PersonalAssignment.objects.filter(assignment__in=assignments, student=student)
-                submitted_count = personal_assignments.filter(status=PersonalAssignment.Status.SUBMITTED).count()
-                total_completed_assignments += submitted_count
-
-            # 전체 평균 완료율 계산
-            completion_rate = (
-                (total_completed_assignments / total_student_assignments * 100) if total_student_assignments > 0 else 0
-            )
-
-            data = {"completion_rate": round(completion_rate, 1)}
-
-            serializer = ClassCompletionRateSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-
-            return create_api_response(
-                data=serializer.data, message="반 완료율 조회 성공", status_code=status.HTTP_200_OK
-            )
-
-        except CourseClass.DoesNotExist:
-            return create_api_response(
-                success=False,
-                error="Class not found",
-                message="해당 클래스를 찾을 수 없습니다.",
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
-        except Exception as e:
-            logger.error(f"[ClassCompletionRateView] {e}", exc_info=True)
-            return create_api_response(
-                success=False,
-                error=str(e),
-                message="반 완료율 조회 중 오류가 발생했습니다.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

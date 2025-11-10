@@ -254,7 +254,7 @@ fun TeacherStudentsScreen(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "과제 완료률",
+                                text = "과제 완료율",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Gray600,
                                 fontWeight = FontWeight.Medium
@@ -262,7 +262,7 @@ fun TeacherStudentsScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (isLoadingStatistics) "로딩 중..." else "${overallCompletionRate.toInt()}%",
+                            text = if (isLoadingStatistics) "-" else "${overallCompletionRate.toInt()}%",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryIndigo

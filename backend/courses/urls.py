@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import (
-    ClassCompletionRateView,
     ClassDetailView,
     ClassListView,
     ClassStudentsStatisticsView,
@@ -26,6 +25,5 @@ urlpatterns = [
         ClassStudentsStatisticsView.as_view(),
         name="class-students-statistics",
     ),
-    path("classes/<int:id>/completion-rate/", ClassCompletionRateView.as_view(), name="class-completion-rate"),
     path("students/<int:id>/classes/", StudentClassesView.as_view(), name="student-classes"),
 ]

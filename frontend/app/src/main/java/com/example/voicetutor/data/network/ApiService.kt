@@ -125,9 +125,7 @@ interface ApiService {
     @PUT("courses/classes/{id}/students/")
     suspend fun enrollStudentToClass(
         @Path("id") id: Int,
-        @Query("studentId") studentId: Int? = null,
-        @Query("name") name: String? = null,
-        @Query("email") email: String? = null
+        @Query("studentId") studentId: Int
     ): Response<ApiResponse<EnrollmentData>>
     
     // Class Students Statistics API
@@ -135,12 +133,6 @@ interface ApiService {
     suspend fun getClassStudentsStatistics(
         @Path("classId") classId: Int
     ): Response<ApiResponse<ClassStudentsStatistics>>
-    
-    // Class Completion Rate API
-    @GET("courses/classes/{id}/completion-rate/")
-    suspend fun getClassCompletionRate(
-        @Path("id") id: Int
-    ): Response<ApiResponse<ClassCompletionRate>>
     
     // Progress Report APIs
     @GET("reports/progress/")

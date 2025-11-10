@@ -260,7 +260,7 @@ fun TeacherStudentReportScreen(
                     )
                     
                     VTStatsCard(
-                        title = "과제 이행률",
+                        title = "과제 완료율",
                         value = if (isLoadingCompletion) "..." else "${completionRate.toInt()}%",
                         icon = Icons.Filled.Done,
                         iconColor = Warning,

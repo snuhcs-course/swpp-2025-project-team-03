@@ -58,6 +58,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=now,
             due_at=now + timedelta(days=7),
+            total_questions=10,
         )
         completed = Assignment.objects.create(
             course_class=course_class,
@@ -65,6 +66,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=now - timedelta(days=2),
             due_at=now - timedelta(days=1),
+            total_questions=10,
         )
 
         url = reverse("assignment-list")
@@ -87,6 +89,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=now,
             due_at=now + timedelta(days=7),
+            total_questions=10,
         )
         completed = Assignment.objects.create(
             course_class=course_class,
@@ -94,6 +97,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=now - timedelta(days=2),
             due_at=now - timedelta(days=1),
+            total_questions=10,
         )
 
         url = reverse("assignment-list")
@@ -115,6 +119,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=now,
             due_at=now + timedelta(days=7),
+            total_questions=10,
         )
         completed = Assignment.objects.create(
             course_class=course_class,
@@ -122,6 +127,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=now - timedelta(days=2),
             due_at=now - timedelta(days=1),
+            total_questions=10,
         )
 
         url = reverse("assignment-list")
@@ -151,6 +157,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=10,
         )
         assignment2 = Assignment.objects.create(
             course_class=other_class,
@@ -158,6 +165,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=10,
         )
 
         url = reverse("assignment-list")
@@ -184,6 +192,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=10,
         )
         assignment2 = Assignment.objects.create(
             course_class=other_class,
@@ -191,6 +200,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=10,
         )
 
         url = reverse("assignment-list")
@@ -210,6 +220,7 @@ class TestAssignmentListView:
             subject=subject,
             visible_from=now,
             due_at=now + timedelta(days=7),
+            total_questions=10,
         )
 
         url = reverse("assignment-list")

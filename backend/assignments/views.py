@@ -92,6 +92,9 @@ class AssignmentListView(APIView):  # GET /assignments
                     # 완료: 마감일이 지난 과제
                     assignments = assignments.filter(due_at__lte=now)
 
+            # total_questions가 0인 과제 제외
+            assignments = assignments.exclude(total_questions=0)
+
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
         except Exception as e:
