@@ -99,4 +99,25 @@ class ClassRepository @Inject constructor(
             Result.failure(e)
         }
     }
+    
+    suspend fun removeStudentFromClass(classId: Int, studentId: Int): Result<Unit> {
+        return try {
+            println("[ClassRepository] Calling API: DELETE /courses/classes/$classId/students/$studentId/")
+            val response = apiService.removeStudentFromClass(classId, studentId)
+            println("[ClassRepository] Response received: isSuccessful=${response.isSuccessful}, code=${response.code()}")
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                println("[ClassRepository] Student removed successfully")
+                Result.success(Unit)
+            } else {
+                val error = response.body()?.error ?: "Unknown error (code: ${response.code()})"
+                println("[ClassRepository] Failed to remove student: $error")
+                Result.failure(Exception(error))
+            }
+        } catch (e: Exception) {
+            println("[ClassRepository] Exception during API call: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
 }
