@@ -414,34 +414,52 @@ fun QuestionGroupCard(
                             val strokeWidth = 3.dp.toPx()
                             val verticalLineX = 0.dp.toPx()
                             val branchLength = 16.dp.toPx()
+                            val curveRadius = 8.dp.toPx() // 곡선 반경
 
                             cardPositions.forEachIndexed { index, yPosition ->
-                                // 세로 선
+                                val path = androidx.compose.ui.graphics.Path()
+
                                 if (index == 0) {
-                                    // 첫 번째: 위에서 시작
-                                    drawLine(
-                                        color = lineColor,
-                                        start = androidx.compose.ui.geometry.Offset(verticalLineX, 0f),
-                                        end = androidx.compose.ui.geometry.Offset(verticalLineX, yPosition),
-                                        strokeWidth = strokeWidth
+                                    // 첫 번째: 위에서 곡선으로 연결
+                                    path.moveTo(verticalLineX, 0f)
+                                    path.lineTo(verticalLineX, yPosition - curveRadius)
+
+                                    // 곡선으로 꺾기
+                                    path.quadraticTo(
+                                        verticalLineX, yPosition,
+                                        verticalLineX + curveRadius, yPosition
                                     )
-                                } else {
-                                    // 이전 가지에서 현재 가지까지
+                                    path.lineTo(branchLength, yPosition)
+                                } else if (index == cardPositions.size - 1) {
+                                    // 마지막: 이전에서 곡선으로 끝
                                     val prevYPosition = cardPositions[index - 1]
-                                    drawLine(
-                                        color = lineColor,
-                                        start = androidx.compose.ui.geometry.Offset(verticalLineX, prevYPosition),
-                                        end = androidx.compose.ui.geometry.Offset(verticalLineX, yPosition),
-                                        strokeWidth = strokeWidth
+                                    path.moveTo(verticalLineX, prevYPosition)
+                                    path.lineTo(verticalLineX, yPosition - curveRadius)
+
+                                    // 곡선으로 꺾기
+                                    path.quadraticTo(
+                                        verticalLineX, yPosition,
+                                        verticalLineX + curveRadius, yPosition
                                     )
+                                    path.lineTo(branchLength, yPosition)
+                                } else {
+                                    // 중간: 이전에서 현재까지 + 곡선 가지
+                                    val prevYPosition = cardPositions[index - 1]
+                                    path.moveTo(verticalLineX, prevYPosition)
+                                    path.lineTo(verticalLineX, yPosition - curveRadius)
+
+                                    // 곡선으로 꺾기
+                                    path.quadraticTo(
+                                        verticalLineX, yPosition,
+                                        verticalLineX + curveRadius, yPosition
+                                    )
+                                    path.lineTo(branchLength, yPosition)
                                 }
 
-                                // 가로 가지 (직각)
-                                drawLine(
+                                drawPath(
+                                    path = path,
                                     color = lineColor,
-                                    start = androidx.compose.ui.geometry.Offset(verticalLineX, yPosition),
-                                    end = androidx.compose.ui.geometry.Offset(branchLength, yPosition),
-                                    strokeWidth = strokeWidth
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
                                 )
                             }
                         }
