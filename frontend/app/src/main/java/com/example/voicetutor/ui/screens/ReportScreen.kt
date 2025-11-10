@@ -2,8 +2,8 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -11,8 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,64 +58,62 @@ fun ReportScreen(
         }
     }
     
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            // Welcome section (Header)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = PrimaryIndigo.copy(alpha = 0.08f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                    )
-                    .padding(20.dp)
+        // Welcome section (Header)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = PrimaryIndigo.copy(alpha = 0.15f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                color = PrimaryIndigo.copy(alpha = 0.15f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Assessment,
-                            contentDescription = null,
-                            tint = PrimaryIndigo,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Filled.Assessment,
+                        contentDescription = null,
+                        tint = PrimaryIndigo,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
 
-                    Column {
-                        Text(
-                            text = "학습 리포트",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "완료한 과제 결과를 확인해보세요",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                    }
+                Column {
+                    Text(
+                        text = "학습 리포트",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "완료한 과제 결과를 확인해보세요",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600
+                    )
                 }
             }
         }
 
-        item {
-            // My completed assignments
-            Column {
+        // My completed assignments
+        Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -138,10 +134,10 @@ fun ReportScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-                // Completed assignments from API
-                if (isLoading) {
+            // Completed assignments from API
+            if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -184,9 +180,8 @@ fun ReportScreen(
                             }
                         )
 
-                        if (index < assignments.size - 1) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
+                    if (index < assignments.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -204,7 +199,7 @@ fun AssignmentReportCard(
         onClick = onReportClick
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -222,7 +217,7 @@ fun AssignmentReportCard(
                         color = Gray800
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     // 제출일
                     Row(
@@ -261,7 +256,7 @@ fun AssignmentReportCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // 리포트 보기 버튼
             VTButton(

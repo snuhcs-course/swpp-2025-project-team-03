@@ -2,8 +2,8 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -11,9 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -105,42 +102,40 @@ fun StudentDashboardScreen(
             viewModelAssignment.clearError()
         }
     }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            // Welcome section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = PrimaryIndigo.copy(alpha = 0.08f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                    )
-                    .padding(20.dp)
-            ) {
-                Column {
-                    Text(
-                        text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-                }
+        // Welcome section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                Text(
+                    text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600
+                )
             }
         }
         
-        item {
-            // My assignments
-            Column {
+        // My assignments
+        Column {
                 Column {
                     Text(
                         text = "나에게 할당된 과제 ${validAssignments.size}개",
@@ -188,10 +183,10 @@ fun StudentDashboardScreen(
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Student assignments from API
-                if (isLoading) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Student assignments from API
+            if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -259,7 +254,6 @@ fun StudentDashboardScreen(
                         
                         if (index < validAssignments.size - 1) {
                             Spacer(modifier = Modifier.height(8.dp))
-                        }
                     }
                 }
             }
@@ -284,7 +278,7 @@ fun StudentAssignmentCard(
         onClick = onClick
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
