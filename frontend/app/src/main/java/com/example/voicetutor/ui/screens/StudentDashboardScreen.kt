@@ -2,8 +2,8 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -11,9 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -105,42 +102,40 @@ fun StudentDashboardScreen(
             viewModelAssignment.clearError()
         }
     }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            // Welcome section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = PrimaryIndigo.copy(alpha = 0.08f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                    )
-                    .padding(20.dp)
-            ) {
-                Column {
-                    Text(
-                        text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-                }
+        // Welcome section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                Text(
+                    text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600
+                )
             }
         }
         
-        item {
-            // My assignments
-            Column {
+        // My assignments
+        Column {
                 Column {
                     Text(
                         text = "나에게 할당된 과제 ${validAssignments.size}개",
@@ -188,10 +183,10 @@ fun StudentDashboardScreen(
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Student assignments from API
-                if (isLoading) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Student assignments from API
+            if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -259,7 +254,6 @@ fun StudentDashboardScreen(
                         
                         if (index < validAssignments.size - 1) {
                             Spacer(modifier = Modifier.height(8.dp))
-                        }
                     }
                 }
             }
@@ -281,10 +275,10 @@ fun StudentAssignmentCard(
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = {}
+        onClick = onClick
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            //modifier = Modifier.padding(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -297,7 +291,7 @@ fun StudentAssignmentCard(
                     // Subject and Status Row
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         // Subject badge
                         if (subject.isNotEmpty()) {
@@ -348,7 +342,7 @@ fun StudentAssignmentCard(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     // Assignment title
                     Text(
@@ -358,7 +352,7 @@ fun StudentAssignmentCard(
                         color = Gray800
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
                     // Due date
                     Text(
@@ -386,37 +380,13 @@ fun StudentAssignmentCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             // Progress bar
-            if ((status == PersonalAssignmentStatus.IN_PROGRESS || status == PersonalAssignmentStatus.NOT_STARTED)&& totalQuestions > 0) {
+            if ((status == PersonalAssignmentStatus.IN_PROGRESS || status == PersonalAssignmentStatus.NOT_STARTED) && totalQuestions > 0) {
+                Spacer(modifier = Modifier.height(10.dp))
+
                 VTProgressBar(
                     progress = progress,
                     modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                VTButton(
-                    text = "과제 시작",
-                    onClick = onStartAssignment,
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
-                )
-
-                VTButton(
-                    text = "과제 상세",
-                    onClick = onClick,
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
                 )
             }
         }
