@@ -284,7 +284,7 @@ fun StudentAssignmentCard(
         onClick = onClick
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -297,7 +297,7 @@ fun StudentAssignmentCard(
                     // Subject and Status Row
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         // Subject badge
                         if (subject.isNotEmpty()) {
@@ -348,7 +348,7 @@ fun StudentAssignmentCard(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     // Assignment title
                     Text(
@@ -358,7 +358,7 @@ fun StudentAssignmentCard(
                         color = Gray800
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
                     // Due date
                     Text(
@@ -388,7 +388,7 @@ fun StudentAssignmentCard(
 
             // Progress bar
             if ((status == PersonalAssignmentStatus.IN_PROGRESS || status == PersonalAssignmentStatus.NOT_STARTED) && totalQuestions > 0) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 VTProgressBar(
                     progress = progress,
