@@ -29,6 +29,8 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
+import java.time.ZonedDateTime
+import java.time.ZoneId
 
 data class ClassAssignment(
     val id: Int,
@@ -64,6 +66,9 @@ fun TeacherClassDetailScreen(
     val dynamicClassName = currentClass?.name ?: className
     val dynamicSubject = currentClass?.subject?.name ?: subject
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
+    
+    // 필터 상태
+    var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
     // Load data on first composition and when screen becomes visible
     LaunchedEffect(Unit) {
@@ -116,7 +121,7 @@ fun TeacherClassDetailScreen(
     }
     
     // Convert API data to ClassAssignment format with real submission stats
-    val classAssignments = assignments.map { assignment ->
+    val allClassAssignments = assignments.map { assignment ->
         val stats = assignmentStatsMap[assignment.id] ?: Triple(0, classStudents.size, 0)
         ClassAssignment(
             id = assignment.id,
@@ -132,6 +137,30 @@ fun TeacherClassDetailScreen(
             completedStudents = stats.first,
             averageScore = stats.third
         )
+    }
+    
+    // 필터링된 과제 목록
+    val classAssignments = remember(allClassAssignments, selectedFilter) {
+        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        when (selectedFilter) {
+            AssignmentFilter.ALL -> allClassAssignments
+            AssignmentFilter.IN_PROGRESS -> allClassAssignments.filter { assignment ->
+                try {
+                    val dueDate = ZonedDateTime.parse(assignment.dueDate)
+                    dueDate.isAfter(now)
+                } catch (e: Exception) {
+                    true // 파싱 실패 시 포함
+                }
+            }
+            AssignmentFilter.COMPLETED -> allClassAssignments.filter { assignment ->
+                try {
+                    val dueDate = ZonedDateTime.parse(assignment.dueDate)
+                    dueDate.isBefore(now) || dueDate.isEqual(now)
+                } catch (e: Exception) {
+                    false // 파싱 실패 시 제외
+                }
+            }
+        }
     }
     
     LazyColumn(
@@ -242,7 +271,7 @@ fun TeacherClassDetailScreen(
         }
         
         item {
-            // Assignments section header
+            // Assignments section header with filter
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -255,6 +284,36 @@ fun TeacherClassDetailScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
+                
+                // Filter chips
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedFilter == AssignmentFilter.ALL,
+                        onClick = { selectedFilter = AssignmentFilter.ALL },
+                        label = { Text("전체", style = MaterialTheme.typography.bodySmall) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.List,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+                    
+                    FilterChip(
+                        selected = selectedFilter == AssignmentFilter.IN_PROGRESS,
+                        onClick = { selectedFilter = AssignmentFilter.IN_PROGRESS },
+                        label = { Text("진행중", style = MaterialTheme.typography.bodySmall) }
+                    )
+                    
+                    FilterChip(
+                        selected = selectedFilter == AssignmentFilter.COMPLETED,
+                        onClick = { selectedFilter = AssignmentFilter.COMPLETED },
+                        label = { Text("마감", style = MaterialTheme.typography.bodySmall) }
+                    )
+                }
             }
         }
         
@@ -385,47 +444,13 @@ fun ClassAssignmentCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Assignment header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = assignment.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-                
-                // Status badge
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = when {
-                                assignment.completionRate >= 0.8f -> Success.copy(alpha = 0.1f)
-                                assignment.completionRate >= 0.5f -> Warning.copy(alpha = 0.1f)
-                                else -> Error.copy(alpha = 0.1f)
-                            },
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = when {
-                            assignment.completionRate >= 0.8f -> "완료"
-                            assignment.completionRate >= 0.5f -> "진행중"
-                            else -> "시작전"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = when {
-                            assignment.completionRate >= 0.8f -> Success
-                            assignment.completionRate >= 0.5f -> Warning
-                            else -> Error
-                        },
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = assignment.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
             }
             
             // Progress info
