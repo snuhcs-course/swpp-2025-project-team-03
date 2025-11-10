@@ -27,7 +27,7 @@ class GetPageTitleTest {
     @Test
     fun getPageTitle_progress_returnsCorrectTitle() {
         val title = getPageTitle(VoiceTutorScreens.Progress.route, UserRole.STUDENT)
-        assertEquals("진도 리포트", title)
+        assertEquals("학습 리포트", title)
     }
 
     @Test

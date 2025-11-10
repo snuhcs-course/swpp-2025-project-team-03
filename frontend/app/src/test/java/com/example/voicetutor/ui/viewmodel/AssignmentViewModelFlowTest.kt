@@ -71,8 +71,7 @@ class AssignmentViewModelFlowTest {
 
     @Before
     fun setup() {
-        whenever(assignmentRepository.getAssignmentResult(any()))
-            .thenReturn(Result.success(AssignmentResultData()))
+        // Note: getAssignmentResult is a suspend function, so it will be mocked per test if needed
     }
 
     // Basic init and simple flows
@@ -423,10 +422,13 @@ class AssignmentViewModelFlowTest {
         val a = AssignmentData(6, "Title", "d", 1, null, "", "", course(), null, null)
         Mockito.`when`(assignmentRepository.getAssignmentById(6)).thenReturn(Result.success(a))
         vm.currentAssignment.test {
-            awaitItem()
+            // 초기값은 null
+            val initial = awaitItem()
+            assert(initial == null)
             vm.loadAssignmentById(6)
             advanceUntilIdle()
-            val next = awaitItem(); assert(next == a)
+            val next = awaitItem()
+            assert(next == a)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -1399,12 +1401,12 @@ class AssignmentViewModelFlowTest {
         val updatedAssignment = AssignmentData(assignmentId, "Updated", "new desc", 0, null, "", "", course(), null, null)
         val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
             title = "Updated",
-            subject = null,
-            classId = null,
-            dueDate = null,
-            type = null,
             description = "new desc",
-            questions = null
+            totalQuestions = null,
+            visibleFrom = null,
+            dueAt = null,
+            grade = null,
+            subject = null
         )
         Mockito.`when`(assignmentRepository.updateAssignment(assignmentId, updateRequest))
             .thenReturn(Result.success(updatedAssignment))
@@ -1428,12 +1430,12 @@ class AssignmentViewModelFlowTest {
         val assignmentId = 15
         val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
             title = "Updated",
-            subject = null,
-            classId = null,
-            dueDate = null,
-            type = null,
             description = "new desc",
-            questions = null
+            totalQuestions = null,
+            visibleFrom = null,
+            dueAt = null,
+            grade = null,
+            subject = null
         )
         Mockito.`when`(assignmentRepository.updateAssignment(assignmentId, updateRequest))
             .thenReturn(Result.failure(Exception("Update failed")))
