@@ -118,10 +118,12 @@ fun TeacherStudentsScreen(
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     val allStudentsForEnroll = remember { mutableStateListOf<Student>() }
     var isLoadingAllStudents by remember { mutableStateOf(false) }
+    var enrollSearchQuery by remember { mutableStateOf("") }
     
     // 학생 삭제 바텀시트 상태
     var showDeleteSheet by remember { mutableStateOf(false) }
     val selectedToDelete = remember { mutableStateListOf<Int>() }
+    var deleteSearchQuery by remember { mutableStateOf("") }
     
     // 학생 삭제 재확인 다이얼로그 상태
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -173,6 +175,7 @@ fun TeacherStudentsScreen(
             // 바텀시트가 닫히면 바텀시트용 목록만 클리어 (viewModel.students는 건드리지 않음)
             allStudentsForEnroll.clear()
             selectedToEnroll.clear()
+            enrollSearchQuery = ""
         }
     }
     
@@ -408,7 +411,10 @@ fun TeacherStudentsScreen(
     
     // 학생 등록 바텀시트
     if (showEnrollSheet) {
-        ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
+        ModalBottomSheet(onDismissRequest = { 
+            showEnrollSheet = false
+            enrollSearchQuery = ""
+        }) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -416,6 +422,38 @@ fun TeacherStudentsScreen(
                     .padding(16.dp)
             ) {
                 Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(12.dp))
+                
+                // 검색 입력 필드
+                OutlinedTextField(
+                    value = enrollSearchQuery,
+                    onValueChange = { enrollSearchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("이름 또는 이메일로 검색", color = Gray500) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "검색",
+                            tint = Gray600
+                        )
+                    },
+                    trailingIcon = {
+                        if (enrollSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { enrollSearchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "검색어 지우기",
+                                    tint = Gray600
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        unfocusedBorderColor = Gray300
+                    )
+                )
                 Spacer(Modifier.height(12.dp))
 
                 // 로딩 중일 때
@@ -431,27 +469,41 @@ fun TeacherStudentsScreen(
                 } else {
                     // 이미 등록된 학생 제외 목록
                     val enrolledIds = classStudents.map { it.id }.toSet()
-                    val candidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
-
-                    if (candidates.isEmpty()) {
-                        Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                    val allCandidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
+                    
+                    // 검색어로 필터링 (이름 또는 이메일)
+                    val searchQueryLower = enrollSearchQuery.lowercase()
+                    val candidates = if (searchQueryLower.isBlank()) {
+                        allCandidates
                     } else {
-                        candidates.forEach { student ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
-                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
-                            }
-                            val checked = selectedToEnroll.contains(student.id)
-                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
-                                if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
-                            })
+                        allCandidates.filter { student ->
+                            val name = student.name?.lowercase() ?: ""
+                            val email = student.email?.lowercase() ?: ""
+                            name.contains(searchQueryLower) || email.contains(searchQueryLower)
                         }
                     }
+
+                    if (allCandidates.isEmpty()) {
+                        Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                    } else if (candidates.isEmpty()) {
+                        Text("검색 결과가 없습니다.", color = Gray600)
+                    } else {
+                        candidates.forEach { student ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                    Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                                }
+                                val checked = selectedToEnroll.contains(student.id)
+                                Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                    if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
+                                })
+                            }
+                        }
                     }
                 }
 
@@ -495,7 +547,10 @@ fun TeacherStudentsScreen(
     
     // 학생 삭제 바텀시트
     if (showDeleteSheet) {
-        ModalBottomSheet(onDismissRequest = { showDeleteSheet = false }) {
+        ModalBottomSheet(onDismissRequest = { 
+            showDeleteSheet = false
+            deleteSearchQuery = ""
+        }) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -504,14 +559,60 @@ fun TeacherStudentsScreen(
             ) {
                 Text("학생 삭제", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
+                
+                // 검색 입력 필드
+                OutlinedTextField(
+                    value = deleteSearchQuery,
+                    onValueChange = { deleteSearchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("이름 또는 이메일로 검색", color = Gray500) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "검색",
+                            tint = Gray600
+                        )
+                    },
+                    trailingIcon = {
+                        if (deleteSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { deleteSearchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "검색어 지우기",
+                                    tint = Gray600
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        unfocusedBorderColor = Gray300
+                    )
+                )
+                Spacer(Modifier.height(12.dp))
 
                 // 이미 등록된 학생 목록
                 val enrolledStudents = classStudents
+                
+                // 검색어로 필터링 (이름 또는 이메일)
+                val searchQueryLower = deleteSearchQuery.lowercase()
+                val filteredStudents = if (searchQueryLower.isBlank()) {
+                    enrolledStudents
+                } else {
+                    enrolledStudents.filter { student ->
+                        val name = student.name?.lowercase() ?: ""
+                        val email = student.email?.lowercase() ?: ""
+                        name.contains(searchQueryLower) || email.contains(searchQueryLower)
+                    }
+                }
 
                 if (enrolledStudents.isEmpty()) {
                     Text("삭제할 학생이 없습니다.", color = Gray600)
+                } else if (filteredStudents.isEmpty()) {
+                    Text("검색 결과가 없습니다.", color = Gray600)
                 } else {
-                    enrolledStudents.forEach { student ->
+                    filteredStudents.forEach { student ->
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
