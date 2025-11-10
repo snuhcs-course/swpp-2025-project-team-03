@@ -310,7 +310,7 @@ fun TeacherStudentsScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             VTButton(
-                text = "학생 등록하기",
+                text = "학생 등록",
                 onClick = {
                     selectedToEnroll.clear()
                     showEnrollSheet = true
@@ -326,7 +326,7 @@ fun TeacherStudentsScreen(
                 modifier = Modifier.weight(1f)
             )
             VTButton(
-                text = "학생 삭제하기",
+                text = "학생 삭제",
                 onClick = {
                     selectedToDelete.clear()
                     showDeleteSheet = true
@@ -421,20 +421,34 @@ fun TeacherStudentsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "학생 등록", 
+                    style = MaterialTheme.typography.titleLarge, 
+                    fontWeight = FontWeight.SemiBold
+                )
                 Spacer(Modifier.height(12.dp))
                 
                 // 검색 입력 필드
                 OutlinedTextField(
                     value = enrollSearchQuery,
                     onValueChange = { enrollSearchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("이름 또는 이메일로 검색", color = Gray500) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    placeholder = { 
+                        Text(
+                            "이름 또는 이메일로 검색", 
+                            color = Gray500,
+                            style = MaterialTheme.typography.bodyMedium
+                        ) 
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Search,
                             contentDescription = "검색",
-                            tint = Gray600
+                            tint = Gray600,
+                            modifier = Modifier.size(20.dp)
                         )
                     },
                     trailingIcon = {
@@ -443,12 +457,14 @@ fun TeacherStudentsScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Clear,
                                     contentDescription = "검색어 지우기",
-                                    tint = Gray600
+                                    tint = Gray600,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
                     },
                     singleLine = true,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PrimaryIndigo,
                         unfocusedBorderColor = Gray300
@@ -557,20 +573,34 @@ fun TeacherStudentsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                Text("학생 삭제", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "학생 삭제", 
+                    style = MaterialTheme.typography.titleLarge, 
+                    fontWeight = FontWeight.SemiBold
+                )
                 Spacer(Modifier.height(12.dp))
                 
                 // 검색 입력 필드
                 OutlinedTextField(
                     value = deleteSearchQuery,
                     onValueChange = { deleteSearchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("이름 또는 이메일로 검색", color = Gray500) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    placeholder = { 
+                        Text(
+                            "이름 또는 이메일로 검색", 
+                            color = Gray500,
+                            style = MaterialTheme.typography.bodyMedium
+                        ) 
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Search,
                             contentDescription = "검색",
-                            tint = Gray600
+                            tint = Gray600,
+                            modifier = Modifier.size(20.dp)
                         )
                     },
                     trailingIcon = {
@@ -579,12 +609,14 @@ fun TeacherStudentsScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Clear,
                                     contentDescription = "검색어 지우기",
-                                    tint = Gray600
+                                    tint = Gray600,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
                     },
                     singleLine = true,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PrimaryIndigo,
                         unfocusedBorderColor = Gray300
