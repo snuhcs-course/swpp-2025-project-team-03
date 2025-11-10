@@ -121,6 +121,7 @@ if db_name and db_user and db_password and db_host:
             "PASSWORD": db_password,
             "HOST": db_host,
             "PORT": db_port or "5432",
+            "CONN_MAX_AGE": 180,
         }
     }
 else:
