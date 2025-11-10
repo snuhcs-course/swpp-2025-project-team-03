@@ -12,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -391,45 +393,113 @@ fun QuestionGroupCard(
 
         // Tail questions (shown when expanded)
         if (isExpanded && group.tailQuestions.isNotEmpty()) {
-            Column(
-                modifier = Modifier.padding(start = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // 각 카드의 Y 위치를 저장
+            val cardPositions = remember { mutableStateListOf<Float>() }
+            val density = androidx.compose.ui.platform.LocalDensity.current
+
+            Row(
+                modifier = Modifier.padding(start = 12.dp)
             ) {
-                group.tailQuestions.forEach { tailQuestion ->
-                    DetailedQuestionResultCard(question = tailQuestion)
+                // 세로 선 + 가지 그리기
+                Box(
+                    modifier = Modifier.width(20.dp)
+                ) {
+                    androidx.compose.foundation.Canvas(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(20.dp)
+                    ) {
+                        if (cardPositions.size == group.tailQuestions.size) {
+                            val lineColor = PrimaryIndigo.copy(alpha = 0.4f)
+                            val strokeWidth = 3.dp.toPx()
+                            val verticalLineX = 0.dp.toPx()
+                            val branchLength = 16.dp.toPx()
+
+                            cardPositions.forEachIndexed { index, yPosition ->
+                                // 세로 선
+                                if (index == 0) {
+                                    // 첫 번째: 위에서 시작
+                                    drawLine(
+                                        color = lineColor,
+                                        start = androidx.compose.ui.geometry.Offset(verticalLineX, 0f),
+                                        end = androidx.compose.ui.geometry.Offset(verticalLineX, yPosition),
+                                        strokeWidth = strokeWidth
+                                    )
+                                } else {
+                                    // 이전 가지에서 현재 가지까지
+                                    val prevYPosition = cardPositions[index - 1]
+                                    drawLine(
+                                        color = lineColor,
+                                        start = androidx.compose.ui.geometry.Offset(verticalLineX, prevYPosition),
+                                        end = androidx.compose.ui.geometry.Offset(verticalLineX, yPosition),
+                                        strokeWidth = strokeWidth
+                                    )
+                                }
+
+                                // 가로 가지 (직각)
+                                drawLine(
+                                    color = lineColor,
+                                    start = androidx.compose.ui.geometry.Offset(verticalLineX, yPosition),
+                                    end = androidx.compose.ui.geometry.Offset(branchLength, yPosition),
+                                    strokeWidth = strokeWidth
+                                )
+                            }
+                        }
+                    }
                 }
 
-                // 꼬리 질문 접기 버튼
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = PrimaryIndigo.copy(alpha = 0.1f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
-                        )
-                        .clickable { onToggle() }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center
+                // 카드들
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Tail question toggle text
-                        Text(
-                            text = "꼬리질문 접기",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = PrimaryIndigo,
-                            fontWeight = FontWeight.Bold
-                        )
+                    group.tailQuestions.forEachIndexed { index, tailQuestion ->
+                        Box(
+                            modifier = Modifier.onGloballyPositioned { coordinates ->
+                                // 제목 높이에 맞춤 (카드 패딩 16dp + 제목 높이 대략 24dp = 약 28dp)
+                                val yPos = coordinates.positionInParent().y + with(density) { 28.dp.toPx() }
+                                // 위치 업데이트
+                                if (index < cardPositions.size) {
+                                    cardPositions[index] = yPos
+                                } else {
+                                    cardPositions.add(yPos)
+                                }
+                            }
+                        ) {
+                            DetailedQuestionResultCard(question = tailQuestion)
+                        }
+                    }
 
-                        // Toggle icon
-                        Icon(
-                            imageVector = Icons.Filled.ExpandLess,
-                            contentDescription = "접기",
-                            tint = PrimaryIndigo,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    // 꼬리 질문 접기 버튼
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = PrimaryIndigo.copy(alpha = 0.1f),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                            )
+                            .clickable { onToggle() }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "꼬리질문 접기",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = PrimaryIndigo,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Icon(
+                                imageVector = Icons.Filled.ExpandLess,
+                                contentDescription = "접기",
+                                tint = PrimaryIndigo,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
