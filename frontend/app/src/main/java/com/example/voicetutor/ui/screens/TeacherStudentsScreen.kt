@@ -119,6 +119,13 @@ fun TeacherStudentsScreen(
     val allStudentsForEnroll = remember { mutableStateListOf<Student>() }
     var isLoadingAllStudents by remember { mutableStateOf(false) }
     
+    // 학생 삭제 바텀시트 상태
+    var showDeleteSheet by remember { mutableStateOf(false) }
+    val selectedToDelete = remember { mutableStateListOf<Int>() }
+    
+    // 학생 삭제 재확인 다이얼로그 상태
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    
     // EntryPoint를 통해 ApiService 주입받기 (바텀시트 독립적 데이터 로딩용)
     val context = LocalContext.current
     val studentRepository = remember {
@@ -128,6 +135,14 @@ fun TeacherStudentsScreen(
         )
         val apiService = entryPoint.apiService()
         StudentRepository(apiService)
+    }
+    val classRepository = remember {
+        val entryPoint = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            ApiServiceEntryPoint::class.java
+        )
+        val apiService = entryPoint.apiService()
+        com.example.voicetutor.data.repository.ClassRepository(apiService)
     }
     
     // 바텀시트 열 때 전체 학생 목록을 별도로 로드 (viewModel.students와 완전히 독립)
@@ -307,6 +322,22 @@ fun TeacherStudentsScreen(
                 },
                 modifier = Modifier.weight(1f)
             )
+            VTButton(
+                text = "학생 삭제하기",
+                onClick = {
+                    selectedToDelete.clear()
+                    showDeleteSheet = true
+                },
+                variant = ButtonVariant.Outline,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                modifier = Modifier.weight(1f)
+            )
         }
         
         // Students list
@@ -455,6 +486,142 @@ fun TeacherStudentsScreen(
                 Spacer(Modifier.height(8.dp))
             }
         }
+    }
+    
+    // 학생 삭제 바텀시트
+    if (showDeleteSheet) {
+        ModalBottomSheet(onDismissRequest = { showDeleteSheet = false }) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("학생 삭제", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(12.dp))
+
+                // 이미 등록된 학생 목록
+                val enrolledStudents = classStudents
+
+                if (enrolledStudents.isEmpty()) {
+                    Text("삭제할 학생이 없습니다.", color = Gray600)
+                } else {
+                    enrolledStudents.forEach { student ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                            }
+                            val checked = selectedToDelete.contains(student.id)
+                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                if (isChecked) selectedToDelete.add(student.id) else selectedToDelete.remove(student.id)
+                            })
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    VTButton(
+                        text = "취소",
+                        onClick = { showDeleteSheet = false },
+                        variant = ButtonVariant.Outline,
+                        modifier = Modifier.weight(1f)
+                    )
+                    VTButton(
+                        text = "삭제",
+                        onClick = {
+                            if (selectedToDelete.isNotEmpty()) {
+                                showDeleteConfirmDialog = true
+                            }
+                        },
+                        variant = ButtonVariant.Primary,
+                        modifier = Modifier.weight(1f),
+                        enabled = selectedToDelete.isNotEmpty()
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+    
+    // 학생 삭제 재확인 다이얼로그
+    if (showDeleteConfirmDialog && selectedToDelete.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = {
+                Text(
+                    text = "학생 제거",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "선택한 ${selectedToDelete.size}명의 학생을 이 반에서 제거하시겠습니까?\n제거된 학생의 과제, 질문, 답변이 모두 삭제됩니다.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                VTButton(
+                    text = "제거",
+                    onClick = {
+                        classId?.let { id ->
+                            coroutineScope.launch {
+                                try {
+                                    println("[DELETE] Starting to remove ${selectedToDelete.size} students from class $id")
+                                    // 각 학생을 순차적으로 삭제
+                                    withContext(Dispatchers.IO) {
+                                        for (studentId in selectedToDelete) {
+                                            println("[DELETE] Removing student $studentId from class $id")
+                                            val result = classRepository.removeStudentFromClass(id, studentId)
+                                            result.onSuccess {
+                                                println("[DELETE] Successfully removed student $studentId")
+                                            }.onFailure { e ->
+                                                println("[DELETE] Failed to remove student $studentId: ${e.message}")
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                    }
+                                    println("[DELETE] All deletions completed. Refreshing lists...")
+                                    // 완료 후 갱신
+                                    withContext(Dispatchers.Main) {
+                                        classViewModel.loadClassStudents(id)
+                                        val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+                                        actualTeacherId?.let {
+                                            viewModel.loadAllStudents(teacherId = it, classId = id.toString())
+                                        }
+                                        // 다이얼로그와 시트 닫기
+                                        showDeleteConfirmDialog = false
+                                        showDeleteSheet = false
+                                        selectedToDelete.clear()
+                                    }
+                                } catch (e: Exception) {
+                                    println("[DELETE] Error removing students: ${e.message}")
+                                    e.printStackTrace()
+                                    withContext(Dispatchers.Main) {
+                                        showDeleteConfirmDialog = false
+                                        showDeleteSheet = false
+                                        selectedToDelete.clear()
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Small
+                )
+            },
+            dismissButton = {
+                VTButton(
+                    text = "취소",
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                    },
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small
+                )
+            }
+        )
     }
 }
 

@@ -103,10 +103,6 @@ fun TeacherClassDetailScreen(
     var showEnrollSheet by remember { mutableStateOf(false) }
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     
-    // 학생 삭제 확인 다이얼로그 상태
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var studentToDelete by remember { mutableStateOf<Student?>(null) }
-    
     // 제출 현황을 저장하는 StateMap
     val assignmentStatsMap = remember { mutableStateMapOf<Int, Triple<Int, Int, Int>>() }
     
@@ -275,93 +271,6 @@ fun TeacherClassDetailScreen(
         }
         
         item {
-            // Students section
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = " 학생 목록",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-            }
-        }
-        
-        // Students list
-        if (classStudents.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(vertical = 24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.People,
-                            contentDescription = null,
-                            tint = Gray400,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "등록된 학생이 없습니다",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
-                        )
-                    }
-                }
-            }
-        } else {
-            items(classStudents) { student ->
-                VTCard(
-                    variant = CardVariant.Elevated
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = student.name ?: "학생",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Gray800
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = student.email,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                studentToDelete = student
-                                showDeleteDialog = true
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = "학생 제거",
-                                tint = Error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        
-        item {
             // Assignments section header with filter
             Spacer(modifier = Modifier.height(6.dp))
             Row(
@@ -519,56 +428,6 @@ fun TeacherClassDetailScreen(
                 Spacer(Modifier.height(8.dp))
             }
         }
-    }
-    
-    // 학생 삭제 확인 다이얼로그
-    if (showDeleteDialog && studentToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { 
-                showDeleteDialog = false
-                studentToDelete = null
-            },
-            title = {
-                Text(
-                    text = "학생 제거",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = "${studentToDelete?.name ?: "학생"}을(를) 이 반에서 제거하시겠습니까?\n제거된 학생의 과제, 질문, 답변이 모두 삭제됩니다.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                VTButton(
-                    text = "제거",
-                    onClick = {
-                        classId?.let { id ->
-                            studentToDelete?.id?.let { studentId ->
-                                classViewModel.removeStudentFromClass(id, studentId)
-                            }
-                        }
-                        showDeleteDialog = false
-                        studentToDelete = null
-                    },
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small
-                )
-            },
-            dismissButton = {
-                VTButton(
-                    text = "취소",
-                    onClick = {
-                        showDeleteDialog = false
-                        studentToDelete = null
-                    },
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small
-                )
-            }
-        )
     }
 }
 
