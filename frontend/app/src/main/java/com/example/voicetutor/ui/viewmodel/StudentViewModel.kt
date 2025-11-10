@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,6 +34,12 @@ class StudentViewModel @Inject constructor(
     
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+    
+    private val _studentClasses = MutableStateFlow<Map<Int, List<ClassInfo>>>(emptyMap())
+    val studentClasses: StateFlow<Map<Int, List<ClassInfo>>> = _studentClasses.asStateFlow()
+    
+    private val _loadingStudentClasses = MutableStateFlow<Set<Int>>(emptySet())
+    val loadingStudentClasses: StateFlow<Set<Int>> = _loadingStudentClasses.asStateFlow()
     
     fun loadAllStudents(teacherId: String? = null, classId: String? = null) {
         viewModelScope.launch {
@@ -104,5 +111,22 @@ class StudentViewModel @Inject constructor(
     
     fun clearError() {
         _error.value = null
+    }
+    
+    fun loadStudentClasses(studentId: Int) {
+        if (_studentClasses.value.containsKey(studentId) || _loadingStudentClasses.value.contains(studentId)) {
+            return
+        }
+        viewModelScope.launch {
+            _loadingStudentClasses.update { it + studentId }
+            studentRepository.getStudentClasses(studentId)
+                .onSuccess { classes ->
+                    _studentClasses.update { it + (studentId to classes) }
+                }
+                .onFailure { exception ->
+                    _error.value = exception.message
+                }
+            _loadingStudentClasses.update { it - studentId }
+        }
     }
 }

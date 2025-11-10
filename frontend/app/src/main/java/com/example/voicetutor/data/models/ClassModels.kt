@@ -87,3 +87,15 @@ data class ClassStudentsStatistics(
     @SerializedName("students")
     val students: List<StudentStatisticsItem>
 )
+
+data class ClassCompletionRate(
+    @SerializedName("completion_rate")
+    val completionRate: Float
+)
+
+data class ClassInfo(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("name")
+    val name: String
+)
