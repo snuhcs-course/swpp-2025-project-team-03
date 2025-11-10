@@ -99,4 +99,18 @@ class ClassRepository @Inject constructor(
             Result.failure(e)
         }
     }
+    
+    suspend fun removeStudentFromClass(classId: Int, studentId: Int): Result<Unit> {
+        return try {
+            val response = apiService.removeStudentFromClass(classId, studentId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
