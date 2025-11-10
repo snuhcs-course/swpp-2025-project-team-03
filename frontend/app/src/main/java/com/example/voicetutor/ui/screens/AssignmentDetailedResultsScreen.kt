@@ -1,6 +1,7 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -396,6 +397,40 @@ fun QuestionGroupCard(
             ) {
                 group.tailQuestions.forEach { tailQuestion ->
                     DetailedQuestionResultCard(question = tailQuestion)
+                }
+
+                // 꼬리 질문 접기 버튼
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = PrimaryIndigo.copy(alpha = 0.1f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        )
+                        .clickable { onToggle() }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Tail question toggle text
+                        Text(
+                            text = "꼬리질문 접기",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = PrimaryIndigo,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        // Toggle icon
+                        Icon(
+                            imageVector = Icons.Filled.ExpandLess,
+                            contentDescription = "접기",
+                            tint = PrimaryIndigo,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
