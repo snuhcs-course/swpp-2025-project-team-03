@@ -199,7 +199,7 @@ fun AssignmentReportCard(
         onClick = onReportClick
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            //modifier = Modifier.padding(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

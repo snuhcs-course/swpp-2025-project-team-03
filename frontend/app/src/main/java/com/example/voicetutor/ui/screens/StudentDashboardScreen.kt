@@ -278,7 +278,7 @@ fun StudentAssignmentCard(
         onClick = onClick
     ) {
         Column(
-            modifier = Modifier.padding(8.dp)
+            //modifier = Modifier.padding(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
