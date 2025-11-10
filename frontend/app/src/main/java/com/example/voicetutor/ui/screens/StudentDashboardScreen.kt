@@ -281,7 +281,7 @@ fun StudentAssignmentCard(
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = {}
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -386,37 +386,13 @@ fun StudentAssignmentCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             // Progress bar
-            if ((status == PersonalAssignmentStatus.IN_PROGRESS || status == PersonalAssignmentStatus.NOT_STARTED)&& totalQuestions > 0) {
+            if ((status == PersonalAssignmentStatus.IN_PROGRESS || status == PersonalAssignmentStatus.NOT_STARTED) && totalQuestions > 0) {
+                Spacer(modifier = Modifier.height(12.dp))
+
                 VTProgressBar(
                     progress = progress,
                     modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                VTButton(
-                    text = "과제 시작",
-                    onClick = onStartAssignment,
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
-                )
-
-                VTButton(
-                    text = "과제 상세",
-                    onClick = onClick,
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
                 )
             }
         }
