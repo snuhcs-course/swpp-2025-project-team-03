@@ -238,7 +238,14 @@ fun TeacherClassDetailScreen(
                 size = ButtonSize.Small,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp)
+                    .height(44.dp),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
         }
         

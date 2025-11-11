@@ -388,16 +388,9 @@ fun AllStudentsCard(
                 VTButton(
                     text = "리포트 보기",
                     onClick = onReportClick,
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Assessment,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Medium,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
