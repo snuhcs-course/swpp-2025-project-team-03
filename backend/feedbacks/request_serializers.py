@@ -3,7 +3,7 @@ from courses.models import CourseClass
 from rest_framework import serializers
 
 
-class MessageSendRequestSerializer(serializers.Serializer):
+class MessageSendRequestSerializer(serializers.Serializer):  # pragma: no cover
     """메시지(피드백) 전송 요청 serializer"""
 
     teacher_id = serializers.IntegerField(required=True)

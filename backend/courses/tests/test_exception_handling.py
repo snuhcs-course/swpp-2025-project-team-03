@@ -10,6 +10,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from .test_courseclass_factories import EnrollmentFactory
+
 Account = get_user_model()
 
 pytestmark = pytest.mark.django_db
@@ -49,6 +51,11 @@ def course_class(teacher, subject):
         start_date=timezone.now(),
         end_date=timezone.now() + timedelta(days=90),
     )
+
+
+@pytest.fixture
+def enrollment(student, course_class):
+    return EnrollmentFactory(student=student, course_class=course_class)
 
 
 class TestCoursesExceptionHandling:
@@ -92,28 +99,22 @@ class TestCoursesExceptionHandling:
             assert response.data["success"] is False
             assert "학생 정보 수정 중 오류가 발생했습니다" in response.data["message"]
 
-    def test_student_delete_view_invalid_serializer(self, api_client, student):
-        """StudentDeleteView의 serializer validation 실패 테스트 (line 180)"""
-        url = reverse("student-detail", kwargs={"id": student.id})
-        # reason 필드의 max_length(500)를 초과하는 데이터를 보내면 validation 실패
-        long_reason = "x" * 501
-        response = api_client.delete(url, {"reason": long_reason}, format="json")
+    def test_student_delete_view_invalid_serializer(self, api_client, student, course_class, enrollment):
+        """ClassStudentDeleteView는 request body를 받지 않으므로 이 테스트는 더 이상 유효하지 않음"""
+        # 새로운 API는 request body를 받지 않으므로 이 테스트는 스킵
+        pass
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.data["success"] is False
-        assert "입력값 오류" in response.data["message"]
-
-    def test_student_delete_view_exception(self, api_client, student):
-        """StudentDeleteView의 exception 처리 테스트 (line 194-196)"""
-        url = reverse("student-detail", kwargs={"id": student.id})
-        with patch("courses.views.Account.objects.get") as mock_get:
+    def test_student_delete_view_exception(self, api_client, student, course_class, enrollment):
+        """ClassStudentDeleteView의 exception 처리 테스트"""
+        url = reverse("class-student-delete", kwargs={"id": course_class.id, "student_id": student.id})
+        with patch("courses.views.CourseClass.objects.get") as mock_get:
             mock_get.side_effect = Exception("Database error")
 
-            response = api_client.delete(url, {"confirm": True}, format="json")
+            response = api_client.delete(url)
 
             assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
             assert response.data["success"] is False
-            assert "학생 삭제 중 오류가 발생했습니다" in response.data["message"]
+            assert "학생 제거 중 오류가 발생했습니다" in response.data["message"]
 
     def test_student_statistics_view_exception(self, api_client, student):
         """StudentStatisticsView의 exception 처리 테스트 (line 238-240)"""

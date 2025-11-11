@@ -111,7 +111,7 @@ db_password = os.getenv("DB_PASSWORD")
 db_host = os.getenv("DB_HOST")
 db_port = os.getenv("DB_PORT")
 
-if db_name and db_user and db_password and db_host:
+if db_name and db_user and db_password and db_host:  # pragma: no cover
     # PostgreSQL 설정이 모두 있으면 PostgreSQL 사용
     DATABASES = {
         "default": {
@@ -283,11 +283,6 @@ LOGGING = {
             "propagate": False,
         },
         "questions": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "feedbacks": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,

@@ -76,7 +76,7 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "계정 설정",
+            text = "계정",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Gray800
@@ -229,52 +229,13 @@ fun SettingsScreen(
         }
         
         VTCard(variant = CardVariant.Default) {
-            Column {
-                Text(
-                    text = "설정",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                SettingsItem(
-                    icon = Icons.Filled.Notifications,
-                    title = "알림 설정",
-                    subtitle = "과제 마감일 및 새 메시지 알림",
-                    onClick = { 
-                        navController?.navigate("notification_settings")
-                        println("알림 설정 화면으로 이동")
-                    }
-                )
-                
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = Gray200
-                )
-                
-                SettingsItem(
-                    icon = Icons.Filled.Language,
-                    title = "언어 설정",
-                    subtitle = "한국어",
-                    onClick = { 
-                        navController?.navigate("language_settings")
-                        println("언어 설정 화면으로 이동")
-                    }
-                )
-                
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = Gray200
-                )
-                
+            Column {                
                 SettingsItem(
                     icon = Icons.AutoMirrored.Filled.Help,
                     title = "도움말",
                     subtitle = "사용법 및 자주 묻는 질문",
                     onClick = { 
-                        navController?.navigate("help")
+//                        navController?.navigate("help")
                         println("도움말 화면으로 이동")
                     }
                 )

@@ -377,7 +377,7 @@ fun AllStudentsCard(
                             )
                         }
                         Text(
-                            text = "($name)",
+                            text = "$name",
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray700
                         )
