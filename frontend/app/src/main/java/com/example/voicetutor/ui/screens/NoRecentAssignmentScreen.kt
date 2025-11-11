@@ -21,8 +21,7 @@ fun NoRecentAssignmentScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp),
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         Column(
