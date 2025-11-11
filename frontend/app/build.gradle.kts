@@ -145,6 +145,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     // MockK for ViewModel mocking in UI tests
     androidTestImplementation("io.mockk:mockk-android:1.13.10")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     
     // Hilt testing - must match the hilt version in libs.versions.toml
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.48")

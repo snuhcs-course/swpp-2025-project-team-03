@@ -7,7 +7,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -31,7 +30,7 @@ class ComprehensiveScreenTests {
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+    val composeTestRule = createAndroidComposeRule<TestHiltActivity>()
 
     @Before
     fun setup() {
