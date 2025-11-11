@@ -165,7 +165,6 @@ fun TeacherClassDetailScreen(
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -238,7 +237,14 @@ fun TeacherClassDetailScreen(
                 size = ButtonSize.Small,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp)
+                    .height(44.dp),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
         }
         
