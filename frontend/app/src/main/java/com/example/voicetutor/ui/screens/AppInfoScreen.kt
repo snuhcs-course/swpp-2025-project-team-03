@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,21 +71,23 @@ fun AppInfoScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // App icon placeholder
+                // App icon
                 Box(
                     modifier = Modifier
                         .size(80.dp)
                         .background(
-                            color = PrimaryIndigo,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(PrimaryIndigo, PrimaryPurple)
+                            ),
                             shape = MaterialTheme.shapes.large
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.School,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(40.dp)
+                    Text(
+                        text = "V",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
                 

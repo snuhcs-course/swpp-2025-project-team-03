@@ -322,9 +322,17 @@ fun ClassCard(
                 VTButton(
                     text = "과제 생성",
                     onClick = { onCreateAssignment(classRoom.id) },
-                    variant = ButtonVariant.Outline,
+                    variant = ButtonVariant.Primary,
                     size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 )
                 
                 VTButton(
