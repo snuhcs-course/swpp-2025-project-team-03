@@ -27,7 +27,7 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 @Composable
 fun AssignmentDetailedResultsScreen(
     personalAssignmentId: Int,
-    assignmentTitle: String = "과제 결과",
+    assignmentTitle: String = "리포트",
     onBackClick: () -> Unit = {},
     viewModel: AssignmentViewModel = hiltViewModel()
 ) {
@@ -164,7 +164,7 @@ fun AssignmentDetailedResultsScreen(
                         color = Color.White
                     )
                     Text(
-                        text = "과제 결과",
+                        text = "리포트",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
                     )

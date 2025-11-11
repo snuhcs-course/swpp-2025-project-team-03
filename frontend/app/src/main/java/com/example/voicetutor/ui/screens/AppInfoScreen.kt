@@ -6,13 +6,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
@@ -25,40 +28,70 @@ fun AppInfoScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        VTHeader(
-            title = "앱 정보",
-            onBackClick = onBackClick
-        )
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = Color.Black
+                )
+            }
+            Text(
+                text = "앱 정보",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+        }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
         
         // App logo and basic info
         VTCard(variant = CardVariant.Outlined) {
             Column(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // App icon placeholder
+                // App icon
                 Box(
                     modifier = Modifier
                         .size(80.dp)
                         .background(
-                            color = PrimaryIndigo,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(PrimaryIndigo, PrimaryPurple)
+                            ),
                             shape = MaterialTheme.shapes.large
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.School,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(40.dp)
+                    Text(
+                        text = "V",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
                     text = "VoiceTutor",
@@ -82,39 +115,9 @@ fun AppInfoScreen(
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // App features
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
-                Text(
-                    text = "주요 기능",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                val features = listOf(
-                    "음성 인식 기반 과제 제출",
-                    "실시간 AI 피드백",
-                    "학생 진도 추적 및 분석",
-                    "수업 관리 및 메시징",
-                    "출석 관리 시스템"
-                )
-                
-                features.forEach { feature ->
-                    FeatureItem(feature = feature)
-                    if (feature != features.last()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
+
+        Spacer(modifier = Modifier.height(4.dp))
+
         // Development info
         VTCard(variant = CardVariant.Outlined) {
             Column {
@@ -142,7 +145,7 @@ fun AppInfoScreen(
                 
                 InfoItem(
                     label = "최종 업데이트",
-                    value = "2024년 1월 15일"
+                    value = "2025년 12월 7일"
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -154,47 +157,7 @@ fun AppInfoScreen(
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Legal information
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
-                Text(
-                    text = "법적 정보",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                LegalItem(
-                    title = "개인정보처리방침",
-                    onClick = {
-                        // TODO: Open privacy policy
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                LegalItem(
-                    title = "서비스 이용약관",
-                    onClick = {
-                        // TODO: Open terms of service
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                LegalItem(
-                    title = "오픈소스 라이선스",
-                    onClick = {
-                        // TODO: Open open source licenses
-                    }
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
         // Contact and support
         VTCard(variant = CardVariant.Outlined) {
@@ -219,17 +182,6 @@ fun AppInfoScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 ContactItem(
-                    icon = Icons.Filled.Language,
-                    title = "웹사이트",
-                    value = "www.voicetutor.com",
-                    onClick = {
-                        // TODO: Open website
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                ContactItem(
                     icon = Icons.Filled.Star,
                     title = "앱 평가하기",
                     value = "Google Play Store",
@@ -239,61 +191,19 @@ fun AppInfoScreen(
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // App actions
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
-                Text(
-                    text = "앱 관리",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                ActionItem(
-                    icon = Icons.Filled.Update,
-                    title = "업데이트 확인",
-                    description = "최신 버전으로 업데이트하세요",
-                    onClick = {
-                        // TODO: Check for updates
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                ActionItem(
-                    icon = Icons.Filled.Share,
-                    title = "앱 공유하기",
-                    description = "VoiceTutor를 친구들에게 추천하세요",
-                    onClick = {
-                        // TODO: Share app
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                ActionItem(
-                    icon = Icons.Filled.Delete,
-                    title = "캐시 삭제",
-                    description = "앱 데이터를 정리하여 공간을 확보하세요",
-                    onClick = {
-                        // TODO: Clear cache
-                    }
-                )
-            }
         }
         
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        // Copyright
+        // Copyright - 하단 고정
         Text(
-            text = "© 2024 VoiceTutor Team. All rights reserved.",
+            text = "© 2025 VoiceTutor Team. All rights reserved.",
             style = MaterialTheme.typography.bodySmall,
             color = Gray500,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .padding(bottom = 16.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+            textAlign = TextAlign.Center
         )
     }
 }
