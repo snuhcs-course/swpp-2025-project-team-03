@@ -306,7 +306,7 @@ fun AssignmentCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 VTButton(
-                    text = "결과 보기",
+                    text = "과제 결과",
                     onClick = onViewResults,
                     variant = ButtonVariant.Primary,
                     size = ButtonSize.Small,
@@ -314,7 +314,7 @@ fun AssignmentCard(
                 )
                 
                 VTButton(
-                    text = "편집",
+                    text = "과제 편집",
                     onClick = { onEditClick(assignment.id) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
