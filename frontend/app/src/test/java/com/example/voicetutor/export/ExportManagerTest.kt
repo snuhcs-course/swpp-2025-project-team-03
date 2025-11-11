@@ -104,5 +104,120 @@ class ExportManagerTest {
         assertEquals(50, progressData.studyHours)
         assertEquals(3, progressData.subjects.size)
     }
+    
+    @Test
+    fun exportData_copy_createsNewInstance() {
+        val original = ExportData("Title", "Content", ExportType.PDF)
+        val copy = original.copy(title = "New Title")
+        
+        assertEquals("New Title", copy.title)
+        assertEquals(original.content, copy.content)
+    }
+    
+    @Test
+    fun exportResult_equality_worksCorrectly() {
+        val result1 = ExportResult(true, "/path/to/file.pdf")
+        val result2 = ExportResult(true, "/path/to/file.pdf")
+        val result3 = ExportResult(false, error = "Error")
+        
+        assertEquals(result1, result2)
+        assertNotEquals(result1, result3)
+    }
+    
+    @Test
+    fun gradeData_copy_createsNewInstance() {
+        val original = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
+        val copy = original.copy(score = 90)
+        
+        assertEquals(90, copy.score)
+        assertEquals(original.assignmentName, copy.assignmentName)
+    }
+    
+    @Test
+    fun progressData_copy_createsNewInstance() {
+        val original = ProgressData(10, 20, 85, 50, listOf("Math"))
+        val copy = original.copy(completedAssignments = 15)
+        
+        assertEquals(15, copy.completedAssignments)
+        assertEquals(original.totalAssignments, copy.totalAssignments)
+    }
+
+    @Test
+    fun gradeData_equality_worksCorrectly() {
+        val grade1 = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
+        val grade2 = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
+        val grade3 = GradeData("Assignment 2", "Math", 85, 100, 85, "2024-01-01")
+        
+        assertEquals(grade1, grade2)
+        assertNotEquals(grade1, grade3)
+    }
+
+    @Test
+    fun progressData_equality_worksCorrectly() {
+        val progress1 = ProgressData(10, 20, 85, 50, listOf("Math", "Science"))
+        val progress2 = ProgressData(10, 20, 85, 50, listOf("Math", "Science"))
+        val progress3 = ProgressData(15, 20, 85, 50, listOf("Math", "Science"))
+        
+        assertEquals(progress1, progress2)
+        assertNotEquals(progress1, progress3)
+    }
+
+    @Test
+    fun exportType_allTypes_haveUniqueNames() {
+        val names = ExportType.values().map { it.name }
+        assertEquals(names.size, names.distinct().size)
+    }
+
+    @Test
+    fun gradeData_withZeroScore_handlesCorrectly() {
+        val gradeData = GradeData(
+            assignmentName = "Assignment 1",
+            subject = "Math",
+            score = 0,
+            maxScore = 100,
+            percentage = 0,
+            submitDate = "2024-01-01"
+        )
+        
+        assertEquals(0, gradeData.score)
+        assertEquals(0, gradeData.percentage)
+    }
+
+    @Test
+    fun progressData_withEmptySubjects_handlesCorrectly() {
+        val progressData = ProgressData(
+            completedAssignments = 0,
+            totalAssignments = 0,
+            averageScore = 0,
+            studyHours = 0,
+            subjects = emptyList()
+        )
+        
+        assertTrue(progressData.subjects.isEmpty())
+        assertEquals(0, progressData.completedAssignments)
+    }
+
+    @Test
+    fun exportData_withEmptyContent_handlesCorrectly() {
+        val exportData = ExportData(
+            title = "Test Export",
+            content = "",
+            type = ExportType.TEXT
+        )
+        
+        assertTrue(exportData.content.isEmpty())
+        assertEquals("Test Export", exportData.title)
+    }
+
+    @Test
+    fun exportResult_withNullFilePath_handlesCorrectly() {
+        val exportResult = ExportResult(
+            success = true,
+            filePath = null
+        )
+        
+        assertTrue(exportResult.success)
+        assertNull(exportResult.filePath)
+    }
 }
 

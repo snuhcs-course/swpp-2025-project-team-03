@@ -10,7 +10,7 @@ class ButtonTest {
 
     @Test
     fun buttonVariant_enumValues_areCorrect() {
-        assertEquals(6, ButtonVariant.values().size)
+        assertEquals(7, ButtonVariant.values().size)
         assertTrue(ButtonVariant.values().contains(ButtonVariant.Primary))
         assertTrue(ButtonVariant.values().contains(ButtonVariant.Secondary))
         assertTrue(ButtonVariant.values().contains(ButtonVariant.Outline))

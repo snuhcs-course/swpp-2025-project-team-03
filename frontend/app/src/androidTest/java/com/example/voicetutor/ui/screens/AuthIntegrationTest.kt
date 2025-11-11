@@ -27,6 +27,7 @@ import org.junit.runner.RunWith
  * 
  * Uses HiltComponentActivity for Hilt dependency injection support in Compose tests.
  */
+@org.junit.Ignore("Integration tests require real network access")
 @MediumTest
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)

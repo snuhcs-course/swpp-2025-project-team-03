@@ -88,5 +88,74 @@ class NotificationManagerTest {
         
         assertEquals(android.R.drawable.ic_dialog_info, action.icon)
     }
+    
+    @Test
+    fun notificationData_copy_createsNewInstance() {
+        val original = NotificationData(
+            id = 1,
+            title = "Original",
+            message = "Message",
+            type = NotificationType.ASSIGNMENT_DUE
+        )
+        
+        val copy = original.copy(title = "Modified")
+        
+        assertEquals("Modified", copy.title)
+        assertEquals(original.message, copy.message)
+    }
+    
+    @Test
+    fun notificationData_equality_worksCorrectly() {
+        val data1 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
+        val data2 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
+        val data3 = NotificationData(2, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
+        
+        assertEquals(data1, data2)
+        assertNotEquals(data1, data3)
+    }
+    
+    @Test
+    fun notificationAction_equality_worksCorrectly() {
+        val action1 = NotificationAction("Action", "test")
+        val action2 = NotificationAction("Action", "test")
+        val action3 = NotificationAction("Action", "other")
+        
+        assertEquals(action1, action2)
+        assertNotEquals(action1, action3)
+    }
+    
+    @Test
+    fun notificationType_allTypes_haveUniqueNames() {
+        val names = NotificationType.values().map { it.name }
+        assertEquals(names.size, names.distinct().size)
+    }
+    
+    @Test
+    fun notificationPriority_allPriorities_haveUniqueNames() {
+        val names = NotificationPriority.values().map { it.name }
+        assertEquals(names.size, names.distinct().size)
+    }
+    
+    @Test
+    fun notificationData_withMultipleActions_storesCorrectly() {
+        val actions = listOf(
+            NotificationAction("Action 1", "action1"),
+            NotificationAction("Action 2", "action2"),
+            NotificationAction("Action 3", "action3")
+        )
+        
+        val data = NotificationData(
+            id = 1,
+            title = "Test",
+            message = "Message",
+            type = NotificationType.ASSIGNMENT_DUE,
+            actions = actions
+        )
+        
+        assertEquals(3, data.actions.size)
+        assertEquals("Action 1", data.actions[0].title)
+        assertEquals("Action 2", data.actions[1].title)
+        assertEquals("Action 3", data.actions[2].title)
+    }
 }
 
