@@ -166,13 +166,19 @@ fun AllStudentsScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("반 선택") },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = Gray800),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                        focusedTextColor = Gray800,
+                        unfocusedTextColor = Gray800,
+                        focusedLabelColor = PrimaryIndigo,
+                        unfocusedLabelColor = Gray600
+                    )
                 )
                 
                 ExposedDropdownMenu(
