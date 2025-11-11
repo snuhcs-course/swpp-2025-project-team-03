@@ -318,7 +318,12 @@ fun MainLayout(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(16.dp)
+                .padding(
+                    start = 17.dp,
+                    top = 17.dp,
+                    end = 17.dp,
+                    bottom = 4.dp
+                )
         ) {
             content()
         }
