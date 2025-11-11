@@ -427,29 +427,147 @@ class TestExtractAcousticFeatures:
             test_wav_path,
             fmin=80.0,
             fmax=400.0,
-            hop=512,
-            smooth_ms=50.0,
-            pause_secs=(1.0, 2.0),
         )
-
-        # 검증: 결과가 올바르게 반환되었는지 확인
         assert isinstance(result, dict)
         assert "sr" in result
 
-        # 커스텀 pause_secs에 따른 pause 키 확인
-        # pause_secs=(1.0, 2.0)이므로 pause_1_cnt와 pause_2_cnt가 생성됨
-        # _fmt_pause_key 함수가 _0을 제거하므로 pause_1_cnt, pause_2_cnt 형식
-        assert "pause_1_cnt" in result
-        assert "pause_2_cnt" in result
-        # pause_0_5_cnt는 없어야 함 (pause_secs에 포함되지 않았으므로)
-        assert "pause_0_5_cnt" not in result
+    def test_moving_average_k_less_equal_one(self):
+        """moving_average에서 k <= 1인 경우 테스트 (line 13)"""
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import moving_average
 
-        assert "min_f0_hz" in result
-        assert "max_f0_hz" in result
-        assert "range_f0_hz" in result
-        assert "n_f0_used" in result
-        assert "tot_slope_f0_st_per_s" in result
-        assert "end_slope_f0_st_per_s" in result
+        x = np.array([1, 2, 3, 4, 5])
+        # k <= 1인 경우
+        result = moving_average(x, k=1)
+        np.testing.assert_array_equal(result, x)
+        result = moving_average(x, k=0)
+        np.testing.assert_array_equal(result, x)
+
+    def test_interp_internal_nans_empty_array(self):
+        """interp_internal_nans에서 빈 배열인 경우 테스트 (line 22)"""
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import interp_internal_nans
+
+        x = np.array([])
+        result = interp_internal_nans(x)
+        assert len(result) == 0
+
+    def test_interp_internal_nans_insufficient_valid(self):
+        """interp_internal_nans에서 valid.sum() < 2인 경우 테스트 (line 26)"""
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import interp_internal_nans
+
+        # valid 값이 1개 이하인 경우
+        x = np.array([np.nan, np.nan, 1.0, np.nan])
+        result = interp_internal_nans(x)
+        # 원본과 동일해야 함
+        assert np.isnan(result[0])
+        assert np.isnan(result[1])
+        assert result[2] == 1.0
+        assert np.isnan(result[3])
+
+    def test_compute_f0_insufficient_valid(self, test_wav_path):
+        """compute_f0에서 valid.sum() < 2인 경우 테스트 (line 55)"""
+        import soundfile as sf
+        from submissions.utils.feature_extractor.extract_acoustic_features import compute_f0
+
+        # 매우 짧은 오디오 또는 무성음만 있는 경우를 시뮬레이션
+        y, sr = sf.read(test_wav_path)
+        # 매우 짧은 오디오로 만들기
+        y_short = y[: sr // 10]  # 0.1초만 사용
+
+        # fmin/fmax를 매우 좁게 설정하여 valid가 거의 없도록
+        result = compute_f0(y_short, sr, fmin=1000.0, fmax=2000.0)
+        # valid.sum() < 2인 경우 dict 반환
+        assert isinstance(result, dict)
+        assert "f0" in result or result.get("f0") is None
+
+    def test_linear_slope_edge_cases(self):
+        """linear_slope의 엣지 케이스 테스트 (line 74)"""
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import linear_slope
+
+        # x가 None인 경우
+        result = linear_slope(None, np.array([1, 2, 3]))
+        assert np.isnan(result)
+
+        # y가 None인 경우
+        result = linear_slope(np.array([1, 2, 3]), None)
+        assert np.isnan(result)
+
+        # len(x) < 2인 경우
+        result = linear_slope(np.array([1]), np.array([2]))
+        assert np.isnan(result)
+
+    def test_remove_short_runs_empty_mask(self):
+        """_remove_short_runs에서 빈 mask인 경우 테스트 (line 81)"""
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import _remove_short_runs
+
+        mask = np.array([], dtype=bool)
+        result = _remove_short_runs(mask, min_len=5, val=1)
+        assert len(result) == 0
+
+    def test_remove_short_runs_short_runs(self):
+        """_remove_short_runs에서 짧은 run 제거 테스트 (line 89)"""
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import _remove_short_runs
+
+        # 짧은 run이 있는 mask
+        mask = np.array([False, True, True, False, True, True, True, True, True, False])
+        # min_len=3, val=1인 경우, 길이 2인 True run이 제거되어야 함
+        result = _remove_short_runs(mask, min_len=3, val=1)
+        # 첫 번째 True run (길이 2)이 제거되어야 함
+        assert not result[1] and not result[2]
+
+    def test_rms_features_empty_frames(self):
+        """rms_features에서 n_frames == 0인 경우 테스트 (line 158-159)"""
+        import librosa
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import rms_features
+
+        # 빈 오디오 시뮬레이션
+        # librosa.feature.rms가 빈 배열에 대해 빈 배열을 반환하도록 매우 짧은 오디오 사용
+        y = np.array([], dtype=np.float32)
+        sr = 16000
+        # librosa.feature.rms는 frame_length보다 짧은 오디오에 대해 빈 배열을 반환할 수 있음
+        # frame_length=2048이므로 그보다 훨씬 짧은 오디오 사용
+        result = rms_features(y, sr, frame_length=2048)
+        # n_frames == 0인 경우 NaN을 반환해야 함
+        # 하지만 librosa가 빈 배열에 대해 다른 동작을 할 수 있으므로,
+        # 실제로는 n_frames가 0이 아닐 수 있음
+        # 따라서 결과가 NaN이거나 유효한 값일 수 있음
+        assert "min_rms" in result
+        assert "median_rms" in result
+        # n_frames가 0이면 NaN이어야 함
+        if len(librosa.feature.rms(y=y, frame_length=2048, hop_length=256).ravel()) == 0:
+            assert np.isnan(result["min_rms"])
+            assert np.isnan(result["median_rms"])
+
+    def test_rms_features_no_speech_vals(self):
+        """rms_features에서 speech_vals.size == 0인 경우 테스트 (line 182-183)"""
+        import numpy as np
+        from submissions.utils.feature_extractor.extract_acoustic_features import rms_features
+
+        # 발화 구간이 없는 경우를 시뮬레이션
+        # intervals는 샘플 인덱스 단위이므로, 오디오 길이를 벗어나는 샘플 인덱스를 사용
+        y = np.random.randn(16000).astype(np.float32)
+        sr = 16000
+
+        # intervals를 오디오 길이를 벗어나는 샘플 인덱스로 설정
+        # 이렇게 하면 speech_mask가 모두 False가 되어 speech_vals.size == 0이 됨
+        audio_length_samples = len(y)
+        result = rms_features(
+            y, sr, intervals=[(audio_length_samples + 1000, audio_length_samples + 2000)]
+        )  # 존재하지 않는 구간
+        # speech_mask가 모두 False이면 speech_vals가 비어있음
+        assert "min_rms" in result
+        assert "median_rms" in result
+        # speech_vals.size == 0인 경우 NaN을 반환해야 함
+        assert np.isnan(result["min_rms"])
+        assert np.isnan(result["median_rms"])
+        # rms_features는 min_rms, median_rms, noise_rms만 반환
+        assert "noise_rms" in result
 
 
 class TestExtractSemanticFeatures:

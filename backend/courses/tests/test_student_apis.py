@@ -229,6 +229,26 @@ class TestStudentDeleteView:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.data["success"] is False
 
+    def test_delete_student_not_enrolled(self, api_client, student, course_class):
+        """등록되지 않은 학생 제거 시도 테스트 (Enrollment.DoesNotExist)"""
+        url = reverse("class-student-delete", kwargs={"id": course_class.id, "student_id": student.id})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["success"] is False
+        assert "등록되어 있지 않습니다" in response.data["message"]
+
+    def test_delete_student_nonexistent_class(self, api_client, student):
+        """존재하지 않는 클래스에서 학생 제거 시도 테스트 (CourseClass.DoesNotExist)"""
+        url = reverse("class-student-delete", kwargs={"id": 999, "student_id": student.id})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["success"] is False
+        assert "클래스를 찾을 수 없습니다" in response.data["message"]
+
 
 class TestStudentStatisticsView:
     """학생 진도 통계량 조회 API 테스트"""
