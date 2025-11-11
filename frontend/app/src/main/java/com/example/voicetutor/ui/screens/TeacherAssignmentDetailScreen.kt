@@ -277,7 +277,7 @@ fun TeacherAssignmentDetailScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             VTButton(
-                text = "결과 보기",
+                text = "과제 결과",
                 onClick = { 
                     val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
                     if (assignmentId > 0) {
@@ -296,7 +296,7 @@ fun TeacherAssignmentDetailScreen(
             )
             
             VTButton(
-                text = "편집",
+                text = "과제 편집",
                 onClick = { 
                     val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
                     if (assignmentId > 0) {

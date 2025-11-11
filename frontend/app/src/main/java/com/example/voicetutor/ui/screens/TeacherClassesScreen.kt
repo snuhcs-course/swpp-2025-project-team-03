@@ -173,7 +173,7 @@ fun TeacherClassesScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 VTButton(
-                    text = "새 수업 만들기",
+                    text = "수업 생성",
                     onClick = onNavigateToCreateClass,
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,

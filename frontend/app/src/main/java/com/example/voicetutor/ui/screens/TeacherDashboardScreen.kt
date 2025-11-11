@@ -451,7 +451,7 @@ fun TeacherAssignmentCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "제출 현황: $submittedCount/$totalCount",
+                    text = "제출 학생: $submittedCount/$totalCount",
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600,
                     fontWeight = FontWeight.Medium

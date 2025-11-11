@@ -62,7 +62,7 @@ fun CreateClassScreen(
             .padding(16.dp)
     ) {
         VTHeader(
-            title = "새 수업 만들기",
+            title = "수업 생성",
             onBackClick = onBackClick,
             showBackButton = false
         )
@@ -167,7 +167,7 @@ fun CreateClassScreen(
         
         // Create button
         VTButton(
-            text = if (isLoading) "생성 중..." else "수업 만들기",
+            text = if (isLoading) "생성 중..." else "수업 생성",
             onClick = {
                 // 현재 시간을 ISO 형식으로 변환
                 val now = LocalDateTime.now()

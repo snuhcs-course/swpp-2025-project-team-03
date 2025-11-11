@@ -131,7 +131,7 @@ fun TeacherAssignmentResultsScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             VTStatsCard(
-                title = "제출 완료",
+                title = "제출 학생",
                 value = "${students.count { it.status == "완료" }}명",
                 icon = Icons.Filled.CheckCircle,
                 iconColor = Success,

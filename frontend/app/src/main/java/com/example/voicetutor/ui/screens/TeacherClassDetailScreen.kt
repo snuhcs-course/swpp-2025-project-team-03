@@ -438,7 +438,7 @@ fun ClassAssignmentCard(
             ) {
                 Column {
                     Text(
-                        text = "완료율",
+                        text = "제출률",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
@@ -452,7 +452,7 @@ fun ClassAssignmentCard(
                 
                 Column {
                     Text(
-                        text = "완료 학생",
+                        text = "제출 학생",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )

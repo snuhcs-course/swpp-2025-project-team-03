@@ -272,7 +272,7 @@ fun TeacherStudentsScreen(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "과제 완료율",
+                                text = "과제 제출률",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Gray600,
                                 fontWeight = FontWeight.Medium
