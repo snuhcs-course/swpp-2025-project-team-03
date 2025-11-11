@@ -107,8 +107,7 @@ fun TeacherStudentReportScreen(
                         Color(0xFFF0F0FF)
                     )
                 )
-            )
-            .padding(12.dp),
+            ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Header
