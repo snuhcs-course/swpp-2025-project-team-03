@@ -38,7 +38,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
     return when {
         currentDestination == VoiceTutorScreens.Assignment.route -> "과제"
         currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route.split("{").first()) == true -> "과제 상세"
-        currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "과제 결과"
+        currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "리포트"
         currentDestination == VoiceTutorScreens.Progress.route -> "학습 리포트"
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
         currentDestination == VoiceTutorScreens.CreateClass.route -> "수업 관리"
