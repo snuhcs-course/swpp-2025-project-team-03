@@ -34,6 +34,7 @@ fun TeacherDashboardScreen(
     refreshTimestamp: Long = 0L, // 새로고침 트리거
     onNavigateToAllAssignments: () -> Unit = {},
     onNavigateToAllStudents: () -> Unit = {},
+    onNavigateToClasses: () -> Unit = {},
     onCreateNewAssignment: () -> Unit = {},
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToAssignmentDetail: (Int) -> Unit = {},
@@ -222,7 +223,8 @@ fun TeacherDashboardScreen(
                 value = dashboardStats?.totalAssignments?.toString() ?: (currentUser?.totalAssignments ?: assignments.size).toString(),
                 icon = Icons.Filled.List,
                 tint = PrimaryIndigo,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToClasses
             )
             
             DashboardSummaryCard(
@@ -233,7 +235,8 @@ fun TeacherDashboardScreen(
                     ?: "0",
                 icon = Icons.Filled.People,
                 tint = Success,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToAllStudents
             )
         }
         
@@ -491,11 +494,13 @@ private fun DashboardSummaryCard(
     value: String,
     icon: ImageVector,
     tint: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     VTCard2(
         modifier = modifier.height(60.dp),
-        variant = CardVariant.Elevated
+        variant = CardVariant.Elevated,
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
