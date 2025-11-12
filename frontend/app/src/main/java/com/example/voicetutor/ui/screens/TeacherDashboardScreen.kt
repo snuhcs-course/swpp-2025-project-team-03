@@ -9,11 +9,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -21,9 +21,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.data.models.AssignmentFilter
+import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
@@ -53,6 +54,8 @@ fun TeacherDashboardScreen(
     val dashboardStats by dashboardViewModel.dashboardStats.collectAsStateWithLifecycle()
     val students by studentViewModel.students.collectAsStateWithLifecycle()
     // Recent activities are not supported by current backend API
+    
+    var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
     // Compute actual teacher ID
     val actualTeacherId = teacherId ?: currentUser?.id?.toString()
@@ -102,6 +105,17 @@ fun TeacherDashboardScreen(
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
     
+    LaunchedEffect(selectedFilter, actualTeacherId) {
+        if (actualTeacherId != null) {
+            val status = when (selectedFilter) {
+                AssignmentFilter.ALL -> null
+                AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
+                AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
+            }
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
+        }
+    }
+    
     LaunchedEffect(assignments) {
         val user = currentUser
         println("TeacherDashboard - Assignments state updated: ${assignments.size} assignments")
@@ -119,8 +133,6 @@ fun TeacherDashboardScreen(
         }
     }
     
-    val filteredAssignments = assignments
-
     // 오늘 마감인 과제 개수 계산 (API 24 호환)
     val dueTodayCount = remember(assignments) {
         // API 26 미만에서는 java.time 일부 기능이 제한되므로 SimpleDateFormat 사용
@@ -218,7 +230,7 @@ fun TeacherDashboardScreen(
                 VTButton(
                     text = "+ 수업 생성하기",
                     onClick = onNavigateToCreateClass,
-                    variant = ButtonVariant.Outline,
+                    variant = ButtonVariant.Primary,
                     size = ButtonSize.Medium,
                     modifier = Modifier.weight(1f)
                 )
@@ -232,24 +244,24 @@ fun TeacherDashboardScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            // Spacer(modifier = Modifier.height(12.dp))
 
-            VTButton(
-                text = "전체 과제 보기",
-                onClick = onNavigateToAllAssignments,
-                variant = ButtonVariant.Primary,
-                size = ButtonSize.Large,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Assignment,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            )
+            // VTButton(
+            //     text = "전체 과제 보기",
+            //     onClick = onNavigateToAllAssignments,
+            //     variant = ButtonVariant.Primary,
+            //     size = ButtonSize.Large,
+            //     modifier = Modifier
+            //         .fillMaxWidth()
+            //         .height(56.dp),
+            //     leadingIcon = {
+            //         Icon(
+            //             imageVector = Icons.Filled.Assignment,
+            //             contentDescription = null,
+            //             modifier = Modifier.size(20.dp)
+            //         )
+            //     }
+            // )
         }
         
         // Assignment management section
@@ -261,22 +273,53 @@ fun TeacherDashboardScreen(
             ) {
                 Column {
                     Text(
-                        text = "진행중인 과제",
+                        text = "모든 과제",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
                     )
                     Text(
-                        text = "현재 진행중인 과제를 확인하세요",
+                        text = "내가 낸 과제를 확인하세요",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
-            // Assignment cards
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = selectedFilter == AssignmentFilter.ALL,
+                    onClick = { selectedFilter = AssignmentFilter.ALL },
+                    label = { Text("전체") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.List,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
+
+                FilterChip(
+                    selected = selectedFilter == AssignmentFilter.IN_PROGRESS,
+                    onClick = { selectedFilter = AssignmentFilter.IN_PROGRESS },
+                    label = { Text("진행중") }
+                )
+
+                FilterChip(
+                    selected = selectedFilter == AssignmentFilter.COMPLETED,
+                    onClick = { selectedFilter = AssignmentFilter.COMPLETED },
+                    label = { Text("마감") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -286,7 +329,7 @@ fun TeacherDashboardScreen(
                         color = PrimaryIndigo
                     )
                 }
-            } else if (filteredAssignments.isEmpty()) {
+            } else if (assignments.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
@@ -309,11 +352,9 @@ fun TeacherDashboardScreen(
                     }
                 }
             } else {
-                // 제출 현황을 저장하는 StateMap
                 val assignmentStatsMap = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
-                
-                // 각 과제의 제출 현황을 로드
-                filteredAssignments.forEach { assignment ->
+
+                assignments.forEach { assignment ->
                     LaunchedEffect(assignment.id) {
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                             val stats = actualAssignmentViewModel.getAssignmentSubmissionStats(assignment.id)
@@ -321,26 +362,91 @@ fun TeacherDashboardScreen(
                         }
                     }
                 }
-                
-                filteredAssignments.forEachIndexed { index, assignment ->
+
+                assignments.forEachIndexed { index, assignment ->
                     val stats = assignmentStatsMap[assignment.id] ?: (0 to assignment.courseClass.studentCount)
-                    
+
                     TeacherAssignmentCard(
                         title = assignment.title,
                         className = assignment.courseClass.name,
                         submittedCount = stats.first,
                         totalCount = stats.second,
                         dueDate = assignment.dueAt,
-                        status = AssignmentStatus.IN_PROGRESS, // 기본값으로 설정
+                        status = AssignmentStatus.IN_PROGRESS,
                         onClick = { onNavigateToAssignmentDetail(assignment.id) },
                         onViewResults = { onNavigateToAssignmentResults(assignment.id) },
                         onEdit = { onNavigateToEditAssignment(assignment.id) }
                     )
-                    
-                    if (index < filteredAssignments.size - 1) {
-                        Spacer(modifier = Modifier.height(8.dp))
+
+                    if (index < assignments.size - 1) {
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TeacherDashboardScreenPreview() {
+    VoiceTutorTheme {
+        TeacherDashboardScreen()
+    }
+}
+
+@Composable
+private fun DashboardSummaryCard(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
+    VTCard2(
+        modifier = modifier.height(60.dp),
+        variant = CardVariant.Elevated,
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 25.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(tint.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = tint
+                )
             }
         }
     }
@@ -431,69 +537,27 @@ fun TeacherAssignmentCard(
                 color = PrimaryIndigo,
                 height = 6
             )
-        }
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun TeacherDashboardScreenPreview() {
-    VoiceTutorTheme {
-        TeacherDashboardScreen()
-    }
-}
+            Spacer(modifier = Modifier.height(12.dp))
 
-@Composable
-private fun DashboardSummaryCard(
-    label: String,
-    value: String,
-    icon: ImageVector,
-    tint: Color,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
-) {
-    VTCard2(
-        modifier = modifier.height(60.dp),
-        variant = CardVariant.Elevated,
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 25.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(tint.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                VTButton(
+                    text = "과제 결과",
+                    onClick = onViewResults,
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = tint
+
+                VTButton(
+                    text = "과제 편집",
+                    onClick = onEdit,
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
