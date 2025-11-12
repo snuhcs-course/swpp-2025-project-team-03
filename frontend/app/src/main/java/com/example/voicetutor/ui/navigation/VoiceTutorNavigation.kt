@@ -294,6 +294,9 @@ fun VoiceTutorNavigation(
                     onNavigateToAllStudents = {
                         navController.navigate(VoiceTutorScreens.AllStudents.route)
                     },
+                    onNavigateToClasses = {
+                        navController.navigate(VoiceTutorScreens.TeacherClasses.route)
+                    },
                     onCreateNewAssignment = {
                         navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(null))
                     },
@@ -653,11 +656,6 @@ fun VoiceTutorNavigation(
                 SettingsScreen(
                     userRole = userRole,
                     studentId = if (studentId != -1) studentId else null,
-                    onLogout = {
-                        navController.navigate(VoiceTutorScreens.Login.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
                     navController = navController
                 )
             }

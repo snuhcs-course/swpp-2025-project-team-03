@@ -1,14 +1,13 @@
 import logging
 
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from django.db.models import ProtectedError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-# from drf_yasg import openapi
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from .request_serializers import LoginRequestSerializer, SignupRequestSerializer
 from .serializers import UserResponseSerializer
@@ -137,4 +136,91 @@ class LogoutView(APIView):
         )
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
+        return response
+
+
+class DeleteAccountView(APIView):
+    @swagger_auto_schema(
+        operation_id="계정 삭제",
+        operation_description="현재 로그인한 사용자의 계정을 삭제하고 JWT 쿠키를 제거합니다.",
+        responses={200: "계정 삭제 성공", 401: "인증 실패", 404: "사용자를 찾을 수 없음"},
+    )
+    def delete(self, request):
+        access_token = request.COOKIES.get("access_token")
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if not access_token:
+            return Response(
+                {"success": False, "message": "access token이 없습니다.", "error": "missing_access_token"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            token = AccessToken(access_token)
+            user_id = token.get("user_id")
+            if user_id is None:
+                raise ValueError("토큰에 사용자 정보가 없습니다.")
+
+            user = Account.objects.get(id=user_id)
+        except Account.DoesNotExist:
+            logger.warning("[DeleteAccountView] user not found for id extracted from token")
+            return Response(
+                {"success": False, "message": "사용자를 찾을 수 없습니다.", "error": "user_not_found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as exc:
+            logger.error(f"[DeleteAccountView] Failed to decode access token: {exc}", exc_info=True)
+            return Response(
+                {"success": False, "message": "유효하지 않은 토큰입니다.", "error": "invalid_token"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            with transaction.atomic():
+                # Delete dependent data explicitly to ensure full cleanup
+                user.answers.all().delete()
+                user.personal_assignments.all().delete()
+                user.received_feedbacks.all().delete()
+                user.given_feedbacks.all().delete()
+                user.enrollments.all().delete()
+                user.course_classes.all().delete()
+
+                deleted_count, _ = Account.objects.filter(id=user.id).delete()
+
+                if deleted_count == 0:
+                    raise ValueError("사용자 삭제에 실패했습니다.")
+        except ProtectedError as exc:
+            logger.error(
+                f"[DeleteAccountView] Related objects prevented deletion for user {user.id}: {exc}", exc_info=True
+            )
+            return Response(
+                {
+                    "success": False,
+                    "message": "관련 데이터 때문에 계정을 삭제할 수 없습니다.",
+                    "error": "protected_related_data",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+        except Exception as exc:
+            logger.error(f"[DeleteAccountView] Failed to delete user {user.id}: {exc}", exc_info=True)
+            return Response(
+                {"success": False, "message": "계정 삭제 중 오류가 발생했습니다.", "error": "delete_failed"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception as exc:
+                logger.warning(f"[DeleteAccountView] Failed to blacklist refresh token: {exc}")
+
+        response = Response(
+            {"success": True, "message": "계정이 삭제되었습니다.", "error": None},
+            status=status.HTTP_200_OK,
+        )
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+
+        logger.info(f"[DeleteAccountView] Account deleted for user_id={user_id}")
         return response

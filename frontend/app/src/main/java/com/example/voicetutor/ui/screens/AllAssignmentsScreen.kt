@@ -92,18 +92,29 @@ fun AllAssignmentsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Column {
-            Text(
-                text = "모든 과제",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Gray800
-            )
-            Text(
-                text = "총 ${assignments.size}개의 과제",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray600
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                Text(
+                    text = "모든 과제",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "총 ${assignments.size}개의 과제",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600
+                )
+            }
         }
         
         // Filter tabs (Teacher only)

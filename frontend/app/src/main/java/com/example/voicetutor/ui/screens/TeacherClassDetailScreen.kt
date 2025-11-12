@@ -173,28 +173,23 @@ fun TeacherClassDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Column {
                     Text(
                         text = dynamicClassName ?: "수업",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = dynamicSubject ?: "과목",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Gray600
                     )
                 }
             }

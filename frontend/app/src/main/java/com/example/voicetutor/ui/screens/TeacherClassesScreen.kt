@@ -127,30 +127,23 @@ fun TeacherClassesScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryIndigo,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 )
-                .shadow(
-                    elevation = 8.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                    spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                )
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+            Column {
                 Text(
                     text = "수업 관리",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
                 )
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "내 수업을 관리하고 과제를 생성하세요",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = Gray600
                 )
             }
         }

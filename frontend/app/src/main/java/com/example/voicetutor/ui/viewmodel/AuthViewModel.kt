@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.repository.AuthRepository
+import com.example.voicetutor.data.repository.DeleteAccountException
 import com.example.voicetutor.data.repository.LoginException
 import com.example.voicetutor.data.repository.SignupException
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +46,9 @@ class AuthViewModel @Inject constructor(
     private val _initialAssignments = MutableStateFlow<List<com.example.voicetutor.data.models.AssignmentData>>(emptyList())
     val initialAssignments: StateFlow<List<com.example.voicetutor.data.models.AssignmentData>> = _initialAssignments.asStateFlow()
     
+    private val _accountDeleted = MutableStateFlow(false)
+    val accountDeleted: StateFlow<Boolean> = _accountDeleted.asStateFlow()
+    
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -74,10 +78,10 @@ class AuthViewModel @Inject constructor(
                             exception.message ?: "보안상의 이유로 계정이 잠겨 있습니다. 관리자에게 문의해주세요."
                         )
                         is LoginException.Server -> LoginError.General.Server(
-                            exception.message ?: "서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+                            "네트워크 연결에 문제가 발생했습니다."
                         )
                         is LoginException.Network -> LoginError.General.Network(
-                            exception.message ?: "네트워크 연결을 확인하고 다시 시도해주세요."
+                            "네트워크 연결에 문제가 발생했습니다."
                         )
                         is LoginException.Unknown -> LoginError.General.Unknown(
                             exception.message ?: "로그인 중 알 수 없는 오류가 발생했습니다."
@@ -145,6 +149,35 @@ class AuthViewModel @Inject constructor(
         _error.value = null
         _signupError.value = null
         _loginError.value = null
+    }
+    
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            
+            authRepository.deleteAccount()
+                .onSuccess {
+                    _accountDeleted.value = true
+                    logout()
+                }
+                .onFailure { exception ->
+                    val message = when (exception) {
+                        is DeleteAccountException.Unauthorized -> exception.message ?: "계정 삭제 권한이 없습니다. 다시 로그인 후 시도해주세요."
+                        is DeleteAccountException.Server -> exception.message ?: "서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+                        is DeleteAccountException.Network -> exception.message ?: "네트워크 연결을 확인하고 다시 시도해주세요."
+                        is DeleteAccountException.Unknown -> exception.message ?: "계정 삭제 중 알 수 없는 오류가 발생했습니다."
+                        else -> exception.message ?: "계정 삭제 중 오류가 발생했습니다."
+                    }
+                    _error.value = message
+                }
+            
+            _isLoading.value = false
+        }
+    }
+    
+    fun clearAccountDeletedFlag() {
+        _accountDeleted.value = false
     }
     
     fun clearError() {
