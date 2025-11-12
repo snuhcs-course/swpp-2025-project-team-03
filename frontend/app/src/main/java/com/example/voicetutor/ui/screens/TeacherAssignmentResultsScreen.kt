@@ -99,28 +99,23 @@ fun TeacherAssignmentResultsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryIndigo,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 )
-                .shadow(
-                    elevation = 8.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                    spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                )
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
             Column {
                 Text(
                     text = dynamicAssignmentTitle,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
                 )
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "학생별 과제 결과를 확인하고 피드백을 제공하세요",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = Gray600
                 )
             }
         }

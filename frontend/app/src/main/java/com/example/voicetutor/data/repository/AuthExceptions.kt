@@ -16,3 +16,10 @@ sealed class LoginException(message: String, cause: Throwable? = null) : Excepti
     class Unknown(message: String) : LoginException(message)
 }
 
+sealed class DeleteAccountException(message: String, cause: Throwable? = null) : Exception(message, cause) {
+    class Unauthorized(message: String) : DeleteAccountException(message)
+    class Server(message: String) : DeleteAccountException(message)
+    class Network(message: String, cause: Throwable? = null) : DeleteAccountException(message, cause)
+    class Unknown(message: String) : DeleteAccountException(message)
+}
+
