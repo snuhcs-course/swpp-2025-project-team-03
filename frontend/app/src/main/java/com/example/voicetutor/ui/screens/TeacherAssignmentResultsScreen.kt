@@ -2,6 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -235,38 +236,11 @@ fun TeacherAssignmentResultCard(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Student info header
+            // Status badge aligned top-right
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.End
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(PrimaryIndigo.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = student.name.first().toString(),
-                        color = PrimaryIndigo,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = student.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-                
-                // Status badge
                 Box(
                     modifier = Modifier
                         .background(
@@ -284,40 +258,56 @@ fun TeacherAssignmentResultCard(
                 }
             }
             
-            // Grade and time info
+            // Name, avatar, and time info row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "등급",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    val grade = scoreToGrade(student.score)
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                color = getGradeColor(grade).copy(alpha = 0.15f),
-                                shape = CircleShape
-                            ),
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryIndigo.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = grade,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = getGradeColor(grade),
-                            fontSize = 24.sp
+                            text = student.name.first().toString(),
+                            color = PrimaryIndigo,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = student.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Text(
+                            text = student.studentId,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray600
                         )
                     }
                 }
-                
-                Column {
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
                         text = "소요 시간",
                         style = MaterialTheme.typography.bodySmall,
@@ -325,25 +315,34 @@ fun TeacherAssignmentResultCard(
                     )
                     Text(
                         text = formatDuration(student.startedAt, student.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = Gray800
                     )
                 }
-                
-                Column {
+
+                Spacer(modifier = Modifier.width(18.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    // modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = "제출 시간",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
+                        modifier = Modifier.align(Alignment.End)
                     )
                     Text(
                         text = formatSubmittedTime(student.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Gray800
+                        color = Gray800,
+                        modifier = Modifier.align(Alignment.End)
                     )
                 }
+
             }
             
             // Sample answers preview
@@ -376,29 +375,6 @@ private fun formatSubmittedTime(isoTime: String): String {
     return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
 }
 
-// Helper function to convert score to grade
-private fun scoreToGrade(score: Int): String {
-    return when {
-        score >= 90 -> "A"
-        score >= 80 -> "B"
-        score >= 70 -> "C"
-        score >= 60 -> "D"
-        else -> "F"
-    }
-}
-
-// Helper function to get grade color
-private fun getGradeColor(grade: String): Color {
-    return when (grade) {
-        "A" -> Success
-        "B" -> Color(0xFF4CAF50)
-        "C" -> Warning
-        "D" -> Color(0xFFFF9800)
-        "F" -> Error
-        else -> Gray600
-    }
-}
-
 // Helper function to format duration between startedAt and submittedAt
 private fun formatDuration(startIso: String?, endIso: String?): String {
     return try {
@@ -409,7 +385,7 @@ private fun formatDuration(startIso: String?, endIso: String?): String {
         }
         val start = parseIsoToMillis(startIso)
         val end = parseIsoToMillis(endIso)
-        if (start == null || end == null || end <= start) {
+        if (start == null || end == null || end < start) {
             println("start or end is null $startIso ,$endIso")
             return "정보 없음"
         }

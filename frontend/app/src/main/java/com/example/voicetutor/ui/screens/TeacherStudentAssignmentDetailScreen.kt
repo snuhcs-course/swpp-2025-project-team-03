@@ -387,7 +387,7 @@ private fun QuestionGroupCard2(
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        VTCard(
+                VTCard(
             variant = CardVariant.Outlined,
             onClick = if (group.tailQuestions.isNotEmpty()) onToggle else null
         ) {
@@ -419,7 +419,7 @@ private fun QuestionGroupCard2(
                                 )
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Text(
+                        Text(
                                 text = if (group.baseQuestion.isCorrect) "정답" else "오답",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (group.baseQuestion.isCorrect) Success else Error,
@@ -674,43 +674,43 @@ private fun DetailedQuestionResultCard2(
                     fontWeight = FontWeight.Bold,
                     color = Gray800
                 )
-
-                Box(
-                    modifier = Modifier
-                        .background(
+                
+                    Box(
+                        modifier = Modifier
+                            .background(
                             color = if (question.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
                         text = if (question.isCorrect) "정답" else "오답",
-                        style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall,
                         color = if (question.isCorrect) Success else Error,
-                        fontWeight = FontWeight.Medium
-                    )
+                            fontWeight = FontWeight.Medium
+                        )
                 }
             }
-
+            
             Text(
                 text = question.question,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = Gray800
             )
-
+            
             if (question.myAnswer.isNotEmpty()) {
                 Column {
-                    Text(
-                        text = "학생 답변:",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray600
-                    )
-                    Text(
+            Text(
+                text = "학생 답변:",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                color = Gray600
+            )
+            Text(
                         text = question.myAnswer,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray800,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Gray800,
                         modifier = Modifier
                             .background(
                                 color = if (question.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
@@ -744,12 +744,12 @@ private fun DetailedQuestionResultCard2(
             question.explanation?.let { explanation ->
                 if (explanation.isNotEmpty()) {
                     Column {
-                        Text(
+                Text(
                             text = "해설",
-                            style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
-                            color = Gray600
-                        )
+                    color = Gray600
+                )
                         Text(
                             text = explanation,
                             style = MaterialTheme.typography.bodyMedium,
