@@ -538,7 +538,16 @@ fun VoiceTutorNavigation(
             ) {
                 TeacherAssignmentResultsScreen(
                     assignmentViewModel = assignmentViewModel,
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
+                    onNavigateToStudentDetail = { studentId, targetAssignmentId, assignmentTitle ->
+                        navController.navigate(
+                            VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute(
+                                studentId,
+                                targetAssignmentId,
+                                assignmentTitle
+                            )
+                        )
+                    }
                 )
             }
         }

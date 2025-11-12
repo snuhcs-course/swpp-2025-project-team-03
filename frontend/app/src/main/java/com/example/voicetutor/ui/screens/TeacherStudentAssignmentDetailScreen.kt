@@ -247,9 +247,7 @@ fun TeacherStudentAssignmentDetailScreen(
                     value = paStats?.let { "${it.accuracy.toInt()}%" } ?: "-",
                     icon = Icons.Filled.CheckCircle,
                     iconColor = Success,
-                    variant = CardVariant.Elevated,
-                    modifier = Modifier.weight(1f),
-                    layout = StatsCardLayout.Vertical
+                    modifier = Modifier.weight(1f)
                 )
                 
                 VTStatsCard(
@@ -257,9 +255,7 @@ fun TeacherStudentAssignmentDetailScreen(
                     value = paStats?.averageScore?.toInt()?.toString() ?: "-",
                     icon = Icons.Filled.Star,
                     iconColor = Warning,
-                    variant = CardVariant.Elevated,
-                    modifier = Modifier.weight(1f),
-                    layout = StatsCardLayout.Vertical
+                    modifier = Modifier.weight(1f)
                 )
             }
             
