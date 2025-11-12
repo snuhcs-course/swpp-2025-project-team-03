@@ -110,33 +110,23 @@ fun AllStudentsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Column {
                     Text(
                         text = "전체 학생 관리",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "학생들의 학습 현황을 확인하고 관리하세요",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                    Text(
-                        text = "총 ${totalStudents}명의 학생",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = Gray600
                     )
                 }
             }

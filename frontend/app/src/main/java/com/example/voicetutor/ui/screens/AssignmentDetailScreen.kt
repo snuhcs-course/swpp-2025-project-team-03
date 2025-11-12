@@ -20,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.theme.Gray800
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
@@ -121,73 +122,31 @@ fun AssignmentDetailScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryIndigo,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 )
-                .shadow(
-                    elevation = 8.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                    spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                )
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = actualTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    val subtitle = buildString {
-                        val subject = currentAssignment?.courseClass?.subject?.name
-                        val due = formatDueDate(currentAssignment?.dueAt)
-                        if (!subject.isNullOrBlank()) append(subject)
-                        if (!subject.isNullOrBlank() && due.isNotBlank()) append(" · ")
-                        if (due.isNotBlank()) append("마감: ").append(due)
-                    }
-                    if (subtitle.isNotBlank()) {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
+            Column {
+                Text(
+                    text = actualTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                val subtitle = buildString {
+                    val subject = currentAssignment?.courseClass?.subject?.name
+                    val due = formatDueDate(currentAssignment?.dueAt)
+                    if (!subject.isNullOrBlank()) append(subject)
+                    if (!subject.isNullOrBlank() && due.isNotBlank()) append(" · ")
+                    if (due.isNotBlank()) append("마감: ").append(due)
                 }
-                
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(
-                            color = Color.White.copy(alpha = 0.15f),
-                            shape = androidx.compose.foundation.shape.CircleShape
-                        )
-                        .shadow(
-                            elevation = 4.dp,
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            ambientColor = Color.Black.copy(alpha = 0.1f),
-                            spotColor = Color.Black.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
+                if (subtitle.isNotBlank()) {
                     Text(
-                        text = if (personalAssignmentStatistics?.totalProblem ?: 0 > 0) {
-                            "${((personalAssignmentStatistics?.solvedProblem ?: 0).toFloat() / (personalAssignmentStatistics?.totalProblem ?: 1).toFloat() * 100f).toInt()}%"
-                        } else {
-                            "0%"
-                        },
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600
                     )
                 }
             }

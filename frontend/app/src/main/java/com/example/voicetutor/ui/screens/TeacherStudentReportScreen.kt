@@ -116,14 +116,8 @@ fun TeacherStudentReportScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = RoundedCornerShape(20.dp)
-                    )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(16.dp)
                     )
                     .padding(20.dp)
             ) {
@@ -131,13 +125,14 @@ fun TeacherStudentReportScreen(
                     Text(
                         text = "${studentName}님의 성취기준 리포트",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "성취기준별 학습 현황을 확인하세요",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Gray600
                     )
                 }
             }
