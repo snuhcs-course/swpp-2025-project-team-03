@@ -151,22 +151,23 @@ fun AssignmentDetailedResultsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Column {
                     Text(
                         text = assignmentTitle,
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "리포트",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Gray600
                     )
                 }
             }

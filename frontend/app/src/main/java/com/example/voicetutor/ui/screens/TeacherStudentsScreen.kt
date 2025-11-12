@@ -190,62 +190,24 @@ fun TeacherStudentsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryIndigo,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 )
-                .shadow(
-                    elevation = 8.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                    spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                )
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = className,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "$subjectName - $description",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(
-                            color = Color.White.copy(alpha = 0.15f),
-                            shape = androidx.compose.foundation.shape.CircleShape
-                        )
-                        .shadow(
-                            elevation = 4.dp,
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            ambientColor = Color.Black.copy(alpha = 0.1f),
-                            spotColor = Color.Black.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = teacherName.firstOrNull()?.toString() ?: "T",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+            Column {
+                Text(
+                    text = className,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "$subjectName - $description",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600
+                )
             }
         }
         

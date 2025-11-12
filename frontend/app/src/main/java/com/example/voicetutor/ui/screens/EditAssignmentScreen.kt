@@ -138,26 +138,31 @@ fun EditAssignmentScreen(
             }
         } else {
             // Assignment info card
-            VTCard(
-                variant = CardVariant.Gradient,
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    )
+                    .padding(20.dp)
             ) {
-            Column {
-                Text(
-                    text = "과제 정보",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "과제의 기본 정보를 수정할 수 있습니다",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
+                Column {
+                    Text(
+                        text = "과제 정보",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "과제의 기본 정보를 수정할 수 있습니다",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600
+                    )
+                }
             }
-        }
-        
+
         // Form
         VTCard(variant = CardVariant.Elevated) {
             Column(
