@@ -74,10 +74,10 @@ class AuthViewModel @Inject constructor(
                             exception.message ?: "보안상의 이유로 계정이 잠겨 있습니다. 관리자에게 문의해주세요."
                         )
                         is LoginException.Server -> LoginError.General.Server(
-                            exception.message ?: "서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+                            "네트워크 연결에 문제가 발생했습니다."
                         )
                         is LoginException.Network -> LoginError.General.Network(
-                            exception.message ?: "네트워크 연결을 확인하고 다시 시도해주세요."
+                            "네트워크 연결에 문제가 발생했습니다."
                         )
                         is LoginException.Unknown -> LoginError.General.Unknown(
                             exception.message ?: "로그인 중 알 수 없는 오류가 발생했습니다."
