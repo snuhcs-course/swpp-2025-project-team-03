@@ -405,14 +405,16 @@ fun TeacherDashboardScreen(
                 assignments.forEachIndexed { index, assignment ->
                     val stats = assignmentStatsMap[assignment.id] ?: (0 to assignment.courseClass.studentCount)
 
-                    AssignmentCard(
-                        assignment = assignment,
+                    TeacherAssignmentCard(
+                        title = assignment.title,
+                        className = assignment.courseClass.name,
                         submittedCount = stats.first,
                         totalCount = stats.second,
-                        onAssignmentClick = { onNavigateToAssignmentDetail(assignment.id) },
-                        onEditClick = { onNavigateToEditAssignment(assignment.id) },
-                        onDeleteClick = { actualAssignmentViewModel.deleteAssignment(assignment.id) },
-                        onViewResults = { onNavigateToAssignmentResults(assignment.id) }
+                        dueDate = assignment.dueAt,
+                        status = AssignmentStatus.IN_PROGRESS,
+                        onClick = { onNavigateToAssignmentDetail(assignment.id) },
+                        onViewResults = { onNavigateToAssignmentResults(assignment.id) },
+                        onEdit = { onNavigateToEditAssignment(assignment.id) }
                     )
 
                     if (index < assignments.size - 1) {
@@ -483,6 +485,118 @@ private fun DashboardSummaryCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = tint
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TeacherAssignmentCard(
+    title: String,
+    className: String,
+    submittedCount: Int,
+    totalCount: Int,
+    dueDate: String,
+    status: AssignmentStatus,
+    onClick: () -> Unit = {},
+    onViewResults: () -> Unit = {},
+    onEdit: () -> Unit = {}
+) {
+    VTCard(
+        variant = CardVariant.Elevated,
+        onClick = onClick
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = className,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PrimaryIndigo,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                        .background(PrimaryIndigo.copy(alpha = 0.08f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = com.example.voicetutor.utils.formatDueDate(dueDate),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "제출 학생: $submittedCount/$totalCount",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Gray600,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Text(
+                    text = "${if (totalCount > 0) (submittedCount.toFloat() / totalCount * 100).toInt() else 0}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PrimaryIndigo,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            VTProgressBar(
+                progress = if (totalCount > 0) submittedCount.toFloat() / totalCount else 0f,
+                showPercentage = false,
+                color = PrimaryIndigo,
+                height = 6
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                VTButton(
+                    text = "과제 결과",
+                    onClick = onViewResults,
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1f)
+                )
+
+                VTButton(
+                    text = "과제 편집",
+                    onClick = onEdit,
+                    variant = ButtonVariant.Outline,
+                    size = ButtonSize.Small,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
