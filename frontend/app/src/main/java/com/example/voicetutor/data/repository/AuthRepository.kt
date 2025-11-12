@@ -130,6 +130,49 @@ open class AuthRepository @Inject constructor(
         }
     }
 
+    open suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            val response = apiService.deleteAccount()
+            val responseBody = response.body()
+
+            println("AuthRepository - DeleteAccount response code: ${response.code()}")
+            println("AuthRepository - DeleteAccount response success: ${responseBody?.success}")
+
+            if (response.isSuccessful) {
+                if (responseBody?.success == false) {
+                    val message = responseBody.error
+                        ?: responseBody.message
+                        ?: "계정 삭제에 실패했습니다."
+                    Result.failure(DeleteAccountException.Unknown(message))
+                } else {
+                    Result.success(Unit)
+                }
+            } else {
+                val statusCode = response.code()
+                val message = responseBody?.error
+                    ?: responseBody?.message
+                    ?: parseErrorMessage(response)
+                    ?: "계정 삭제에 실패했습니다."
+
+                val exception = when {
+                    statusCode == 401 || statusCode == 403 -> DeleteAccountException.Unauthorized("계정 삭제를 위해 다시 로그인해주세요.")
+                    statusCode in 500..599 -> DeleteAccountException.Server("서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+                    else -> DeleteAccountException.Unknown(message)
+                }
+                Result.failure(exception)
+            }
+        } catch (e: Exception) {
+            println("AuthRepository - DeleteAccount error: ${e.message}")
+            e.printStackTrace()
+            val exception = when (e) {
+                is DeleteAccountException -> e
+                is IOException -> DeleteAccountException.Network("네트워크 연결을 확인하고 다시 시도해주세요.", e)
+                else -> DeleteAccountException.Unknown(e.message ?: "계정 삭제 중 알 수 없는 오류가 발생했습니다.")
+            }
+            Result.failure(exception)
+        }
+    }
+
     private fun parseErrorMessage(response: retrofit2.Response<*>): String? {
         return try {
             val errorBody = response.errorBody()?.string()

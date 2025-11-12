@@ -22,6 +22,9 @@ interface ApiService {
     @POST("auth/logout/")
     suspend fun logout(): Response<ApiResponse<Unit>>
     
+    @DELETE("auth/account/")
+    suspend fun deleteAccount(): Response<ApiResponse<Unit>>
+    
     // Assignment APIs
     @GET("assignments/")
     suspend fun getAllAssignments(
