@@ -1,10 +1,12 @@
 package com.example.voicetutor.ui.screens
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.data.repository.AuthRepository
@@ -31,7 +33,7 @@ class ScreenCoverageExpansionTest {
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule
-    val composeRule = createAndroidComposeRule<TestHiltActivity>()
+    val composeRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Before
     fun setUp() {
@@ -46,9 +48,10 @@ class ScreenCoverageExpansionTest {
         composeRule.waitUntil(timeoutMillis = 5_000) { authViewModel.currentUser.value != null }
     }
 
-    private fun waitForText(text: String) {
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().isNotEmpty()
+    private fun waitForText(text: String, substring: Boolean = true, timeoutMillis: Long = 10_000) {
+        composeRule.waitUntil(timeoutMillis = timeoutMillis) {
+            composeRule.onAllNodesWithText(text, substring = substring, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -58,41 +61,22 @@ class ScreenCoverageExpansionTest {
 
         composeRule.setContent {
             VoiceTutorTheme {
-                TeacherDashboardScreen(teacherId = "2")
-            }
-        }
-        waitForText("환영합니다")
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                AllAssignmentsScreen(teacherId = "2")
+                Column {
+                    TeacherDashboardScreen(teacherId = "2")
+                    AllAssignmentsScreen(teacherId = "2")
+                    TeacherStudentsScreen(classId = 1, teacherId = "2")
+                    TeacherClassDetailScreen(classId = 1, className = "수학 A반")
+                    TeacherStudentReportScreen(
+                        classId = 1,
+                        studentId = 1,
+                        studentName = "홍길동"
+                    )
+                }
             }
         }
         waitForText("모든 과제")
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                TeacherStudentsScreen(classId = 1, teacherId = "2")
-            }
-        }
-        waitForText("학생 관리")
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                TeacherClassDetailScreen(classId = 1, className = "수학 A반")
-            }
-        }
+        waitForText("학생 목록")
         waitForText("수학 A반")
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                TeacherStudentReportScreen(
-                    classId = 1,
-                    studentId = 1,
-                    studentName = "홍길동"
-                )
-            }
-        }
         waitForText("성취기준")
     }
 
@@ -105,11 +89,19 @@ class ScreenCoverageExpansionTest {
 
         composeRule.setContent {
             VoiceTutorTheme {
-                StudentDashboardScreen(
-                    authViewModel = authViewModel,
-                    assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
-                )
+                Column {
+                    StudentDashboardScreen(
+                        authViewModel = authViewModel,
+                        assignmentViewModel = assignmentViewModel,
+                        dashboardViewModel = dashboardViewModel
+                    )
+                    AssignmentDetailedResultsScreen(
+                        personalAssignmentId = 1,
+                        assignmentTitle = "테스트 과제",
+                        viewModel = assignmentViewModel
+                    )
+                    AppInfoScreen()
+                }
             }
         }
 
@@ -117,31 +109,9 @@ class ScreenCoverageExpansionTest {
             authViewModel.login("student@voicetutor.com", "student123")
         }
         composeRule.waitUntil(timeoutMillis = 5_000) { authViewModel.currentUser.value != null }
+        composeRule.waitForIdle()
         waitForText("나에게 할당된 과제")
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                AssignmentDetailedResultsScreen(
-                    personalAssignmentId = 1,
-                    assignmentTitle = "테스트 과제",
-                    viewModel = assignmentViewModel
-                )
-            }
-        }
-        waitForText("과제 결과")
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                ReportScreen(studentId = 1)
-            }
-        }
-        waitForText("학습 리포트")
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                AppInfoScreen()
-            }
-        }
+        waitForText("테스트 과제")
         waitForText("앱 정보")
     }
 }

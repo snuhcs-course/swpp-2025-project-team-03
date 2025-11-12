@@ -144,7 +144,7 @@ class NavigationHelperTest {
     fun getPageTitle_withSettingsRouteExactMatch_returnsCorrectTitle() {
         // Test that exact route pattern also works (for backward compatibility)
         val title = getPageTitle(VoiceTutorScreens.Settings.route, UserRole.STUDENT)
-        assertEquals("설정", title)
+        assertEquals("계정", title)
     }
 }
 

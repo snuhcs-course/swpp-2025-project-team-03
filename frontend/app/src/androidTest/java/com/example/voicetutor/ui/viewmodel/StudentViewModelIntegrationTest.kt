@@ -89,6 +89,26 @@ class StudentViewModelIntegrationTest {
     }
 
     @Test
+    fun loadStudentProgress_failure_setsError() = runTest(dispatcher) {
+        apiService.shouldFailStudentProgress = true
+
+        viewModel.loadStudentProgress(1)
+        advanceUntilIdle()
+
+        assertEquals(apiService.studentProgressErrorMessage, viewModel.error.value)
+    }
+
+    @Test
+    fun loadStudentClasses_failure_setsError() = runTest(dispatcher) {
+        apiService.shouldFailStudentClasses = true
+
+        viewModel.loadStudentClasses(1)
+        advanceUntilIdle()
+
+        assertEquals(apiService.studentClassesErrorMessage, viewModel.error.value)
+    }
+
+    @Test
     fun failingLoadAllStudents_setsError() = runTest(dispatcher) {
         val failingViewModel = StudentViewModel(
             StudentRepository(object : ApiService by FakeApiService() {

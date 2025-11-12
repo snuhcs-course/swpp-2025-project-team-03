@@ -1,6 +1,7 @@
 package com.example.voicetutor.data.network
 
 import com.example.voicetutor.data.models.*
+import kotlinx.coroutines.delay
 import okhttp3.MultipartBody
 import retrofit2.Response
 
@@ -103,7 +104,7 @@ class FakeApiService : ApiService {
         averageScore = 85f
     )
 
-    private val personalAssignmentData = PersonalAssignmentData(
+    val personalAssignmentData = PersonalAssignmentData(
         id = 1,
         student = StudentInfo(
             id = 1,
@@ -200,8 +201,29 @@ class FakeApiService : ApiService {
     var personalAssignmentsResponse: List<PersonalAssignmentData> = listOf(personalAssignmentData)
     var personalAssignmentStatisticsResponses: MutableMap<Int, PersonalAssignmentStatistics> =
         mutableMapOf(personalAssignmentData.id to personalAssignmentStatistics)
+    var shouldFailGetAssignmentById: Boolean = false
+    var getAssignmentByIdErrorMessage: String = "Failed to load assignment"
     var shouldFailPersonalAssignments: Boolean = false
     var personalAssignmentsErrorMessage: String = "Failed to load personal assignments"
+    var shouldFailGetAllAssignments: Boolean = false
+    var getAllAssignmentsErrorMessage: String = "Failed to load assignments"
+    var shouldFailAssignmentResult: Boolean = false
+    var assignmentResultErrorMessage: String = "Failed to load assignment result"
+    var shouldFailAssignmentCorrectness: Boolean = false
+    var assignmentCorrectnessErrorMessage: String = "Failed to load assignment correctness"
+    var personalAssignmentsDelayMillis: Long = 0L
+    var shouldFailCreateAssignment: Boolean = false
+    var createAssignmentErrorMessage: String = "Failed to create assignment"
+    var shouldFailPersonalAssignmentStatistics: Boolean = false
+    var personalAssignmentStatisticsErrorMessage: String = "Failed to load statistics"
+    var shouldFailDashboardStats: Boolean = false
+    var dashboardStatsErrorMessage: String = "Failed to load dashboard"
+    var shouldFailCurriculumReport: Boolean = false
+    var curriculumReportErrorMessage: String = "Failed to load curriculum report"
+    var shouldFailStudentProgress: Boolean = false
+    var studentProgressErrorMessage: String = "Failed to load student progress"
+    var shouldFailStudentClasses: Boolean = false
+    var studentClassesErrorMessage: String = "Failed to load student classes"
 
     private fun <T> success(data: T): Response<ApiResponse<T>> =
         Response.success(ApiResponse(success = true, data = data, message = null, error = null))
@@ -249,20 +271,33 @@ class FakeApiService : ApiService {
         teacherId: String?,
         classId: String?,
         status: String?
-    ): Response<ApiResponse<List<AssignmentData>>> = success(assignmentsResponse)
+    ): Response<ApiResponse<List<AssignmentData>>> =
+        if (shouldFailGetAllAssignments) {
+            failure(getAllAssignmentsErrorMessage)
+        } else {
+            success(assignmentsResponse)
+        }
 
     override suspend fun getAssignmentById(id: Int): Response<ApiResponse<AssignmentData>> =
-        success(assignmentByIdResponse.copy(id = id))
+        if (shouldFailGetAssignmentById) {
+            failure(getAssignmentByIdErrorMessage)
+        } else {
+            success(assignmentByIdResponse.copy(id = id))
+        }
 
     override suspend fun createAssignment(assignment: CreateAssignmentRequest): Response<ApiResponse<CreateAssignmentResponse>> =
-        success(
-            CreateAssignmentResponse(
-                assignment_id = 99,
-                material_id = 501,
-                s3_key = "assignments/99/material.pdf",
-                upload_url = "https://example.com/upload"
+        if (shouldFailCreateAssignment) {
+            failure(createAssignmentErrorMessage)
+        } else {
+            success(
+                CreateAssignmentResponse(
+                    assignment_id = 99,
+                    material_id = 501,
+                    s3_key = "assignments/99/material.pdf",
+                    upload_url = "https://example.com/upload"
+                )
             )
-        )
+        }
 
     override suspend fun updateAssignment(id: Int, assignment: UpdateAssignmentRequest): Response<ApiResponse<AssignmentData>> =
         success(assignmentData.copy(id = id, title = assignment.title ?: assignmentData.title))
@@ -270,7 +305,11 @@ class FakeApiService : ApiService {
     override suspend fun deleteAssignment(id: Int): Response<ApiResponse<Unit>> = success(Unit)
 
     override suspend fun getAssignmentResult(id: Int): Response<ApiResponse<AssignmentResultData>> =
-        success(assignmentResultResponse)
+        if (shouldFailAssignmentResult) {
+            failure(assignmentResultErrorMessage)
+        } else {
+            success(assignmentResultResponse)
+        }
 
     override suspend fun submitAssignment(
         id: Int,
@@ -312,6 +351,9 @@ class FakeApiService : ApiService {
         if (shouldFailPersonalAssignments) {
             return failure(personalAssignmentsErrorMessage)
         }
+        if (personalAssignmentsDelayMillis > 0) {
+            delay(personalAssignmentsDelayMillis)
+        }
         val data = personalAssignmentsResponse.filter { assignmentId == null || it.assignment.id == assignmentId }
         return success(data)
     }
@@ -320,7 +362,11 @@ class FakeApiService : ApiService {
         success(listOf(personalAssignmentQuestion))
 
     override suspend fun getPersonalAssignmentStatistics(id: Int): Response<ApiResponse<PersonalAssignmentStatistics>> =
-        success(personalAssignmentStatisticsResponses[id] ?: personalAssignmentStatistics)
+        if (shouldFailPersonalAssignmentStatistics) {
+            failure(personalAssignmentStatisticsErrorMessage)
+        } else {
+            success(personalAssignmentStatisticsResponses[id] ?: personalAssignmentStatistics)
+        }
 
     override suspend fun getRecentPersonalAssignment(studentId: Int): Response<ApiResponse<RecentAnswerData>> =
         success(RecentAnswerData(personalAssignmentId = personalAssignmentData.id))
@@ -339,11 +385,19 @@ class FakeApiService : ApiService {
     override suspend fun completePersonalAssignment(id: Int): Response<ApiResponse<Unit>> = success(Unit)
 
     override suspend fun getAssignmentCorrectness(id: Int): Response<ApiResponse<List<AssignmentCorrectnessItem>>> =
-        success(assignmentCorrectness)
+        if (shouldFailAssignmentCorrectness) {
+            failure(assignmentCorrectnessErrorMessage)
+        } else {
+            success(assignmentCorrectness)
+        }
     // endregion
 
     override suspend fun getStudentProgress(id: Int): Response<ApiResponse<StudentProgress>> =
-        success(studentProgress)
+        if (shouldFailStudentProgress) {
+            failure(studentProgressErrorMessage)
+        } else {
+            success(studentProgress)
+        }
 
     // region Class APIs
     override suspend fun getClasses(teacherId: String): Response<ApiResponse<List<ClassData>>> =
@@ -359,7 +413,11 @@ class FakeApiService : ApiService {
         success(listOf(student.copy(id = id)))
 
     override suspend fun getStudentClasses(id: Int): Response<ApiResponse<List<ClassInfo>>> =
-        success(studentClasses)
+        if (shouldFailStudentClasses) {
+            failure(studentClassesErrorMessage)
+        } else {
+            success(studentClasses)
+        }
 
     override suspend fun enrollStudentToClass(id: Int, studentId: Int): Response<ApiResponse<EnrollmentData>> =
         success(
@@ -396,46 +454,58 @@ class FakeApiService : ApiService {
         classId: String?,
         period: String
     ): Response<ApiResponse<ProgressReportData>> =
-        success(
-            ProgressReportData(
-                totalStudents = 25,
-                totalAssignments = 12,
-                completedAssignments = 9,
-                averageScore = 85.0,
-                classBreakdown = listOf(
-                    ClassProgress(
-                        classId = classData.id,
-                        className = classData.name,
-                        studentCount = 25,
-                        completedAssignments = 9,
-                        totalAssignments = 12
+        if (shouldFailCurriculumReport) {
+            failure(curriculumReportErrorMessage)
+        } else {
+            success(
+                ProgressReportData(
+                    totalStudents = 25,
+                    totalAssignments = 12,
+                    completedAssignments = 9,
+                    averageScore = 85.0,
+                    classBreakdown = listOf(
+                        ClassProgress(
+                            classId = classData.id,
+                            className = classData.name,
+                            studentCount = 25,
+                            completedAssignments = 9,
+                            totalAssignments = 12
+                        )
                     )
                 )
             )
-        )
+        }
 
     override suspend fun getCurriculumReport(
         classId: Int,
         studentId: Int
     ): Response<ApiResponse<CurriculumReportData>> =
-        success(
-            CurriculumReportData(
-                totalQuestions = 40,
-                totalCorrect = 32,
-                overallAccuracy = 0.8,
-                achievementStatistics = mapOf(
-                    "수학" to AchievementStatistics(
-                        totalQuestions = 20,
-                        correctQuestions = 16,
-                        accuracy = 0.8,
-                        content = "수와 연산"
+        if (shouldFailCurriculumReport) {
+            failure(curriculumReportErrorMessage)
+        } else {
+            success(
+                CurriculumReportData(
+                    totalQuestions = 40,
+                    totalCorrect = 32,
+                    overallAccuracy = 0.8,
+                    achievementStatistics = mapOf(
+                        "수학" to AchievementStatistics(
+                            totalQuestions = 20,
+                            correctQuestions = 16,
+                            accuracy = 0.8,
+                            content = "수와 연산"
+                        )
                     )
                 )
             )
-        )
+        }
 
     override suspend fun getDashboardStats(teacherId: String): Response<ApiResponse<DashboardStats>> =
-        success(dashboardStats)
+        if (shouldFailDashboardStats) {
+            failure(dashboardStatsErrorMessage)
+        } else {
+            success(dashboardStats)
+        }
     // endregion
 
     override suspend fun healthCheck(): Response<ApiResponse<String>> =

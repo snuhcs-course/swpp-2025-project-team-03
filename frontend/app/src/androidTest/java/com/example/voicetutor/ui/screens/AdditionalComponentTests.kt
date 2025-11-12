@@ -2,7 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 class AdditionalComponentTests {
 
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<TestHiltActivity>()
+    val composeTestRule = createComposeRule()
 
     // ========== TeacherAssignmentResultCard Tests ==========
 
@@ -224,7 +224,9 @@ class AdditionalComponentTests {
         }
         composeTestRule.waitForIdle()
         
-        composeTestRule.onNodeWithText("과제", substring = true).performClick()
+        composeTestRule.onAllNodesWithText("과제", substring = true, useUnmergedTree = true)
+            .get(0)
+            .performClick()
         assert(assignmentClicked)
     }
 
@@ -378,7 +380,7 @@ class AdditionalComponentTests {
         
         // Verify at least one card renders
         composeTestRule.onAllNodesWithText("과제", substring = true, useUnmergedTree = true)
-            .onFirst()
+            .get(0)
             .assertExists()
     }
 
@@ -386,38 +388,22 @@ class AdditionalComponentTests {
 
     @Test
     fun teacherAssignmentResultCard_edgeCases() {
-        // Test with zero score
         composeTestRule.setContent {
             VoiceTutorTheme {
-                TeacherAssignmentResultCard(
-                    student = StudentResult("1", "학생", 0, 0, "미완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
-                    onStudentClick = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        // Verify card renders (even if name is empty or not found)
-        composeTestRule.onRoot().assertExists()
-        
-        // Test with perfect score
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                TeacherAssignmentResultCard(
-                    student = StudentResult("1", "학생", 100, 100, "완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
-                    onStudentClick = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onRoot().assertExists()
-        
-        // Test with empty name
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                TeacherAssignmentResultCard(
-                    student = StudentResult("1", "", 85, 80, "완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
-                    onStudentClick = {}
-                )
+                Column {
+                    TeacherAssignmentResultCard(
+                        student = StudentResult("1", "학생0", 0, 0, "미완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
+                        onStudentClick = {}
+                    )
+                    TeacherAssignmentResultCard(
+                        student = StudentResult("2", "학생100", 100, 100, "완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
+                        onStudentClick = {}
+                    )
+                    TeacherAssignmentResultCard(
+                        student = StudentResult("3", "-", 85, 80, "완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
+                        onStudentClick = {}
+                    )
+                }
             }
         }
         composeTestRule.waitForIdle()
@@ -426,53 +412,42 @@ class AdditionalComponentTests {
 
     @Test
     fun assignmentCard_edgeCases() {
-        // Test with zero submissions
-        val assignment1 = createMockAssignmentData(
-            id = 1,
-            title = "과제",
-            subjectName = "수학",
-            className = "수학 1반",
-            dueDate = "2024-12-31T23:59:59Z",
-            totalQuestions = 10
-        )
-        
         composeTestRule.setContent {
             VoiceTutorTheme {
-                AssignmentCard(
-                    assignment = assignment1,
-                    submittedCount = 0,
-                    totalCount = 0,
-                    onAssignmentClick = {},
-                    onEditClick = {},
-                    onDeleteClick = {},
-                    onViewResults = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onRoot().assertExists()
-        
-        // Test with all submissions
-        val assignment2 = createMockAssignmentData(
-            id = 2,
-            title = "완료된 과제",
-            subjectName = "수학",
-            className = "수학 1반",
-            dueDate = "2024-12-31T23:59:59Z",
-            totalQuestions = 10
-        )
-        
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                AssignmentCard(
-                    assignment = assignment2,
-                    submittedCount = 10,
-                    totalCount = 10,
-                    onAssignmentClick = {},
-                    onEditClick = {},
-                    onDeleteClick = {},
-                    onViewResults = {}
-                )
+                Column {
+                    AssignmentCard(
+                        assignment = createMockAssignmentData(
+                            id = 1,
+                            title = "과제",
+                            subjectName = "수학",
+                            className = "수학 1반",
+                            dueDate = "2024-12-31T23:59:59Z",
+                            totalQuestions = 10
+                        ),
+                        submittedCount = 0,
+                        totalCount = 0,
+                        onAssignmentClick = {},
+                        onEditClick = {},
+                        onDeleteClick = {},
+                        onViewResults = {}
+                    )
+                    AssignmentCard(
+                        assignment = createMockAssignmentData(
+                            id = 2,
+                            title = "완료된 과제",
+                            subjectName = "수학",
+                            className = "수학 1반",
+                            dueDate = "2024-12-31T23:59:59Z",
+                            totalQuestions = 10
+                        ),
+                        submittedCount = 10,
+                        totalCount = 10,
+                        onAssignmentClick = {},
+                        onEditClick = {},
+                        onDeleteClick = {},
+                        onViewResults = {}
+                    )
+                }
             }
         }
         composeTestRule.waitForIdle()
@@ -483,72 +458,52 @@ class AdditionalComponentTests {
 
     @Test
     fun multipleRenders_allComponents() {
-        // Render StudentAssignmentCard
         composeTestRule.setContent {
             VoiceTutorTheme {
-                StudentAssignmentCard(
-                    title = "과제 1",
-                    subject = "수학",
-                    dueDate = "2024-12-31",
-                    progress = 0.5f,
-                    solvedNum = 5,
-                    totalQuestions = 10,
-                    status = PersonalAssignmentStatus.IN_PROGRESS,
-                    onClick = {},
-                    onStartAssignment = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        // Render TeacherAssignmentCard
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                TeacherAssignmentCard(
-                    title = "과제 2",
-                    className = "수학 1반",
-                    dueDate = "2024-12-31T23:59:59Z",
-                    submittedCount = 5,
-                    totalCount = 10,
-                    status = AssignmentStatus.IN_PROGRESS,
-                    onClick = {},
-                    onViewResults = {},
-                    onEdit = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        // Render AssignmentCard
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                AssignmentCard(
-                    assignment = createMockAssignmentData(
-                        id = 3,
-                        title = "과제 3",
-                        subjectName = "수학",
+                Column {
+                    StudentAssignmentCard(
+                        title = "과제 1",
+                        subject = "수학",
+                        dueDate = "2024-12-31",
+                        progress = 0.5f,
+                        solvedNum = 5,
+                        totalQuestions = 10,
+                        status = PersonalAssignmentStatus.IN_PROGRESS,
+                        onClick = {},
+                        onStartAssignment = {}
+                    )
+                    TeacherAssignmentCard(
+                        title = "과제 2",
                         className = "수학 1반",
                         dueDate = "2024-12-31T23:59:59Z",
-                        totalQuestions = 10
-                    ),
-                    submittedCount = 5,
-                    totalCount = 10,
-                    onAssignmentClick = {},
-                    onEditClick = {},
-                    onDeleteClick = {},
-                    onViewResults = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        // Render TeacherAssignmentResultCard
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                TeacherAssignmentResultCard(
-                    student = StudentResult("1", "학생", 85, 80, "완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
-                    onStudentClick = {}
-                )
+                        submittedCount = 5,
+                        totalCount = 10,
+                        status = AssignmentStatus.IN_PROGRESS,
+                        onClick = {},
+                        onViewResults = {},
+                        onEdit = {}
+                    )
+                    AssignmentCard(
+                        assignment = createMockAssignmentData(
+                            id = 3,
+                            title = "과제 3",
+                            subjectName = "수학",
+                            className = "수학 1반",
+                            dueDate = "2024-12-31T23:59:59Z",
+                            totalQuestions = 10
+                        ),
+                        submittedCount = 5,
+                        totalCount = 10,
+                        onAssignmentClick = {},
+                        onEditClick = {},
+                        onDeleteClick = {},
+                        onViewResults = {}
+                    )
+                    TeacherAssignmentResultCard(
+                        student = StudentResult("1", "학생", 85, 80, "완료", null, "2024-01-01T12:00:00Z", emptyList(), emptyList()),
+                        onStudentClick = {}
+                    )
+                }
             }
         }
         composeTestRule.waitForIdle()

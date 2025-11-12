@@ -2,7 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 class ScreenInternalComponentsTests {
 
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<TestHiltActivity>()
+    val composeTestRule = createComposeRule()
 
     // ========== StudentDashboardScreen Components ==========
 
@@ -340,39 +340,34 @@ class ScreenInternalComponentsTests {
 
     @Test
     fun studentAssignmentCard_edgeCases() {
-        // Test with zero progress
         composeTestRule.setContent {
             VoiceTutorTheme {
-                StudentAssignmentCard(
-                    title = "과제",
-                    subject = "수학",
-                    dueDate = "2024-12-31",
-                    progress = 0f,
-                    solvedNum = 0,
-                    totalQuestions = 0,
-                    status = PersonalAssignmentStatus.NOT_STARTED,
-                    onClick = {},
-                    onStartAssignment = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onRoot().assertExists()
-        
-        // Test with submitted status
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                StudentAssignmentCard(
-                    title = "제출된 과제",
-                    subject = "수학",
-                    dueDate = "2024-12-31",
-                    progress = 1.0f,
-                    solvedNum = 10,
-                    totalQuestions = 10,
-                    status = PersonalAssignmentStatus.SUBMITTED,
-                    onClick = {},
-                    onStartAssignment = {}
-                )
+                Column {
+                    // Zero progress, zero totals
+                    StudentAssignmentCard(
+                        title = "과제",
+                        subject = "수학",
+                        dueDate = "2024-12-31",
+                        progress = 0f,
+                        solvedNum = 0,
+                        totalQuestions = 0,
+                        status = PersonalAssignmentStatus.NOT_STARTED,
+                        onClick = {},
+                        onStartAssignment = {}
+                    )
+                    // Submitted state
+                    StudentAssignmentCard(
+                        title = "제출된 과제",
+                        subject = "수학",
+                        dueDate = "2024-12-31",
+                        progress = 1.0f,
+                        solvedNum = 10,
+                        totalQuestions = 10,
+                        status = PersonalAssignmentStatus.SUBMITTED,
+                        onClick = {},
+                        onStartAssignment = {}
+                    )
+                }
             }
         }
         composeTestRule.waitForIdle()
@@ -381,39 +376,34 @@ class ScreenInternalComponentsTests {
 
     @Test
     fun teacherAssignmentCard_edgeCases() {
-        // Test with zero submissions
         composeTestRule.setContent {
             VoiceTutorTheme {
-                TeacherAssignmentCard(
-                    title = "과제",
-                    className = "수학 1반",
-                    dueDate = "2024-12-31T23:59:59Z",
-                    submittedCount = 0,
-                    totalCount = 10,
-                    status = AssignmentStatus.IN_PROGRESS,
-                    onClick = {},
-                    onViewResults = {},
-                    onEdit = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onRoot().assertExists()
-        
-        // Test with all submissions
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                TeacherAssignmentCard(
-                    title = "완료된 과제",
-                    className = "수학 1반",
-                    dueDate = "2024-12-31T23:59:59Z",
-                    submittedCount = 10,
-                    totalCount = 10,
-                    status = AssignmentStatus.COMPLETED,
-                    onClick = {},
-                    onViewResults = {},
-                    onEdit = {}
-                )
+                Column {
+                    // Zero submissions
+                    TeacherAssignmentCard(
+                        title = "과제",
+                        className = "수학 1반",
+                        dueDate = "2024-12-31T23:59:59Z",
+                        submittedCount = 0,
+                        totalCount = 10,
+                        status = AssignmentStatus.IN_PROGRESS,
+                        onClick = {},
+                        onViewResults = {},
+                        onEdit = {}
+                    )
+                    // All submissions completed
+                    TeacherAssignmentCard(
+                        title = "완료된 과제",
+                        className = "수학 1반",
+                        dueDate = "2024-12-31T23:59:59Z",
+                        submittedCount = 10,
+                        totalCount = 10,
+                        status = AssignmentStatus.COMPLETED,
+                        onClick = {},
+                        onViewResults = {},
+                        onEdit = {}
+                    )
+                }
             }
         }
         composeTestRule.waitForIdle()

@@ -1,8 +1,10 @@
 package com.example.voicetutor.ui.screens
 
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -107,6 +109,62 @@ class TeacherAssignmentResultsScreenTest {
     }
 
     @Test
+    fun teacherAssignmentResultsScreen_loadingState_showsProgressIndicator() {
+        val assignmentId = 55
+        val assignmentData = createAssignmentData(id = assignmentId, title = "로딩 상태 과제")
+
+        val fakeApi = FakeApiService().apply {
+            assignmentByIdResponse = assignmentData
+            assignmentsResponse = listOf(assignmentData)
+            personalAssignmentsDelayMillis = 2_000
+        }
+
+        val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
+
+        composeTestRule.mainClock.autoAdvance = false
+
+        setScreenContent(viewModel, assignmentId)
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule
+                .onAllNodes(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate), useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)).assertExists()
+
+        composeTestRule.mainClock.autoAdvance = true
+        composeTestRule.mainClock.advanceTimeBy(2_500)
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("학생별 결과", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun teacherAssignmentResultsScreen_errorState_showsEmptyMessage() {
+        val assignmentId = 66
+        val assignmentData = createAssignmentData(id = assignmentId, title = "에러 상태 과제")
+
+        val fakeApi = FakeApiService().apply {
+            assignmentByIdResponse = assignmentData
+            assignmentsResponse = listOf(assignmentData)
+            shouldFailPersonalAssignments = true
+            personalAssignmentsErrorMessage = "네트워크 오류"
+        }
+
+        val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
+
+        setScreenContent(viewModel, assignmentId)
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodes(hasText("제출된 과제가 없습니다", substring = true), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("제출된 과제가 없습니다", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun teacherAssignmentResultsScreen_withMixedStatuses_showsAllBadges() {
         val assignmentId = 99
         val assignmentData = createAssignmentData(id = assignmentId, title = "상태 혼합 과제")
@@ -181,7 +239,7 @@ class TeacherAssignmentResultsScreenTest {
 
     private fun waitForText(text: String) {
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule.onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
     }
 

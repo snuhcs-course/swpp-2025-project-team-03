@@ -217,6 +217,38 @@ class AssignmentViewModelIntegrationTest {
     }
 
     @Test
+    fun loadAllAssignments_failure_setsError() = runTest(dispatcher) {
+        apiService.shouldFailGetAllAssignments = true
+
+        viewModel.loadAllAssignments(teacherId = "2")
+        advanceUntilIdle()
+
+        assertEquals(apiService.getAllAssignmentsErrorMessage, viewModel.error.value)
+    }
+
+    @Test
+    fun loadAssignmentStudentResults_failure_clearsResults() = runTest(dispatcher) {
+        apiService.shouldFailPersonalAssignments = true
+
+        viewModel.loadAssignmentStudentResults(assignmentId = 1)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.assignmentResults.value.isEmpty())
+        assertEquals(apiService.personalAssignmentsErrorMessage, viewModel.error.value)
+    }
+
+    @Test
+    fun loadAssignmentCorrectness_failure_setsError() = runTest(dispatcher) {
+        apiService.shouldFailAssignmentCorrectness = true
+
+        viewModel.loadAssignmentCorrectness(personalAssignmentId = 1)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.assignmentCorrectness.value.isEmpty())
+        assertEquals(apiService.assignmentCorrectnessErrorMessage, viewModel.error.value)
+    }
+
+    @Test
     fun submitAssignment_successKeepsErrorNull() = runTest(dispatcher) {
         val submission = AssignmentSubmissionRequest(
             studentId = 1,

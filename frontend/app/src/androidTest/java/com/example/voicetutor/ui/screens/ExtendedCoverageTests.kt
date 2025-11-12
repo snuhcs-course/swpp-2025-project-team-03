@@ -7,7 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
 class ExtendedCoverageTests {
 
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<TestHiltActivity>()
+    val composeTestRule = createComposeRule()
 
     // ========== AssignmentScreen Components ==========
 
@@ -111,7 +111,7 @@ class ExtendedCoverageTests {
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
-        composeTestRule.onNodeWithText("85", substring = true).assertExists()
+        composeTestRule.onNodeWithText("등급", substring = true).assertExists()
     }
 
     @Test

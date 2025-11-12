@@ -34,12 +34,13 @@ class SupportingViewModelIntegrationTest {
     private lateinit var reportViewModel: ReportViewModel
     private lateinit var dashboardViewModel: DashboardViewModel
     private lateinit var classViewModel: ClassViewModel
+    private lateinit var apiService: FakeApiService
 
     @Before
     fun setUp() {
         dispatcher = StandardTestDispatcher()
         Dispatchers.setMain(dispatcher)
-        val apiService = FakeApiService()
+        apiService = FakeApiService()
         reportViewModel = ReportViewModel(ReportRepository(apiService))
         dashboardViewModel = DashboardViewModel(DashboardRepository(apiService))
         classViewModel = ClassViewModel(ClassRepository(apiService))
@@ -156,6 +157,28 @@ class SupportingViewModelIntegrationTest {
         failingClassViewModel.removeStudentFromClass(classId = 1, studentId = 3)
         advanceUntilIdle()
         assertEquals("remove error", failingClassViewModel.error.value)
+    }
+
+    @Test
+    fun loadDashboardStats_failure_setsError() = runTest(dispatcher) {
+        apiService.shouldFailDashboardStats = true
+        apiService.dashboardStatsErrorMessage = "대시보드 실패"
+
+        dashboardViewModel.loadDashboardData(teacherId = "2")
+        advanceUntilIdle()
+
+        assertEquals("대시보드 실패", dashboardViewModel.error.value)
+    }
+
+    @Test
+    fun loadCurriculumReport_failure_setsError() = runTest(dispatcher) {
+        apiService.shouldFailCurriculumReport = true
+        apiService.curriculumReportErrorMessage = "리포트 실패"
+
+        reportViewModel.loadCurriculumReport(classId = 1, studentId = 1)
+        advanceUntilIdle()
+
+        assertEquals("리포트 실패", reportViewModel.error.value)
     }
 }
 

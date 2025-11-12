@@ -6,8 +6,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
@@ -25,7 +26,7 @@ import org.junit.runner.RunWith
 class FullScreenRenderingTests {
 
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<TestHiltActivity>()
+    val composeTestRule = createComposeRule()
 
     // ========== CreateAssignmentScreen Tests ==========
     // Note: This screen requires ViewModels, so we'll test composable parts that don't need them
@@ -393,40 +394,17 @@ class FullScreenRenderingTests {
 
     @Test
     fun multipleScreens_renderedSequentially() {
-        // Render multiple screen components to increase coverage
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
                     Text("화면 1")
-                    VTCard {
-                        Text("컨텐츠 1")
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onRoot().assertExists()
-        
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
+                    VTCard { Text("컨텐츠 1") }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text("화면 2")
-                    VTCard {
-                        Text("컨텐츠 2")
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onRoot().assertExists()
-        
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
+                    VTCard { Text("컨텐츠 2") }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text("화면 3")
-                    VTCard {
-                        Text("컨텐츠 3")
-                    }
+                    VTCard { Text("컨텐츠 3") }
                 }
             }
         }

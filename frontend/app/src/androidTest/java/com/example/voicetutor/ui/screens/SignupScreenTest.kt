@@ -1,152 +1,124 @@
 package com.example.voicetutor.ui.screens
 
-import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.models.User
+import com.example.voicetutor.data.models.UserRole
+import com.example.voicetutor.data.network.FakeApiService
+import com.example.voicetutor.data.repository.AuthRepository
+import com.example.voicetutor.data.repository.SignupException
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
-import io.mockk.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.junit.Before
-import org.junit.Ignore
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Espresso/Compose UI tests for SignupScreen.
- * 
- * NOTE: Disabled due to MockK incompatibility with Android Instrumentation tests.
- */
-@Ignore("MockK incompatible with Android tests - use Hilt-based tests instead")
 @RunWith(AndroidJUnit4::class)
 class SignupScreenTest {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    private lateinit var mockAuthViewModel: AuthViewModel
-
-    @Before
-    fun setup() {
-        mockAuthViewModel = mockk(relaxed = true) {
-            every { currentUser } returns MutableStateFlow(null)
-            every { isLoading } returns MutableStateFlow(false)
-            every { signupError } returns MutableStateFlow(null)
+    private fun waitForText(text: String, timeoutMillis: Long = 5_000) {
+        composeRule.waitUntil(timeoutMillis = timeoutMillis) {
+            composeRule
+                .onAllNodesWithText(text, substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
         }
     }
 
     @Test
-    fun displaysSignupForm() {
-        composeTestRule.setContent {
+    fun signupScreen_showsValidationErrors_whenSubmittingEmptyForm() {
+        val viewModel = AuthViewModel(AuthRepository(FakeApiService()))
+
+        composeRule.setContent {
             VoiceTutorTheme {
-                SignupScreen(authViewModel = mockAuthViewModel)
+                SignupScreen(authViewModel = viewModel)
             }
         }
 
-        // Verify signup form elements exist
-        composeTestRule.onNodeWithText("이름", substring = true)
-            .assertExists()
-        composeTestRule.onNodeWithText("이메일", substring = true)
-            .assertExists()
-        composeTestRule.onNodeWithText("비밀번호", substring = true)
-            .assertExists()
-        composeTestRule.onNodeWithText("비밀번호 확인", substring = true)
-            .assertExists()
+        composeRule.onNodeWithText("계정 만들기", useUnmergedTree = true).performClick()
+
+        waitForText("이름을 입력해주세요")
+        composeRule.onNodeWithText("이름을 입력해주세요", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
-    fun displaysRoleSelection() {
-        composeTestRule.setContent {
+    fun signupScreen_withValidInput_updatesCurrentUser() {
+        val successfulRepository = object : AuthRepository(FakeApiService()) {
+            override suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
+                delay(100) // simulate network call
+                val user = User(
+                    id = 100,
+                    name = name,
+                    email = email,
+                    role = role,
+                    isStudent = role == UserRole.STUDENT,
+                    assignments = emptyList()
+                )
+                return Result.success(user)
+            }
+        }
+        val authViewModel = AuthViewModel(successfulRepository)
+        val lastUserEmail = AtomicReference<String?>(null)
+
+        composeRule.setContent {
             VoiceTutorTheme {
-                SignupScreen(authViewModel = mockAuthViewModel)
+                SignupScreen(authViewModel = authViewModel)
             }
         }
 
-        // Role selection should be visible
-        composeTestRule.onNodeWithText("학생", substring = true)
-            .assertExists()
-        composeTestRule.onNodeWithText("선생님", substring = true)
-            .assertExists()
+        composeRule.onNodeWithText("이름", useUnmergedTree = true).performTextInput("테스트 학생")
+        composeRule.onNodeWithText("이메일", useUnmergedTree = true).performTextInput("student@example.com")
+        composeRule.onNodeWithText("비밀번호", useUnmergedTree = true).performTextInput("password123")
+        composeRule.onNodeWithText("비밀번호 확인", useUnmergedTree = true).performTextInput("password123")
+
+        composeRule.onNodeWithText("계정 만들기", useUnmergedTree = true).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            authViewModel.currentUser.value?.also { lastUserEmail.set(it.email) } != null
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { lastUserEmail.get() == "student@example.com" }
     }
 
     @Test
-    fun displaysSignupButton() {
-        composeTestRule.setContent {
+    fun signupScreen_duplicateEmail_showsErrorMessage() {
+        val errorRepository = object : AuthRepository(FakeApiService()) {
+            override suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
+                return Result.failure(SignupException.DuplicateEmail("이미 사용 중인 이메일입니다"))
+            }
+        }
+        val authViewModel = AuthViewModel(errorRepository)
+
+        composeRule.setContent {
             VoiceTutorTheme {
-                SignupScreen(authViewModel = mockAuthViewModel)
+                SignupScreen(authViewModel = authViewModel)
             }
         }
 
-        composeTestRule.onNodeWithText("회원가입", substring = true)
-            .assertExists()
-    }
+        composeRule.onNodeWithText("이름", useUnmergedTree = true).performTextInput("테스트 학생")
+        composeRule.onNodeWithText("이메일", useUnmergedTree = true).performTextInput("student@example.com")
+        composeRule.onNodeWithText("비밀번호", useUnmergedTree = true).performTextInput("password123")
+        composeRule.onNodeWithText("비밀번호 확인", useUnmergedTree = true).performTextInput("password123")
 
-    @Test
-    fun displaysLoginLink() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                SignupScreen(authViewModel = mockAuthViewModel)
-            }
+        composeRule.onNodeWithText("계정 만들기", useUnmergedTree = true).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            authViewModel.signupError.value != null
         }
 
-        composeTestRule.onNodeWithText("로그인", substring = true)
-            .assertExists()
-    }
-
-    @Test
-    fun allFieldsAreEditable() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                SignupScreen(authViewModel = mockAuthViewModel)
-            }
-        }
-
-        // Test name field
-        composeTestRule.onNodeWithText("이름", substring = true)
-            .performTextInput("홍길동")
-
-        // Test email field
-        composeTestRule.onNodeWithText("이메일", substring = true)
-            .performTextInput("test@example.com")
-
-        // Test password field
-        composeTestRule.onNodeWithText("비밀번호", substring = true)
-            .performTextInput("password123")
-
-        // Test confirm password field
-        composeTestRule.onNodeWithText("비밀번호 확인", substring = true)
-            .performTextInput("password123")
-    }
-
-    @Test
-    fun signupButtonIsClickable() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                SignupScreen(authViewModel = mockAuthViewModel)
-            }
-        }
-
-        composeTestRule.onNodeWithText("회원가입", substring = true)
-            .assertIsEnabled()
-            .performClick()
-    }
-
-    @Test
-    fun displaysLoadingState() {
-        every { mockAuthViewModel.isLoading } returns MutableStateFlow(true)
-
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                SignupScreen(authViewModel = mockAuthViewModel)
-            }
-        }
-
-        // Loading indicator should be visible
-        composeTestRule.onAllNodesWithContentDescription("Loading")
-            .onFirst()
-            .assertExists()
+        composeRule.onNodeWithText("이미 사용 중인 이메일입니다", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("로그인하기", useUnmergedTree = true).assertIsDisplayed()
     }
 }
 
