@@ -138,7 +138,8 @@ fun MainLayout(
                      baseDestination == VoiceTutorScreens.TeacherDashboard.route ||
                      baseDestination == VoiceTutorScreens.TeacherClasses.route ||
                      baseDestination == VoiceTutorScreens.AllStudents.route ||
-                     baseDestination?.startsWith("assignment_detail") == true
+                     baseDestination?.startsWith("assignment_detail") == true ||
+                     baseDestination?.startsWith("no_recent_assignment") == true
 
     val userName = currentUser?.name ?: "사용자"
     val userInitial = currentUser?.initial ?: "?"
