@@ -216,46 +216,13 @@ fun TeacherStudentsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            VTCard(
-                variant = CardVariant.Elevated,
+            VTStatsCard(
+                title = "과제 제출률",
+                value = if (isLoadingStatistics) "-" else "${overallCompletionRate.toInt()}%",
+                icon = Icons.Filled.Done,
+                iconColor = PrimaryIndigo,
                 modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "과제 제출률",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Gray600,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = if (isLoadingStatistics) "-" else "${overallCompletionRate.toInt()}%",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryIndigo
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Filled.Done,
-                        contentDescription = null,
-                        tint = PrimaryIndigo.copy(alpha = 0.3f),
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
+            )
             
             VTStatsCard(
                 title = "학생",
@@ -467,21 +434,21 @@ fun TeacherStudentsScreen(
                         Text("검색 결과가 없습니다.", color = Gray600)
                     } else {
                         candidates.forEach { student ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
-                                    Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
-                                }
-                                val checked = selectedToEnroll.contains(student.id)
-                                Checkbox(checked = checked, onCheckedChange = { isChecked ->
-                                    if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
-                                })
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
                             }
+                            val checked = selectedToEnroll.contains(student.id)
+                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
+                            })
                         }
+                    }
                     }
                 }
 
@@ -781,12 +748,12 @@ fun StudentListItem(
                     Spacer(modifier = Modifier.width(12.dp))
                     
                     Column {
-                        Text(
-                            text = student.name ?: "이름 없음",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
+                            Text(
+                                text = student.name ?: "이름 없음",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Gray800
+                            )
                         Text(
                             text = student.email ?: "이메일 없음",
                             style = MaterialTheme.typography.bodySmall,
@@ -797,42 +764,84 @@ fun StudentListItem(
                 
                 Column(
                     horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    val completionText = if (isLoadingStats) "과제 완료: 로딩 중" else {
-                        if (totalAssignments > 0) "과제 완료: $completedAssignments/$totalAssignments" else "과제 완료: -"
-                    }
-                    val scoreText = if (isLoadingStats) "평균 점수: 로딩 중" else "평균 점수: ${averageScore.toInt()}점"
-                    
-                    Text(
-                        text = completionText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray700
-                    )
-                    Text(
-                        text = scoreText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray700
-                    )
-                    if (!isLoadingStats) {
+
+                    val scoreLabelText = if (isLoadingStats) "평균 점수: 로딩 중" else "평균 점수: ${averageScore.toInt()}점"
+
+                    val scoreColor = PrimaryIndigo
+
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                            .background(PrimaryIndigo.copy(alpha = 0.08f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
                         Text(
-                            text = "완료율: ${(completionRate).toInt()}%",
+                            text = scoreLabelText,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray700
+                            color = scoreColor,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
-                }
             }
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val completionText = if (isLoadingStats) "과제 완료: 로딩 중" else {
+                if (totalAssignments > 0) "과제 완료: $completedAssignments/$totalAssignments" else "과제 완료: -"
+            }
+            val completionRateValue = (completionRate).toInt()
+            val completionRateText = if (isLoadingStats) "완료율: 로딩 중" else "완료율: ${completionRateValue}%"
+
+            val completionColor = Gray600
+            val progressColor = PrimaryIndigo
+
+            Text(
+                text = completionText,
+                style = MaterialTheme.typography.bodySmall,
+                color = completionColor,
+                fontWeight = FontWeight.Medium
+            )
+
+            Text(
+                text = completionRateText,
+                style = MaterialTheme.typography.bodySmall,
+                color = progressColor,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val progressColor = PrimaryIndigo
+
+        VTProgressBar(
+            progress = if (totalAssignments > 0) (completionRate/100) else 0f,
+            showPercentage = false,
+            color = progressColor,
+            height = 6
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
     }
-    
+}
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp)
     ) {
         if (!isLastItem) {
-            Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(4.dp))
             Divider(
                 modifier = Modifier.fillMaxWidth(),
                 color = Gray200,
