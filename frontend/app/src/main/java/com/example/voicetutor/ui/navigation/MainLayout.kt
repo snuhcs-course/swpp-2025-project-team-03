@@ -2,6 +2,7 @@ package com.example.voicetutor.ui.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,6 +27,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.automirrored.filled.*
 import com.example.voicetutor.data.models.UserRole
+import com.example.voicetutor.ui.components.ButtonSize
+import com.example.voicetutor.ui.components.ButtonVariant
+import com.example.voicetutor.ui.components.VTButton
 import com.example.voicetutor.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -291,24 +296,77 @@ fun MainLayout(
         if (showLogoutDialog) {
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
-                title = { Text(text = "로그아웃") },
-                text = { Text(text = "로그아웃하시겠습니까?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showLogoutDialog = false
-                            authViewModel.logout()
-                            navController.navigate(VoiceTutorScreens.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White,
+                tonalElevation = 0.dp,
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(PrimaryIndigo, PrimaryPurple)
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("로그아웃")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
                     }
                 },
-                dismissButton = {
-                    TextButton(onClick = { showLogoutDialog = false }) {
-                        Text("취소")
+                title = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "로그아웃",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = PrimaryIndigo
+                        )
+                    }
+                },
+                text = {
+                    Text(
+                        text = "로그아웃하시겠습니까?",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        VTButton(
+                            text = "취소",
+                            onClick = { showLogoutDialog = false },
+                            modifier = Modifier.weight(1f),
+                            variant = ButtonVariant.Outline,
+                            size = ButtonSize.Medium
+                        )
+                        VTButton(
+                            text = "로그아웃",
+                            onClick = {
+                                showLogoutDialog = false
+                                authViewModel.logout()
+                                navController.navigate(VoiceTutorScreens.Login.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            variant = ButtonVariant.Primary,
+                            size = ButtonSize.Medium
+                        )
                     }
                 }
             )
