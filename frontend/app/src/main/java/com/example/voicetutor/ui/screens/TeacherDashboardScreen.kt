@@ -353,7 +353,7 @@ fun TeacherDashboardScreen(
                 }
             } else {
                 val assignmentStatsMap = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
-
+                
                 assignments.forEach { assignment ->
                     LaunchedEffect(assignment.id) {
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
