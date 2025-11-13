@@ -22,6 +22,7 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.theme.Gray800
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.utils.formatDueDate
 
 @Composable
 fun AssignmentDetailScreen(
@@ -77,13 +78,7 @@ fun AssignmentDetailScreen(
     
     // Use actual assignment title or fallback
     val actualTitle = currentAssignment?.title ?: assignmentTitle ?: "과제"
-    // Format subject and due date from API instead of dummy text
-    fun formatDueDate(due: String?): String {
-        return try {
-            if (due == null) return ""
-            java.time.ZonedDateTime.parse(due).format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-        } catch (e: Exception) { due ?: "" }
-    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -137,9 +132,13 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 val subtitle = buildString {
                     val subject = currentAssignment?.courseClass?.subject?.name
-                    val due = formatDueDate(currentAssignment?.dueAt)
+                    val className = currentAssignment?.courseClass?.name
+                    val due = currentAssignment?.dueAt?.let { formatDueDate(it) } ?: ""
+
                     if (!subject.isNullOrBlank()) append(subject)
-                    if (!subject.isNullOrBlank() && due.isNotBlank()) append(" · ")
+                    if (!subject.isNullOrBlank() && !className.isNullOrBlank()) append(" · ")
+                    if (!className.isNullOrBlank()) append(className)
+                    if ((!subject.isNullOrBlank() || !className.isNullOrBlank()) && due.isNotBlank()) append(" · ")
                     if (due.isNotBlank()) append("마감: ").append(due)
                 }
                 if (subtitle.isNotBlank()) {

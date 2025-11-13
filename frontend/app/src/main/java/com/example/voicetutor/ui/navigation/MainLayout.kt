@@ -35,7 +35,8 @@ import kotlinx.coroutines.delay
 
 data class RecentAssignment(
     val id: String, // personal_assignment_id
-    val title: String // 과제 제목
+    val title: String, // 과제 제목
+    val assignmentId: Int // assignment_id
 )
 
 // Helper function to get page title based on current destination
@@ -80,7 +81,8 @@ fun MainLayout(
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "teacher_classes" // 수업 탭 선택
-        currentDestination == VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudents.route.split("{").first()) == true -> "teacher_classes" // 학생 관리 화면에서 수업 탭 선택
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentReport.route.split("{").first()) == true -> "teacher_students" // 학생 리포트 화면에서 리포트 탭 선택
         currentDestination == VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
         else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"
     }
@@ -475,7 +477,8 @@ fun MainLayout(
             userRole = userRole,
             currentRoute = currentRoute,
             recentAssignment = recentAssignment,
-            currentUserId = currentUser?.id
+            currentUserId = currentUser?.id,
+            assignmentViewModel = assignmentViewModel
         )
     }
 }
@@ -486,7 +489,8 @@ fun BottomNavigation(
     userRole: UserRole,
     currentRoute: String,
     recentAssignment: RecentAssignment? = null,
-    currentUserId: Int? = null
+    currentUserId: Int? = null,
+    assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 ) {
     NavigationBar(
         containerColor = Color.White.copy(alpha = 0.95f),
@@ -539,11 +543,11 @@ fun BottomNavigation(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = Icons.Filled.People,
-                        contentDescription = "학생"
+                        imageVector = Icons.Filled.Assessment,
+                        contentDescription = "리포트"
                     )
                 },
-                label = { Text("학생") },
+                label = { Text("리포트") },
                 selected = currentRoute == "teacher_students",
                 onClick = {
                     navController.navigate(VoiceTutorScreens.AllStudents.route)
@@ -589,6 +593,11 @@ fun BottomNavigation(
                 selected = currentRoute == "assignment",
                 onClick = {
                     if (recentAssignment != null) {
+                        // ViewModel에 두 ID를 모두 저장 (Dashboard와 동일하게)
+                        assignmentViewModel.setSelectedAssignmentIds(
+                            assignmentId = recentAssignment.assignmentId,
+                            personalAssignmentId = recentAssignment.id.toIntOrNull()
+                        )
                         // 이어하기: 최근 과제 상세 화면으로 이동
                         navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(recentAssignment.id, recentAssignment.title))
                     } else {

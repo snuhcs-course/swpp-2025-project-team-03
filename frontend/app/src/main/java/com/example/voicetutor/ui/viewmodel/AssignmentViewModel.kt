@@ -1111,6 +1111,7 @@ class AssignmentViewModel @Inject constructor(
                             val recent = RecentAssignment(
                                 id = personalAssignment.id.toString(),
                                 title = personalAssignment.assignment.title,
+                                assignmentId = personalAssignment.assignment.id
                             )
                             _recentAssignment.value = recent
                         } else {
