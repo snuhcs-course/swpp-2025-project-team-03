@@ -401,14 +401,15 @@ fun MainLayout(
                 Surface(
                     modifier = Modifier
                         .shadow(8.dp, RoundedCornerShape(12.dp))
-                        .wrapContentWidth()
-                        .height(56.dp),
+                        .wrapContentWidth(),
                     shape = RoundedCornerShape(12.dp),
                     color = Color.White,
                     tonalElevation = 8.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .heightIn(min = 56.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -419,13 +420,26 @@ fun MainLayout(
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(max = 200.dp)
+                            modifier = Modifier.weight(1f)
                         )
                         CircularProgressIndicator(
                             color = PrimaryIndigo,
                             strokeWidth = 3.dp,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(24.dp)
                         )
+                        TextButton(
+                            onClick = {
+                                assignmentViewModel.cancelQuestionGeneration()
+                            },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "생성 취소",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Gray600,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }

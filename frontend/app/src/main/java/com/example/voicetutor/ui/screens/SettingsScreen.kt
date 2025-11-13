@@ -258,21 +258,6 @@ fun SettingsScreen(
         VTCard(variant = CardVariant.Default) {
             Column {                
                 SettingsItem(
-                    icon = Icons.AutoMirrored.Filled.Help,
-                    title = "도움말",
-                    subtitle = "사용법 및 자주 묻는 질문",
-                    onClick = { 
-//                        navController?.navigate("help")
-                        println("도움말 화면으로 이동")
-                    }
-                )
-                
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = Gray200
-                )
-                
-                SettingsItem(
                     icon = Icons.Filled.Info,
                     title = "앱 정보",
                     subtitle = "버전 1.0.0",
