@@ -725,43 +725,77 @@ class AssignmentViewModel @Inject constructor(
                     println("AssignmentViewModel - Found ${pendingAssignments.size} pending assignments")
                     
                     // PersonalAssignmentData를 AssignmentData로 변환
-                    val convertedAssignments: List<AssignmentData> = pendingAssignments.map { personalAssignment: PersonalAssignmentData ->
+                    // courseClass 정보를 위해 각 assignment를 개별로 로드
+                    val convertedAssignments: MutableList<AssignmentData> = mutableListOf()
+
+                    pendingAssignments.forEach { personalAssignment ->
                         println("AssignmentViewModel - Converting Pending PersonalAssignment: ID=${personalAssignment.id}, Assignment ID=${personalAssignment.assignment.id}, Title=${personalAssignment.assignment.title}")
-                        AssignmentData(
-                            id = personalAssignment.assignment.id,
-                            title = personalAssignment.assignment.title,
-                            description = personalAssignment.assignment.description,
-                            totalQuestions = personalAssignment.assignment.totalQuestions,
-                            createdAt = null,
-                            visibleFrom = personalAssignment.assignment.visibleFrom,
-                            dueAt = personalAssignment.assignment.dueAt,
-                            courseClass = CourseClass(
-                                id = 0,
-                                name = "",
-                                description = null,
-                                subject = Subject(
-                                    id = 0,
-                                    name = "",
-                                    code = null
-                                ),
-                                teacherName = "",
-                                startDate = "",
-                                endDate = "",
-                                studentCount = 0,
-                                createdAt = ""
-                            ),
-                            materials = null,
-                            grade = personalAssignment.assignment.grade,
-                            // Personal Assignment 정보 추가
-                            personalAssignmentStatus = personalAssignment.status,
-                            solvedNum = personalAssignment.solvedNum,
-                            personalAssignmentId = personalAssignment.id  // PersonalAssignment ID 설정
-                        )
+
+                        // Assignment 상세 정보 로드 (courseClass 포함)
+                        assignmentRepository.getAssignmentById(personalAssignment.assignment.id)
+                            .onSuccess { fullAssignment ->
+                                val assignmentData = AssignmentData(
+                                    id = personalAssignment.assignment.id,
+                                    title = personalAssignment.assignment.title,
+                                    description = personalAssignment.assignment.description,
+                                    totalQuestions = personalAssignment.assignment.totalQuestions,
+                                    createdAt = fullAssignment.createdAt,
+                                    visibleFrom = personalAssignment.assignment.visibleFrom,
+                                    dueAt = personalAssignment.assignment.dueAt,
+                                    courseClass = fullAssignment.courseClass,  // 실제 courseClass 정보 사용
+                                    materials = fullAssignment.materials,
+                                    grade = personalAssignment.assignment.grade,
+                                    // Personal Assignment 정보 추가
+                                    personalAssignmentStatus = personalAssignment.status,
+                                    solvedNum = personalAssignment.solvedNum,
+                                    personalAssignmentId = personalAssignment.id
+                                )
+                                convertedAssignments.add(assignmentData)
+                                println("AssignmentViewModel - Added assignment with courseClass: ${fullAssignment.courseClass.name}, subject: ${fullAssignment.courseClass.subject.name}")
+
+                                // 모든 assignment가 로드되면 업데이트
+                                if (convertedAssignments.size == pendingAssignments.size) {
+                                    _assignments.value = convertedAssignments.toList()
+                                    println("AssignmentViewModel - All pending assignments loaded with courseClass info, showing ${convertedAssignments.size} assignments")
+                                }
+                            }
+                            .onFailure { e ->
+                                println("AssignmentViewModel - Failed to load full assignment ${personalAssignment.assignment.id}: ${e.message}")
+                                // courseClass 없이라도 추가
+                                val assignmentData = AssignmentData(
+                                    id = personalAssignment.assignment.id,
+                                    title = personalAssignment.assignment.title,
+                                    description = personalAssignment.assignment.description,
+                                    totalQuestions = personalAssignment.assignment.totalQuestions,
+                                    createdAt = null,
+                                    visibleFrom = personalAssignment.assignment.visibleFrom,
+                                    dueAt = personalAssignment.assignment.dueAt,
+                                    courseClass = CourseClass(
+                                        id = 0, name = "", description = null,
+                                        subject = Subject(id = 0, name = "", code = null),
+                                        teacherName = "", startDate = "", endDate = "",
+                                        studentCount = 0, createdAt = ""
+                                    ),
+                                    materials = null,
+                                    grade = personalAssignment.assignment.grade,
+                                    personalAssignmentStatus = personalAssignment.status,
+                                    solvedNum = personalAssignment.solvedNum,
+                                    personalAssignmentId = personalAssignment.id
+                                )
+                                convertedAssignments.add(assignmentData)
+
+                                if (convertedAssignments.size == pendingAssignments.size) {
+                                    _assignments.value = convertedAssignments.toList()
+                                }
+                            }
                     }
                     
-                    _assignments.value = convertedAssignments
-                    println("AssignmentViewModel - Pending assignments loaded, showing ${convertedAssignments.size} assignments")
-                    
+                    // pendingAssignments가 비어있으면 즉시 빈 리스트 설정
+                    if (pendingAssignments.isEmpty()) {
+                        _assignments.value = emptyList()
+                        println("AssignmentViewModel - No pending assignments found")
+                    }
+
                     // 학생별 통계 계산 (전체 personal assignment 기반)
                     calculateStudentStatsFromPersonalAssignments(personalAssignments)
                 }
@@ -793,43 +827,72 @@ class AssignmentViewModel @Inject constructor(
                     println("AssignmentViewModel - Found ${completedAssignments.size} completed assignments")
                     
                     // PersonalAssignmentData를 AssignmentData로 변환
-                    val convertedAssignments: List<AssignmentData> = completedAssignments.map { personalAssignment: PersonalAssignmentData ->
-                        AssignmentData(
-                            id = personalAssignment.assignment.id,
-                            title = personalAssignment.assignment.title,
-                            description = personalAssignment.assignment.description,
-                            totalQuestions = personalAssignment.assignment.totalQuestions,
-                            createdAt = null,
-                            visibleFrom = personalAssignment.assignment.visibleFrom,
-                            dueAt = personalAssignment.assignment.dueAt,
-                            courseClass = CourseClass(
-                                id = 0,
-                                name = "",
-                                description = null,
-                                subject = Subject(
-                                    id = 0,
-                                    name = "",
-                                    code = null
-                                ),
-                                teacherName = "",
-                                startDate = "",
-                                endDate = "",
-                                studentCount = 0,
-                                createdAt = ""
-                            ),
-                            materials = null,
-                            grade = personalAssignment.assignment.grade,
-                            // Personal Assignment 정보 추가
-                            personalAssignmentStatus = personalAssignment.status,
-                            solvedNum = personalAssignment.solvedNum,
-                            personalAssignmentId = personalAssignment.id,  // PersonalAssignment ID 설정
-                            submittedAt = personalAssignment.submittedAt
-                        )
+                    // courseClass 정보를 위해 각 assignment를 개별로 로드
+                    val convertedAssignments: MutableList<AssignmentData> = mutableListOf()
+
+                    completedAssignments.forEach { personalAssignment ->
+                        assignmentRepository.getAssignmentById(personalAssignment.assignment.id)
+                            .onSuccess { fullAssignment ->
+                                val assignmentData = AssignmentData(
+                                    id = personalAssignment.assignment.id,
+                                    title = personalAssignment.assignment.title,
+                                    description = personalAssignment.assignment.description,
+                                    totalQuestions = personalAssignment.assignment.totalQuestions,
+                                    createdAt = fullAssignment.createdAt,
+                                    visibleFrom = personalAssignment.assignment.visibleFrom,
+                                    dueAt = personalAssignment.assignment.dueAt,
+                                    courseClass = fullAssignment.courseClass,  // ✅ 실제 courseClass 정보 사용
+                                    materials = fullAssignment.materials,
+                                    grade = personalAssignment.assignment.grade,
+                                    personalAssignmentStatus = personalAssignment.status,
+                                    solvedNum = personalAssignment.solvedNum,
+                                    personalAssignmentId = personalAssignment.id,
+                                    submittedAt = personalAssignment.submittedAt
+                                )
+                                convertedAssignments.add(assignmentData)
+
+                                if (convertedAssignments.size == completedAssignments.size) {
+                                    _assignments.value = convertedAssignments.toList()
+                                    println("AssignmentViewModel - All completed assignments loaded with courseClass info")
+                                }
+                            }
+                            .onFailure { e ->
+                                println("AssignmentViewModel - Failed to load full assignment ${personalAssignment.assignment.id}: ${e.message}")
+                                // courseClass 없이라도 추가
+                                val assignmentData = AssignmentData(
+                                    id = personalAssignment.assignment.id,
+                                    title = personalAssignment.assignment.title,
+                                    description = personalAssignment.assignment.description,
+                                    totalQuestions = personalAssignment.assignment.totalQuestions,
+                                    createdAt = null,
+                                    visibleFrom = personalAssignment.assignment.visibleFrom,
+                                    dueAt = personalAssignment.assignment.dueAt,
+                                    courseClass = CourseClass(
+                                        id = 0, name = "", description = null,
+                                        subject = Subject(id = 0, name = "", code = null),
+                                        teacherName = "", startDate = "", endDate = "",
+                                        studentCount = 0, createdAt = ""
+                                    ),
+                                    materials = null,
+                                    grade = personalAssignment.assignment.grade,
+                                    personalAssignmentStatus = personalAssignment.status,
+                                    solvedNum = personalAssignment.solvedNum,
+                                    personalAssignmentId = personalAssignment.id,
+                                    submittedAt = personalAssignment.submittedAt
+                                )
+                                convertedAssignments.add(assignmentData)
+
+                                if (convertedAssignments.size == completedAssignments.size) {
+                                    _assignments.value = convertedAssignments.toList()
+                                }
+                            }
                     }
                     
-                    _assignments.value = convertedAssignments
-                    println("AssignmentViewModel - Completed assignments loaded, showing ${convertedAssignments.size} assignments")
-                    
+                    if (completedAssignments.isEmpty()) {
+                        _assignments.value = emptyList()
+                        println("AssignmentViewModel - No completed assignments found")
+                    }
+
                     // 학생별 통계 계산 (전체 personal assignment 기반)
                     calculateStudentStatsFromPersonalAssignments(personalAssignments)
                 }
