@@ -22,6 +22,7 @@ import com.example.voicetutor.data.models.DetailedQuestionResult
 import com.example.voicetutor.data.models.QuestionGroup
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
@@ -123,7 +124,7 @@ fun AssignmentDetailedResultsScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = error ?: "알 수 없는 오류",
+                    text = ErrorMessageMapper.getErrorMessage(error),
                     color = Gray600,
                     style = MaterialTheme.typography.bodyMedium
                 )

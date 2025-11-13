@@ -30,6 +30,7 @@ import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.navigation.VoiceTutorScreens
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 
 @Composable
 fun SettingsScreen(
@@ -182,7 +183,7 @@ fun SettingsScreen(
                                 color = Error
                             )
                             Text(
-                                text = error,
+                                text = ErrorMessageMapper.getErrorMessage(error),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Gray600
                             )
@@ -285,7 +286,7 @@ fun SettingsScreen(
         
         if (error != null && studentId == null && !isLoading) {
             Text(
-                text = error,
+                text = ErrorMessageMapper.getErrorMessage(error),
                 style = MaterialTheme.typography.bodySmall,
                 color = Error,
                 modifier = Modifier.fillMaxWidth()

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.CurriculumReportData
 import com.example.voicetutor.data.repository.ReportRepository
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +36,7 @@ class ReportViewModel @Inject constructor(
                     _curriculumReport.value = report
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false

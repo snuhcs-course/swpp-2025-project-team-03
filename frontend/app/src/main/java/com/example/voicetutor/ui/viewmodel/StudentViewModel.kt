@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.data.repository.StudentRepository
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,7 +52,7 @@ class StudentViewModel @Inject constructor(
                     _students.value = students
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -68,7 +69,7 @@ class StudentViewModel @Inject constructor(
                     _currentStudent.value = student
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -85,7 +86,7 @@ class StudentViewModel @Inject constructor(
                     _studentAssignments.value = assignments
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -102,7 +103,7 @@ class StudentViewModel @Inject constructor(
                     _studentProgress.value = progress
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -124,7 +125,7 @@ class StudentViewModel @Inject constructor(
                     _studentClasses.update { it + (studentId to classes) }
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             _loadingStudentClasses.update { it - studentId }
         }
