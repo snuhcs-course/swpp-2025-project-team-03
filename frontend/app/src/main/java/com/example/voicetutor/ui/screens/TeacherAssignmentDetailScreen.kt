@@ -57,8 +57,6 @@ fun TeacherAssignmentDetailScreen(
 
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = assignment?.title ?: (targetAssignment?.title ?: "과제")
-    // assignmentResults API가 제거되었으므로 빈 리스트 사용
-    val assignmentResults = remember { emptyList<StudentResult>() }
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     // for student lists
@@ -69,10 +67,12 @@ fun TeacherAssignmentDetailScreen(
         if (assignmentId > 0) {
             println("TeacherAssignmentDetail - Loading assignment ID: $assignmentId")
             viewModel.loadAssignmentById(assignmentId)
+            viewModel.loadAssignmentStudentResults(assignmentId)
         } else {
             targetAssignment?.let { target ->
                 println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
                 viewModel.loadAssignmentById(target.id)
+                viewModel.loadAssignmentStudentResults(target.id)
                 // 통계도 함께 로드 (assignment가 로드되기 전에도 targetAssignment로 통계 로드 가능)
                 println("TeacherAssignmentDetail - Loading statistics for target assignment: ${target.title} (ID: ${target.id})")
                 viewModel.loadAssignmentStatistics(target.id, target.courseClass.studentCount)
@@ -80,11 +80,12 @@ fun TeacherAssignmentDetailScreen(
         }
     }
 
-    // assignment가 로드되면 통계 새로고침 (화면 진입 시, assignment가 업데이트될 때)
+    // assignment가 로드되면 통계와 학생 결과 새로고침 (화면 진입 시, assignment가 업데이트될 때)
     LaunchedEffect(assignment?.id) {
         assignment?.let { a ->
-            println("TeacherAssignmentDetail - Assignment loaded, refreshing statistics: ${a.title} (ID: ${a.id})")
+            println("TeacherAssignmentDetail - Assignment loaded, refreshing statistics and student results: ${a.title} (ID: ${a.id})")
             viewModel.loadAssignmentStatistics(a.id, a.courseClass.studentCount)
+            viewModel.loadAssignmentStudentResults(a.id)
         }
     }
 
@@ -111,17 +112,6 @@ fun TeacherAssignmentDetailScreen(
             submittedStudents = assignmentStatistics?.submittedStudents ?: 0,
             averageScore = assignmentStatistics?.averageScore ?: 0,
             completionRate = assignmentStatistics?.completionRate ?: 0
-        )
-    }
-
-    // Convert StudentResult to StudentSubmission for UI
-    val recentSubmissions = assignmentResults.map { result ->
-        StudentSubmission(
-            name = result.name,
-            studentId = result.studentId,
-            submittedAt = result.submittedAt,
-            score = result.score,
-            status = result.status
         )
     }
 
