@@ -2,6 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -29,7 +30,6 @@ fun TeacherAssignmentDetailScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentId: Int = 0,
     assignmentTitle: String? = null, // For backward compatibility
-    onNavigateToAssignmentResults: (Int) -> Unit = {},
     onNavigateToEditAssignment: (Int) -> Unit = {},
     onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> }
 ) {
@@ -226,17 +226,46 @@ fun TeacherAssignmentDetailScreen(
                 )
             }
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = "과제 내용",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    VTButton(
+                        text = "과제 편집",
+                        onClick = {
+                            val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
+                            if (assignmentId > 0) {
+                                onNavigateToEditAssignment(assignmentId)
+                            }
+                        },
+                        variant = ButtonVariant.Outline,
+                        size = ButtonSize.Small,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    )
+                }
+            }
+
             // Assignment content
             VTCard(variant = CardVariant.Elevated) {
                 Column {
-                    Text(
-                        text = "과제 내용",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     Text(
                         text = assignmentDetail.description,
                         style = MaterialTheme.typography.bodyMedium,
@@ -244,50 +273,6 @@ fun TeacherAssignmentDetailScreen(
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
                     )
                 }
-            }
-
-            // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                VTButton(
-                    text = "과제 결과",
-                    onClick = {
-                        val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
-                        if (assignmentId > 0) {
-                            onNavigateToAssignmentResults(assignmentId)
-                        }
-                    },
-                    variant = ButtonVariant.Primary,
-                    modifier = Modifier.weight(1f),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Assessment,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                )
-
-                VTButton(
-                    text = "과제 편집",
-                    onClick = {
-                        val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
-                        if (assignmentId > 0) {
-                            onNavigateToEditAssignment(assignmentId)
-                        }
-                    },
-                    variant = ButtonVariant.Outline,
-                    modifier = Modifier.weight(1f),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                )
             }
 
             // Students list
