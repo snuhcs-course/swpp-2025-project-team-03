@@ -95,7 +95,8 @@ fun AssignmentDetailedResultsScreen(
         }
     }
 
-    val totalQuestions = detailedResults.size
+    // base 질문 개수만 세기 (꼬리질문 제외)
+    val totalQuestions = questionGroups.size
     // API에서 평균 점수를 가져옴 (0~100 사이의 값)
     val averageScore = statistics?.averageScore?.toInt() ?: 0
 
