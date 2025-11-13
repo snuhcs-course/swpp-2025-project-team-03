@@ -143,6 +143,7 @@ fun AssignmentContinuousScreen(
     // 응답 결과 표시를 위한 상태
     var showResult by remember { mutableStateOf(false) }
     var isAnswerCorrect by remember { mutableStateOf(false) }
+    var isSkipped by remember { mutableStateOf(false) }
     var currentQuestionAnswer by remember { mutableStateOf("") }
     var currentTailQuestionNumber by remember { mutableStateOf<String?>(null) }
     var lastProcessedQuestionIndex by remember { mutableStateOf(-1) }
@@ -225,6 +226,7 @@ fun AssignmentContinuousScreen(
             // 응답 처리 표시
             lastProcessedResponseNumberStr = responseNumberStr
             isAnswerCorrect = response.isCorrect
+            // isSkipped는 건너뛰기 버튼을 눌렀을 때만 true (서버 응답과 관계없이 유지)
             showResult = true
             
             // tailQuestion이 null이면 완료 가능한 상태 (사용자가 완료 버튼을 눌러야 함)
@@ -416,7 +418,7 @@ fun AssignmentContinuousScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(24.dp),
+                        .padding(0.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Question number - showResult가 false일 때만 질문 번호 표시
@@ -491,36 +493,58 @@ fun AssignmentContinuousScreen(
                     // 응답 결과 표시
                     if (showResult) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         // 정답/오답 표시
                         VTCard(
                             variant = CardVariant.Outlined,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
-                                modifier = Modifier.padding(24.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()         // ⬅︎ 카드 가로 폭을 꽉 채우기
+                                    .padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (isAnswerCorrect) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
-                                        contentDescription = null,
-                                        tint = if (isAnswerCorrect) Success else Error,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Text(
-                                        text = if (isAnswerCorrect) "정답입니다!" else "틀렸습니다",
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isAnswerCorrect) Success else Error
-                                    )
+
+                                Icon(
+                                    imageVector = when {
+                                        isSkipped -> Icons.Filled.SkipNext
+                                        isAnswerCorrect -> Icons.Filled.CheckCircle
+                                        else -> Icons.Filled.Cancel
+                                    },
+                                    contentDescription = null,
+                                    tint = when {
+                                        isSkipped -> Warning
+                                        isAnswerCorrect -> Success
+                                        else -> Error
+                                    },
+                                    modifier = Modifier.size(56.dp)
+                                )
+                                val resultTextStyle = when {
+                                    isSkipped -> MaterialTheme.typography.titleLarge  // 한 단계 작은 폰트
+                                    else -> MaterialTheme.typography.headlineSmall
                                 }
+                                Text(
+                                    text = when {
+                                        isSkipped -> "문제를 건너뛰었습니다"
+                                        isAnswerCorrect -> "정답입니다!"
+                                        else -> "틀렸습니다"
+                                    },
+                                    style = resultTextStyle,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when {
+                                        isSkipped -> Warning
+                                        isAnswerCorrect -> Success
+                                        else -> Error
+                                    },
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    textAlign = TextAlign.Center      // 선택 사항
+                                )
+
                             }
                         }
+
                     }
                 }
             }
@@ -708,6 +732,9 @@ fun AssignmentContinuousScreen(
                                     text = "건너뛰기",
                                     onClick = {
                                         println("AssignmentScreen - Skip button clicked")
+                                        // 건너뛰기 상태만 설정 (서버 응답 대기)
+                                        isSkipped = true
+
                                         scope.launch {
                                             try {
                                                 // 빈 WAV 파일 생성
@@ -826,6 +853,7 @@ fun AssignmentContinuousScreen(
                                     // 꼬리 질문 상태로 전환
                                     // clearAnswerSubmissionResponse는 호출하지 않음 (tailQuestion 정보 유지)
                                     showResult = false
+                                    isSkipped = false  // 건너뛰기 상태 초기화
                                     // currentTailQuestionNumber와 savedTailQuestion은 유지 (이미 설정됨)
                                     
                                     println("AssignmentScreen - Moving to tail question: $currentTailQuestionNumber")
@@ -890,6 +918,7 @@ fun AssignmentContinuousScreen(
                                         println("AssignmentScreen - Moving to next question")
                                         viewModel.clearAnswerSubmissionResponse()
                                         showResult = false
+                                        isSkipped = false  // 건너뛰기 상태 초기화
                                         currentTailQuestionNumber = null
                                         savedTailQuestion = null
                                         
