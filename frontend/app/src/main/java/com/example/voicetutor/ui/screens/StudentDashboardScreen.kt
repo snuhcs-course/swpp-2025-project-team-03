@@ -325,6 +325,7 @@ fun StudentDashboardScreen(
                         StudentAssignmentCard(
                             title = assignment.title,
                             subject = assignment.courseClass.subject.name,
+                            className = assignment.courseClass.name,
                             dueDate = formatDueDate(assignment.dueAt),
                             progress = progress,
                             solvedNum = assignment.solvedNum ?: 0,
@@ -364,6 +365,7 @@ fun StudentAssignmentCard(
     solvedNum: Int = 0,
     totalQuestions: Int = 0,
     status: PersonalAssignmentStatus? = null,
+    className: String = "",
     onClick: () -> Unit = {},
     onStartAssignment: () -> Unit = {}
 ) {
@@ -399,6 +401,23 @@ fun StudentAssignmentCard(
                                     text = subject,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = PrimaryIndigo,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        // Class name badge
+                        if (className.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                    .background(PrimaryEmerald.copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = className,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryEmerald,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
