@@ -251,18 +251,20 @@ fun TeacherStudentAssignmentDetailScreen(
         ) {
             VTStatsCard(
                 title = "정답률",
-                    value = paStats?.let { "${it.accuracy.toInt()}%" } ?: "-",
+                value = paStats?.let { "${it.accuracy.toInt()}%" } ?: "-",
                 icon = Icons.Filled.CheckCircle,
                 iconColor = Success,
-                    modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                variant = CardVariant.Gradient
             )
             
             VTStatsCard(
-                    title = "평균 점수",
-                    value = paStats?.averageScore?.toInt()?.toString() ?: "-",
+                title = "평균 점수",
+                value = paStats?.averageScore?.toInt()?.toString() ?: "-",
                 icon = Icons.Filled.Star,
-                    iconColor = Warning,
-                    modifier = Modifier.weight(1f)
+                iconColor = Warning,
+                modifier = Modifier.weight(1f),
+                variant = CardVariant.Gradient
             )
         }
         
