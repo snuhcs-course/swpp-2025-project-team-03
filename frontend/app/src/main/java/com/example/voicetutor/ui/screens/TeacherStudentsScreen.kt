@@ -244,11 +244,12 @@ fun TeacherStudentsScreen(
                     selectedToEnroll.clear()
                     showEnrollSheet = true
                 },
-                variant = ButtonVariant.Outline,
+                variant = ButtonVariant.Primary,
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.PersonAdd,
                         contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
                 },

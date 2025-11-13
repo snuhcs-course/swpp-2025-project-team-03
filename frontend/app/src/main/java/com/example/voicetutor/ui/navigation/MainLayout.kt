@@ -80,7 +80,8 @@ fun MainLayout(
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "teacher_classes" // 수업 탭 선택
-        currentDestination == VoiceTutorScreens.TeacherStudents.route -> "teacher_students"
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudents.route.split("{").first()) == true -> "teacher_classes" // 학생 관리 화면에서 수업 탭 선택
+        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentReport.route.split("{").first()) == true -> "teacher_students" // 학생 리포트 화면에서 리포트 탭 선택
         currentDestination == VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
         else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"
     }
