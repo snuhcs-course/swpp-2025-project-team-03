@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.data.repository.ClassRepository
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +43,7 @@ class ClassViewModel @Inject constructor(
                     _classes.value = classes
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -59,7 +60,7 @@ class ClassViewModel @Inject constructor(
                     _currentClass.value = classData
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -76,7 +77,7 @@ class ClassViewModel @Inject constructor(
                     _classStudents.value = students
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -94,7 +95,7 @@ class ClassViewModel @Inject constructor(
                     _classes.value = _classes.value + classData
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -115,7 +116,7 @@ class ClassViewModel @Inject constructor(
                     loadClassStudents(classId)
                 }
                 .onFailure { e ->
-                    _error.value = e.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(e)
                 }
             _isLoading.value = false
         }
@@ -131,7 +132,7 @@ class ClassViewModel @Inject constructor(
                     loadClassStudents(classId)
                 }
                 .onFailure { e ->
-                    _error.value = e.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(e)
                 }
             _isLoading.value = false
         }

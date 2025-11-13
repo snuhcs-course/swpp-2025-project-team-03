@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.ReportViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
@@ -217,7 +218,7 @@ fun TeacherStudentReportScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = error ?: "알 수 없는 오류가 발생했습니다",
+                            text = ErrorMessageMapper.getErrorMessage(error),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Gray600
                         )

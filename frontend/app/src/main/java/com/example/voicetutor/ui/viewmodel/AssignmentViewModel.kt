@@ -18,6 +18,7 @@ import com.example.voicetutor.data.models.AnswerSubmissionResponse
 import com.example.voicetutor.audio.RecordingState
 import com.example.voicetutor.ui.navigation.RecentAssignment
 import com.example.voicetutor.data.network.AssignmentSubmissionRequest
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.data.network.AssignmentSubmissionResult
 import com.example.voicetutor.data.network.CreateAssignmentRequest
 import com.example.voicetutor.data.network.CreateAssignmentResponse
@@ -176,7 +177,7 @@ class AssignmentViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - ❌ Failed to load assignments: ${exception.message}")
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             if (!silent) {
@@ -209,7 +210,7 @@ class AssignmentViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - Error: ${exception.message}")
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -276,7 +277,7 @@ class AssignmentViewModel @Inject constructor(
                     loadAssignmentResult(id, assignment.courseClass.studentCount)
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -487,7 +488,7 @@ class AssignmentViewModel @Inject constructor(
                         }
                     }
                     .onFailure { e ->
-                        _error.value = e.message
+                        _error.value = ErrorMessageMapper.getErrorMessage(e)
                         _assignmentResults.value = emptyList()
                     }
             } finally {
@@ -530,7 +531,7 @@ class AssignmentViewModel @Inject constructor(
                     loadAllAssignments()
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -604,7 +605,7 @@ class AssignmentViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - Error: ${exception.message}")
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -698,7 +699,7 @@ class AssignmentViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - Error: ${exception.message}")
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -801,7 +802,7 @@ class AssignmentViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - Error: ${exception.message}")
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -898,7 +899,7 @@ class AssignmentViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - Error: ${exception.message}")
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -1018,7 +1019,7 @@ class AssignmentViewModel @Inject constructor(
                     }.onFailure { e ->
                         println("❌ PDF 업로드 실패: ${e.message}")
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                            _error.value = "PDF 업로드 실패: ${e.message}"
+                            _error.value = "PDF 업로드 실패: ${ErrorMessageMapper.getErrorMessage(e)}"
                             _isUploading.value = false
                             _isCreatingAssignment.value = false
                         }
@@ -1026,7 +1027,7 @@ class AssignmentViewModel @Inject constructor(
                 }.onFailure { e ->
                     println("❌ 과제 생성 실패: ${e.message}")
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        _error.value = "과제 생성 실패: ${e.message}"
+                        _error.value = "과제 생성 실패: ${ErrorMessageMapper.getErrorMessage(e)}"
                         _isUploading.value = false
                         _isCreatingAssignment.value = false
                     }
@@ -1035,7 +1036,7 @@ class AssignmentViewModel @Inject constructor(
                 println("❌ 예외 발생: ${e.message}")
                 e.printStackTrace()
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    _error.value = "오류: ${e.message}"
+                    _error.value = ErrorMessageMapper.getErrorMessage(e)
                     _isUploading.value = false
                     _isCreatingAssignment.value = false
                 }
@@ -1059,7 +1060,7 @@ class AssignmentViewModel @Inject constructor(
                     loadAssignmentResult(id, updatedAssignment.courseClass.studentCount)
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -1077,7 +1078,7 @@ class AssignmentViewModel @Inject constructor(
                     _assignments.value = _assignments.value.filter { it.id != id }
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -1149,7 +1150,7 @@ class AssignmentViewModel @Inject constructor(
                     // You might want to navigate to results screen or show success message
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -1240,7 +1241,7 @@ class AssignmentViewModel @Inject constructor(
                     println("버킷: ${status.bucket}")
                 }
                 .onFailure { exception ->
-                    _error.value = "S3 확인 실패: ${exception.message}"
+                    _error.value = "S3 확인 실패: ${ErrorMessageMapper.getErrorMessage(exception)}"
                 }
             
             _isLoading.value = false
@@ -1275,7 +1276,7 @@ class AssignmentViewModel @Inject constructor(
                     println("AssignmentViewModel - Successfully loaded ${questions.size} questions")
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                     println("AssignmentViewModel - Failed to load questions: ${exception.message}")
                 }
             
@@ -1346,17 +1347,17 @@ class AssignmentViewModel @Inject constructor(
                                         }
                                         .onFailure { statsException ->
                                             println("AssignmentViewModel - Failed to load statistics: ${statsException.message}")
-                                            _error.value = "통계를 확인할 수 없습니다: ${statsException.message}"
+                                            _error.value = "통계를 확인할 수 없습니다: ${ErrorMessageMapper.getErrorMessage(statsException)}"
                                         }
                                 } else {
                                     println("AssignmentViewModel - Other error: $message")
-                                    _error.value = exception.message
+                                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                                 }
                             }
                     }
                     .onFailure { exception ->
                         println("AssignmentViewModel - Failed to load base questions: ${exception.message}")
-                        _error.value = exception.message
+                        _error.value = ErrorMessageMapper.getErrorMessage(exception)
                     }
             } finally {
                 _isLoading.value = false
@@ -1418,7 +1419,7 @@ class AssignmentViewModel @Inject constructor(
                                     _error.value = "통계를 확인할 수 없습니다: ${statsException.message}"
                                 }
                         } else {
-                            _error.value = exception.message
+                            _error.value = ErrorMessageMapper.getErrorMessage(exception)
                             println("AssignmentViewModel - Failed to load next question: ${exception.message}")
                         }
                     }
@@ -1450,7 +1451,7 @@ class AssignmentViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     println("AssignmentViewModel - Failed to load statistics: ${exception.message}")
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             _isLoading.value = false
@@ -1511,7 +1512,7 @@ class AssignmentViewModel @Inject constructor(
                         }
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                     println("AssignmentViewModel - Failed to submit answer: ${exception.message}")
                 }
             
@@ -1681,7 +1682,7 @@ class AssignmentViewModel @Inject constructor(
                     }
                     .onFailure { exception ->
                         println("AssignmentViewModel - Error completing assignment: ${exception.message}")
-                        _error.value = exception.message
+                        _error.value = ErrorMessageMapper.getErrorMessage(exception)
                     }
             } catch (e: Exception) {
                 println("AssignmentViewModel - Error completing assignment: ${e.message}")
@@ -1776,7 +1777,7 @@ class AssignmentViewModel @Inject constructor(
                     println("AssignmentViewModel - Successfully loaded ${correctnessData.size} correctness items")
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                     println("AssignmentViewModel - Failed to load correctness: ${exception.message}")
                 }
 

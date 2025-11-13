@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.theme.Gray800
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.utils.formatDueDate
 
@@ -104,7 +105,7 @@ fun AssignmentDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = error ?: "",
+                    text = ErrorMessageMapper.getErrorMessage(error),
                     color = Error,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium

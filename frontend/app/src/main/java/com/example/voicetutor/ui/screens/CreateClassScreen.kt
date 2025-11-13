@@ -26,6 +26,7 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -212,7 +213,7 @@ fun CreateClassScreen(
         error?.let { errorMessage ->
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = errorMessage,
+                text = ErrorMessageMapper.getErrorMessage(errorMessage),
                 color = Error,
                 style = MaterialTheme.typography.bodyMedium
             )

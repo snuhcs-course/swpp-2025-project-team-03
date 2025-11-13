@@ -69,10 +69,8 @@ fun EditAssignmentScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedClass by remember { mutableStateOf("고등학교 1학년 A반") }
     var dueDate by remember { mutableStateOf("2024-01-20 23:59") }
-    var visibleFrom by remember { mutableStateOf("") }
     var assignmentType by remember { mutableStateOf("연속형") }
     var dueDateError by remember { mutableStateOf<String?>(null) }
-    var visibleDateError by remember { mutableStateOf<String?>(null) }
     var validationDialogMessage by remember { mutableStateOf<String?>(null) }
     
     // Load data on first composition
@@ -98,10 +96,8 @@ fun EditAssignmentScreen(
             description = assignment.description ?: ""
             selectedClass = assignment.courseClass.name
             dueDate = normalizeDateTime(assignment.dueAt) ?: assignment.dueAt
-            visibleFrom = assignment.visibleFrom?.let { normalizeDateTime(it) } ?: ""
             assignmentType = "연속형" // type 속성이 없으므로 기본값
             dueDateError = null
-            visibleDateError = null
         }
     }
     
@@ -273,45 +269,6 @@ fun EditAssignmentScreen(
             }
         }
         
-        // Settings card
-        VTCard(variant = CardVariant.Elevated) {
-            Column {
-                Text(
-                    text = "공개 설정",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                OutlinedTextField(
-                    value = visibleFrom,
-                    onValueChange = {
-                        visibleFrom = it
-                        visibleDateError = null
-                    },
-                    label = { Text("공개 일시") },
-                    placeholder = { Text("예: 2024-01-10 09:00") },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Visibility,
-                            contentDescription = null,
-                            tint = PrimaryIndigo
-                        )
-                    },
-                    supportingText = {
-                        Text(
-                            text = visibleDateError ?: "비워두면 기존 값이 반영됩니다. (yyyy-MM-dd HH:mm)",
-                            color = if (visibleDateError != null) Error else Gray500,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    },
-                    isError = visibleDateError != null
-                )
-            }
-        }
-        
         // Statistics card
         VTCard(variant = CardVariant.Outlined) {
             Column {
@@ -383,17 +340,13 @@ fun EditAssignmentScreen(
             text = "저장",
             onClick = {
                 dueDateError = validateDateTime(dueDate)
-                visibleDateError = if (visibleFrom.isBlank()) null else validateDateTime(visibleFrom)
                 
                 if (title.isNotBlank() && description.isNotBlank() && 
                     selectedClass.isNotBlank() && dueDate.isNotBlank() &&
-                    dueDateError == null && visibleDateError == null) {
+                    dueDateError == null) {
                     val isoDue = formatToIso8601(dueDate)
-                    val isoVisible = if (visibleFrom.isBlank()) null else formatToIso8601(visibleFrom)
-                    val existingVisibleIso = currentAssignment?.visibleFrom
-                    val visibleForRequest = if (visibleFrom.isBlank()) existingVisibleIso else isoVisible
                     
-                    if (isoDue == null || (visibleFrom.isNotBlank() && isoVisible == null)) {
+                    if (isoDue == null) {
                         validationDialogMessage = "날짜 형식이 올바르지 않습니다."
                         return@VTButton
                     }
@@ -408,7 +361,6 @@ fun EditAssignmentScreen(
                         title = title,
                         description = description,
                         totalQuestions = currentAssignment?.totalQuestions,
-                        visibleFrom = visibleForRequest,
                         dueAt = isoDue,
                         grade = currentAssignment?.grade,
                         subject = currentAssignment?.courseClass?.subject?.let {
@@ -424,9 +376,8 @@ fun EditAssignmentScreen(
                     Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
                     onSaveAssignment()
                 } else {
-                    val message = listOfNotNull(dueDateError, visibleDateError)
-                        .joinToString("\n")
-                        .ifBlank { "필수 항목을 모두 입력하고 올바른 형식인지 확인해주세요." }
+                    val message = dueDateError
+                        ?: "필수 항목을 모두 입력하고 올바른 형식인지 확인해주세요."
                     validationDialogMessage = message
                 }
             },
