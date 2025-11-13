@@ -66,6 +66,31 @@ fun StudentDashboardScreen(
         }
     }
 
+    // 각 상태별 개수 계산
+    val allAssignmentsCount = remember(assignments) {
+        assignments.count {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus != null &&
+            it.personalAssignmentId != null
+        }
+    }
+
+    val notStartedCount = remember(assignments) {
+        assignments.count {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED &&
+            it.personalAssignmentId != null
+        }
+    }
+
+    val inProgressCount = remember(assignments) {
+        assignments.count {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS &&
+            it.personalAssignmentId != null
+        }
+    }
+
     LaunchedEffect(assignments) {
         println("StudentDashboard - currentUser: ${currentUser?.email}, id: ${currentUser?.id}, role: ${currentUser?.role}")
         println("StudentDashboard - assignments from ViewModel: ${assignments.size}")
@@ -138,7 +163,7 @@ fun StudentDashboardScreen(
         Column {
                 Column {
                     Text(
-                        text = "나에게 할당된 과제 ${validAssignments.size}개",
+                        text = "나에게 할당된 과제",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
@@ -160,7 +185,30 @@ fun StudentDashboardScreen(
                     FilterChip(
                         selected = selectedFilter == PersonalAssignmentFilter.ALL,
                         onClick = { selectedFilter = PersonalAssignmentFilter.ALL },
-                        label = { Text("전체") },
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("전체")
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = PrimaryIndigo,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$allAssignmentsCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Filled.List,
@@ -173,13 +221,59 @@ fun StudentDashboardScreen(
                     FilterChip(
                         selected = selectedFilter == PersonalAssignmentFilter.NOT_STARTED,
                         onClick = { selectedFilter = PersonalAssignmentFilter.NOT_STARTED },
-                        label = { Text("시작 안함") }
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("시작 안함")
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = PrimaryIndigo,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$notStartedCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
                     )
 
                     FilterChip(
                         selected = selectedFilter == PersonalAssignmentFilter.IN_PROGRESS,
                         onClick = { selectedFilter = PersonalAssignmentFilter.IN_PROGRESS },
-                        label = { Text("진행 중") }
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("진행 중")
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = PrimaryIndigo,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$inProgressCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
                 

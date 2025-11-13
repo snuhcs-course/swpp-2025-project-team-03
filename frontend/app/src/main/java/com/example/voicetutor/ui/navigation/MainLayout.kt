@@ -35,7 +35,8 @@ import kotlinx.coroutines.delay
 
 data class RecentAssignment(
     val id: String, // personal_assignment_id
-    val title: String // 과제 제목
+    val title: String, // 과제 제목
+    val assignmentId: Int // assignment_id
 )
 
 // Helper function to get page title based on current destination
@@ -475,7 +476,8 @@ fun MainLayout(
             userRole = userRole,
             currentRoute = currentRoute,
             recentAssignment = recentAssignment,
-            currentUserId = currentUser?.id
+            currentUserId = currentUser?.id,
+            assignmentViewModel = assignmentViewModel
         )
     }
 }
@@ -486,7 +488,8 @@ fun BottomNavigation(
     userRole: UserRole,
     currentRoute: String,
     recentAssignment: RecentAssignment? = null,
-    currentUserId: Int? = null
+    currentUserId: Int? = null,
+    assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 ) {
     NavigationBar(
         containerColor = Color.White.copy(alpha = 0.95f),
@@ -589,6 +592,11 @@ fun BottomNavigation(
                 selected = currentRoute == "assignment",
                 onClick = {
                     if (recentAssignment != null) {
+                        // ViewModel에 두 ID를 모두 저장 (Dashboard와 동일하게)
+                        assignmentViewModel.setSelectedAssignmentIds(
+                            assignmentId = recentAssignment.assignmentId,
+                            personalAssignmentId = recentAssignment.id.toIntOrNull()
+                        )
                         // 이어하기: 최근 과제 상세 화면으로 이동
                         navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(recentAssignment.id, recentAssignment.title))
                     } else {
