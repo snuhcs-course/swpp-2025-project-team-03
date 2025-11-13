@@ -196,16 +196,16 @@ fun TeacherStudentsScreen(
                 .padding(20.dp)
         ) {
             Column {
-                Text(
-                    text = className,
-                    style = MaterialTheme.typography.titleLarge,
+                    Text(
+                        text = className,
+                        style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "$subjectName - $description",
-                    style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "$subjectName - $description",
+                        style = MaterialTheme.typography.bodyMedium,
                     color = Gray600
                 )
             }
@@ -785,13 +785,13 @@ fun StudentListItem(
                             fontWeight = FontWeight.SemiBold
                         )
                     }
+                }
             }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -804,16 +804,16 @@ fun StudentListItem(
             val completionColor = Gray600
             val progressColor = PrimaryIndigo
 
-            Text(
+        Text(
                 text = completionText,
                 style = MaterialTheme.typography.bodySmall,
                 color = completionColor,
                 fontWeight = FontWeight.Medium
             )
 
-            Text(
+        Text(
                 text = completionRateText,
-                style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodySmall,
                 color = progressColor,
                 fontWeight = FontWeight.Bold
             )

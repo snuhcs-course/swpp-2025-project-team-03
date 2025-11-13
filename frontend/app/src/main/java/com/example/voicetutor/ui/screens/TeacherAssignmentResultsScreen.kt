@@ -2,8 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -14,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,7 +30,8 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun TeacherAssignmentResultsScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentId: Int = 0,
-    assignmentTitle: String? = null // For backward compatibility
+    assignmentTitle: String? = null, // For backward compatibility
+    onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> }
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -43,8 +42,8 @@ fun TeacherAssignmentResultsScreen(
     val assignmentStats by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
     
     // 모달 상태 관리
-    var selectedStudent by remember { mutableStateOf<StudentResult?>(null) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // var selectedStudent by remember { mutableStateOf<StudentResult?>(null) }
+    // val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     // Find assignment by ID or title from the assignments list
     // "과목 - 제목" 형식도 처리 가능하도록 수정
@@ -52,11 +51,11 @@ fun TeacherAssignmentResultsScreen(
         if (assignmentId > 0) {
             assignments.find { it.id == assignmentId }
         } else if (assignmentTitle != null) {
-        assignments.find { 
-            it.title == assignmentTitle || 
-            "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
-            assignmentTitle.contains(it.title)
-            }
+            assignments.find { 
+                it.title == assignmentTitle || 
+                "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
+                assignmentTitle.contains(it.title)
+                }
         } else {
             null
         }
@@ -64,6 +63,7 @@ fun TeacherAssignmentResultsScreen(
     
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle ?: "과제")
+    val resolvedAssignmentId = targetAssignment?.id ?: currentAssignment?.id ?: assignmentId
     
     // Load assignment data on first composition
     LaunchedEffect(assignmentId, targetAssignment?.id) {
@@ -207,8 +207,11 @@ fun TeacherAssignmentResultsScreen(
                 students.forEachIndexed { index, student ->
                     TeacherAssignmentResultCard(
                         student = student,
-                        onStudentClick = { 
-                            selectedStudent = student
+                        onStudentClick = {
+                            val destinationAssignmentId = resolvedAssignmentId
+                            if (destinationAssignmentId != 0) {
+                                onNavigateToStudentDetail(student.studentId, destinationAssignmentId, dynamicAssignmentTitle)
+                            }
                         }
                     )
                     
@@ -217,21 +220,6 @@ fun TeacherAssignmentResultsScreen(
                     }
                 }
             }
-        }
-    }
-    
-    // 학생 상세 결과 모달
-    selectedStudent?.let { student ->
-        ModalBottomSheet(
-            onDismissRequest = { selectedStudent = null },
-            sheetState = sheetState,
-            containerColor = Color.White
-        ) {
-            StudentResultDetailModal(
-                student = student,
-                assignmentTitle = dynamicAssignmentTitle,
-                onDismiss = { selectedStudent = null }
-            )
         }
     }
 }
@@ -248,38 +236,11 @@ fun TeacherAssignmentResultCard(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Student info header
+            // Status badge aligned top-right
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.End
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(PrimaryIndigo.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = student.name.first().toString(),
-                        color = PrimaryIndigo,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = student.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-                
-                // Status badge
                 Box(
                     modifier = Modifier
                         .background(
@@ -297,40 +258,56 @@ fun TeacherAssignmentResultCard(
                 }
             }
             
-            // Grade and time info
+            // Name, avatar, and time info row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "등급",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    val grade = scoreToGrade(student.score)
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                color = getGradeColor(grade).copy(alpha = 0.15f),
-                                shape = CircleShape
-                            ),
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryIndigo.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = grade,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = getGradeColor(grade),
-                            fontSize = 24.sp
+                            text = student.name.first().toString(),
+                            color = PrimaryIndigo,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = student.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Text(
+                            text = student.studentId,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray600
                         )
                     }
                 }
-                
-                Column {
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
                         text = "소요 시간",
                         style = MaterialTheme.typography.bodySmall,
@@ -338,25 +315,34 @@ fun TeacherAssignmentResultCard(
                     )
                     Text(
                         text = formatDuration(student.startedAt, student.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = Gray800
                     )
                 }
-                
-                Column {
+
+                Spacer(modifier = Modifier.width(18.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    // modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = "제출 시간",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
+                        modifier = Modifier.align(Alignment.End)
                     )
                     Text(
                         text = formatSubmittedTime(student.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Gray800
+                        color = Gray800,
+                        modifier = Modifier.align(Alignment.End)
                     )
                 }
+
             }
             
             // Sample answers preview
@@ -389,29 +375,6 @@ private fun formatSubmittedTime(isoTime: String): String {
     return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
 }
 
-// Helper function to convert score to grade
-private fun scoreToGrade(score: Int): String {
-    return when {
-        score >= 90 -> "A"
-        score >= 80 -> "B"
-        score >= 70 -> "C"
-        score >= 60 -> "D"
-        else -> "F"
-    }
-}
-
-// Helper function to get grade color
-private fun getGradeColor(grade: String): Color {
-    return when (grade) {
-        "A" -> Success
-        "B" -> Color(0xFF4CAF50)
-        "C" -> Warning
-        "D" -> Color(0xFFFF9800)
-        "F" -> Error
-        else -> Gray600
-    }
-}
-
 // Helper function to format duration between startedAt and submittedAt
 private fun formatDuration(startIso: String?, endIso: String?): String {
     return try {
@@ -422,7 +385,7 @@ private fun formatDuration(startIso: String?, endIso: String?): String {
         }
         val start = parseIsoToMillis(startIso)
         val end = parseIsoToMillis(endIso)
-        if (start == null || end == null || end <= start) {
+        if (start == null || end == null || end < start) {
             println("start or end is null $startIso ,$endIso")
             return "정보 없음"
         }
@@ -458,205 +421,205 @@ private fun parseIsoToMillis(iso: String): Long? {
     }
 }
 
-@Composable
-fun StudentResultDetailModal(
-    student: StudentResult,
-    assignmentTitle: String,
-    onDismiss: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = student.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Gray800
-                )
-                Text(
-                    text = assignmentTitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
-                )
-            }
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = "닫기",
-                    tint = Gray600
-                )
-            }
-        }
-        
-        Divider()
-        
-        // Student info
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(PrimaryIndigo.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = student.name.first().toString(),
-                    color = PrimaryIndigo,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "학생 ID: ${student.studentId}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = if (student.status == "완료") Success.copy(alpha = 0.1f) else Warning.copy(alpha = 0.1f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = student.status,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (student.status == "완료") Success else Warning,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-        }
-        
-        // Stats
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // 등급 섹션
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "등급",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                val grade = scoreToGrade(student.score)
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .background(
-                            color = getGradeColor(grade).copy(alpha = 0.15f),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = grade,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = getGradeColor(grade),
-                        fontSize = 32.sp
-                    )
-                }
-            }
-            
-            // 점수 섹션
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "점수",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "${student.score}점",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryIndigo
-                )
-            }
-        }
-        
-        Divider()
-        
-        // Time info
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "소요 시간",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = formatDuration(student.startedAt, student.submittedAt),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "제출 시간",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = formatSubmittedTime(student.submittedAt),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-            }
-        }
-        
-        // Full detail button
-        // 상세 페이지 삭제로 버튼 제거
-    }
-}
+//@Composable
+//fun StudentResultDetailModal(
+//    student: StudentResult,
+//    assignmentTitle: String,
+//    onDismiss: () -> Unit
+//) {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(24.dp),
+//        verticalArrangement = Arrangement.spacedBy(16.dp)
+//    ) {
+//        // Header
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Column(modifier = Modifier.weight(1f)) {
+//                Text(
+//                    text = student.name,
+//                    style = MaterialTheme.typography.titleLarge,
+//                    fontWeight = FontWeight.Bold,
+//                    color = Gray800
+//                )
+//                Text(
+//                    text = assignmentTitle,
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = Gray600
+//                )
+//            }
+//            IconButton(onClick = onDismiss) {
+//                Icon(
+//                    imageVector = Icons.Filled.Close,
+//                    contentDescription = "닫기",
+//                    tint = Gray600
+//                )
+//            }
+//        }
+//
+//        Divider()
+//
+//        // Student info
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(16.dp)
+//        ) {
+//            Box(
+//                modifier = Modifier
+//                    .size(64.dp)
+//                    .clip(CircleShape)
+//                    .background(PrimaryIndigo.copy(alpha = 0.1f)),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Text(
+//                    text = student.name.first().toString(),
+//                    color = PrimaryIndigo,
+//                    style = MaterialTheme.typography.headlineMedium,
+//                    fontWeight = FontWeight.Bold
+//                )
+//            }
+//
+//            Column(modifier = Modifier.weight(1f)) {
+//                Text(
+//                    text = "학생 ID: ${student.studentId}",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = Gray600
+//                )
+//                Spacer(modifier = Modifier.height(4.dp))
+//                Box(
+//                    modifier = Modifier
+//                        .background(
+//                            color = if (student.status == "완료") Success.copy(alpha = 0.1f) else Warning.copy(alpha = 0.1f),
+//                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+//                        )
+//                        .padding(horizontal = 12.dp, vertical = 6.dp)
+//                ) {
+//                    Text(
+//                        text = student.status,
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = if (student.status == "완료") Success else Warning,
+//                        fontWeight = FontWeight.Medium
+//                    )
+//                }
+//            }
+//        }
+//
+//        // Stats
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(12.dp)
+//        ) {
+//            // 등급 섹션
+//            Column(
+//                modifier = Modifier
+//                    .weight(1f)
+//                    .padding(16.dp),
+//                horizontalAlignment = Alignment.CenterHorizontally
+//            ) {
+//                Text(
+//                    text = "등급",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = Gray600,
+//                    fontWeight = FontWeight.Medium
+//                )
+//                Spacer(modifier = Modifier.height(8.dp))
+//                val grade = scoreToGrade(student.score)
+//                Box(
+//                    modifier = Modifier
+//                        .size(64.dp)
+//                        .background(
+//                            color = getGradeColor(grade).copy(alpha = 0.15f),
+//                            shape = CircleShape
+//                        ),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Text(
+//                        text = grade,
+//                        style = MaterialTheme.typography.headlineMedium,
+//                        fontWeight = FontWeight.Bold,
+//                        color = getGradeColor(grade),
+//                        fontSize = 32.sp
+//                    )
+//                }
+//            }
+//
+//            // 점수 섹션
+//            Column(
+//                modifier = Modifier
+//                    .weight(1f)
+//                    .padding(16.dp),
+//                horizontalAlignment = Alignment.CenterHorizontally
+//            ) {
+//                Text(
+//                    text = "점수",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = Gray600,
+//                    fontWeight = FontWeight.Medium
+//                )
+//                Spacer(modifier = Modifier.height(8.dp))
+//                Text(
+//                    text = "${student.score}점",
+//                    style = MaterialTheme.typography.headlineSmall,
+//                    fontWeight = FontWeight.Bold,
+//                    color = PrimaryIndigo
+//                )
+//            }
+//        }
+//
+//        Divider()
+//
+//        // Time info
+//        Column(
+//            modifier = Modifier.fillMaxWidth(),
+//            verticalArrangement = Arrangement.spacedBy(12.dp)
+//        ) {
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Text(
+//                    text = "소요 시간",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = Gray600,
+//                    fontWeight = FontWeight.Medium
+//                )
+//                Text(
+//                    text = formatDuration(student.startedAt, student.submittedAt),
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = Gray800
+//                )
+//            }
+//
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Text(
+//                    text = "제출 시간",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = Gray600,
+//                    fontWeight = FontWeight.Medium
+//                )
+//                Text(
+//                    text = formatSubmittedTime(student.submittedAt),
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = Gray800
+//                )
+//            }
+//        }
+//
+//        // Full detail button
+//        // 상세 페이지 삭제로 버튼 제거
+//    }
+//}
 
 @Preview(showBackground = true)
 @Composable
