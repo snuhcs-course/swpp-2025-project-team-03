@@ -117,14 +117,14 @@ fun AllStudentsScreen(
             ) {
                 Column {
                     Text(
-                        text = "전체 학생 관리",
+                        text = "성취기준 리포트",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "학생들의 학습 현황을 확인하고 관리하세요",
+                        text = "학생들의 학습 현황을 확인하고 취약 유형을 분석하세요",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray600
                     )

@@ -539,11 +539,11 @@ fun BottomNavigation(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = Icons.Filled.People,
-                        contentDescription = "학생"
+                        imageVector = Icons.Filled.Assessment,
+                        contentDescription = "리포트"
                     )
                 },
-                label = { Text("학생") },
+                label = { Text("리포트") },
                 selected = currentRoute == "teacher_students",
                 onClick = {
                     navController.navigate(VoiceTutorScreens.AllStudents.route)
