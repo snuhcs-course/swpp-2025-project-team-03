@@ -500,45 +500,51 @@ fun AssignmentContinuousScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
-                                modifier = Modifier.padding(24.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()         // ⬅︎ 카드 가로 폭을 꽉 채우기
+                                    .padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = when {
-                                            isSkipped -> Icons.Filled.SkipNext
-                                            isAnswerCorrect -> Icons.Filled.CheckCircle
-                                            else -> Icons.Filled.Cancel
-                                        },
-                                        contentDescription = null,
-                                        tint = when {
-                                            isSkipped -> Warning
-                                            isAnswerCorrect -> Success
-                                            else -> Error
-                                        },
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Text(
-                                        text = when {
-                                            isSkipped -> "문제를 건너뛰었습니다"
-                                            isAnswerCorrect -> "정답입니다!"
-                                            else -> "틀렸습니다"
-                                        },
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = when {
-                                            isSkipped -> Warning
-                                            isAnswerCorrect -> Success
-                                            else -> Error
-                                        }
-                                    )
+
+                                Icon(
+                                    imageVector = when {
+                                        isSkipped -> Icons.Filled.SkipNext
+                                        isAnswerCorrect -> Icons.Filled.CheckCircle
+                                        else -> Icons.Filled.Cancel
+                                    },
+                                    contentDescription = null,
+                                    tint = when {
+                                        isSkipped -> Warning
+                                        isAnswerCorrect -> Success
+                                        else -> Error
+                                    },
+                                    modifier = Modifier.size(56.dp)
+                                )
+                                val resultTextStyle = when {
+                                    isSkipped -> MaterialTheme.typography.titleLarge  // 한 단계 작은 폰트
+                                    else -> MaterialTheme.typography.headlineSmall
                                 }
+                                Text(
+                                    text = when {
+                                        isSkipped -> "문제를 건너뛰었습니다"
+                                        isAnswerCorrect -> "정답입니다!"
+                                        else -> "틀렸습니다"
+                                    },
+                                    style = resultTextStyle,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when {
+                                        isSkipped -> Warning
+                                        isAnswerCorrect -> Success
+                                        else -> Error
+                                    },
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    textAlign = TextAlign.Center      // 선택 사항
+                                )
+
                             }
                         }
+
                     }
                 }
             }
