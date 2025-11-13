@@ -7,7 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .request_serializers import LoginRequestSerializer, SignupRequestSerializer
 from .serializers import UserResponseSerializer
@@ -80,11 +80,19 @@ class LoginView(APIView):
         responses={200: "로그인 성공", 400: "잘못된 요청", 401: "인증 실패"},
     )
     def post(self, request):
+        logger.info("[LoginView] 로그인 요청 도착함")
+        logger.info(f"[LoginView] request.data: {request.data}")
+        logger.info(f"[LoginView] request.data type: {type(request.data)}")
+        logger.info(
+            f"[LoginView] request.data keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}"
+        )
+
         email = request.data.get("email")
         password = request.data.get("password")
-        logger.info("로그인 요청 도착함")
+        logger.info(f"[LoginView] Extracted email: {email}, password: {'***' if password else None}")
 
         if not email or not password:
+            logger.warning(f"[LoginView] Missing email or password - email: {email}, password: {bool(password)}")
             return Response(
                 {"success": False, "message": "email/password 필수 입력"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -92,16 +100,19 @@ class LoginView(APIView):
 
         try:
             user = Account.objects.get(email=email)
+            logger.info(f"[LoginView] User found: {user.id}, checking password...")
             if not user.check_password(password):
+                logger.warning(f"[LoginView] Password mismatch for user {user.id}")
                 return Response(
                     {"success": False, "message": "비밀번호가 일치하지 않습니다."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            logger.info("로그인 성공함")
+            logger.info(f"[LoginView] 로그인 성공함 - user_id: {user.id}")
             return set_jwt_cookie_response(user, status_code=status.HTTP_200_OK)
 
         except Account.DoesNotExist:
+            logger.warning(f"[LoginView] User not found for email: {email}")
             return Response(
                 {"success": False, "message": "해당 이메일의 사용자가 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -146,34 +157,13 @@ class DeleteAccountView(APIView):
         responses={200: "계정 삭제 성공", 401: "인증 실패", 404: "사용자를 찾을 수 없음"},
     )
     def delete(self, request):
-        access_token = request.COOKIES.get("access_token")
-        refresh_token = request.COOKIES.get("refresh_token")
-
-        if not access_token:
+        if not request.user or not request.user.is_authenticated:
             return Response(
                 {"success": False, "message": "access token이 없습니다.", "error": "missing_access_token"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        try:
-            token = AccessToken(access_token)
-            user_id = token.get("user_id")
-            if user_id is None:
-                raise ValueError("토큰에 사용자 정보가 없습니다.")
-
-            user = Account.objects.get(id=user_id)
-        except Account.DoesNotExist:
-            logger.warning("[DeleteAccountView] user not found for id extracted from token")
-            return Response(
-                {"success": False, "message": "사용자를 찾을 수 없습니다.", "error": "user_not_found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        except Exception as exc:
-            logger.error(f"[DeleteAccountView] Failed to decode access token: {exc}", exc_info=True)
-            return Response(
-                {"success": False, "message": "유효하지 않은 토큰입니다.", "error": "invalid_token"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+        user = request.user
 
         try:
             with transaction.atomic():
@@ -208,13 +198,6 @@ class DeleteAccountView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        if refresh_token:
-            try:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            except Exception as exc:
-                logger.warning(f"[DeleteAccountView] Failed to blacklist refresh token: {exc}")
-
         response = Response(
             {"success": True, "message": "계정이 삭제되었습니다.", "error": None},
             status=status.HTTP_200_OK,
@@ -222,5 +205,5 @@ class DeleteAccountView(APIView):
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
 
-        logger.info(f"[DeleteAccountView] Account deleted for user_id={user_id}")
+        logger.info(f"[DeleteAccountView] Account deleted for user_id={user.id}")
         return response
