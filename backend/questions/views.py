@@ -209,8 +209,23 @@ class QuestionCreateView(APIView):
 
             # 취소된 경우 에러 반환 (질문은 이미 생성되었을 수 있음)
             assignment.refresh_from_db()
-            if assignment.total_questions == 0 or is_cancelled:
-                # 이미 생성된 질문은 삭제하지 않고, totalQuestions만 0으로 유지
+
+            # is_cancelled가 True면 트랜잭션 내부에서 취소를 감지한 것이므로,
+            # 일관성을 위해 total_questions를 0으로 확실히 설정
+            if is_cancelled:
+                assignment.total_questions = 0
+                assignment.save(update_fields=["total_questions"])
+                return Response(
+                    {
+                        "error": "Question generation cancelled",
+                        "message": f"Assignment {assignment_id}의 질문 생성이 취소되었습니다.",
+                        "cancelled": True,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 트랜잭션 종료 후 다른 요청에서 취소한 경우
+            if assignment.total_questions == 0:
                 return Response(
                     {
                         "error": "Question generation cancelled",
