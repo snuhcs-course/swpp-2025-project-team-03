@@ -259,12 +259,6 @@ fun AllStudentsScreen(
                     }
                 }
 
-                if (index > 0) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Divider(color = Gray200.copy(alpha = 0.6f))
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
                 AllStudentsCard(
                     student = student,
                     classNames = classesForStudent?.map { it.name } ?: emptyList(),
