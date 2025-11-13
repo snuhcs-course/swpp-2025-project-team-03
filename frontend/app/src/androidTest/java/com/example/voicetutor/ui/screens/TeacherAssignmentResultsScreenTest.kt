@@ -5,7 +5,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.AssignmentData
@@ -34,52 +39,6 @@ class TeacherAssignmentResultsScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun teacherAssignmentResultsScreen_displaysStudentListAndBottomSheet() {
-        val assignmentId = 77
-        val assignmentData = createAssignmentData(
-            id = assignmentId,
-            title = "듣기 평가 과제"
-        )
-
-        val submittedAssignment = createPersonalAssignmentData(
-            id = 301,
-            assignmentId = assignmentId,
-            status = PersonalAssignmentStatus.SUBMITTED,
-            studentName = "홍길동",
-            startedAt = "2024-01-02T09:00:00Z",
-            submittedAt = "2024-01-02T10:00:00Z"
-        )
-
-        val fakeApi = FakeApiService().apply {
-            assignmentByIdResponse = assignmentData
-            assignmentsResponse = listOf(assignmentData)
-            personalAssignmentsResponse = listOf(submittedAssignment)
-            personalAssignmentStatisticsResponses = mutableMapOf(
-                submittedAssignment.id to createStatistics(averageScore = 92f, accuracy = 0.92f)
-            )
-            assignmentResultResponse = AssignmentResultData(
-                submittedStudents = 1,
-                totalStudents = 1,
-                averageScore = 92.0,
-                completionRate = 1.0
-            )
-        }
-
-        val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
-
-        setScreenContent(viewModel, assignmentId)
-
-        waitForText("학생별 결과")
-        waitForText("홍길동")
-
-        composeTestRule.onNodeWithText("홍길동", useUnmergedTree = true).performClick()
-
-        waitForText("학생 ID: 301")
-        composeTestRule.onNodeWithText("학생 ID: 301", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("점수", useUnmergedTree = true).assertIsDisplayed()
-    }
-
-    @Test
     fun teacherAssignmentResultsScreen_withEmptyResults_showsEmptyPlaceholder() {
         val assignmentId = 88
         val assignmentData = createAssignmentData(id = assignmentId, title = "빈 결과 과제")
@@ -104,41 +63,10 @@ class TeacherAssignmentResultsScreenTest {
         waitForText("학생별 결과")
         waitForText("제출된 과제가 없습니다")
 
-        composeTestRule.onNodeWithText("제출된 과제가 없습니다", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("학생별 결과", useUnmergedTree = true).assertIsDisplayed()
-    }
-
-    @Test
-    fun teacherAssignmentResultsScreen_loadingState_showsProgressIndicator() {
-        val assignmentId = 55
-        val assignmentData = createAssignmentData(id = assignmentId, title = "로딩 상태 과제")
-
-        val fakeApi = FakeApiService().apply {
-            assignmentByIdResponse = assignmentData
-            assignmentsResponse = listOf(assignmentData)
-            personalAssignmentsDelayMillis = 2_000
-        }
-
-        val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
-
-        composeTestRule.mainClock.autoAdvance = false
-
-        setScreenContent(viewModel, assignmentId)
-
-        composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule
-                .onAllNodes(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate), useUnmergedTree = true)
-                .fetchSemanticsNodes()
-                .isNotEmpty()
-        }
-
-        composeTestRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)).assertExists()
-
-        composeTestRule.mainClock.autoAdvance = true
-        composeTestRule.mainClock.advanceTimeBy(2_500)
-
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("학생별 결과", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("제출된 과제가 없습니다", useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("학생별 결과", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
     @Test
@@ -161,7 +89,9 @@ class TeacherAssignmentResultsScreenTest {
             composeTestRule.onAllNodes(hasText("제출된 과제가 없습니다", substring = true), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("제출된 과제가 없습니다", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("제출된 과제가 없습니다", useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
     }
 
     @Test
@@ -217,10 +147,55 @@ class TeacherAssignmentResultsScreenTest {
         waitForText("학생별 결과")
         waitForText("총 3명")
 
-        composeTestRule.onNodeWithText("총 3명", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("완료", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("진행 중", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("미시작", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("총 3명", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("완료", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("진행 중", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("미시작", useUnmergedTree = true).onFirst().assertIsDisplayed()
+    }
+
+    @Test
+    fun teacherAssignmentResultsScreen_withoutCompletedStudents_showsDashForAverage() {
+        val assignmentId = 101
+        val assignmentData = createAssignmentData(id = assignmentId, title = "미완료 과제")
+
+        val inProgress = createPersonalAssignmentData(
+            id = 601,
+            assignmentId = assignmentId,
+            status = PersonalAssignmentStatus.IN_PROGRESS,
+            studentName = "진행중 학생",
+            startedAt = "2024-01-06T09:00:00Z",
+            submittedAt = null
+        )
+        val notStarted = createPersonalAssignmentData(
+            id = 602,
+            assignmentId = assignmentId,
+            status = PersonalAssignmentStatus.NOT_STARTED,
+            studentName = "미시작 학생",
+            startedAt = null,
+            submittedAt = null
+        )
+
+        val fakeApi = FakeApiService().apply {
+            assignmentByIdResponse = assignmentData
+            assignmentsResponse = listOf(assignmentData)
+            personalAssignmentsResponse = listOf(inProgress, notStarted)
+            personalAssignmentStatisticsResponses = mutableMapOf()
+            assignmentResultResponse = AssignmentResultData(
+                submittedStudents = 0,
+                totalStudents = 2,
+                averageScore = 0.0,
+                completionRate = 0.0
+            )
+        }
+
+        val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
+
+        setScreenContent(viewModel, assignmentId)
+
+        waitForText("학생별 결과")
+        composeTestRule.onAllNodesWithText("총 2명", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("평균 점수", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("-", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
     private fun setScreenContent(

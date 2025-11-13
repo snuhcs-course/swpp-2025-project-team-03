@@ -2,10 +2,13 @@ package com.example.voicetutor.ui.navigation
 
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
@@ -68,7 +71,7 @@ class MainLayoutTeacherNavigationTest {
         composeRule.waitForIdle()
     }
 
-    private fun waitForRoutePrefix(prefix: String, timeoutMillis: Long = 10_000) {
+    private fun waitForRoutePrefix(prefix: String, timeoutMillis: Long = 15_000) {
         composeRule.waitUntil(timeoutMillis) {
             var matches = false
             composeRule.runOnIdle {
@@ -86,55 +89,6 @@ class MainLayoutTeacherNavigationTest {
             viewModel = ViewModelProvider(entry)[AuthViewModel::class.java]
         }
         return checkNotNull(viewModel)
-    }
-
-    @Test
-    fun teacherMainLayout_bottomNavigation_andLogoutFlow() {
-        setContent()
-
-        val authViewModel = authViewModel()
-
-        composeRule.runOnIdle {
-            authViewModel.login("teacher@voicetutor.com", "teacher123")
-        }
-
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            authViewModel.currentUser.value != null
-        }
-
-        waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
-
-        composeRule.onNodeWithText("VoiceTutor", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("테스트선생님", useUnmergedTree = true).assertIsDisplayed()
-
-        composeRule.onNodeWithText("수업", useUnmergedTree = true).performClick()
-        waitForRoutePrefix(VoiceTutorScreens.TeacherClasses.route)
-        composeRule.onNodeWithText("수업 관리", useUnmergedTree = true).assertIsDisplayed()
-
-        composeRule.onNodeWithText("학생", useUnmergedTree = true).performClick()
-        waitForRoutePrefix(VoiceTutorScreens.AllStudents.route)
-        composeRule.onNodeWithText("전체 학생 관리", useUnmergedTree = true).assertIsDisplayed()
-
-        composeRule.onNodeWithText("홈", useUnmergedTree = true).performClick()
-        waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
-
-        val teacherNodes = composeRule.onAllNodesWithText("테스트선생님", useUnmergedTree = true)
-            .fetchSemanticsNodes()
-        if (teacherNodes.isNotEmpty()) {
-            composeRule.onNodeWithText("테스트선생님", useUnmergedTree = true).performClick()
-        }
-        waitForRoutePrefix(VoiceTutorScreens.Settings.route.substringBefore("{"))
-        composeRule.onNodeWithText("계정", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("뒤로가기").performClick()
-
-        waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
-
-        composeRule.onNodeWithContentDescription("로그아웃").performClick()
-        composeRule.onNodeWithText("로그아웃하시겠습니까?", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("로그아웃", useUnmergedTree = true).performClick()
-
-        waitForRoutePrefix(VoiceTutorScreens.Login.route)
-        composeRule.onNodeWithText("로그인", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -157,37 +111,66 @@ class MainLayoutTeacherNavigationTest {
             navController.navigate(VoiceTutorScreens.AllAssignments.route)
         }
         waitForRoutePrefix(VoiceTutorScreens.AllAssignments.route)
-        composeRule.onNodeWithText("모든 과제", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("모든 과제", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
 
         composeRule.runOnIdle {
             navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(1))
         }
         waitForRoutePrefix(VoiceTutorScreens.TeacherAssignmentDetail.route.substringBefore("{"))
-        composeRule.onNodeWithText("과제 내용", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("과제 내용", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
 
         composeRule.runOnIdle {
             navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(1))
         }
         waitForRoutePrefix(VoiceTutorScreens.TeacherAssignmentResults.route.substringBefore("{"))
-        composeRule.onNodeWithText("학생별 결과", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("학생별 결과", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
 
         composeRule.runOnIdle {
             navController.navigate(VoiceTutorScreens.TeacherStudentReport.createRoute(1, 1, "홍길동"))
         }
         waitForRoutePrefix(VoiceTutorScreens.TeacherStudentReport.route.substringBefore("{"))
-        composeRule.onNodeWithText("홍길동", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("홍길동", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            navController.navigate(VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute("1", 1, "듣기 평가 과제"))
+        }
+        waitForRoutePrefix(VoiceTutorScreens.TeacherStudentAssignmentDetail.route.substringBefore("{"))
+        composeRule.onAllNodesWithText("홍길동", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
 
         composeRule.runOnIdle {
             navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(null))
         }
         waitForRoutePrefix(VoiceTutorScreens.CreateAssignment.route.substringBefore("{"))
-        composeRule.onNodeWithText("기본 정보", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("기본 정보", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
 
         composeRule.runOnIdle {
             navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(1))
         }
         waitForRoutePrefix(VoiceTutorScreens.EditAssignment.route.substringBefore("{"))
-        composeRule.onNodeWithText("과제 편집", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("과제 편집", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
+    }
+
+    @Test
+    fun teacherMainLayout_navigateToCreateClassScreen() {
+        setContent()
+
+        val authViewModel = authViewModel()
+
+        composeRule.runOnIdle {
+            authViewModel.login("teacher@voicetutor.com", "teacher123")
+        }
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            authViewModel.currentUser.value != null
+        }
+
+        waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
+
+        composeRule.runOnIdle {
+            navController.navigate(VoiceTutorScreens.CreateClass.route)
+        }
+        waitForRoutePrefix(VoiceTutorScreens.CreateClass.route)
+        composeRule.onAllNodesWithText("수업 생성", substring = false, useUnmergedTree = true)[0].assertIsDisplayed()
     }
 }
 

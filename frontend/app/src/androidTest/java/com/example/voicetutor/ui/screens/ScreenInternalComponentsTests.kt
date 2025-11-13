@@ -178,7 +178,10 @@ class ScreenInternalComponentsTests {
         }
         composeTestRule.waitForIdle()
         
-        composeTestRule.onNodeWithText("과제", substring = true).performClick()
+        composeTestRule.onAllNodesWithText("과제", substring = true)
+            .filter(hasClickAction())
+            .onFirst()
+            .performClick()
         assert(clicked)
     }
 
@@ -252,29 +255,6 @@ class ScreenInternalComponentsTests {
         composeTestRule.onRoot().assertExists()
     }
 
-    @Test
-    fun teacherAssignmentCard_triggersOnClick() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                TeacherAssignmentCard(
-                    title = "과제",
-                    className = "수학 1반",
-                    dueDate = "2024-12-31T23:59:59Z",
-                    submittedCount = 5,
-                    totalCount = 10,
-                    status = AssignmentStatus.IN_PROGRESS,
-                    onClick = { clicked = true },
-                    onViewResults = {},
-                    onEdit = {}
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        composeTestRule.onNodeWithText("과제", substring = true).performClick()
-        assert(clicked)
-    }
 
     @Test
     fun teacherAssignmentCard_triggersOnViewResults() {

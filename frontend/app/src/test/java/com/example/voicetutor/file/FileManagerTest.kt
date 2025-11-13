@@ -264,5 +264,112 @@ class FileManagerTest {
         assertEquals(info1, info2)
         assertNotEquals(info1, info3)
     }
+
+    @Test
+    fun formatFileSize_zeroBytes_returnsZeroBytes() {
+        fileManager = FileManager(mockContext)
+        
+        assertEquals("0 B", fileManager.formatFileSize(0))
+    }
+
+    @Test
+    fun formatFileSize_oneByte_returnsOneByte() {
+        fileManager = FileManager(mockContext)
+        
+        assertEquals("1 B", fileManager.formatFileSize(1))
+    }
+
+    @Test
+    fun formatFileSize_1023Bytes_returnsBytes() {
+        fileManager = FileManager(mockContext)
+        
+        assertEquals("1023 B", fileManager.formatFileSize(1023))
+    }
+
+    @Test
+    fun formatFileSize_exactlyOneKB_returnsOneKB() {
+        fileManager = FileManager(mockContext)
+        
+        assertEquals("1.0 KB", fileManager.formatFileSize(1024))
+    }
+
+    @Test
+    fun formatFileSize_1025Bytes_returnsKB() {
+        fileManager = FileManager(mockContext)
+        
+        assertEquals("1.0 KB", fileManager.formatFileSize(1025))
+    }
+
+    @Test
+    fun formatFileSize_1536Bytes_returnsKB() {
+        fileManager = FileManager(mockContext)
+        
+        assertEquals("1.5 KB", fileManager.formatFileSize(1536))
+    }
+
+    @Test
+    fun formatFileSize_1023KB_returnsKB() {
+        fileManager = FileManager(mockContext)
+        
+        val bytes = 1023 * 1024L
+        assertEquals("1023.0 KB", fileManager.formatFileSize(bytes))
+    }
+
+    @Test
+    fun formatFileSize_exactlyOneMB_returnsOneMB() {
+        fileManager = FileManager(mockContext)
+        
+        val oneMB = 1024 * 1024L
+        assertEquals("1.0 MB", fileManager.formatFileSize(oneMB))
+    }
+
+    @Test
+    fun formatFileSize_oneAndHalfMB_returnsMB() {
+        fileManager = FileManager(mockContext)
+        
+        val oneAndHalfMB = (1024 + 512) * 1024L
+        assertEquals("1.5 MB", fileManager.formatFileSize(oneAndHalfMB))
+    }
+
+    @Test
+    fun formatFileSize_1023MB_returnsMB() {
+        fileManager = FileManager(mockContext)
+        
+        val bytes = 1023L * 1024 * 1024
+        assertEquals("1023.0 MB", fileManager.formatFileSize(bytes))
+    }
+
+    @Test
+    fun formatFileSize_exactlyOneGB_returnsOneGB() {
+        fileManager = FileManager(mockContext)
+        
+        val oneGB = 1024L * 1024 * 1024
+        assertEquals("1.0 GB", fileManager.formatFileSize(oneGB))
+    }
+
+    @Test
+    fun formatFileSize_oneAndHalfGB_returnsGB() {
+        fileManager = FileManager(mockContext)
+        
+        val oneAndHalfGB = (1024 + 512).toLong() * 1024 * 1024
+        assertEquals("1.5 GB", fileManager.formatFileSize(oneAndHalfGB))
+    }
+
+    @Test
+    fun formatFileSize_veryLargeFile_returnsGB() {
+        fileManager = FileManager(mockContext)
+        
+        val tenGB = 10L * 1024 * 1024 * 1024
+        assertEquals("10.0 GB", fileManager.formatFileSize(tenGB))
+    }
+
+    @Test
+    fun formatFileSize_negativeBytes_handlesGracefully() {
+        fileManager = FileManager(mockContext)
+        
+        // Negative bytes should still format (though unusual)
+        val result = fileManager.formatFileSize(-100)
+        assertNotNull(result)
+    }
 }
 

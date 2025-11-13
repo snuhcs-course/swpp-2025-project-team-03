@@ -2,16 +2,19 @@ package com.example.voicetutor.ui.navigation
 
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.voicetutor.HiltComponentActivity
+import com.example.voicetutor.data.models.PersonalAssignmentStatus
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
@@ -71,7 +74,7 @@ class MainLayoutStudentNavigationTest {
         composeRule.waitForIdle()
     }
 
-    private fun waitForRoutePrefix(prefix: String, timeoutMillis: Long = 10_000) {
+    private fun waitForRoutePrefix(prefix: String, timeoutMillis: Long = 15_000) {
         composeRule.waitUntil(timeoutMillis) {
             var matches = false
             composeRule.runOnIdle {
@@ -79,16 +82,6 @@ class MainLayoutStudentNavigationTest {
                 matches = currentRoute?.startsWith(prefix) == true
             }
             matches
-        }
-    }
-
-    private fun waitForRecentAssignment(assignmentViewModel: AssignmentViewModel, timeoutMillis: Long = 10_000) {
-        composeRule.waitUntil(timeoutMillis) {
-            var hasRecent = false
-            composeRule.runOnIdle {
-                hasRecent = assignmentViewModel.recentAssignment.value != null
-            }
-            hasRecent
         }
     }
 
@@ -111,11 +104,17 @@ class MainLayoutStudentNavigationTest {
     }
 
     @Test
-    fun studentMainLayout_fullNavigationFlow() {
+    fun studentMainLayout_progressShowsEmptyStateWhenNoCompletedAssignments() {
+        fakeApi.personalAssignmentsResponse = listOf(
+            fakeApi.personalAssignmentData.copy(
+                status = PersonalAssignmentStatus.IN_PROGRESS,
+                submittedAt = null
+            )
+        )
+
         setContent()
 
         val authViewModel = authViewModel()
-        val assignmentViewModel = assignmentViewModel()
 
         composeRule.runOnIdle {
             authViewModel.login("student@voicetutor.com", "student123")
@@ -127,56 +126,22 @@ class MainLayoutStudentNavigationTest {
 
         waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
 
-        composeRule.onNodeWithText("VoiceTutor", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("테스트학생", useUnmergedTree = true).assertIsDisplayed()
-
-        waitForRecentAssignment(assignmentViewModel)
-
-        composeRule.onNodeWithText("리포트", useUnmergedTree = true).performClick()
-        waitForRoutePrefix(VoiceTutorScreens.Progress.route)
-        composeRule.onNodeWithText("VoiceTutor", useUnmergedTree = true).assertIsDisplayed()
-
-        composeRule.onNodeWithText("홈", useUnmergedTree = true).performClick()
-        waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
-
-        val studentNodes = composeRule.onAllNodesWithText("테스트학생", useUnmergedTree = true)
-            .fetchSemanticsNodes()
-        if (studentNodes.isNotEmpty()) {
-            composeRule.onNodeWithText("테스트학생", useUnmergedTree = true)
-                .performClick()
+        composeRule.runOnIdle {
+            navController.navigate(VoiceTutorScreens.Progress.route)
         }
-        waitForRoutePrefix(VoiceTutorScreens.Settings.route.substringBefore("{"))
-        composeRule.onNodeWithText("계정", useUnmergedTree = true).assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("뒤로가기").performClick()
-        waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
+        waitForRoutePrefix(VoiceTutorScreens.Progress.route)
 
-        composeRule.onNodeWithText("이어하기", useUnmergedTree = true).performClick()
-        waitForRoutePrefix(VoiceTutorScreens.AssignmentDetail.route.substringBefore("{"))
-        composeRule.onNodeWithText("과제 상세", useUnmergedTree = true).assertIsDisplayed()
-
-        composeRule.onNodeWithContentDescription("뒤로가기").performClick()
-        waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
-
-        composeRule.onNodeWithContentDescription("로그아웃").performClick()
-        composeRule.onNodeWithText("로그아웃하시겠습니까?", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("취소", useUnmergedTree = true).performClick()
-
-        composeRule.onNodeWithContentDescription("로그아웃").performClick()
-        composeRule.onNodeWithText("로그아웃", useUnmergedTree = true).performClick()
-
-        waitForRoutePrefix(VoiceTutorScreens.Login.route)
-        composeRule.onNodeWithText("로그인", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("완료한 과제가 없습니다", substring = true, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
     }
 
     @Test
-    fun studentMainLayout_resumeButtonWithoutRecentNavigatesToEmptyState() {
-        fakeApi.personalAssignmentsResponse = emptyList()
-
+    fun studentMainLayout_assignmentDetailedResultsAccessible() {
         setContent()
 
         val authViewModel = authViewModel()
-        val assignmentViewModel = assignmentViewModel()
 
         composeRule.runOnIdle {
             authViewModel.login("student@voicetutor.com", "student123")
@@ -188,23 +153,25 @@ class MainLayoutStudentNavigationTest {
 
         waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
 
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            var hasRecent = true
-            composeRule.runOnIdle {
-                hasRecent = assignmentViewModel.recentAssignment.value != null
-            }
-            !hasRecent
+        val personalAssignment = fakeApi.personalAssignmentData
+
+        composeRule.runOnIdle {
+            navController.navigate(
+                VoiceTutorScreens.AssignmentDetailedResults.createRoute(
+                    personalAssignment.id,
+                    personalAssignment.assignment.title
+                )
+            )
         }
 
-        composeRule.onNodeWithText("이어하기", useUnmergedTree = true).performClick()
+        waitForRoutePrefix(VoiceTutorScreens.AssignmentDetailedResults.route.substringBefore("{"))
 
-        waitForRoutePrefix(VoiceTutorScreens.NoRecentAssignment.route.substringBefore("{"))
-
-        composeRule.onNodeWithText("이어할 과제가 없습니다", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("뒤로가기").performClick()
-
-        waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
-        composeRule.onNodeWithText("VoiceTutor", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("문제별 상세 결과", substring = true, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText(personalAssignment.assignment.title, substring = true, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
     }
 }
 

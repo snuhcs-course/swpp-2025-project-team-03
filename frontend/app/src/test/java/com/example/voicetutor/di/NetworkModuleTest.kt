@@ -58,7 +58,8 @@ class NetworkModuleTest {
     @Test
     fun provideOkHttpClient_returnsConfiguredClient() {
         val loggingInterceptor = networkModule.provideLoggingInterceptor()
-        val client = networkModule.provideOkHttpClient(loggingInterceptor)
+        val cookieJar = networkModule.provideCookieJar()
+        val client = networkModule.provideOkHttpClient(loggingInterceptor, cookieJar)
         
         assertNotNull(client)
         assertTrue(client is OkHttpClient)
@@ -75,7 +76,8 @@ class NetworkModuleTest {
     @Test
     fun provideRetrofit_returnsConfiguredRetrofitInstance() {
         val loggingInterceptor = networkModule.provideLoggingInterceptor()
-        val client = networkModule.provideOkHttpClient(loggingInterceptor)
+        val cookieJar = networkModule.provideCookieJar()
+        val client = networkModule.provideOkHttpClient(loggingInterceptor, cookieJar)
         val gson = networkModule.provideGson()
         
         val retrofit = networkModule.provideRetrofit(client, gson, mockApiConfig)
@@ -88,7 +90,8 @@ class NetworkModuleTest {
     @Test
     fun provideApiService_returnsApiServiceInstance() {
         val loggingInterceptor = networkModule.provideLoggingInterceptor()
-        val client = networkModule.provideOkHttpClient(loggingInterceptor)
+        val cookieJar = networkModule.provideCookieJar()
+        val client = networkModule.provideOkHttpClient(loggingInterceptor, cookieJar)
         val gson = networkModule.provideGson()
         val retrofit = networkModule.provideRetrofit(client, gson, mockApiConfig)
         
@@ -100,7 +103,8 @@ class NetworkModuleTest {
     @Test
     fun okHttpClient_hasCorrectInterceptorConfiguration() {
         val loggingInterceptor = networkModule.provideLoggingInterceptor()
-        val client = networkModule.provideOkHttpClient(loggingInterceptor)
+        val cookieJar = networkModule.provideCookieJar()
+        val client = networkModule.provideOkHttpClient(loggingInterceptor, cookieJar)
         
         // Verify interceptors count (should have at least the logging interceptor)
         assertTrue(client.interceptors.size >= 1)
@@ -126,7 +130,8 @@ class NetworkModuleTest {
     @Test
     fun retrofit_usesGsonConverter() {
         val loggingInterceptor = networkModule.provideLoggingInterceptor()
-        val client = networkModule.provideOkHttpClient(loggingInterceptor)
+        val cookieJar = networkModule.provideCookieJar()
+        val client = networkModule.provideOkHttpClient(loggingInterceptor, cookieJar)
         val gson = networkModule.provideGson()
         val retrofit = networkModule.provideRetrofit(client, gson, mockApiConfig)
         

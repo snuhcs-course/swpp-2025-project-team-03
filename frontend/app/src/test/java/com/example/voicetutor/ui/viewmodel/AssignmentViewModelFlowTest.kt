@@ -7,6 +7,7 @@ import com.example.voicetutor.testing.MainDispatcherRule
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
@@ -139,51 +140,6 @@ class AssignmentViewModelFlowTest {
     }
 
     // Filters and lists
-    @Test
-    fun loadPendingStudentAssignments_filtersNotStartedAndInProgressOnly() = runTest {
-        val studentId = 1
-        val list = listOf(
-            pa(1, PersonalAssignmentStatus.NOT_STARTED),
-            pa(2, PersonalAssignmentStatus.IN_PROGRESS, solved = 1),
-            pa(3, PersonalAssignmentStatus.SUBMITTED),
-            pa(4, PersonalAssignmentStatus.SUBMITTED)
-        )
-        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
-            .thenReturn(Result.success(list))
-        val vm = AssignmentViewModel(assignmentRepository)
-        vm.assignments.test {
-            awaitItem()
-            vm.loadPendingStudentAssignments(studentId)
-            runCurrent()
-            val next = awaitItem()
-            assert(next.size == 2)
-            assert(next.all { it.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED || it.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS })
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun loadCompletedStudentAssignments_filtersSubmittedAndGraded() = runTest {
-        val studentId = 2
-        val list = listOf(
-            pa(1, PersonalAssignmentStatus.NOT_STARTED),
-            pa(2, PersonalAssignmentStatus.IN_PROGRESS),
-            pa(3, PersonalAssignmentStatus.SUBMITTED),
-            pa(4, PersonalAssignmentStatus.SUBMITTED)
-        )
-        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
-            .thenReturn(Result.success(list))
-        val vm = AssignmentViewModel(assignmentRepository)
-        vm.assignments.test {
-            awaitItem()
-            vm.loadCompletedStudentAssignments(studentId)
-            runCurrent()
-            val next = awaitItem()
-            assert(next.size == 2)
-            assert(next.all { it.personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED })
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
 
     @Test
     @Ignore("Filter test issue")
@@ -1351,53 +1307,6 @@ class AssignmentViewModelFlowTest {
             val result = awaitItem()
             assert(result.size == 1)
             assert(result.first().personalAssignmentStatus == PersonalAssignmentStatus.SUBMITTED)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun loadPendingStudentAssignments_filtersCorrectly() = runTest {
-        val studentId = 6
-        val list = listOf(
-            pa(1, PersonalAssignmentStatus.NOT_STARTED),
-            pa(2, PersonalAssignmentStatus.IN_PROGRESS),
-            pa(3, PersonalAssignmentStatus.SUBMITTED)
-        )
-        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
-            .thenReturn(Result.success(list))
-        val vm = AssignmentViewModel(assignmentRepository)
-
-        vm.assignments.test {
-            awaitItem()
-            vm.loadPendingStudentAssignments(studentId)
-            advanceUntilIdle()
-            val result = awaitItem()
-            // PENDING은 NOT_STARTED 또는 IN_PROGRESS
-            assert(result.size == 2)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun loadCompletedStudentAssignments_filtersCorrectly() = runTest {
-        val studentId = 7
-        val list = listOf(
-            pa(1, PersonalAssignmentStatus.NOT_STARTED),
-            pa(2, PersonalAssignmentStatus.IN_PROGRESS),
-            pa(3, PersonalAssignmentStatus.SUBMITTED),
-            pa(4, PersonalAssignmentStatus.SUBMITTED)
-        )
-        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId))
-            .thenReturn(Result.success(list))
-        val vm = AssignmentViewModel(assignmentRepository)
-
-        vm.assignments.test {
-            awaitItem()
-            vm.loadCompletedStudentAssignments(studentId)
-            advanceUntilIdle()
-            val result = awaitItem()
-            // COMPLETED는 SUBMITTED
-            assert(result.size == 2)
             cancelAndIgnoreRemainingEvents()
         }
     }

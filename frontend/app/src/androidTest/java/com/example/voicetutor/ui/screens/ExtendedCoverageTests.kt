@@ -110,8 +110,11 @@ class ExtendedCoverageTests {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
-        composeTestRule.onNodeWithText("등급", substring = true).assertExists()
+        composeTestRule.onNodeWithText("홍길동", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("2024001", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("완료", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("소요 시간", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("제출 시간", substring = true, useUnmergedTree = true).assertExists()
     }
 
     @Test
@@ -372,8 +375,8 @@ class ExtendedCoverageTests {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("전체 과제", substring = true).assertExists()
-        composeTestRule.onNodeWithText("10", substring = true).assertExists()
+        composeTestRule.onAllNodesWithText("전체 과제", substring = true, useUnmergedTree = true).onFirst().assertExists()
+        composeTestRule.onAllNodesWithText("10", substring = true, useUnmergedTree = true).onFirst().assertExists()
     }
 
     // ========== TeacherStudentsScreen Components ==========

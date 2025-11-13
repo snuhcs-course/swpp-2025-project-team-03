@@ -157,5 +157,93 @@ class NotificationManagerTest {
         assertEquals("Action 2", data.actions[1].title)
         assertEquals("Action 3", data.actions[2].title)
     }
+
+    @Test
+    fun notificationData_hashCode_worksCorrectly() {
+        val data1 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
+        val data2 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
+        
+        assertEquals(data1.hashCode(), data2.hashCode())
+    }
+
+    @Test
+    fun notificationAction_hashCode_worksCorrectly() {
+        val action1 = NotificationAction("Action", "test")
+        val action2 = NotificationAction("Action", "test")
+        
+        assertEquals(action1.hashCode(), action2.hashCode())
+    }
+
+    @Test
+    fun notificationData_toString_containsFields() {
+        val data = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
+        val toString = data.toString()
+        
+        assertTrue(toString.contains("Title"))
+        assertTrue(toString.contains("Message"))
+        assertTrue(toString.contains("ASSIGNMENT_DUE"))
+    }
+
+    @Test
+    fun notificationAction_toString_containsFields() {
+        val action = NotificationAction("Action", "test")
+        val toString = action.toString()
+        
+        assertTrue(toString.contains("Action"))
+        assertTrue(toString.contains("test"))
+    }
+
+    @Test
+    fun notificationData_withEmptyMessage_handlesEmptyString() {
+        val data = NotificationData(1, "Title", "", NotificationType.ASSIGNMENT_DUE)
+        
+        assertTrue(data.message.isEmpty())
+    }
+
+    @Test
+    fun notificationData_withLongMessage_handlesLongString() {
+        val longMessage = "A".repeat(1000)
+        val data = NotificationData(1, "Title", longMessage, NotificationType.ASSIGNMENT_DUE)
+        
+        assertEquals(1000, data.message.length)
+    }
+
+    @Test
+    fun notificationAction_withCustomIcon_usesCustomIcon() {
+        val customIcon = android.R.drawable.ic_menu_edit
+        val action = NotificationAction("Action", "test", customIcon)
+        
+        assertEquals(customIcon, action.icon)
+    }
+
+    @Test
+    fun notificationType_valueOf_worksCorrectly() {
+        assertEquals(NotificationType.ASSIGNMENT_DUE, NotificationType.valueOf("ASSIGNMENT_DUE"))
+        assertEquals(NotificationType.NEW_MESSAGE, NotificationType.valueOf("NEW_MESSAGE"))
+        assertEquals(NotificationType.GRADE_UPDATE, NotificationType.valueOf("GRADE_UPDATE"))
+        assertEquals(NotificationType.SYSTEM_UPDATE, NotificationType.valueOf("SYSTEM_UPDATE"))
+        assertEquals(NotificationType.REMINDER, NotificationType.valueOf("REMINDER"))
+    }
+
+    @Test
+    fun notificationPriority_valueOf_worksCorrectly() {
+        assertEquals(NotificationPriority.LOW, NotificationPriority.valueOf("LOW"))
+        assertEquals(NotificationPriority.NORMAL, NotificationPriority.valueOf("NORMAL"))
+        assertEquals(NotificationPriority.HIGH, NotificationPriority.valueOf("HIGH"))
+        assertEquals(NotificationPriority.URGENT, NotificationPriority.valueOf("URGENT"))
+    }
+
+    @Test
+    fun notificationData_withSpecialCharacters_handlesCorrectly() {
+        val data = NotificationData(
+            1,
+            "Title & Test < > \" '",
+            "Message with\nnewlines\tand\ttabs",
+            NotificationType.ASSIGNMENT_DUE
+        )
+        
+        assertTrue(data.title.contains("&"))
+        assertTrue(data.message.contains("\n"))
+    }
 }
 

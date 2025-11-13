@@ -93,6 +93,14 @@ class FakeApiService : ApiService {
         difficulty = "EASY"
     )
 
+    var personalAssignmentQuestionsResponses: List<PersonalAssignmentQuestion> = listOf(personalAssignmentQuestion)
+    var nextQuestionQueue: MutableList<PersonalAssignmentQuestion> = mutableListOf(personalAssignmentQuestion)
+    var shouldReturnNoMoreQuestions: Boolean = false
+    var nextQuestionErrorMessage: String = "No more questions"
+    var answerSubmissionResponse: AnswerSubmissionResponse =
+        AnswerSubmissionResponse(isCorrect = true, numberStr = "1", tailQuestion = null)
+    var answerSubmissionResponseQueue: MutableList<AnswerSubmissionResponse>? = null
+
     private val personalAssignmentStatistics = PersonalAssignmentStatistics(
         totalQuestions = 10,
         answeredQuestions = 5,
@@ -190,7 +198,7 @@ class FakeApiService : ApiService {
         feedback = emptyList()
     )
 
-    private val studentClasses = listOf(
+    var studentClassesResponse: List<ClassInfo> = listOf(
         ClassInfo(id = 1, name = "수학 A반"),
         ClassInfo(id = 2, name = "과학 B반")
     )
@@ -211,6 +219,7 @@ class FakeApiService : ApiService {
     var assignmentResultErrorMessage: String = "Failed to load assignment result"
     var shouldFailAssignmentCorrectness: Boolean = false
     var assignmentCorrectnessErrorMessage: String = "Failed to load assignment correctness"
+    var assignmentCorrectnessResponses: List<AssignmentCorrectnessItem> = assignmentCorrectness
     var personalAssignmentsDelayMillis: Long = 0L
     var shouldFailCreateAssignment: Boolean = false
     var createAssignmentErrorMessage: String = "Failed to create assignment"
@@ -224,6 +233,8 @@ class FakeApiService : ApiService {
     var studentProgressErrorMessage: String = "Failed to load student progress"
     var shouldFailStudentClasses: Boolean = false
     var studentClassesErrorMessage: String = "Failed to load student classes"
+    var shouldFailCreateClass: Boolean = false
+    var createClassErrorMessage: String = "Failed to create class"
 
     private fun <T> success(data: T): Response<ApiResponse<T>> =
         Response.success(ApiResponse(success = true, data = data, message = null, error = null))
@@ -264,6 +275,7 @@ class FakeApiService : ApiService {
         Response.success(LoginResponse(success = true, user = null, token = "fake-token", message = "가입 완료", error = null))
 
     override suspend fun logout(): Response<ApiResponse<Unit>> = success(Unit)
+    override suspend fun deleteAccount(): Response<ApiResponse<Unit>> = success(Unit)
     // endregion
 
     // region Assignment APIs
@@ -334,8 +346,16 @@ class FakeApiService : ApiService {
     // endregion
 
     // region Student APIs
+    var allStudentsResponse: List<Student> = listOf(student)
+    var shouldFailAllStudents: Boolean = false
+    var allStudentsErrorMessage: String = "Failed to load students"
+
     override suspend fun getAllStudents(teacherId: String?, classId: String?): Response<ApiResponse<List<Student>>> =
-        success(listOf(student))
+        if (shouldFailAllStudents) {
+            failure(allStudentsErrorMessage)
+        } else {
+            success(allStudentsResponse)
+        }
 
     override suspend fun getStudentById(id: Int): Response<ApiResponse<Student>> = success(student.copy(id = id))
 
@@ -359,7 +379,7 @@ class FakeApiService : ApiService {
     }
 
     override suspend fun getPersonalAssignmentQuestions(id: Int): Response<ApiResponse<List<PersonalAssignmentQuestion>>> =
-        success(listOf(personalAssignmentQuestion))
+        success(personalAssignmentQuestionsResponses)
 
     override suspend fun getPersonalAssignmentStatistics(id: Int): Response<ApiResponse<PersonalAssignmentStatistics>> =
         if (shouldFailPersonalAssignmentStatistics) {
@@ -376,11 +396,24 @@ class FakeApiService : ApiService {
         studentId: MultipartBody.Part,
         questionId: MultipartBody.Part,
         audioFile: MultipartBody.Part
-    ): Response<ApiResponse<AnswerSubmissionResponse>> =
-        success(AnswerSubmissionResponse(isCorrect = true, numberStr = "1", tailQuestion = null))
+    ): Response<ApiResponse<AnswerSubmissionResponse>> {
+        val response = answerSubmissionResponseQueue?.let { queue ->
+            if (queue.isNotEmpty()) queue.removeAt(0) else null
+        } ?: answerSubmissionResponse
+        return success(response)
+    }
 
-    override suspend fun getNextQuestion(personalAssignmentId: Int): Response<ApiResponse<PersonalAssignmentQuestion>> =
-        success(personalAssignmentQuestion)
+    override suspend fun getNextQuestion(personalAssignmentId: Int): Response<ApiResponse<PersonalAssignmentQuestion>> {
+        if (nextQuestionQueue.isNotEmpty()) {
+            val next = nextQuestionQueue.removeAt(0)
+            return success(next)
+        }
+        return if (shouldReturnNoMoreQuestions) {
+            failure(nextQuestionErrorMessage)
+        } else {
+            success(personalAssignmentQuestion)
+        }
+    }
 
     override suspend fun completePersonalAssignment(id: Int): Response<ApiResponse<Unit>> = success(Unit)
 
@@ -388,7 +421,7 @@ class FakeApiService : ApiService {
         if (shouldFailAssignmentCorrectness) {
             failure(assignmentCorrectnessErrorMessage)
         } else {
-            success(assignmentCorrectness)
+            success(assignmentCorrectnessResponses)
         }
     // endregion
 
@@ -400,23 +433,43 @@ class FakeApiService : ApiService {
         }
 
     // region Class APIs
+    var classesResponse: List<ClassData> = listOf(classData)
+    var shouldFailClasses: Boolean = false
+    var classesErrorMessage: String = "Failed to load classes"
+
     override suspend fun getClasses(teacherId: String): Response<ApiResponse<List<ClassData>>> =
-        success(listOf(classData))
+        if (shouldFailClasses) {
+            failure(classesErrorMessage)
+        } else {
+            success(classesResponse)
+        }
 
     override suspend fun createClass(request: CreateClassRequest): Response<ApiResponse<ClassData>> =
-        success(classData.copy(id = 10, name = request.name))
+        if (shouldFailCreateClass) {
+            failure(createClassErrorMessage)
+        } else {
+            success(classData.copy(id = 10, name = request.name))
+        }
 
     override suspend fun getClassById(id: Int): Response<ApiResponse<ClassData>> =
         success(classData.copy(id = id))
 
+    var classStudentsResponse: List<Student> = listOf(student)
+    var shouldFailClassStudents: Boolean = false
+    var classStudentsErrorMessage: String = "Failed to load class students"
+
     override suspend fun getClassStudents(id: Int): Response<ApiResponse<List<Student>>> =
-        success(listOf(student.copy(id = id)))
+        if (shouldFailClassStudents) {
+            failure(classStudentsErrorMessage)
+        } else {
+            success(classStudentsResponse)
+        }
 
     override suspend fun getStudentClasses(id: Int): Response<ApiResponse<List<ClassInfo>>> =
         if (shouldFailStudentClasses) {
             failure(studentClassesErrorMessage)
         } else {
-            success(studentClasses)
+            success(studentClassesResponse)
         }
 
     override suspend fun enrollStudentToClass(id: Int, studentId: Int): Response<ApiResponse<EnrollmentData>> =
@@ -431,21 +484,27 @@ class FakeApiService : ApiService {
     override suspend fun removeStudentFromClass(id: Int, student_id: Int): Response<ApiResponse<Unit>> =
         success(Unit)
 
-    override suspend fun getClassStudentsStatistics(classId: Int): Response<ApiResponse<ClassStudentsStatistics>> =
-        success(
-            ClassStudentsStatistics(
-                overallCompletionRate = 0.75f,
-                students = listOf(
-                    StudentStatisticsItem(
-                        studentId = 1,
-                        averageScore = 88.0f,
-                        completionRate = 0.9f,
-                        totalAssignments = 10,
-                        completedAssignments = 9
-                    )
-                )
+    var classStudentsStatisticsResponse: ClassStudentsStatistics = ClassStudentsStatistics(
+        overallCompletionRate = 0.75f,
+        students = listOf(
+            StudentStatisticsItem(
+                studentId = 1,
+                averageScore = 88.0f,
+                completionRate = 0.9f,
+                totalAssignments = 10,
+                completedAssignments = 9
             )
         )
+    )
+    var shouldFailClassStudentsStatistics: Boolean = false
+    var classStudentsStatisticsErrorMessage: String = "Failed to load class statistics"
+
+    override suspend fun getClassStudentsStatistics(classId: Int): Response<ApiResponse<ClassStudentsStatistics>> =
+        if (shouldFailClassStudentsStatistics) {
+            failure(classStudentsStatisticsErrorMessage)
+        } else {
+            success(classStudentsStatisticsResponse)
+        }
     // endregion
 
     // region Reports & Dashboard

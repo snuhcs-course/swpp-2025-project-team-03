@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -154,6 +155,40 @@ class NavigationFlowTest {
 
         composeRule
             .onNode(hasText("앱 정보", substring = true), useUnmergedTree = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun manualNavigationToCreateClassRendersScreen() {
+        setContent()
+
+        var authViewModel: AuthViewModel? = null
+        composeRule.runOnIdle {
+            val entry = navController.getBackStackEntry(navController.graph.id)
+            authViewModel = ViewModelProvider(entry)[AuthViewModel::class.java]
+        }
+        val viewModel = checkNotNull(authViewModel)
+        composeRule.runOnIdle {
+            viewModel.login(email = "teacher@voicetutor.com", password = "teacher123")
+        }
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            viewModel.currentUser.value?.role == UserRole.TEACHER
+        }
+
+        composeRule.runOnIdle {
+            navController.navigate(VoiceTutorScreens.CreateClass.route)
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule
+                .onAllNodesWithText("수업 생성", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeRule
+            .onAllNodesWithText("수업 생성", substring = true, useUnmergedTree = true)[0]
             .assertIsDisplayed()
     }
 }

@@ -3,7 +3,8 @@ package com.example.voicetutor.ui.screens
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -53,7 +54,7 @@ class StudentScreenEdgeCasesTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithText("과제가 없습니다", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("과제가 없습니다", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
     @Test
@@ -98,7 +99,7 @@ class StudentScreenEdgeCasesTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithText("1단원 복습 과제", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("1단원 복습 과제", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
     @Test
@@ -129,8 +130,10 @@ class StudentScreenEdgeCasesTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithText("태양이 도는 은하의 이름은?", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("은하수", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("태양이 도는 은하의 이름은?", useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText("은하수", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 }
 
