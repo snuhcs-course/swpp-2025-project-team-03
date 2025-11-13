@@ -755,7 +755,10 @@ fun StudentListItem(
                                 color = Gray800
                             )
                         Text(
-                            text = student.email ?: "이메일 없음",
+                            text = run {
+                                val email = student.email ?: "이메일 없음"
+                                if (email.length > 24) email.take(24) + "..." else email
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray600
                         )
