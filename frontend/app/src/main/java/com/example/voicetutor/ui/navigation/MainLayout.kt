@@ -419,13 +419,26 @@ fun MainLayout(
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(max = 200.dp)
+                            modifier = Modifier.widthIn(max = 180.dp)
                         )
                         CircularProgressIndicator(
                             color = PrimaryIndigo,
                             strokeWidth = 3.dp,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(24.dp)
                         )
+                        IconButton(
+                            onClick = {
+                                assignmentViewModel.cancelQuestionGeneration()
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "취소",
+                                tint = Gray500,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }

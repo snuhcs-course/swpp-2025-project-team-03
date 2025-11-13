@@ -101,6 +101,9 @@ class AssignmentViewModel @Inject constructor(
     private val _generatingAssignmentTitle = MutableStateFlow<String?>(null)
     val generatingAssignmentTitle: StateFlow<String?> = _generatingAssignmentTitle.asStateFlow()
     
+    // 현재 생성 중인 assignmentId 저장 (취소 시 사용)
+    private var generatingAssignmentId: Int? = null
+    
     // 학생별 통계
     private val _studentStats = MutableStateFlow<StudentStats?>(null)
     val studentStats: StateFlow<StudentStats?> = _studentStats.asStateFlow()
@@ -982,6 +985,7 @@ class AssignmentViewModel @Inject constructor(
                             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                 _isGeneratingQuestions.value = true
                                 _generatingAssignmentTitle.value = assignment.title
+                                generatingAssignmentId = createResponse.assignment_id // assignmentId 저장
                             }
                             
                             try {
@@ -998,6 +1002,7 @@ class AssignmentViewModel @Inject constructor(
                                         _questionGenerationSuccess.value = true
                                         _isGeneratingQuestions.value = false
                                         _generatingAssignmentTitle.value = null
+                                        generatingAssignmentId = null // 완료 후 초기화
                                     }
                                 }.onFailure { e ->
                                     println("❌ [별도 스레드] 문제 생성 실패: ${e.message}")
@@ -1005,6 +1010,7 @@ class AssignmentViewModel @Inject constructor(
                                         _questionGenerationError.value = e.message
                                         _isGeneratingQuestions.value = false
                                         _generatingAssignmentTitle.value = null
+                                        generatingAssignmentId = null // 실패 후 초기화
                                     }
                                 }
                             } catch (e: Exception) {
@@ -1013,6 +1019,7 @@ class AssignmentViewModel @Inject constructor(
                                     _questionGenerationError.value = e.message
                                     _isGeneratingQuestions.value = false
                                     _generatingAssignmentTitle.value = null
+                                    generatingAssignmentId = null // 예외 후 초기화
                                 }
                             }
                         }
@@ -1213,11 +1220,57 @@ class AssignmentViewModel @Inject constructor(
         _questionGenerationSuccess.value = false
         _questionGenerationError.value = null
         _generatingAssignmentTitle.value = null
+        generatingAssignmentId = null // 초기화
     }
     
     fun clearQuestionGenerationStatus() {
         _questionGenerationSuccess.value = false
         _questionGenerationError.value = null
+    }
+    
+    // 질문 생성 취소 (모달 제거 + totalQuestions를 0으로 업데이트)
+    fun cancelQuestionGeneration() {
+        println("AssignmentViewModel - Cancelling question generation")
+        val assignmentId = generatingAssignmentId
+        
+        // 상태 초기화 (모달 제거)
+        _isGeneratingQuestions.value = false
+        _generatingAssignmentTitle.value = null
+        _questionGenerationSuccess.value = false
+        _questionGenerationError.value = null
+        
+        // assignmentId가 있으면 totalQuestions를 0으로 업데이트
+        if (assignmentId != null) {
+            println("AssignmentViewModel - Updating assignment $assignmentId: totalQuestions = 0")
+            viewModelScope.launch {
+                try {
+                    val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
+                        title = null,
+                        description = null,
+                        totalQuestions = 0, // totalQuestions를 0으로 설정
+                        visibleFrom = null,
+                        dueAt = null,
+                        grade = null,
+                        subject = null
+                    )
+                    assignmentRepository.updateAssignment(assignmentId, updateRequest)
+                        .onSuccess {
+                            println("✅ Assignment $assignmentId: totalQuestions가 0으로 업데이트됨")
+                            generatingAssignmentId = null // 초기화
+                        }
+                        .onFailure { e ->
+                            println("❌ Assignment $assignmentId 업데이트 실패: ${e.message}")
+                            generatingAssignmentId = null // 실패해도 초기화
+                        }
+                } catch (e: Exception) {
+                    println("❌ Assignment $assignmentId 업데이트 예외: ${e.message}")
+                    generatingAssignmentId = null // 예외 발생해도 초기화
+                }
+            }
+        } else {
+            println("AssignmentViewModel - No assignment ID to cancel")
+            generatingAssignmentId = null
+        }
     }
     
     fun checkS3UploadStatus(assignmentId: Int) {
