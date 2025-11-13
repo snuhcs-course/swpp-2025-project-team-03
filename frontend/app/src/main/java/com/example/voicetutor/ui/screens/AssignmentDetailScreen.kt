@@ -132,9 +132,13 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 val subtitle = buildString {
                     val subject = currentAssignment?.courseClass?.subject?.name
+                    val className = currentAssignment?.courseClass?.name
                     val due = currentAssignment?.dueAt?.let { formatDueDate(it) } ?: ""
+
                     if (!subject.isNullOrBlank()) append(subject)
-                    if (!subject.isNullOrBlank() && due.isNotBlank()) append(" · ")
+                    if (!subject.isNullOrBlank() && !className.isNullOrBlank()) append(" · ")
+                    if (!className.isNullOrBlank()) append(className)
+                    if ((!subject.isNullOrBlank() || !className.isNullOrBlank()) && due.isNotBlank()) append(" · ")
                     if (due.isNotBlank()) append("마감: ").append(due)
                 }
                 if (subtitle.isNotBlank()) {
