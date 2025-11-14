@@ -322,8 +322,7 @@ class AssignmentViewModel @Inject constructor(
                         }
                         
                         // 실제 총 학생 수는 personal assignments의 개수 (과제를 받은 학생 수)
-                        // 또는 전달받은 totalStudents 중 더 큰 값 사용
-                        val actualTotalStudents = maxOf(personalAssignments.size, totalStudents)
+                        val actualTotalStudents = personalAssignments.size
                         
                         // 각 personal assignment의 통계를 확인하여 완료 여부 판단
                         // status가 SUBMITTED이거나, submitted_at이 있거나, 통계에서 모든 문제를 완료한 경우 제출로 간주

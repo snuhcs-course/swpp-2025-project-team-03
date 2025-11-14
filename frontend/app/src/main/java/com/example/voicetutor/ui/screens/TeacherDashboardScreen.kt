@@ -353,7 +353,7 @@ fun TeacherDashboardScreen(
                 }
             } else {
                 val assignmentStatsMap = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
-
+                
                 assignments.forEach { assignment ->
                     LaunchedEffect(assignment.id) {
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -538,28 +538,28 @@ fun TeacherAssignmentCard(
                 height = 6
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                VTButton(
-                    text = "과제 결과",
-                    onClick = onViewResults,
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
-                )
-
-                VTButton(
-                    text = "과제 편집",
-                    onClick = onEdit,
-                    variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+//            Spacer(modifier = Modifier.height(12.dp))
+//
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.spacedBy(8.dp)
+//            ) {
+//                VTButton(
+//                    text = "과제 결과",
+//                    onClick = onViewResults,
+//                    variant = ButtonVariant.Primary,
+//                    size = ButtonSize.Small,
+//                    modifier = Modifier.weight(1f)
+//                )
+//
+//                VTButton(
+//                    text = "과제 편집",
+//                    onClick = onEdit,
+//                    variant = ButtonVariant.Outline,
+//                    size = ButtonSize.Small,
+//                    modifier = Modifier.weight(1f)
+//                )
+//            }
         }
     }
 }
