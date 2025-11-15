@@ -232,7 +232,9 @@ data class PersonalAssignmentQuestion(
     @SerializedName("explanation")
     val explanation: String,
     @SerializedName("difficulty")
-    val difficulty: String
+    val difficulty: String,
+    @SerializedName("is_processing")
+    val isProcessing: Boolean = false,
 )
 
 data class PersonalAssignmentStatistics(

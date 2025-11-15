@@ -157,7 +157,11 @@ class AssignmentViewModel @Inject constructor(
     
     private val _assignmentStatistics = MutableStateFlow<AssignmentStatistics?>(null)
     val assignmentStatistics: StateFlow<AssignmentStatistics?> = _assignmentStatistics.asStateFlow()
-    
+
+    private val _isProcessing = MutableStateFlow(false)
+    val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
+
+
     fun setSelectedAssignmentIds(assignmentId: Int, personalAssignmentId: Int?) {
         _selectedAssignmentId.value = assignmentId
         _selectedPersonalAssignmentId.value = personalAssignmentId
@@ -1436,10 +1440,17 @@ class AssignmentViewModel @Inject constructor(
                 assignmentRepository.getNextQuestion(personalAssignmentId)
                     .onSuccess { question ->
                         println("AssignmentViewModel - SUCCESS: Received question: ${question.question}")
-                        // 단일 질문을 리스트로 변환하여 저장
-                        _personalAssignmentQuestions.value = listOf(question)
-                        _currentQuestionIndex.value = 0
-                        println("AssignmentViewModel - Successfully loaded next question: ${question.question}")
+
+                        _isProcessing.value = question.isProcessing
+                        if (question.isProcessing) {
+                            // 채점 중인 경우: 질문 리스트는 건드리지 않고 상태만 업데이트해도 됨
+                            println("AssignmentViewModel - Question is still processing")
+                        } else {
+                            // 단일 질문을 리스트로 변환하여 저장
+                            _personalAssignmentQuestions.value = listOf(question)
+                            _currentQuestionIndex.value = 0
+                            println("AssignmentViewModel - Successfully loaded next question: ${question.question}")
+                        }
                     }
                     .onFailure { exception ->
                         println("AssignmentViewModel - FAILURE: ${exception.message}")
@@ -1482,7 +1493,26 @@ class AssignmentViewModel @Inject constructor(
             }
         }
     }
-    
+    fun refreshProcessingStatus(personalAssignmentId: Int) {
+        viewModelScope.launch {
+            println("AssignmentViewModel - refreshProcessingStatus CALLED for personalAssignmentId: $personalAssignmentId")
+            assignmentRepository.getNextQuestion(personalAssignmentId)
+                .onSuccess { question ->
+                    _isProcessing.value = question.isProcessing
+                    println("AssignmentViewModel - refreshProcessingStatus: isProcessing=${question.isProcessing}")
+
+                    // 처리 완료된 경우에만 다음 질문 세팅
+                    if (!question.isProcessing) {
+                        _personalAssignmentQuestions.value = listOf(question)
+                        _currentQuestionIndex.value = 0
+                    }
+                }
+                .onFailure { e ->
+                    println("AssignmentViewModel - Failed to refresh processing status: ${e.message}")
+                    // 에러라고 해서 isProcessing을 무조건 false로 내릴지 여부는 상황에 따라 선택
+                }
+        }
+    }
     fun loadPersonalAssignmentStatistics(personalAssignmentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
