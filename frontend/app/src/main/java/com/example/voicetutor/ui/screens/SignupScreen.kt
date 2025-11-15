@@ -21,8 +21,11 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.utils.TutorialPreferences
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -87,6 +90,21 @@ fun SignupScreen(
 
     LaunchedEffect(error) {
         error?.let { }
+    }
+    
+    // 회원가입 성공 시 새 사용자 플래그 설정
+    val context = LocalContext.current
+    val tutorialPrefs = remember { TutorialPreferences(context) }
+    val isLoggedIn by viewModelAuth.isLoggedIn.collectAsStateWithLifecycle()
+    
+    LaunchedEffect(isLoggedIn, currentUser) {
+        // 회원가입 화면에서 회원가입 성공 후 로그인 상태가 되고 사용자 정보가 설정된 경우
+        // (회원가입 성공 시 자동으로 로그인되므로)
+        if (isLoggedIn && currentUser != null) {
+            // 새로 가입한 사용자로 표시
+            tutorialPrefs.setNewUser()
+            println("SignupScreen - New user flag set for: ${currentUser?.email}")
+        }
     }
 
     Box(

@@ -16,6 +16,7 @@ class TutorialPreferences(context: Context) {
         private const val PREFS_NAME = "tutorial_preferences"
         private const val KEY_TEACHER_TUTORIAL_COMPLETED = "teacher_tutorial_completed"
         private const val KEY_STUDENT_TUTORIAL_COMPLETED = "student_tutorial_completed"
+        private const val KEY_IS_NEW_USER = "is_new_user"
     }
     
     /**
@@ -47,12 +48,34 @@ class TutorialPreferences(context: Context) {
     }
     
     /**
+     * 새로 가입한 사용자로 표시 (회원가입 성공 시 호출)
+     */
+    fun setNewUser() {
+        prefs.edit().putBoolean(KEY_IS_NEW_USER, true).apply()
+    }
+    
+    /**
+     * 새로 가입한 사용자인지 확인
+     */
+    fun isNewUser(): Boolean {
+        return prefs.getBoolean(KEY_IS_NEW_USER, false)
+    }
+    
+    /**
+     * 새로 가입한 사용자 플래그 제거 (튜토리얼 완료 시 호출)
+     */
+    fun clearNewUserFlag() {
+        prefs.edit().putBoolean(KEY_IS_NEW_USER, false).apply()
+    }
+    
+    /**
      * 모든 튜토리얼 초기화 (개발/테스트용)
      */
     fun resetAllTutorials() {
         prefs.edit()
             .putBoolean(KEY_TEACHER_TUTORIAL_COMPLETED, false)
             .putBoolean(KEY_STUDENT_TUTORIAL_COMPLETED, false)
+            .putBoolean(KEY_IS_NEW_USER, false)
             .apply()
     }
 }

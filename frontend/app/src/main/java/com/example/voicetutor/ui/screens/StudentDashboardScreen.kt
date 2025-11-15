@@ -55,19 +55,12 @@ fun StudentDashboardScreen(
     val tutorialPrefs = remember { TutorialPreferences(context) }
     var showTutorial by remember { mutableStateOf(false) }
     
-    // 테스트용: 항상 튜토리얼 표시
+    // 새로 회원가입한 사용자에게만 튜토리얼 표시
     LaunchedEffect(currentUser) {
-        if (currentUser != null) {
+        if (currentUser != null && tutorialPrefs.isNewUser() && !tutorialPrefs.isStudentTutorialCompleted()) {
             showTutorial = true
         }
     }
-    
-    // 실제 배포시 사용할 코드 (현재 주석 처리)
-    // LaunchedEffect(currentUser) {
-    //     if (currentUser != null && !tutorialPrefs.isStudentTutorialCompleted()) {
-    //         showTutorial = true
-    //     }
-    // }
     
     LaunchedEffect(assignments) {
         println("StudentDashboard - currentUser: ${currentUser?.email}, id: ${currentUser?.id}, role: ${currentUser?.role}")
@@ -112,10 +105,12 @@ fun StudentDashboardScreen(
             pages = StudentOnboardingData.studentOnboardingPages,
             onComplete = {
                 tutorialPrefs.setStudentTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
                 showTutorial = false
             },
             onSkip = {
                 tutorialPrefs.setStudentTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
                 showTutorial = false
             }
         )

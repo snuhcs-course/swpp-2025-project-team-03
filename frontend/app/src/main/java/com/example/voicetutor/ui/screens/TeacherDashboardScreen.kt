@@ -61,19 +61,12 @@ fun TeacherDashboardScreen(
     val tutorialPrefs = remember { TutorialPreferences(context) }
     var showTutorial by remember { mutableStateOf(false) }
     
-    // 테스트용: 항상 튜토리얼 표시
+    // 새로 회원가입한 사용자에게만 튜토리얼 표시
     LaunchedEffect(currentUser) {
-        if (currentUser != null) {
+        if (currentUser != null && tutorialPrefs.isNewUser() && !tutorialPrefs.isTeacherTutorialCompleted()) {
             showTutorial = true
         }
     }
-    
-    // 실제 배포시 사용할 코드 (현재 주석 처리)
-    // LaunchedEffect(currentUser) {
-    //     if (currentUser != null && !tutorialPrefs.isTeacherTutorialCompleted()) {
-    //         showTutorial = true
-    //     }
-    // }
     
     // Compute actual teacher ID
     val actualTeacherId = teacherId ?: currentUser?.id?.toString()
@@ -167,10 +160,12 @@ fun TeacherDashboardScreen(
             pages = TeacherOnboardingData.teacherOnboardingPages,
             onComplete = {
                 tutorialPrefs.setTeacherTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
                 showTutorial = false
             },
             onSkip = {
                 tutorialPrefs.setTeacherTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
                 showTutorial = false
             }
         )
