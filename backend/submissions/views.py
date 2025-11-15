@@ -225,11 +225,49 @@ class AnswerSubmitView(APIView):
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
+            processing_answer = (
+                Answer.objects.filter(
+                    question__in=questions,
+                    student=personal_assignment.student,
+                    state=Answer.State.PROCESSING,  # 새로 추가한 state
+                )
+                .select_related("question")
+                .first()
+            )
+            if processing_answer:
+                q = processing_answer.question
+
+                # number 표기 (1 또는 1-1 형태)
+                if q.recalled_num == 0:
+                    number_str = f"{q.number}"
+                else:
+                    number_str = f"{q.number}-{q.recalled_num}"
+
+                question_data = {
+                    "id": q.id,
+                    "number": number_str,
+                    "question": q.content,
+                    "answer": q.model_answer,
+                    "explanation": q.explanation,
+                    "difficulty": q.difficulty,
+                    # [추가 포인트] 프론트가 인지할 수 있는 플래그
+                    "is_processing": True,
+                }
+
+                logger.info(
+                    f"[AnswerSubmitView GET] PROCESSING 상태 Answer 발견: question_id={q.id}, number={number_str}"
+                )
+
+                return create_api_response(
+                    data=question_data,
+                    message="현재 채점 중인 문제가 있습니다.",
+                    status_code=status.HTTP_200_OK,
+                )
             # 최적화: 한 번의 쿼리로 모든 답변 정보 가져오기
             answered_question_ids = set(
-                Answer.objects.filter(question__in=questions, student=personal_assignment.student).values_list(
-                    "question_id", flat=True
-                )
+                Answer.objects.filter(question__in=questions, student=personal_assignment.student)
+                .exclude(state=Answer.State.PROCESSING)
+                .values_list("question_id", flat=True)
             )
 
             # number별로 그룹화하여 처리
@@ -371,6 +409,9 @@ class AnswerSubmitView(APIView):
         Step 1: multipart/form-data로 .wav 파일을 받아서 STT 변환 및 Feature 추출
         - extract_all_features() 함수 사용 (STT + 음향 특징 + 스크립트 특징 + 의미론적 특징)
         """
+
+        answer = None
+
         try:
             # Step 1-1: 요청 데이터 검증
             student_id = request.data.get("studentId")
@@ -431,7 +472,18 @@ class AnswerSubmitView(APIView):
                     message=f"ID가 {question_id}인 문제를 찾을 수 없습니다.",
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
-
+            answer, _ = Answer.objects.update_or_create(
+                question=question,
+                student=student,
+                defaults={
+                    "state": Answer.State.PROCESSING,
+                    "text_answer": "",
+                    "eval_grade": None,
+                    "started_at": timezone.now(),  # 임시값, 나중에 audio_duration 기반으로 덮어씀
+                    "submitted_at": None,
+                },
+            )
+            logger.info(f"[AnswerSubmitView] Answer를 PROCESSING 상태로 설정 - id={answer.id}")
             # 임시 파일 생성 (extract_all_features 함수용)
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
                 # 업로드된 파일 내용을 임시 파일에 쓰기
@@ -459,6 +511,15 @@ class AnswerSubmitView(APIView):
                 # STT 결과 (transcript) 확인
                 transcript = features.get("script", "")
                 if not transcript or transcript.strip() == "":
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] STT 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                            answer = None
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] STT 실패 시 Answer 삭제 중 에러: {del_err}", exc_info=True
+                            )
                     return create_api_response(
                         success=False,
                         error="STT failed",
@@ -482,6 +543,15 @@ class AnswerSubmitView(APIView):
                     logger.info(f"[AnswerSubmitView] ML 추론 완료 - Confidence: {confidence_score}")
                 except Exception as inf_error:
                     logger.error(f"[AnswerSubmitView] ML 추론 실패: {inf_error}", exc_info=True)
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] Inference 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                            answer = None
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] Inference 실패 시 Answer 삭제 중 에러: {del_err}", exc_info=True
+                            )
                     return create_api_response(
                         success=False,
                         error="Inference failed",
@@ -508,6 +578,15 @@ class AnswerSubmitView(APIView):
                     logger.info(f"[AnswerSubmitView] Tail Question 생성 완료 - Plan: {tail_payload.get('plan')}")
                 except Exception as tail_error:
                     logger.error(f"[AnswerSubmitView] Tail Question 생성 실패: {tail_error}", exc_info=True)
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] Tail 생성 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                            answer = None
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] Tail 실패 시 Answer 삭제 중 에러: {del_err}", exc_info=True
+                            )
                     return create_api_response(
                         success=False,
                         error="Tail question generation failed",
@@ -553,22 +632,23 @@ class AnswerSubmitView(APIView):
                     )
 
                     # Answer 생성 또는 업데이트
-                    answer, created = Answer.objects.update_or_create(
-                        question=question,
-                        student=student,
-                        defaults={
-                            "text_answer": transcript,
-                            "state": answer_state,
-                            "eval_grade": confidence_score,
-                            "started_at": started_at,
-                            "submitted_at": timezone.now(),
-                        },
-                    )
+                    answer.text_answer = transcript
+                    answer.eval_grade = confidence_score
+                    answer.started_at = started_at
+                    answer.submitted_at = timezone.now()
 
-                    action = "생성" if created else "업데이트"
-                    logger.info(f"[AnswerSubmitView] Answer 레코드 {action} 완료 - Answer ID: {answer.id}")
+                    logger.info(f"[AnswerSubmitView] Answer 레코드 생성 완료 - Answer ID: {answer.id}")
                 except Exception as answer_error:
                     logger.error(f"[AnswerSubmitView] Answer 레코드 생성 실패: {answer_error}", exc_info=True)
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] Answer 생성 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] Answer 생성 실패 시 Answer 삭제 중 에러: {del_err}",
+                                exc_info=True,
+                            )
                     return create_api_response(
                         success=False,
                         error="Answer creation failed",
@@ -615,7 +695,6 @@ class AnswerSubmitView(APIView):
                                     recalled_num=recalled_time,
                                     base_question=question,  # 원본 질문 연결
                                 )
-
                                 logger.info(
                                     f"[AnswerSubmitView] Tail Question 객체 생성 완료 - Question ID: {tail_question_obj.id}"
                                 )
@@ -644,7 +723,8 @@ class AnswerSubmitView(APIView):
                         logger.info(
                             f"[AnswerSubmitView] PersonalAssignment 상태를 SUBMITTED로 변경 - ID: {personal_assignment.id}"
                         )
-
+                answer.state = answer_state
+                answer.save()
                 # Step 6: 응답 데이터 준비
                 # TailQuestionSerializer 사용
                 if tail_question_obj:
@@ -690,7 +770,13 @@ class AnswerSubmitView(APIView):
 
         except Exception as e:
             logger.error(f"[AnswerSubmitView] {e}", exc_info=True)
-
+            if answer and answer.state == Answer.State.PROCESSING:
+                answer.delete()
+                logger.info(
+                    f"[AnswerSubmitView] 전역 예외 발생으로 PROCESSING Answer 삭제 - "
+                    f"question_id={getattr(answer, 'question_id', None)}, "
+                    f"student_id={getattr(answer, 'student_id', None)}"
+                )
             return create_api_response(
                 success=False,
                 error=str(e),
