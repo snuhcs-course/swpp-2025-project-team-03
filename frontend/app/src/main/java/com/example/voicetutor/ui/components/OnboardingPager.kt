@@ -191,20 +191,13 @@ private fun OnboardingPageContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .background(Color.Black)
     ) {
-        Spacer(modifier = Modifier.weight(0.1f))
-        
-        // 이미지 또는 아이콘
+        // 이미지 또는 아이콘 - 위쪽에 크게 배치
         Box(
             modifier = Modifier
-                .fillMaxWidth()
                 .weight(1f)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
-                .padding(4.dp),
+                .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             if (page.icon != null) {
@@ -219,14 +212,25 @@ private fun OnboardingPageContent(
                     painter = painterResource(id = page.imageRes),
                     contentDescription = page.title,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Crop
                 )
             }
         }
         
-        // 제목과 설명
+        // 제목과 설명 - 아래쪽에 별도로 배치
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            PrimaryIndigo.copy(alpha = 0.1f),
+                            PrimaryPurple.copy(alpha = 0.1f),
+                            LightBlue.copy(alpha = 0.1f)
+                        )
+                    )
+                )
+                .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 제목
@@ -249,8 +253,6 @@ private fun OnboardingPageContent(
                 lineHeight = 24.sp
             )
         }
-        
-        Spacer(modifier = Modifier.weight(0.1f))
     }
 }
 

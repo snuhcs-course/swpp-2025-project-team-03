@@ -20,8 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.voicetutor.data.models.AssignmentFilter
 import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.ui.components.*
@@ -66,10 +69,32 @@ fun TeacherDashboardScreen(
     val tutorialPrefs = remember { TutorialPreferences(context) }
     var showTutorial by remember { mutableStateOf(false) }
     
-    // 새로 회원가입한 사용자에게만 튜토리얼 표시
+    // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
     LaunchedEffect(currentUser) {
-        if (currentUser != null && tutorialPrefs.isNewUser() && !tutorialPrefs.isTeacherTutorialCompleted()) {
-            showTutorial = true
+        if (currentUser != null) {
+            val isNewUser = tutorialPrefs.isNewUser()
+            
+            // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
+            if (isNewUser) {
+                showTutorial = true
+            }
+        }
+    }
+    
+    // 화면이 다시 포커스될 때 튜토리얼 상태 재확인 (설정에서 초기화 후 돌아올 때)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, currentUser) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && currentUser != null && !showTutorial) {
+                val isNewUser = tutorialPrefs.isNewUser()
+                if (isNewUser) {
+                    showTutorial = true
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
     
@@ -82,40 +107,22 @@ fun TeacherDashboardScreen(
         kotlinx.coroutines.delay(100)
     }
     
-    LaunchedEffect(assignments.size) {
-        println("TeacherDashboard - Assignments changed: ${assignments.size}")
-        assignments.forEach { 
-            println("  - ${it.title} (${it.courseClass.subject.name})")
-        }
-    }
-    
     // 강제 새로고침 처리 (과제 생성 후 등)
     LaunchedEffect(refreshTimestamp, actualTeacherId) {
-        println("TeacherDashboard - LaunchedEffect triggered with refreshTimestamp: $refreshTimestamp")
-        println("TeacherDashboard - actualTeacherId: $actualTeacherId")
-        
         if (refreshTimestamp > 0L && actualTeacherId != null) {
-            println("TeacherDashboard - ✅ Force refreshing data (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
             dashboardViewModel.loadDashboardData(actualTeacherId)
             studentViewModel.loadAllStudents(teacherId = actualTeacherId)
-        } else {
-            println("TeacherDashboard - ❌ Skipping refresh (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
         }
     }
     
     LaunchedEffect(actualTeacherId) {
         if (actualTeacherId == null) {
-            println("TeacherDashboard - ⚠️ Waiting for user to be loaded...")
             return@LaunchedEffect
         }
         
-        println("TeacherDashboard - ✅ Initial loading data for teacher ID: $actualTeacherId")
-        println("TeacherDashboard - Current user ID: ${currentUser?.id}, email: ${currentUser?.email}")
-        
         // 항상 해당 선생님의 과제만 가져오도록 teacherId 필수로 전달
         // 로그인 시 받은 assignments는 무시하고 항상 API로 최신 데이터 가져오기
-        println("TeacherDashboard - Calling loadAllAssignments with teacherId=$actualTeacherId")
         actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
         dashboardViewModel.loadDashboardData(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
@@ -129,15 +136,6 @@ fun TeacherDashboardScreen(
                 AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
             }
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
-        }
-    }
-    
-    LaunchedEffect(assignments) {
-        val user = currentUser
-        println("TeacherDashboard - Assignments state updated: ${assignments.size} assignments")
-        println("TeacherDashboard - Current user ID: ${user?.id}, email: ${user?.email}")
-        assignments.forEach { 
-            println("  - ${it.title} (${it.courseClass.subject.name}) - teacher: ${it.courseClass.teacherName}")
         }
     }
     

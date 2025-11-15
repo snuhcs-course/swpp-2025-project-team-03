@@ -11,8 +11,8 @@ import com.example.voicetutor.ui.components.OnboardingPage
  * 7단계 온보딩:
  * 1. Teacher Home Dashboard 화면
  * 2. 수업 관리(클래스 목록) 화면
- * 3. 수업별 과제 목록 화면
- * 4. 개별 과제 상세 화면
+ * 3. 과제 생성 화면
+ * 4. 수업별 과제 목록 화면
  * 5. 과제 결과 화면 (학생별 결과)
  * 6. 학생 관리 화면
  * 7. 성취기준 리포트 화면
@@ -35,16 +35,16 @@ object TeacherOnboardingData {
         ),
         
         OnboardingPage(
-            title = "수업별 과제 진행 상황을 확인해요",
-            description = "내 수업의 모든 과제의 제출률과 평균 점수를 볼 수 있어요.\n.",
-            imageRes = R.drawable.teacherclassassignment,
+            title = "각 수업에 배당할 과제를 생성해요",
+            description = "과제 제목, 반 선택, 학년, 과목, 설명, 마감일을 설정하여\n새로운 과제를 만들고 수업에 배당할 수 있어요.",
+            imageRes = R.drawable.assignmentcreate,
             icon = null
         ),
         
         OnboardingPage(
-            title = "개별 과제의 핵심 정보를 모아서 봐요",
-            description = "과제 제목, 설명, 제출률과 평균 점수를 확인하고\n필요하면 과제 내용을 수정하거나 결과 화면으로 이동할 수 있어요.",
-            imageRes = R.drawable.teacherassignmentspecific,
+            title = "수업별 과제 진행 상황을 확인해요",
+            description = "내 수업의 모든 과제의 제출률과 평균 점수를 볼 수 있어요.\n.",
+            imageRes = R.drawable.teacherclassassignment,
             icon = null
         ),
         

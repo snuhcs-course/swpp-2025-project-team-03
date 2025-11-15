@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.data.models.UserRole
+import com.example.voicetutor.utils.TutorialPreferences
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.navigation.VoiceTutorScreens
 import com.example.voicetutor.ui.theme.*
@@ -415,7 +416,7 @@ fun SettingsScreen(
             },
             text = {
                 Text(
-                    text = "튜토리얼을 초기화하면 다음 로그인 시 다시 볼 수 있습니다.\n계속하시겠습니까?",
+                    text = "튜토리얼을 초기화하면 다음 로그인 시 다시 볼 수 있습니다. 계속하시겠습니까?",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },

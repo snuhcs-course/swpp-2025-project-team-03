@@ -98,9 +98,7 @@ fun SignupScreen(
         }
     }
 
-    LaunchedEffect(error) {
-        error?.let { }
-    }
+    // Error handling은 signupError를 통해 처리됨
     
     // 회원가입 성공 시 새 사용자 플래그 설정
     val context = LocalContext.current
