@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.models.TeacherOnboardingData
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.utils.TutorialPreferences
 
@@ -160,16 +161,17 @@ fun TeacherDashboardScreen(
         }
     }
     
-    // 인터랙티브 튜토리얼 오버레이
+    // 온보딩 튜토리얼 (7단계)
     if (showTutorial) {
-        InteractiveTutorialOverlay(
-            spots = InteractiveTutorialData.teacherInteractiveTutorialSpots,
+        OnboardingPager(
+            pages = TeacherOnboardingData.teacherOnboardingPages,
             onComplete = {
                 tutorialPrefs.setTeacherTutorialCompleted()
                 showTutorial = false
             },
             onSkip = {
                 tutorialPrefs.setTeacherTutorialCompleted()
+                showTutorial = false
             }
         )
     }
