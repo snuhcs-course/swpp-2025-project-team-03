@@ -34,6 +34,7 @@ class Answer(models.Model):
     class State(models.TextChoices):
         CORRECT = "correct", "Correct"
         INCORRECT = "incorrect", "Incorrect"
+        PROCESSING = "PROCESSING", "Processing"
 
     question = models.ForeignKey("questions.Question", on_delete=models.CASCADE, related_name="answers")
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="answers")
