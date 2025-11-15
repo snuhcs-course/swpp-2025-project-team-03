@@ -103,12 +103,35 @@ WSGI_APPLICATION = "voicetutor.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# 테스트 환경 또는 환경 변수가 없을 때는 SQLite 사용
+# 환경 변수가 모두 설정되어 있을 때만 PostgreSQL 사용
+db_name = os.getenv("DB_NAME")
+db_user = os.getenv("DB_USER")
+db_password = os.getenv("DB_PASSWORD")
+db_host = os.getenv("DB_HOST")
+db_port = os.getenv("DB_PORT")
+
+if db_name and db_user and db_password and db_host:  # pragma: no cover
+    # PostgreSQL 설정이 모두 있으면 PostgreSQL 사용
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_name,
+            "USER": db_user,
+            "PASSWORD": db_password,
+            "HOST": db_host,
+            "PORT": db_port or "5432",
+            "CONN_MAX_AGE": 180,
+        }
     }
-}
+else:
+    # 환경 변수가 없거나 테스트 환경일 때는 SQLite 사용
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
@@ -154,7 +177,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("core.authentication.CookieJWTAuthentication",),
 }
 
 REST_USE_JWT = True
@@ -260,11 +283,6 @@ LOGGING = {
             "propagate": False,
         },
         "questions": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "feedbacks": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,

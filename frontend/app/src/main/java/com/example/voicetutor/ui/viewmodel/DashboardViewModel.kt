@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voicetutor.data.models.DashboardStats
 import com.example.voicetutor.data.repository.DashboardRepository
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +39,7 @@ class DashboardViewModel @Inject constructor(
                     _dashboardStats.value = stats
                 }
                 .onFailure { exception ->
-                    _error.value = exception.message
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
             // Recent activities are not supported by current backend API

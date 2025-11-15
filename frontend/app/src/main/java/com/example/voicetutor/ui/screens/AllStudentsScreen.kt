@@ -1,12 +1,14 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
@@ -34,9 +37,7 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 @Composable
 fun AllStudentsScreen(
     teacherId: String = "1", // 임시로 기본값 설정
-    onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> },  // 리포트용
-    onNavigateToStudentInfo: (String, String) -> Unit = { _, _ -> },  // 학생 상세용
-    onNavigateToMessage: (String) -> Unit = {}
+    onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> }  // 리포트용
 ) {
     val studentViewModel: StudentViewModel = hiltViewModel()
     val classViewModel: ClassViewModel = hiltViewModel()
@@ -47,6 +48,8 @@ fun AllStudentsScreen(
     
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
+    val studentClasses by studentViewModel.studentClasses.collectAsStateWithLifecycle()
+    val loadingStudentClasses by studentViewModel.loadingStudentClasses.collectAsStateWithLifecycle()
     
     var selectedClassId by rememberSaveable(stateSaver = Saver(
         save = { it ?: -1 },
@@ -97,45 +100,8 @@ fun AllStudentsScreen(
     // Calculate stats
     val totalStudents = allStudents.size
     
-    // 학생 통계 데이터 클래스
-    data class StudentStats(
-        val averageScore: Float,
-        val completionRate: Float,
-        val totalAssignments: Int,
-        val completedAssignments: Int
-    )
-    
-    var studentsStatisticsMap by remember { mutableStateOf<Map<Int, StudentStats>>(emptyMap()) }
-    var isLoadingStatistics by remember { mutableStateOf(true) }
-    
-    // Load statistics for selected class
-    LaunchedEffect(selectedClassId) {
-        selectedClassId?.let { classId ->
-            isLoadingStatistics = true
-            classViewModel.loadClassStudentsStatistics(classId) { result ->
-                result.onSuccess { stats ->
-                    studentsStatisticsMap = stats.students.associate { 
-                        it.studentId to StudentStats(
-                            averageScore = it.averageScore,
-                            completionRate = it.completionRate,
-                            totalAssignments = it.totalAssignments,
-                            completedAssignments = it.completedAssignments
-                        )
-                    }
-                    isLoadingStatistics = false
-                }.onFailure {
-                    studentsStatisticsMap = emptyMap()
-                    isLoadingStatistics = false
-                }
-            }
-        } ?: run {
-            isLoadingStatistics = false
-        }
-    }
-    
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -144,33 +110,23 @@ fun AllStudentsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Column {
                     Text(
-                        text = "전체 학생 관리",
+                        text = "성취기준 리포트",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "학생들의 학습 현황을 확인하고 관리하세요",
+                        text = "학생들의 학습 현황을 확인하고 취약 유형을 분석하세요",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                    Text(
-                        text = "총 ${totalStudents}명의 학생",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = Gray600
                     )
                 }
             }
@@ -199,13 +155,19 @@ fun AllStudentsScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("반 선택") },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = Gray800),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                        focusedTextColor = Gray800,
+                        unfocusedTextColor = Gray800,
+                        focusedLabelColor = PrimaryIndigo,
+                        unfocusedLabelColor = Gray600
+                    )
                 )
                 
                 ExposedDropdownMenu(
@@ -285,23 +247,22 @@ fun AllStudentsScreen(
                 }
             }
         } else {
-            items(
+            itemsIndexed(
                 items = allStudents,
-                key = { student -> student.id }  // 각 학생의 고유 ID를 키로 사용
-            ) { student ->
-                val stats = studentsStatisticsMap[student.id]
+                key = { _, student -> student.id }  // 각 학생의 고유 ID를 키로 사용
+            ) { index, student ->
+                val classesForStudent = studentClasses[student.id]
+                val isClassesLoading = loadingStudentClasses.contains(student.id)
+                LaunchedEffect(student.id) {
+                    if (classesForStudent == null && !isClassesLoading) {
+                        studentViewModel.loadStudentClasses(student.id)
+                    }
+                }
+
                 AllStudentsCard(
                     student = student,
-                    averageScore = stats?.averageScore ?: 0f,
-                    completionRate = stats?.completionRate ?: 0f,
-                    totalAssignments = stats?.totalAssignments ?: 0,
-                    completedAssignments = stats?.completedAssignments ?: 0,
-                    isLoadingStats = isLoadingStatistics,
-                    onStudentClick = { 
-                        // 학생 상세 페이지로 이동
-                        onNavigateToStudentInfo(student.id.toString(), student.name)
-                    },
-                    onMessageClick = { onNavigateToMessage(student.name) },
+                    classNames = classesForStudent?.map { it.name } ?: emptyList(),
+                    isLoadingClasses = classesForStudent == null || isClassesLoading,
                     onReportClick = {
                         // 리포트 페이지로 이동
                         val classId = selectedClassId ?: 0
@@ -316,45 +277,44 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
-    averageScore: Float,  // 사용하지 않지만 호환성을 위해 유지
-    completionRate: Float,
-    totalAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
-    completedAssignments: Int,  // 사용하지 않지만 호환성을 위해 유지
-    isLoadingStats: Boolean,
-    onStudentClick: () -> Unit,
-    onMessageClick: () -> Unit,
-    onReportClick: () -> Unit = onStudentClick
+    classNames: List<String>,
+    isLoadingClasses: Boolean,
+    onReportClick: () -> Unit
 ) {
-    VTCard(
-        variant = CardVariant.Elevated,
-        onClick = onStudentClick
+    VTCard2(
+        modifier = Modifier.fillMaxWidth(),
+        variant = CardVariant.Elevated
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Student info header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(PrimaryIndigo.copy(alpha = 0.1f)),
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryIndigo.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = student.name.first().toString(),
+                        text = student.name.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
                         color = PrimaryIndigo,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
                         text = student.name,
                         style = MaterialTheme.typography.titleSmall,
@@ -366,63 +326,61 @@ fun AllStudentsCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
-                    Text(
-                        text = "학생", // 클래스 정보가 없으므로 기본값
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "반: ",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = Gray600
+                )
+                when {
+                    isLoadingClasses -> Text(
+                        text = "불러오는 중...",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray500
                     )
+                    classNames.isEmpty() -> Text(
+                        text = "배정된 반이 없습니다",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray500
+                    )
+                    else -> classNames.forEachIndexed { index, name ->
+                        if (index > 0) {
+                            Text(
+                                text = ", ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Gray500
+                            )
+                        }
+                        Text(
+                            text = "$name",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray700
+                        )
+                    }
                 }
-                
             }
-            
-            // Progress bar - 과제 진행률 표시
-            Column {
-                Spacer(modifier = Modifier.height(4.dp))
-                VTProgressBar(
-                    progress = (completionRate / 100f).coerceIn(0f, 1f),
-                    showPercentage = true
-                )
-            }
-            
-            // Action buttons
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 리포트 버튼 (좌측 하단)
-                Box(
-                    modifier = Modifier.widthIn(max = 244.dp)
-                ) {
-                    VTButton(
-                        text = "리포트 보기",
-                        onClick = {
-                            onReportClick()
-                        },
-                        variant = ButtonVariant.Outline,
-                        modifier = Modifier.fillMaxWidth(),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Assessment,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // 메시지 버튼 (우측)
-                IconButton(
-                    onClick = onMessageClick
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Message,
-                        contentDescription = "메시지 보내기",
-                        tint = PrimaryIndigo
-                    )
-                }
+                VTButton(
+                    text = "리포트 보기",
+                    onClick = onReportClick,
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Medium,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

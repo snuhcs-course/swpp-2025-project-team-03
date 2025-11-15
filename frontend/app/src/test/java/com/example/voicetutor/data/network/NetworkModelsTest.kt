@@ -233,27 +233,24 @@ class NetworkModelsTest {
     @Test
     fun updateAssignmentRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val questions = listOf(
-            QuestionData(id = 1, question = "Q1", type = "SHORT_ANSWER", options = null, correctAnswer = "A1")
-        )
         val request = UpdateAssignmentRequest(
             title = "Updated",
-            subject = "Math",
-            classId = 1,
-            dueDate = "2025-12-31",
-            type = "QUIZ",
             description = "New description",
-            questions = questions
+            totalQuestions = 10,
+            visibleFrom = "2025-01-01T00:00:00Z",
+            dueAt = "2025-12-31T00:00:00Z",
+            grade = "A",
+            subject = SubjectUpdateRequest(id = 2, name = "Math", code = "MATH")
         )
 
         // Assert
         assertEquals("Updated", request.title)
-        assertEquals("Math", request.subject)
-        assertEquals(1, request.classId)
-        assertEquals("2025-12-31", request.dueDate)
-        assertEquals("QUIZ", request.type)
         assertEquals("New description", request.description)
-        assertEquals(1, request.questions?.size)
+        assertEquals(10, request.totalQuestions)
+        assertEquals("2025-01-01T00:00:00Z", request.visibleFrom)
+        assertEquals("2025-12-31T00:00:00Z", request.dueAt)
+        assertEquals("A", request.grade)
+        assertEquals(2, request.subject?.id)
     }
 
     @Test
@@ -261,19 +258,22 @@ class NetworkModelsTest {
         // Arrange
         val request = UpdateAssignmentRequest(
             title = null,
-            subject = null,
-            classId = null,
-            dueDate = null,
-            type = null,
             description = null,
-            questions = null
+            totalQuestions = null,
+            visibleFrom = null,
+            dueAt = null,
+            grade = null,
+            subject = null
         )
 
         // Assert
         assertNull(request.title)
+        assertNull(request.description)
+        assertNull(request.totalQuestions)
+        assertNull(request.visibleFrom)
+        assertNull(request.dueAt)
+        assertNull(request.grade)
         assertNull(request.subject)
-        assertNull(request.classId)
-        assertNull(request.questions)
     }
 
     @Test

@@ -2,8 +2,8 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -11,8 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,10 +30,8 @@ fun StudentDashboardScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
-    onNavigateToAllAssignments: (Int) -> Unit = {},
-    onNavigateToCompletedAssignments: (Int) -> Unit = {},
-    onNavigateToAllStudentAssignments: (Int) -> Unit = {},
     onNavigateToProgressReport: () -> Unit = {},
+    onNavigateToAssignment: (String) -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {}
 ) {
     val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
@@ -62,6 +58,54 @@ fun StudentDashboardScreen(
         }
     }
     
+    // 필터 상태 추가
+    var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
+
+    // 질문이 생성된 과제만 필터링 + 선택된 필터 적용
+    val validAssignments = remember(assignments, selectedFilter) {
+        val filtered = assignments.filter {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus != null &&
+            it.personalAssignmentId != null
+        }
+
+        when (selectedFilter) {
+            PersonalAssignmentFilter.ALL -> filtered
+            PersonalAssignmentFilter.NOT_STARTED -> filtered.filter {
+                it.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED
+            }
+            PersonalAssignmentFilter.IN_PROGRESS -> filtered.filter {
+                it.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS
+            }
+            else -> filtered
+        }
+    }
+
+    // 각 상태별 개수 계산
+    val allAssignmentsCount = remember(assignments) {
+        assignments.count {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus != null &&
+            it.personalAssignmentId != null
+        }
+    }
+
+    val notStartedCount = remember(assignments) {
+        assignments.count {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus == PersonalAssignmentStatus.NOT_STARTED &&
+            it.personalAssignmentId != null
+        }
+    }
+
+    val inProgressCount = remember(assignments) {
+        assignments.count {
+            it.totalQuestions > 0 &&
+            it.personalAssignmentStatus == PersonalAssignmentStatus.IN_PROGRESS &&
+            it.personalAssignmentId != null
+        }
+    }
+
     LaunchedEffect(assignments) {
         println("StudentDashboard - currentUser: ${currentUser?.email}, id: ${currentUser?.id}, role: ${currentUser?.role}")
         println("StudentDashboard - assignments from ViewModel: ${assignments.size}")
@@ -116,155 +160,161 @@ fun StudentDashboardScreen(
         )
     }
     
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            // Welcome section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
-                    )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
-            ) {
+        // Welcome section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                Text(
+                    text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600
+                )
+            }
+        }
+        
+        // My assignments
+        Column {
                 Column {
                     Text(
-                        text = currentUser?.welcomeMessage ?: "안녕하세요, ${studentName}님!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        text = "나에게 할당된 과제",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = currentUser?.subMessage ?: "오늘도 VoiceTutor와 함께 학습을 시작해볼까요?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        text = "진행 중인 과제와 새로 배정된 과제를 확인해보세요",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
                     )
                 }
-            }
-        }
-        
-        item {
-            // Progress overview
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "완료 현황",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "이번 주 과제 완료 현황을 확인해보세요",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                    
-                    VTButton(
-                        text = "전체 보기",
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                // 전체 과제 보기 (AllStudentAssignments)
-                                onNavigateToAllStudentAssignments(studentId)
-                            }
-                        },
-                        variant = ButtonVariant.Ghost,
-                        size = ButtonSize.Small
-                    )
-                }
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
+                // Filter tabs
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    VTStatsCard(
-                        title = "남은 과제",
-                        value = studentStats?.totalAssignments?.toString() ?: "0",
-                        icon = Icons.Filled.List,
-                        iconColor = PrimaryIndigo,
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                // PendingAssignmentsScreen으로 네비게이트
-                                onNavigateToAllAssignments(studentId)
+                    FilterChip(
+                        selected = selectedFilter == PersonalAssignmentFilter.ALL,
+                        onClick = { selectedFilter = PersonalAssignmentFilter.ALL },
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("전체")
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = PrimaryIndigo,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$allAssignmentsCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.List,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     )
-                    
-                    VTStatsCard(
-                        title = "완료한 과제",
-                        value = studentStats?.completedAssignments?.toString() ?: "0",
-                        icon = Icons.Filled.Done,
-                        iconColor = Success,
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                onNavigateToCompletedAssignments(studentId)
+
+                    FilterChip(
+                        selected = selectedFilter == PersonalAssignmentFilter.NOT_STARTED,
+                        onClick = { selectedFilter = PersonalAssignmentFilter.NOT_STARTED },
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("시작 안함")
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = PrimaryIndigo,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$notStartedCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
-                        },
-                        modifier = Modifier.weight(1f)
+                        }
                     )
-                }
-            }
-        }
-        
-        item {
-            // My assignments
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "나에게 할당된 과제",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "진행 중인 과제와 새로 배정된 과제를 확인해보세요",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                    
-                    VTButton(
-                        text = "전체 보기",
-                        onClick = { 
-                            currentUser?.id?.let { studentId ->
-                                // 전체 과제 보기 (PendingAssignments - 해야 할 과제)
-                                onNavigateToAllAssignments(studentId)
+
+                    FilterChip(
+                        selected = selectedFilter == PersonalAssignmentFilter.IN_PROGRESS,
+                        onClick = { selectedFilter = PersonalAssignmentFilter.IN_PROGRESS },
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("진행 중")
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = PrimaryIndigo,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$inProgressCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
-                        },
-                        variant = ButtonVariant.Ghost,
-                        size = ButtonSize.Small
+                        }
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Student assignments from API
-                if (isLoading) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Student assignments from API
+            if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -273,7 +323,7 @@ fun StudentDashboardScreen(
                             color = PrimaryIndigo
                         )
                     }
-                } else if (assignments.isEmpty()) {
+                } else if (validAssignments.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -296,7 +346,7 @@ fun StudentDashboardScreen(
                         }
                     }
                 } else {
-                    assignments.forEachIndexed { index, assignment ->
+                    validAssignments.forEachIndexed { index, assignment ->
                         // Personal assignment의 진행률 계산: solvedNum / totalQuestions
                         // solvedNum은 기본 질문에 답변한 개수 (꼬리 질문 제외)
                         val progress = if (assignment.totalQuestions > 0 && assignment.solvedNum != null) {
@@ -309,11 +359,13 @@ fun StudentDashboardScreen(
                         StudentAssignmentCard(
                             title = assignment.title,
                             subject = assignment.courseClass.subject.name,
+                            className = assignment.courseClass.name,
                             dueDate = formatDueDate(assignment.dueAt),
                             progress = progress,
                             solvedNum = assignment.solvedNum ?: 0,
                             totalQuestions = assignment.totalQuestions,
-                            onClick = { 
+                            status = assignment.personalAssignmentStatus,
+                            onClick = {
                                 // 두 ID를 모두 저장: assignment.id (6) 와 personalAssignmentId (16)
                                 viewModelAssignment.setSelectedAssignmentIds(
                                     assignmentId = assignment.id,
@@ -321,12 +373,16 @@ fun StudentDashboardScreen(
                                 )
                                 val detailId = assignment.personalAssignmentId ?: assignment.id
                                 onNavigateToAssignmentDetail(detailId.toString())
+                            },
+                            onStartAssignment = {
+                                // personalAssignmentId를 사용하여 과제 시작
+                                val personalId = assignment.personalAssignmentId ?: assignment.id
+                                onNavigateToAssignment(personalId.toString())
                             }
                         )
                         
-                        if (index < assignments.size - 1) {
+                        if (index < validAssignments.size - 1) {
                             Spacer(modifier = Modifier.height(8.dp))
-                        }
                     }
                 }
             }
@@ -342,13 +398,18 @@ fun StudentAssignmentCard(
     progress: Float,
     solvedNum: Int = 0,
     totalQuestions: Int = 0,
-    onClick: () -> Unit = {}
+    status: PersonalAssignmentStatus? = null,
+    className: String = "",
+    onClick: () -> Unit = {},
+    onStartAssignment: () -> Unit = {}
 ) {
     VTCard(
         variant = CardVariant.Elevated,
         onClick = onClick
     ) {
-        Column {
+        Column(
+            //modifier = Modifier.padding(8.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -357,56 +418,122 @@ fun StudentAssignmentCard(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = subject,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = PrimaryIndigo,
-                        fontWeight = FontWeight.Medium
-                    )
+                    // Subject and Status Row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // Subject badge
+                        if (subject.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                    .background(PrimaryIndigo.copy(alpha = 0.1f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = subject,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryIndigo,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        // Class name badge
+                        if (className.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                    .background(PrimaryEmerald.copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = className,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryEmerald,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        // Status badge
+                        if (status != null) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                    .background(
+                                        when (status) {
+                                            PersonalAssignmentStatus.NOT_STARTED -> Gray400.copy(alpha = 0.1f)
+                                            PersonalAssignmentStatus.IN_PROGRESS -> Warning.copy(alpha = 0.15f)
+                                            else -> Gray400.copy(alpha = 0.1f)
+                                        }
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = when (status) {
+                                        PersonalAssignmentStatus.NOT_STARTED -> "시작 안함"
+                                        PersonalAssignmentStatus.IN_PROGRESS -> "진행 중"
+                                        else -> ""
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = when (status) {
+                                        PersonalAssignmentStatus.NOT_STARTED -> Gray400
+                                        PersonalAssignmentStatus.IN_PROGRESS -> Warning
+                                        else -> Gray400
+                                    },
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Assignment title
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
                     )
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                        .background(Warning.copy(alpha = 0.15f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    // Due date
                     Text(
-                        text = dueDate,
+                        text = "마감: $dueDate",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Warning,
-                        fontWeight = FontWeight.Bold
+                        color = Gray500
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    // Question count
+                    Text(
+                        text = "$totalQuestions",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryIndigo
+                    )
+                    Text(
+                        text = "문제",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // 진행률 표시 (0%일 때도 표시)
-            if (totalQuestions > 0) {
+
+            // Progress bar
+            if ((status == PersonalAssignmentStatus.IN_PROGRESS || status == PersonalAssignmentStatus.NOT_STARTED) && totalQuestions > 0) {
+                Spacer(modifier = Modifier.height(10.dp))
+
                 VTProgressBar(
                     progress = progress,
                     modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "${solvedNum} / ${totalQuestions} 완료 (${(progress * 100).toInt()}%)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
-                )
-            } else {
-                Text(
-                    text = "진행률 정보 없음",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
                 )
             }
         }

@@ -128,7 +128,12 @@ class ClassStudentsStatisticsSerializer(serializers.Serializer):
     students = StudentStatisticsItemSerializer(many=True)
 
 
-class ClassCompletionRateSerializer(serializers.Serializer):
-    """반의 완료율을 위한 serializer"""
+class ClassInfoSerializer(serializers.ModelSerializer):
+    """학생이 수강 중인 클래스 정보를 위한 serializer"""
 
-    completion_rate = serializers.FloatField()  # 완료율 (0-100)
+    class Meta:
+        model = CourseClass
+        fields = [
+            "id",
+            "name",
+        ]

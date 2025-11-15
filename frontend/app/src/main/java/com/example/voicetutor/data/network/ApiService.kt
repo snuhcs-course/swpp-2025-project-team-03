@@ -22,6 +22,9 @@ interface ApiService {
     @POST("auth/logout/")
     suspend fun logout(): Response<ApiResponse<Unit>>
     
+    @DELETE("auth/account/")
+    suspend fun deleteAccount(): Response<ApiResponse<Unit>>
+    
     // Assignment APIs
     @GET("assignments/")
     suspend fun getAllAssignments(
@@ -42,7 +45,10 @@ interface ApiService {
     @DELETE("assignments/{id}/")
     suspend fun deleteAssignment(@Path("id") id: Int): Response<ApiResponse<Unit>>
     
-    // removed: saveAssignmentDraft, getAssignmentResults
+    @GET("assignments/{id}/results/")
+    suspend fun getAssignmentResult(@Path("id") id: Int): Response<ApiResponse<AssignmentResultData>>
+
+    // removed: saveAssignmentDraft
     
     // Student APIs (Backend: /api/courses/students/)
     @GET("courses/students/")
@@ -112,33 +118,31 @@ interface ApiService {
     @GET("courses/classes/{id}/students/")
     suspend fun getClassStudents(@Path("id") id: Int): Response<ApiResponse<List<Student>>>
     
+    // Student's enrolled classes (Backend: GET /api/courses/students/{id}/classes/)
+    @GET("courses/students/{id}/classes/")
+    suspend fun getStudentClasses(
+        @Path("id") id: Int
+    ): Response<ApiResponse<List<ClassInfo>>>
+    
     // Enroll student to class (Backend: PUT /api/courses/classes/{id}/students/)
     @PUT("courses/classes/{id}/students/")
     suspend fun enrollStudentToClass(
         @Path("id") id: Int,
-        @Query("studentId") studentId: Int? = null,
-        @Query("name") name: String? = null,
-        @Query("email") email: String? = null
+        @Query("studentId") studentId: Int
     ): Response<ApiResponse<EnrollmentData>>
+    
+    // Remove student from class (Backend: DELETE /api/courses/classes/{id}/students/{student_id}/)
+    @DELETE("courses/classes/{id}/students/{student_id}/")
+    suspend fun removeStudentFromClass(
+        @Path("id") id: Int,
+        @Path("student_id") student_id: Int
+    ): Response<ApiResponse<Unit>>
     
     // Class Students Statistics API
     @GET("courses/classes/{classId}/students-statistics/")
     suspend fun getClassStudentsStatistics(
         @Path("classId") classId: Int
     ): Response<ApiResponse<ClassStudentsStatistics>>
-    
-    // Class Completion Rate API
-    @GET("courses/classes/{id}/completion-rate/")
-    suspend fun getClassCompletionRate(
-        @Path("id") id: Int
-    ): Response<ApiResponse<ClassCompletionRate>>
-    
-    // Message APIs (Backend: /api/feedbacks/messages/)
-    @POST("feedbacks/messages/send/")
-    suspend fun sendMessage(@Body request: SendMessageRequest): Response<ApiResponse<SendMessageResponse>>
-    
-    @GET("feedbacks/messages/{classId}/")
-    suspend fun getClassMessages(@Path("classId") classId: Int): Response<ApiResponse<List<MessageData>>>
     
     // Progress Report APIs
     @GET("reports/progress/")
@@ -179,14 +183,6 @@ interface ApiService {
     
     // AI/Quiz APIs removed
     
-    @GET("messages/")
-    suspend fun getMessages(
-        @Query("userId") userId: Int,
-        @Query("messageType") messageType: String? = null,
-        @Query("limit") limit: Int = 50,
-        @Query("offset") offset: Int = 0
-    ): Response<ApiResponse<MessageListResponse>>
-    
 }
 
 // Minimal response model for recent personal assignment lookup
@@ -206,6 +202,7 @@ data class CreateAssignmentRequest(
     val subject: String,
     @SerializedName("class_id") val class_id: Int,
     @SerializedName("due_at") val due_at: String,
+    @SerializedName("visible_from") val visible_from: String? = null,
     val grade: String?,
     val type: String,
     val description: String?,
@@ -247,13 +244,19 @@ data class CreateClassRequest(
 )
 
 data class UpdateAssignmentRequest(
-    val title: String?,
-    val subject: String?,
-    val classId: Int?,
-    val dueDate: String?,
-    val type: String?,
-    val description: String?,
-    val questions: List<QuestionData>?
+    val title: String? = null,
+    val description: String? = null,
+    @SerializedName("total_questions") val totalQuestions: Int? = null,
+    @SerializedName("visible_from") val visibleFrom: String? = null,
+    @SerializedName("due_at") val dueAt: String? = null,
+    val grade: String? = null,
+    val subject: SubjectUpdateRequest? = null
+)
+
+data class SubjectUpdateRequest(
+    val id: Int? = null,
+    val name: String? = null,
+    val code: String? = null
 )
 
 

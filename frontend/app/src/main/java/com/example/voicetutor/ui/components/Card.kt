@@ -119,6 +119,101 @@ fun VTCard(
     }
 }
 
+@Composable
+fun VTCard2(
+    modifier: Modifier = Modifier,
+    variant: CardVariant = CardVariant.Default,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val shape = RoundedCornerShape(20.dp)
+
+    val cardModifier = modifier
+        .fillMaxWidth()
+        .then(
+            when (variant) {
+                CardVariant.Default -> Modifier
+                    .shadow(
+                        elevation = 4.dp,
+                        shape = shape,
+                        ambientColor = Color.Black.copy(alpha = 0.04f),
+                        spotColor = Color.Black.copy(alpha = 0.08f)
+                    )
+                    .background(Color.White, shape)
+
+                CardVariant.Elevated -> Modifier
+                    .shadow(
+                        elevation = 12.dp,
+                        shape = shape,
+                        ambientColor = Color.Black.copy(alpha = 0.06f),
+                        spotColor = Color.Black.copy(alpha = 0.12f)
+                    )
+                    .background(Color.White, shape)
+
+                CardVariant.Outlined -> Modifier
+                    .shadow(
+                        elevation = 2.dp,
+                        shape = shape,
+                        ambientColor = Color.Black.copy(alpha = 0.02f),
+                        spotColor = Color.Black.copy(alpha = 0.04f)
+                    )
+                    .background(Color.White, shape)
+                    .border(
+                        width = 1.dp,
+                        color = Gray50,
+                        shape = shape
+                    )
+
+                CardVariant.Gradient -> Modifier
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = shape,
+                        ambientColor = PrimaryIndigo.copy(alpha = 0.15f),
+                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
+                    )
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                PrimaryIndigo,
+                                LightIndigo
+                            )
+                        ),
+                        shape = shape
+                    )
+
+                CardVariant.Selected -> Modifier
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = shape,
+                        ambientColor = PrimaryIndigo.copy(alpha = 0.1f),
+                        spotColor = PrimaryIndigo.copy(alpha = 0.2f)
+                    )
+                    .background(Color.White, shape)
+                    .border(
+                        width = 2.dp,
+                        color = PrimaryIndigo,
+                        shape = shape
+                    )
+            }
+        )
+        .then(
+            if (onClick != null) {
+                Modifier.clickable { onClick() }
+            } else {
+                Modifier
+            }
+        )
+
+    Box(
+        modifier = cardModifier
+    ) {
+        Column(
+            modifier = Modifier.padding(5.dp),
+            content = content
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun CardPreview() {

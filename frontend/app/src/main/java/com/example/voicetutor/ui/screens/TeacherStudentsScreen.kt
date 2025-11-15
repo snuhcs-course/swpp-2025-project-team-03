@@ -2,6 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,10 +40,7 @@ import kotlinx.coroutines.delay
 fun TeacherStudentsScreen(
     classId: Int? = null,
     teacherId: String? = null,
-    onNavigateToSendMessage: () -> Unit = {},
     onNavigateToStudentDetail: (Int) -> Unit = {},
-    onNavigateToMessage: (Int) -> Unit = {},
-    onNavigateToAttendance: () -> Unit = {},
     navController: androidx.navigation.NavHostController? = null
 ) {
     val viewModel: StudentViewModel = hiltViewModel()
@@ -120,6 +118,15 @@ fun TeacherStudentsScreen(
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     val allStudentsForEnroll = remember { mutableStateListOf<Student>() }
     var isLoadingAllStudents by remember { mutableStateOf(false) }
+    var enrollSearchQuery by remember { mutableStateOf("") }
+    
+    // 학생 삭제 바텀시트 상태
+    var showDeleteSheet by remember { mutableStateOf(false) }
+    val selectedToDelete = remember { mutableStateListOf<Int>() }
+    var deleteSearchQuery by remember { mutableStateOf("") }
+    
+    // 학생 삭제 재확인 다이얼로그 상태
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     
     // EntryPoint를 통해 ApiService 주입받기 (바텀시트 독립적 데이터 로딩용)
     val context = LocalContext.current
@@ -130,6 +137,14 @@ fun TeacherStudentsScreen(
         )
         val apiService = entryPoint.apiService()
         StudentRepository(apiService)
+    }
+    val classRepository = remember {
+        val entryPoint = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            ApiServiceEntryPoint::class.java
+        )
+        val apiService = entryPoint.apiService()
+        com.example.voicetutor.data.repository.ClassRepository(apiService)
     }
     
     // 바텀시트 열 때 전체 학생 목록을 별도로 로드 (viewModel.students와 완전히 독립)
@@ -160,6 +175,7 @@ fun TeacherStudentsScreen(
             // 바텀시트가 닫히면 바텀시트용 목록만 클리어 (viewModel.students는 건드리지 않음)
             allStudentsForEnroll.clear()
             selectedToEnroll.clear()
+            enrollSearchQuery = ""
         }
     }
     
@@ -174,62 +190,24 @@ fun TeacherStudentsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryIndigo,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 )
-                .shadow(
-                    elevation = 8.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                    spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                )
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+            Column {
                     Text(
                         text = className,
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "$subjectName - $description",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(
-                            color = Color.White.copy(alpha = 0.15f),
-                            shape = androidx.compose.foundation.shape.CircleShape
-                        )
-                        .shadow(
-                            elevation = 4.dp,
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            ambientColor = Color.Black.copy(alpha = 0.1f),
-                            spotColor = Color.Black.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = teacherName.firstOrNull()?.toString() ?: "T",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    color = Gray600
+                )
             }
         }
         
@@ -238,52 +216,13 @@ fun TeacherStudentsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            VTCard(
-                variant = CardVariant.Elevated,
+            VTStatsCard(
+                title = "과제 제출률",
+                value = if (isLoadingStatistics) "-" else "${overallCompletionRate.toInt()}%",
+                icon = Icons.Filled.Done,
+                iconColor = PrimaryIndigo,
                 modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "과제 이행률",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Gray600,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                        Text(
-                            text = "(최근 1달)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray500,
-                            fontSize = 11.sp
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = if (isLoadingStatistics) "로딩 중..." else "${overallCompletionRate.toInt()}%",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryIndigo
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Filled.Done,
-                        contentDescription = null,
-                        tint = PrimaryIndigo.copy(alpha = 0.3f),
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
+            )
             
             VTStatsCard(
                 title = "학생",
@@ -300,29 +239,32 @@ fun TeacherStudentsScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             VTButton(
-                text = "메시지 보내기",
-                onClick = onNavigateToSendMessage,
+                text = "학생 등록",
+                onClick = {
+                    selectedToEnroll.clear()
+                    showEnrollSheet = true
+                },
                 variant = ButtonVariant.Primary,
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Filled.Message,
+                        imageVector = Icons.Filled.PersonAdd,
                         contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
                 },
                 modifier = Modifier.weight(1f)
             )
-            
             VTButton(
-                text = "학생 등록하기",
+                text = "학생 삭제",
                 onClick = {
-                    selectedToEnroll.clear()
-                    showEnrollSheet = true
+                    selectedToDelete.clear()
+                    showDeleteSheet = true
                 },
                 variant = ButtonVariant.Outline,
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Filled.PersonAdd,
+                        imageVector = Icons.Filled.Delete,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -335,7 +277,7 @@ fun TeacherStudentsScreen(
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -344,23 +286,6 @@ fun TeacherStudentsScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.FilterList,
-                        contentDescription = null,
-                        tint = Gray500,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "정렬",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
-                    )
-                }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -398,58 +323,16 @@ fun TeacherStudentsScreen(
                     }
                 }
             } else {
-                students.forEach { student ->
+                students.forEachIndexed { index, student ->
                     val stats = studentsStatisticsMap[student.id]
-                    StudentCard(
+                    StudentListItem(
                         student = student,
                         averageScore = stats?.averageScore ?: 0f,
                         completionRate = stats?.completionRate ?: 0f,
                         totalAssignments = stats?.totalAssignments ?: 0,
                         completedAssignments = stats?.completedAssignments ?: 0,
                         isLoadingStats = isLoadingStatistics,
-                        onViewStudent = { onNavigateToStudentDetail(student.id) },
-                        onSendMessage = { onNavigateToMessage(student.id) }
-                    )
-                    
-                    if (student != students.last()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-        }
-        
-        // Quick actions
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
-                Text(
-                    text = "빠른 작업",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    QuickActionCard(
-                        title = "성과 분석",
-                        description = "반 전체 성과 보기",
-                        icon = Icons.Filled.Analytics,
-                        color = PrimaryIndigo,
-                        onClick = { navController?.navigate("analytics") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    QuickActionCard(
-                        title = "출석 관리",
-                        description = "출석 현황 확인",
-                        icon = Icons.Filled.EventAvailable,
-                        color = Success,
-                        onClick = onNavigateToAttendance,
-                        modifier = Modifier.weight(1f)
+                        isLastItem = index == students.lastIndex
                     )
                 }
             }
@@ -458,9 +341,65 @@ fun TeacherStudentsScreen(
     
     // 학생 등록 바텀시트
     if (showEnrollSheet) {
-        ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        ModalBottomSheet(onDismissRequest = { 
+            showEnrollSheet = false
+            enrollSearchQuery = ""
+        }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "학생 등록", 
+                    style = MaterialTheme.typography.titleLarge, 
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(12.dp))
+                
+                // 검색 입력 필드
+                OutlinedTextField(
+                    value = enrollSearchQuery,
+                    onValueChange = { enrollSearchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    placeholder = { 
+                        Text(
+                            "이름 또는 이메일로 검색", 
+                            color = Gray500,
+                            style = MaterialTheme.typography.bodyMedium
+                        ) 
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "검색",
+                            tint = Gray600,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (enrollSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { enrollSearchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "검색어 지우기",
+                                    tint = Gray600,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        unfocusedBorderColor = Gray300
+                    )
+                )
                 Spacer(Modifier.height(12.dp))
 
                 // 로딩 중일 때
@@ -476,10 +415,24 @@ fun TeacherStudentsScreen(
                 } else {
                     // 이미 등록된 학생 제외 목록
                     val enrolledIds = classStudents.map { it.id }.toSet()
-                    val candidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
+                    val allCandidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
+                    
+                    // 검색어로 필터링 (이름 또는 이메일)
+                    val searchQueryLower = enrollSearchQuery.lowercase()
+                    val candidates = if (searchQueryLower.isBlank()) {
+                        allCandidates
+                    } else {
+                        allCandidates.filter { student ->
+                            val name = student.name?.lowercase() ?: ""
+                            val email = student.email?.lowercase() ?: ""
+                            name.contains(searchQueryLower) || email.contains(searchQueryLower)
+                        }
+                    }
 
-                    if (candidates.isEmpty()) {
+                    if (allCandidates.isEmpty()) {
                         Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                    } else if (candidates.isEmpty()) {
+                        Text("검색 결과가 없습니다.", color = Gray600)
                     } else {
                         candidates.forEach { student ->
                         Row(
@@ -537,45 +490,266 @@ fun TeacherStudentsScreen(
             }
         }
     }
+    
+    // 학생 삭제 바텀시트
+    if (showDeleteSheet) {
+        ModalBottomSheet(onDismissRequest = { 
+            showDeleteSheet = false
+            deleteSearchQuery = ""
+        }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "학생 삭제", 
+                    style = MaterialTheme.typography.titleLarge, 
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(12.dp))
+                
+                // 검색 입력 필드
+                OutlinedTextField(
+                    value = deleteSearchQuery,
+                    onValueChange = { deleteSearchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    placeholder = { 
+                        Text(
+                            "이름 또는 이메일로 검색", 
+                            color = Gray500,
+                            style = MaterialTheme.typography.bodyMedium
+                        ) 
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "검색",
+                            tint = Gray600,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (deleteSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { deleteSearchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "검색어 지우기",
+                                    tint = Gray600,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        unfocusedBorderColor = Gray300
+                    )
+                )
+                Spacer(Modifier.height(12.dp))
+
+                // 이미 등록된 학생 목록
+                val enrolledStudents = classStudents
+                
+                // 검색어로 필터링 (이름 또는 이메일)
+                val searchQueryLower = deleteSearchQuery.lowercase()
+                val filteredStudents = if (searchQueryLower.isBlank()) {
+                    enrolledStudents
+                } else {
+                    enrolledStudents.filter { student ->
+                        val name = student.name?.lowercase() ?: ""
+                        val email = student.email?.lowercase() ?: ""
+                        name.contains(searchQueryLower) || email.contains(searchQueryLower)
+                    }
+                }
+
+                if (enrolledStudents.isEmpty()) {
+                    Text("삭제할 학생이 없습니다.", color = Gray600)
+                } else if (filteredStudents.isEmpty()) {
+                    Text("검색 결과가 없습니다.", color = Gray600)
+                } else {
+                    filteredStudents.forEach { student ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                            }
+                            val checked = selectedToDelete.contains(student.id)
+                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                if (isChecked) selectedToDelete.add(student.id) else selectedToDelete.remove(student.id)
+                            })
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    VTButton(
+                        text = "취소",
+                        onClick = { showDeleteSheet = false },
+                        variant = ButtonVariant.Outline,
+                        modifier = Modifier.weight(1f)
+                    )
+                    VTButton(
+                        text = "삭제",
+                        onClick = {
+                            if (selectedToDelete.isNotEmpty()) {
+                                showDeleteConfirmDialog = true
+                            }
+                        },
+                        variant = ButtonVariant.Primary,
+                        modifier = Modifier.weight(1f),
+                        enabled = selectedToDelete.isNotEmpty()
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+    
+    // 학생 삭제 재확인 다이얼로그
+    if (showDeleteConfirmDialog && selectedToDelete.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = {
+                Text(
+                    text = "학생 제거",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "선택한 ${selectedToDelete.size}명의 학생을 이 반에서 제거하시겠습니까?\n제거된 학생의 과제, 질문, 답변이 모두 삭제됩니다.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        VTButton(
+                            text = "취소",
+                            onClick = {
+                                showDeleteConfirmDialog = false
+                            },
+                            variant = ButtonVariant.Outline,
+                            size = ButtonSize.Medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        VTButton(
+                            text = "제거",
+                            onClick = {
+                                classId?.let { id ->
+                                    coroutineScope.launch {
+                                        try {
+                                            println("[DELETE] Starting to remove ${selectedToDelete.size} students from class $id")
+                                            // 각 학생을 순차적으로 삭제
+                                            withContext(Dispatchers.IO) {
+                                                for (studentId in selectedToDelete) {
+                                                    println("[DELETE] Removing student $studentId from class $id")
+                                                    val result = classRepository.removeStudentFromClass(id, studentId)
+                                                    result.onSuccess {
+                                                        println("[DELETE] Successfully removed student $studentId")
+                                                    }.onFailure { e ->
+                                                        println("[DELETE] Failed to remove student $studentId: ${e.message}")
+                                                        e.printStackTrace()
+                                                    }
+                                                }
+                                            }
+                                            println("[DELETE] All deletions completed. Refreshing lists...")
+                                            // 완료 후 갱신
+                                            withContext(Dispatchers.Main) {
+                                                classViewModel.loadClassStudents(id)
+                                                val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+                                                actualTeacherId?.let {
+                                                    viewModel.loadAllStudents(teacherId = it, classId = id.toString())
+                                                }
+                                                // 다이얼로그와 시트 닫기
+                                                showDeleteConfirmDialog = false
+                                                showDeleteSheet = false
+                                                selectedToDelete.clear()
+                                            }
+                                        } catch (e: Exception) {
+                                            println("[DELETE] Error removing students: ${e.message}")
+                                            e.printStackTrace()
+                                            withContext(Dispatchers.Main) {
+                                                showDeleteConfirmDialog = false
+                                                showDeleteSheet = false
+                                                selectedToDelete.clear()
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            variant = ButtonVariant.Primary,
+                            size = ButtonSize.Medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
 }
 
 @Composable
-fun StudentCard(
+fun StudentListItem(
     student: Student,
     averageScore: Float,
     completionRate: Float,
     totalAssignments: Int,
     completedAssignments: Int,
     isLoadingStats: Boolean,
-    onViewStudent: (Int) -> Unit,
-    onSendMessage: (Int) -> Unit
+    isLastItem: Boolean
 ) {
-    VTCard(
-        variant = CardVariant.Elevated,
-        onClick = { onViewStudent(student.id) }
+    androidx.compose.material3.Surface(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        color = Color.White,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Gray200.copy(alpha = 0.6f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(32.dp)
                             .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(
-                                PrimaryIndigo.copy(alpha = 0.1f)
-                            ),
+                            .background(PrimaryIndigo.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = student.name?.takeIf { it.isNotBlank() }?.firstOrNull()?.toString() ?: "?",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryIndigo
                         )
@@ -584,37 +758,46 @@ fun StudentCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     
                     Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
                             Text(
                                 text = student.name ?: "이름 없음",
-                                style = MaterialTheme.typography.titleSmall,
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Gray800
                             )
-                        }
                         Text(
-                            text = student.email ?: "이메일 없음",
+                            text = run {
+                                val email = student.email ?: "이메일 없음"
+                                if (email.length > 24) email.take(24) + "..." else email
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray600
-                        )
-                        Text(
-                            text = "최근 활동: ${"활동 없음"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray500
                         )
                     }
                 }
                 
-                IconButton(
-                    onClick = { onSendMessage(student.id) }
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Message,
-                        contentDescription = "메시지 보내기",
-                        tint = PrimaryIndigo
-                    )
+
+                    val scoreLabelText = if (isLoadingStats) "평균 점수: 로딩 중" else "평균 점수: ${averageScore.toInt()}점"
+
+                    val scoreColor = PrimaryIndigo
+
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                            .background(PrimaryIndigo.copy(alpha = 0.08f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = scoreLabelText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = scoreColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
             
@@ -622,105 +805,60 @@ fun StudentCard(
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StudentStatItem(
-                    label = "과제 완료",
-                    value = if (isLoadingStats) "로딩 중..." else "${completedAssignments}/${totalAssignments}",
-                    progress = if (totalAssignments > 0) (completedAssignments.toFloat() / totalAssignments) else 0f,
-                    color = PrimaryIndigo
-                )
-                
-                StudentStatItem(
-                    label = "평균 점수",
-                    value = if (isLoadingStats) "로딩 중..." else "${averageScore.toInt()}점",
-                    progress = (averageScore / 100f).coerceIn(0f, 1f),
-                    color = when {
-                        averageScore >= 90 -> Success
-                        averageScore >= 80 -> Warning
-                        else -> Error
-                    }
-                )
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val completionText = if (isLoadingStats) "과제 완료: 로딩 중" else {
+                if (totalAssignments > 0) "과제 완료: $completedAssignments/$totalAssignments" else "과제 완료: -"
             }
-        }
-    }
-}
+            val completionRateValue = (completionRate).toInt()
+            val completionRateText = if (isLoadingStats) "완료율: 로딩 중" else "완료율: ${completionRateValue}%"
 
+            val completionColor = Gray600
+            val progressColor = PrimaryIndigo
 
-@Composable
-fun StudentStatItem(
-    label: String,
-    value: String,
-    progress: Float,
-    color: Color
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
         Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = Gray600
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Box(
-            modifier = Modifier
-                .width(60.dp)
-                .height(4.dp)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                .background(Gray200)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                    .background(color)
-            )
-        }
-    }
-}
-
-@Composable
-fun QuickActionCard(
-    title: String,
-    description: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    VTCard(
-        variant = CardVariant.Outlined,
-        onClick = onClick,
-        modifier = modifier
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            Text(
-                text = description,
+                text = completionText,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray600
+                color = completionColor,
+                fontWeight = FontWeight.Medium
+            )
+
+        Text(
+                text = completionRateText,
+            style = MaterialTheme.typography.bodySmall,
+                color = progressColor,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val progressColor = PrimaryIndigo
+
+        VTProgressBar(
+            progress = if (totalAssignments > 0) (completionRate/100) else 0f,
+            showPercentage = false,
+            color = progressColor,
+            height = 6
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+    }
+}
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
+    ) {
+        if (!isLastItem) {
+        Spacer(modifier = Modifier.height(4.dp))
+            Divider(
+                modifier = Modifier.fillMaxWidth(),
+                color = Gray200,
+                thickness = 0.5.dp
             )
         }
     }

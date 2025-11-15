@@ -1,11 +1,12 @@
 from django.urls import path
 
 from .views import (
-    ClassCompletionRateView,
     ClassDetailView,
     ClassListView,
+    ClassStudentDeleteView,
     ClassStudentsStatisticsView,
     ClassStudentsView,
+    StudentClassesView,
     StudentDetailView,
     StudentListView,
     StudentStatisticsView,
@@ -21,9 +22,14 @@ urlpatterns = [
     path("classes/<int:id>/", ClassDetailView.as_view(), name="class-detail"),
     path("classes/<int:id>/students/", ClassStudentsView.as_view(), name="class-students"),
     path(
+        "classes/<int:id>/students/<int:student_id>/",
+        ClassStudentDeleteView.as_view(),
+        name="class-student-delete",
+    ),
+    path(
         "classes/<int:classId>/students-statistics/",
         ClassStudentsStatisticsView.as_view(),
         name="class-students-statistics",
     ),
-    path("classes/<int:id>/completion-rate/", ClassCompletionRateView.as_view(), name="class-completion-rate"),
+    path("students/<int:id>/classes/", StudentClassesView.as_view(), name="student-classes"),
 ]

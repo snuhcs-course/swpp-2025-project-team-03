@@ -56,6 +56,16 @@ class QuestionCreateView(APIView):
         except Assignment.DoesNotExist:
             return Response({"error": "Invalid assignment_id"}, status=status.HTTP_404_NOT_FOUND)
 
+        # 취소 체크: totalQuestions가 0이면 질문 생성이 취소된 것으로 간주
+        if assignment.total_questions == 0:
+            return Response(
+                {
+                    "error": "Question generation cancelled",
+                    "message": f"Assignment {assignment_id}의 질문 생성이 취소되었습니다.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             material = Material.objects.get(id=material_id, assignment=assignment)
         except Material.DoesNotExist:
@@ -135,12 +145,41 @@ class QuestionCreateView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+            # 질문 생성 전에 다시 취소 체크 (race condition 방지)
+            assignment.refresh_from_db()
+            if assignment.total_questions == 0:
+                return Response(
+                    {
+                        "error": "Question generation cancelled",
+                        "message": f"Assignment {assignment_id}의 질문 생성이 취소되었습니다.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             created_questions = []
             total_questions_created = 0
+            is_cancelled = False
 
+            # 질문 생성 (트랜잭션 내부)
             with transaction.atomic():
                 for personal_assignment in personal_assignments:
+                    # 취소 체크 (트랜잭션 내부에서도 체크 가능)
+                    assignment.refresh_from_db()
+                    if assignment.total_questions == 0:
+                        is_cancelled = True
+                        break
+
                     for i, quiz in enumerate(quizzes, 1):
+                        # 질문 생성 중간에도 취소 체크
+                        if i % 2 == 0:  # 매 2개 질문마다 체크
+                            assignment.refresh_from_db()
+                            if assignment.total_questions == 0:
+                                is_cancelled = True
+                                break
+
+                        if is_cancelled:
+                            break
+
                         try:
                             q = Question.objects.create(
                                 personal_assignment=personal_assignment,
@@ -168,6 +207,35 @@ class QuestionCreateView(APIView):
                                 }
                             )
 
+            # 취소된 경우 에러 반환 (질문은 이미 생성되었을 수 있음)
+            assignment.refresh_from_db()
+
+            # is_cancelled가 True면 트랜잭션 내부에서 취소를 감지한 것이므로,
+            # 일관성을 위해 total_questions를 0으로 확실히 설정
+            if is_cancelled:
+                assignment.total_questions = 0
+                assignment.save(update_fields=["total_questions"])
+                return Response(
+                    {
+                        "error": "Question generation cancelled",
+                        "message": f"Assignment {assignment_id}의 질문 생성이 취소되었습니다.",
+                        "cancelled": True,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 트랜잭션 종료 후 다른 요청에서 취소한 경우
+            if assignment.total_questions == 0:
+                return Response(
+                    {
+                        "error": "Question generation cancelled",
+                        "message": f"Assignment {assignment_id}의 질문 생성이 취소되었습니다.",
+                        "cancelled": True,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 질문 생성 완료 - totalQuestions 업데이트
             assignment.total_questions = data["total_number"]
             assignment.save()
 

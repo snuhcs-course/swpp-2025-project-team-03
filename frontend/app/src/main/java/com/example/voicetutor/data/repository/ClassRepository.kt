@@ -69,16 +69,12 @@ class ClassRepository @Inject constructor(
 
     suspend fun enrollStudentToClass(
         classId: Int,
-        studentId: Int? = null,
-        name: String? = null,
-        email: String? = null
+        studentId: Int
     ): Result<EnrollmentData> {
         return try {
             val response = apiService.enrollStudentToClass(
                 id = classId,
-                studentId = studentId,
-                name = name,
-                email = email
+                studentId = studentId
             )
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()?.data ?: throw Exception("No data"))
@@ -104,16 +100,23 @@ class ClassRepository @Inject constructor(
         }
     }
     
-    suspend fun getClassCompletionRate(classId: Int): Result<ClassCompletionRate> {
+    suspend fun removeStudentFromClass(classId: Int, studentId: Int): Result<Unit> {
         return try {
-            val response = apiService.getClassCompletionRate(classId)
+            println("[ClassRepository] Calling API: DELETE /courses/classes/$classId/students/$studentId/")
+            val response = apiService.removeStudentFromClass(classId, studentId)
+            println("[ClassRepository] Response received: isSuccessful=${response.isSuccessful}, code=${response.code()}")
             
             if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()?.data ?: throw Exception("No data"))
+                println("[ClassRepository] Student removed successfully")
+                Result.success(Unit)
             } else {
-                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+                val error = response.body()?.error ?: "Unknown error (code: ${response.code()})"
+                println("[ClassRepository] Failed to remove student: $error")
+                Result.failure(Exception(error))
             }
         } catch (e: Exception) {
+            println("[ClassRepository] Exception during API call: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }

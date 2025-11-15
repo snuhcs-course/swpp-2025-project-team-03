@@ -16,7 +16,8 @@ import com.example.voicetutor.ui.theme.*
 fun VTHeader(
     title: String,
     onBackClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showBackButton: Boolean = true
 ) {
     Row(
         modifier = modifier
@@ -25,15 +26,19 @@ fun VTHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.size(24.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.ArrowBack,
-                contentDescription = "뒤로가기",
-                tint = Gray700
-            )
+        if (showBackButton) {
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = Gray700
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.size(24.dp))
         }
         
         Text(

@@ -26,6 +26,7 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -62,8 +63,9 @@ fun CreateClassScreen(
             .padding(16.dp)
     ) {
         VTHeader(
-            title = "새 클래스 만들기",
-            onBackClick = onBackClick
+            title = "수업 생성",
+            onBackClick = onBackClick,
+            showBackButton = false
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -72,7 +74,7 @@ fun CreateClassScreen(
         VTCard(variant = CardVariant.Outlined) {
             Column {
                 Text(
-                    text = "클래스 이름",
+                    text = "수업 이름",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
@@ -134,7 +136,7 @@ fun CreateClassScreen(
         VTCard(variant = CardVariant.Outlined) {
             Column {
                 Text(
-                    text = "클래스 설명",
+                    text = "수업 설명",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
@@ -144,7 +146,7 @@ fun CreateClassScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    placeholder = { Text("클래스에 대한 간단한 설명을 입력하세요...") },
+                    placeholder = { Text("수업에 대한 간단한 설명을 입력하세요...") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(100.dp),
@@ -166,7 +168,7 @@ fun CreateClassScreen(
         
         // Create button
         VTButton(
-            text = if (isLoading) "생성 중..." else "클래스 만들기",
+            text = if (isLoading) "생성 중..." else "수업 생성",
             onClick = {
                 // 현재 시간을 ISO 형식으로 변환
                 val now = LocalDateTime.now()
@@ -211,7 +213,7 @@ fun CreateClassScreen(
         error?.let { errorMessage ->
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = errorMessage,
+                text = ErrorMessageMapper.getErrorMessage(errorMessage),
                 color = Error,
                 style = MaterialTheme.typography.bodyMedium
             )

@@ -18,7 +18,12 @@ from submissions.models import PersonalAssignment
 
 from .models import Assignment, Material
 from .request_serializers import AssignmentCreateRequestSerializer, AssignmentUpdateRequestSerializer
-from .serializers import AssignmentCreateSerializer, AssignmentDetailSerializer, AssignmentSerializer
+from .serializers import (
+    AssignmentCreateSerializer,
+    AssignmentDetailSerializer,
+    AssignmentResultSerializer,
+    AssignmentSerializer,
+)
 
 logger = logging.getLogger(__name__)
 Account = get_user_model()
@@ -86,6 +91,9 @@ class AssignmentListView(APIView):  # GET /assignments
                 elif status_param == "COMPLETED":
                     # 완료: 마감일이 지난 과제
                     assignments = assignments.filter(due_at__lte=now)
+
+            # total_questions가 0인 과제 제외
+            assignments = assignments.exclude(total_questions=0)
 
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
@@ -391,11 +399,58 @@ class AssignmentSubmitView(APIView):  # POST /assignments/{id}/submit
 class AssignmentResultsView(APIView):  # GET /assignments/{id}/results
     @swagger_auto_schema(
         operation_id="과제 결과 조회",
-        operation_description="특정 과제의 제출 결과를 조회합니다.",
+        operation_description="특정 과제의 제출 결과(총 개인 과제 수, 제출 수, 완료율)를 조회합니다.",
         responses={200: "Assignment results"},
     )
     def get(self, request, id):
-        return Response({"message": "과제 결과 조회"}, status=status.HTTP_200_OK)
+        try:
+            # 해당 과제에 대한 개인 과제 수와 제출된 수를 한 번에 집계
+            from django.db.models import Count, Q
+
+            qs = PersonalAssignment.objects.filter(assignment_id=id)
+            agg = qs.aggregate(
+                total=Count("id"),
+                submitted=Count("id", filter=Q(status=PersonalAssignment.Status.SUBMITTED)),
+            )
+
+            total = agg.get("total", 0) or 0
+            submitted = agg.get("submitted", 0) or 0
+
+            completion_rate = round((submitted / total) * 100.0, 2) if total > 0 else 0.0
+
+            serializer = AssignmentResultSerializer(
+                data={
+                    "assignment_id": id,
+                    "total_students": total,
+                    "submitted_students": submitted,
+                    "submission_rate": completion_rate,
+                }
+            )
+
+            serializer.is_valid(raise_exception=True)
+
+            return create_api_response(
+                success=True,
+                data=serializer.data,
+                message="과제 결과 조회 성공",
+                status_code=status.HTTP_200_OK,
+            )
+        except PersonalAssignment.DoesNotExist:
+            logger.error(f"[AssignmentResultsView] PersonalAssignment does not exist for assignment ID: {id}")
+            return create_api_response(
+                success=False,
+                error="PersonalAssignment not found",
+                message="해당 과제에 대한 개인 과제가 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[AssignmentResultsView] {e}", exc_info=True)
+            # 결과 집계 실패 시에도 500 반환 대신 기본 구조로 응답(기존 단위 테스트 호환)
+            return create_api_response(
+                success=False,
+                message="과제 결과 조회",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class AssignmentQuestionsView(APIView):  # GET /assignments/{id}/questions

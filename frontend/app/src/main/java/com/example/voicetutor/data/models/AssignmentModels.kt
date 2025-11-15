@@ -62,7 +62,8 @@ data class AssignmentData(
     // Personal Assignment 관련 정보 (변환 시 추가)
     val personalAssignmentStatus: PersonalAssignmentStatus? = null,
     val solvedNum: Int? = null,
-    val personalAssignmentId: Int? = null  // PersonalAssignment ID 추가
+    val personalAssignmentId: Int? = null,  // PersonalAssignment ID 추가
+    val submittedAt: String? = null  // 제출 일시
 )
 
 data class CourseClass(
@@ -207,6 +208,17 @@ data class DetailedAnswer(
     val responseTime: String
 )
 
+data class AssignmentResultData(
+    @SerializedName("submitted_students")
+    val submittedStudents: Int? = null,
+    @SerializedName("total_students")
+    val totalStudents: Int? = null,
+    @SerializedName("average_score")
+    val averageScore: Double? = null,
+    @SerializedName("completion_rate")
+    val completionRate: Double? = null
+)
+
 // Personal Assignment API용 데이터 모델들
 data class PersonalAssignmentQuestion(
     @SerializedName("id")
@@ -291,3 +303,4 @@ data class AssignmentCorrectnessItem(
     @SerializedName("explanation")
     val explanation: String
 )
+

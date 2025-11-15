@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.ReportViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
@@ -107,8 +108,7 @@ fun TeacherStudentReportScreen(
                         Color(0xFFF0F0FF)
                     )
                 )
-            )
-            .padding(12.dp),
+            ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Header
@@ -117,14 +117,8 @@ fun TeacherStudentReportScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = RoundedCornerShape(20.dp)
-                    )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(16.dp)
                     )
                     .padding(20.dp)
             ) {
@@ -132,13 +126,14 @@ fun TeacherStudentReportScreen(
                     Text(
                         text = "${studentName}님의 성취기준 리포트",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "성취기준별 학습 현황을 확인하세요",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Gray600
                     )
                 }
             }
@@ -223,7 +218,7 @@ fun TeacherStudentReportScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = error ?: "알 수 없는 오류가 발생했습니다",
+                            text = ErrorMessageMapper.getErrorMessage(error),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Gray600
                         )
@@ -260,7 +255,7 @@ fun TeacherStudentReportScreen(
                     )
                     
                     VTStatsCard(
-                        title = "과제 이행률",
+                        title = "과제 완료율",
                         value = if (isLoadingCompletion) "..." else "${completionRate.toInt()}%",
                         icon = Icons.Filled.Done,
                         iconColor = Warning,

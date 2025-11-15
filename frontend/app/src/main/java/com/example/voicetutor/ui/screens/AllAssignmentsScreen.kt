@@ -92,18 +92,29 @@ fun AllAssignmentsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Column {
-            Text(
-                text = "모든 과제",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Gray800
-            )
-            Text(
-                text = "총 ${assignments.size}개의 과제",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray600
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                Text(
+                    text = "모든 과제",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "총 ${assignments.size}개의 과제",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600
+                )
+            }
         }
         
         // Filter tabs (Teacher only)
@@ -133,7 +144,7 @@ fun AllAssignmentsScreen(
             FilterChip(
                 selected = selectedFilter == AssignmentFilter.COMPLETED,
                 onClick = { selectedFilter = AssignmentFilter.COMPLETED },
-                label = { Text("완료") }
+                label = { Text("마감") }
             )
         }
         
@@ -306,7 +317,7 @@ fun AssignmentCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 VTButton(
-                    text = "결과 보기",
+                    text = "과제 결과",
                     onClick = onViewResults,
                     variant = ButtonVariant.Primary,
                     size = ButtonSize.Small,
@@ -314,7 +325,7 @@ fun AssignmentCard(
                 )
                 
                 VTButton(
-                    text = "편집",
+                    text = "과제 편집",
                     onClick = { onEditClick(assignment.id) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,

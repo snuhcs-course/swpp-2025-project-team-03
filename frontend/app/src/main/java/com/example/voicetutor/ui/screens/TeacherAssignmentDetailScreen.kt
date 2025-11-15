@@ -2,7 +2,9 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -27,54 +29,66 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun TeacherAssignmentDetailScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentId: Int = 0,
-    onNavigateToAssignmentResults: (Int) -> Unit = {},
-    onNavigateToEditAssignment: (Int) -> Unit = {}
+    assignmentTitle: String? = null, // For backward compatibility
+    onNavigateToEditAssignment: (Int) -> Unit = {},
+    onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> }
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val assignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
+    val students by viewModel.assignmentResults.collectAsStateWithLifecycle()
     val assignmentStatistics by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
-    
+
     // Find assignment by id from the assignments list
-    val targetAssignment = remember(assignments, assignmentId) {
+    // "과목 - 제목" 형식도 처리 가능하도록 수정
+    val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
         if (assignmentId > 0) {
             assignments.find { it.id == assignmentId }
+        } else if (assignmentTitle != null) {
+            assignments.find {
+                it.title == assignmentTitle ||
+                        "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
+                        assignmentTitle.contains(it.title)
+            }
         } else {
             null
         }
     }
-    
+
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = assignment?.title ?: (targetAssignment?.title ?: "과제")
-    // assignmentResults API가 제거되었으므로 빈 리스트 사용
-    val assignmentResults = remember { emptyList<StudentResult>() }
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
-    
+    // for student lists
+    val resolvedAssignmentId = targetAssignment?.id ?: assignment?.id ?: assignmentId
+
     // Load assignment data on first composition and when screen is entered
     LaunchedEffect(assignmentId) {
         if (assignmentId > 0) {
             println("TeacherAssignmentDetail - Loading assignment ID: $assignmentId")
             viewModel.loadAssignmentById(assignmentId)
+            viewModel.loadAssignmentStudentResults(assignmentId)
         } else {
             targetAssignment?.let { target ->
                 println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
                 viewModel.loadAssignmentById(target.id)
+                viewModel.loadAssignmentStudentResults(target.id)
                 // 통계도 함께 로드 (assignment가 로드되기 전에도 targetAssignment로 통계 로드 가능)
                 println("TeacherAssignmentDetail - Loading statistics for target assignment: ${target.title} (ID: ${target.id})")
                 viewModel.loadAssignmentStatistics(target.id, target.courseClass.studentCount)
             }
         }
     }
-    
-    // assignment가 로드되면 통계 새로고침 (화면 진입 시, assignment가 업데이트될 때)
+
+    // assignment가 로드되면 통계와 학생 결과 새로고침 (화면 진입 시, assignment가 업데이트될 때)
     LaunchedEffect(assignment?.id) {
         assignment?.let { a ->
-            println("TeacherAssignmentDetail - Assignment loaded, refreshing statistics: ${a.title} (ID: ${a.id})")
+            println("TeacherAssignmentDetail - Assignment loaded, refreshing statistics and student results: ${a.title} (ID: ${a.id})")
             viewModel.loadAssignmentStatistics(a.id, a.courseClass.studentCount)
+            viewModel.loadAssignmentStudentResults(a.id)
         }
     }
-    
+
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
@@ -82,7 +96,7 @@ fun TeacherAssignmentDetailScreen(
             viewModel.clearError()
         }
     }
-    
+
     // Convert AssignmentData to AssignmentDetail for UI
     val assignmentDetail = assignment?.let { a ->
         AssignmentDetail(
@@ -100,18 +114,7 @@ fun TeacherAssignmentDetailScreen(
             completionRate = assignmentStatistics?.completionRate ?: 0
         )
     }
-    
-    // Convert StudentResult to StudentSubmission for UI
-    val recentSubmissions = assignmentResults.map { result ->
-        StudentSubmission(
-            name = result.name,
-            studentId = result.studentId,
-            submittedAt = result.submittedAt,
-            score = result.score,
-            status = result.status
-        )
-    }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -156,231 +159,452 @@ fun TeacherAssignmentDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = assignmentDetail.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "${assignmentDetail.subject} • ${assignmentDetail.className}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(
-                            color = Color.White.copy(alpha = 0.15f),
-                            shape = androidx.compose.foundation.shape.CircleShape
-                        )
-                        .shadow(
-                            elevation = 4.dp,
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            ambientColor = Color.Black.copy(alpha = 0.1f),
-                            spotColor = Color.Black.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
+                Column {
                     Text(
-                        text = "김",
-                        color = Color.White,
+                        text = assignmentDetail.title,
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "${assignmentDetail.subject} • ${assignmentDetail.className}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600
                     )
                 }
             }
-        }
-        
-        // Stats overview
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            VTStatsCard(
-                title = "제출률",
-                value = "${assignmentDetail.completionRate}%",
-                icon = Icons.Filled.Assignment,
-                iconColor = PrimaryIndigo,
-                variant = CardVariant.Elevated,
-                modifier = Modifier.weight(1f),
-                layout = StatsCardLayout.Vertical
-            )
-            
-            VTStatsCard(
-                title = "평균 점수",
-                value = "${assignmentDetail.averageScore}점",
-                icon = Icons.Filled.Grade,
-                iconColor = Success,
-                variant = CardVariant.Elevated,
-                modifier = Modifier.weight(1f),
-                layout = StatsCardLayout.Vertical
-            )
-            
-            VTStatsCard(
-                title = "제출 학생",
-                value = "${assignmentDetail.submittedStudents}/${assignmentDetail.totalStudents}",
-                icon = Icons.Filled.People,
-                iconColor = Warning,
-                variant = CardVariant.Elevated,
-                modifier = Modifier.weight(1f),
-                layout = StatsCardLayout.Vertical
-            )
-        }
-        
-        // Assignment content
-        VTCard(variant = CardVariant.Elevated) {
-            Column {
+
+            // Stats overview
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                VTStatsCard(
+                    title = "제출률",
+                    value = "${assignmentDetail.completionRate}%",
+                    icon = Icons.Filled.Assignment,
+                    iconColor = PrimaryIndigo,
+                    variant = CardVariant.Elevated,
+                    modifier = Modifier.weight(1f),
+                    layout = StatsCardLayout.Vertical
+                )
+
+                VTStatsCard(
+                    title = "평균 점수",
+                    value = "${assignmentDetail.averageScore}점",
+                    icon = Icons.Filled.Grade,
+                    iconColor = Success,
+                    variant = CardVariant.Elevated,
+                    modifier = Modifier.weight(1f),
+                    layout = StatsCardLayout.Vertical
+                )
+
+                VTStatsCard(
+                    title = "제출 학생",
+                    value = "${assignmentDetail.submittedStudents}/${assignmentDetail.totalStudents}",
+                    icon = Icons.Filled.People,
+                    iconColor = Warning,
+                    variant = CardVariant.Elevated,
+                    modifier = Modifier.weight(1f),
+                    layout = StatsCardLayout.Vertical
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
                 Text(
                     text = "과제 내용",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Text(
-                    text = assignmentDetail.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray700,
-                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
-                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    VTButton(
+                        text = "과제 편집",
+                        onClick = {
+                            val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
+                            if (assignmentId > 0) {
+                                onNavigateToEditAssignment(assignmentId)
+                            }
+                        },
+                        variant = ButtonVariant.Outline,
+                        size = ButtonSize.Small,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    )
+                }
             }
-        }
-        
-        // Action buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            VTButton(
-                text = "결과 보기",
-                onClick = { 
-                    val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
-                    if (assignmentId > 0) {
-                        onNavigateToAssignmentResults(assignmentId)
-                    }
-                },
-                variant = ButtonVariant.Primary,
-                modifier = Modifier.weight(1f),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Assessment,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+
+            // Assignment content
+            VTCard(variant = CardVariant.Elevated) {
+                Column {
+                    Text(
+                        text = assignmentDetail.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray700,
+                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
                     )
                 }
-            )
-            
-            VTButton(
-                text = "편집",
-                onClick = { 
-                    val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
-                    if (assignmentId > 0) {
-                        onNavigateToEditAssignment(assignmentId)
-                    }
-                },
-                variant = ButtonVariant.Outline,
-                modifier = Modifier.weight(1f),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+            }
+
+            // Students list
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "학생별 결과",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+
+                    Text(
+                        text = "총 ${students.size}명",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = PrimaryIndigo,
+                        fontWeight = FontWeight.Medium
                     )
                 }
-            )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Loading indicator
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo
+                        )
+                    }
+                } else if (students.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Person,
+                                contentDescription = null,
+                                tint = Gray400,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "제출된 과제가 없습니다",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Gray600
+                            )
+                        }
+                    }
+                } else {
+                    // 학생 결과 표시 (API 데이터가 있을 때만 표시됨)
+                    students.forEachIndexed { index, student ->
+                        TeacherAssignmentResultCard(
+                            student = student,
+                            onStudentClick = {
+                                val destinationAssignmentId = resolvedAssignmentId
+                                if (destinationAssignmentId != 0) {
+                                    onNavigateToStudentDetail(student.studentId, destinationAssignmentId, dynamicAssignmentTitle)
+                                }
+                            }
+                        )
+
+                        if (index < students.size - 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
+//@Composable
+//fun StudentSubmissionItem(
+//    submission: StudentSubmission,
+//    onClick: () -> Unit
+//) {
+//    Row(
+//        modifier = Modifier.fillMaxWidth(),
+//        horizontalArrangement = Arrangement.SpaceBetween,
+//        verticalAlignment = Alignment.CenterVertically
+//    ) {
+//        Column(
+//            modifier = Modifier.weight(1f)
+//        ) {
+//            Text(
+//                text = submission.name,
+//                style = MaterialTheme.typography.bodyMedium,
+//                fontWeight = FontWeight.Medium,
+//                color = Gray800
+//            )
+//            Text(
+//                text = submission.studentId,
+//                style = MaterialTheme.typography.bodySmall,
+//                color = Gray600
+//            )
+//        }
+//
+//        Column(
+//            horizontalAlignment = Alignment.End
+//        ) {
+//            if (submission.status == "완료") {
+//                Text(
+//                    text = "${submission.score}점",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    fontWeight = FontWeight.Bold,
+//                    color = when {
+//                        submission.score >= 90 -> Success
+//                        submission.score >= 70 -> Warning
+//                        else -> Error
+//                    }
+//                )
+//                Text(
+//                    text = com.example.voicetutor.utils.formatSubmittedTime(submission.submittedAt),
+//                    style = MaterialTheme.typography.bodySmall,
+//                    color = Gray600
+//                )
+//            } else {
+//                Box(
+//                    modifier = Modifier
+//                        .background(
+//                            Error.copy(alpha = 0.1f),
+//                            androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+//                        )
+//                        .padding(horizontal = 8.dp, vertical = 4.dp)
+//                ) {
+//                    Text(
+//                        text = submission.status,
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = Error,
+//                        fontWeight = FontWeight.Medium
+//                    )
+//                }
+//            }
+//        }
+//        }
+//    }
+//}
+
 @Composable
-fun StudentSubmissionItem(
-    submission: StudentSubmission,
-    onClick: () -> Unit
+fun TeacherAssignmentResultCard(
+    student: StudentResult,
+    onStudentClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    VTCard(
+        variant = CardVariant.Elevated,
+        onClick = onStudentClick
     ) {
         Column(
-            modifier = Modifier.weight(1f)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = submission.name,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = Gray800
-            )
-            Text(
-                text = submission.studentId,
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
-        }
-        
-        Column(
-            horizontalAlignment = Alignment.End
-        ) {
-            if (submission.status == "완료") {
-                Text(
-                    text = "${submission.score}점",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = when {
-                        submission.score >= 90 -> Success
-                        submission.score >= 70 -> Warning
-                        else -> Error
-                    }
-                )
-                Text(
-                    text = com.example.voicetutor.utils.formatSubmittedTime(submission.submittedAt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
-                )
-            } else {
+            // Status badge aligned top-right
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
                 Box(
                     modifier = Modifier
                         .background(
-                            Error.copy(alpha = 0.1f),
-                            androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                            color = if (student.status == "완료") Success.copy(alpha = 0.1f) else Warning.copy(alpha = 0.1f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                         )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = submission.status,
+                        text = student.status,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Error,
+                        color = if (student.status == "완료") Success else Warning,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
+
+            // Name, avatar, and time info row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryIndigo.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = student.name.first().toString(),
+                            color = PrimaryIndigo,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = student.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Text(
+                            text = student.studentId,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray600
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = "소요 시간",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
+                    )
+                    Text(
+                        text = formatDuration(student.startedAt, student.submittedAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray800
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(18.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    // modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "제출 시간",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600,
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                    Text(
+                        text = formatSubmittedTime(student.submittedAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray800,
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                }
+
+            }
+
+            // Sample answers preview
+            if (student.answers.isNotEmpty()) {
+                Column {
+                    Text(
+                        text = "답변 미리보기",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray700
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = student.answers.first(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
+    }
+}
+
+// Helper function to format submitted time - using common utility
+private fun formatSubmittedTime(isoTime: String): String {
+    return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
+}
+
+// Helper function to format duration between startedAt and submittedAt
+private fun formatDuration(startIso: String?, endIso: String?): String {
+    return try {
+        println("formatDuration start!")
+        if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
+            println("startIso or endIso is null, $startIso || $endIso")
+            return "정보 없음"
         }
+        val start = parseIsoToMillis(startIso)
+        val end = parseIsoToMillis(endIso)
+        if (start == null || end == null || end < start) {
+            println("start or end is null $startIso ,$endIso")
+            return "정보 없음"
+        }
+        val diffMs = end - start
+        val totalSeconds = diffMs / 1000
+        val hours = (totalSeconds / 3600).toInt()
+        val minutes = ((totalSeconds % 3600) / 60).toInt()
+        val seconds = (totalSeconds % 60).toInt()
+        if (hours > 0) {
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format("%02d:%02d", minutes, seconds)
+        }
+    } catch (e: Exception) {
+        println("FormatDuration: Exception!! $startIso $endIso")
+        "정보 없음"
+    }
+}
+
+// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
+private fun parseIsoToMillis(iso: String): Long? {
+    return try {
+        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
+        val cleaned = iso.replace("Z", "").let { raw ->
+            val dotIdx = raw.indexOf('.')
+            if (dotIdx != -1) raw.substring(0, dotIdx) else raw
+        }
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        sdf.parse(cleaned)?.time
+    } catch (e: Exception) {
+        null
     }
 }
 
