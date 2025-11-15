@@ -33,6 +33,7 @@ import com.example.voicetutor.audio.AudioRecorder
 import com.example.voicetutor.utils.PermissionUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -101,7 +102,7 @@ fun AssignmentContinuousScreen(
     val viewModel: AssignmentViewModel = hiltViewModel()
     val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
     val context = LocalContext.current
-    
+
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val personalAssignmentQuestions by viewModel.personalAssignmentQuestions.collectAsStateWithLifecycle()
     val totalBaseQuestions by viewModel.totalBaseQuestions.collectAsStateWithLifecycle()
@@ -125,7 +126,59 @@ fun AssignmentContinuousScreen(
 
     // AudioRecorder 상태 관찰
     val audioRecorderState by audioRecorder.recordingState.collectAsStateWithLifecycle()
-    
+
+    // PersonalAssignmentData에서 isProcessing 확인
+
+    val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
+
+    // 채점 중 polling 로직
+    var pollingJob by remember { mutableStateOf<Job?>(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshProcessingStatus(assignmentId)
+    }
+
+    LaunchedEffect(isProcessing) {
+        if (isProcessing) {
+            pollingJob?.cancel()
+            pollingJob = scope.launch {
+                while (true) {
+                    delay(1000)
+                    // 1초마다 “다음 문제 조회” API로 상태 확인
+                    viewModel.refreshProcessingStatus(assignmentId)
+
+                    // ViewModel의 isProcessing이 false면 반복 종료
+                    if (!viewModel.isProcessing.value) {
+                        break
+                    }
+                }
+            }
+        } else {
+            pollingJob?.cancel()
+        }
+    }
+
+    if (isProcessing) {
+        // 채점 중 안내 문구만 표시
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = PrimaryIndigo)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "채점 중입니다. 잠시 대기하세요.",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        return
+    }
+
     // 재생 진행 시간 업데이트
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
