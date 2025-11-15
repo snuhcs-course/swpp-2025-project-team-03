@@ -19,13 +19,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.voicetutor.data.models.AssignmentFilter
 import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.models.TeacherOnboardingData
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.utils.TutorialPreferences
 
 @Composable
 fun TeacherDashboardScreen(
@@ -57,6 +64,40 @@ fun TeacherDashboardScreen(
     
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
+    // 튜토리얼 상태 관리
+    val context = LocalContext.current
+    val tutorialPrefs = remember { TutorialPreferences(context) }
+    var showTutorial by remember { mutableStateOf(false) }
+    
+    // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            val isNewUser = tutorialPrefs.isNewUser()
+            
+            // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
+            if (isNewUser) {
+                showTutorial = true
+            }
+        }
+    }
+    
+    // 화면이 다시 포커스될 때 튜토리얼 상태 재확인 (설정에서 초기화 후 돌아올 때)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, currentUser) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && currentUser != null && !showTutorial) {
+                val isNewUser = tutorialPrefs.isNewUser()
+                if (isNewUser) {
+                    showTutorial = true
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    
     // Compute actual teacher ID
     val actualTeacherId = teacherId ?: currentUser?.id?.toString()
     
@@ -66,40 +107,22 @@ fun TeacherDashboardScreen(
         kotlinx.coroutines.delay(100)
     }
     
-    LaunchedEffect(assignments.size) {
-        println("TeacherDashboard - Assignments changed: ${assignments.size}")
-        assignments.forEach { 
-            println("  - ${it.title} (${it.courseClass.subject.name})")
-        }
-    }
-    
     // 강제 새로고침 처리 (과제 생성 후 등)
     LaunchedEffect(refreshTimestamp, actualTeacherId) {
-        println("TeacherDashboard - LaunchedEffect triggered with refreshTimestamp: $refreshTimestamp")
-        println("TeacherDashboard - actualTeacherId: $actualTeacherId")
-        
         if (refreshTimestamp > 0L && actualTeacherId != null) {
-            println("TeacherDashboard - ✅ Force refreshing data (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
             dashboardViewModel.loadDashboardData(actualTeacherId)
             studentViewModel.loadAllStudents(teacherId = actualTeacherId)
-        } else {
-            println("TeacherDashboard - ❌ Skipping refresh (timestamp: $refreshTimestamp, teacherId: $actualTeacherId)")
         }
     }
     
     LaunchedEffect(actualTeacherId) {
         if (actualTeacherId == null) {
-            println("TeacherDashboard - ⚠️ Waiting for user to be loaded...")
             return@LaunchedEffect
         }
         
-        println("TeacherDashboard - ✅ Initial loading data for teacher ID: $actualTeacherId")
-        println("TeacherDashboard - Current user ID: ${currentUser?.id}, email: ${currentUser?.email}")
-        
         // 항상 해당 선생님의 과제만 가져오도록 teacherId 필수로 전달
         // 로그인 시 받은 assignments는 무시하고 항상 API로 최신 데이터 가져오기
-        println("TeacherDashboard - Calling loadAllAssignments with teacherId=$actualTeacherId")
         actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
         dashboardViewModel.loadDashboardData(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
@@ -116,21 +139,29 @@ fun TeacherDashboardScreen(
         }
     }
     
-    LaunchedEffect(assignments) {
-        val user = currentUser
-        println("TeacherDashboard - Assignments state updated: ${assignments.size} assignments")
-        println("TeacherDashboard - Current user ID: ${user?.id}, email: ${user?.email}")
-        assignments.forEach { 
-            println("  - ${it.title} (${it.courseClass.subject.name}) - teacher: ${it.courseClass.teacherName}")
-        }
-    }
-    
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show error message
             actualAssignmentViewModel.clearError()
         }
+    }
+    
+    // 온보딩 튜토리얼 (7단계)
+    if (showTutorial) {
+        OnboardingPager(
+            pages = TeacherOnboardingData.teacherOnboardingPages,
+            onComplete = {
+                tutorialPrefs.setTeacherTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
+                showTutorial = false
+            },
+            onSkip = {
+                tutorialPrefs.setTeacherTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
+                showTutorial = false
+            }
+        )
     }
     
     // 오늘 마감인 과제 개수 계산 (API 24 호환)
@@ -147,6 +178,9 @@ fun TeacherDashboardScreen(
             due.isNotBlank() && due.length >= 10 && due.substring(0, 10) == todayStr
         }
     }
+    
+    // 필터링된 과제 목록 (API에서 이미 필터링된 결과 사용)
+    val filteredAssignments = assignments
     
     Column(
         modifier = Modifier

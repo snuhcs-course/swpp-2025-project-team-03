@@ -14,13 +14,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.models.StudentOnboardingData
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.utils.formatDueDate
+import com.example.voicetutor.utils.TutorialPreferences
 
 @Composable
 fun StudentDashboardScreen(
@@ -42,6 +48,40 @@ fun StudentDashboardScreen(
     val studentStats by viewModelAssignment.studentStats.collectAsStateWithLifecycle()
     
     val studentName = currentUser?.name ?: "학생"
+    
+    // 튜토리얼 상태 관리
+    val context = LocalContext.current
+    val tutorialPrefs = remember { TutorialPreferences(context) }
+    var showTutorial by remember { mutableStateOf(false) }
+    
+    // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            val isNewUser = tutorialPrefs.isNewUser()
+            
+            // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
+            if (isNewUser) {
+                showTutorial = true
+            }
+        }
+    }
+    
+    // 화면이 다시 포커스될 때 튜토리얼 상태 재확인 (설정에서 초기화 후 돌아올 때)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, currentUser) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && currentUser != null && !showTutorial) {
+                val isNewUser = tutorialPrefs.isNewUser()
+                if (isNewUser) {
+                    showTutorial = true
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     
     // 필터 상태 추가
     var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
@@ -91,31 +131,15 @@ fun StudentDashboardScreen(
         }
     }
 
-    LaunchedEffect(assignments) {
-        println("StudentDashboard - currentUser: ${currentUser?.email}, id: ${currentUser?.id}, role: ${currentUser?.role}")
-        println("StudentDashboard - assignments from ViewModel: ${assignments.size}")
-        assignments.forEach { 
-            println("  - ${it.title}")
-            println("    - solvedNum: ${it.solvedNum}")
-            println("    - totalQuestions: ${it.totalQuestions}")
-            println("    - progress: ${if (it.totalQuestions > 0 && it.solvedNum != null) (it.solvedNum.toFloat() / it.totalQuestions.toFloat()) else 0f}")
-        }
-    }
-    
     LaunchedEffect(currentUser) {
         val user = currentUser
         if (user != null) {
-            println("StudentDashboard - Loading/Reloading pending assignments for student ID: ${user.id}")
             viewModelAssignment.loadPendingStudentAssignments(user.id)
         } else {
-            println("StudentDashboard - ⚠️ currentUser is null! Waiting for user data...")
             kotlinx.coroutines.delay(500)
             val retryUser = viewModelAuth.currentUser.value
             if (retryUser != null) {
-                println("StudentDashboard - Retry: Loading assignments for student ID: ${retryUser.id}")
                 viewModelAssignment.loadPendingStudentAssignments(retryUser.id)
-            } else {
-                println("StudentDashboard - ❌ Still no user data after retry")
             }
         }
     }
@@ -127,10 +151,29 @@ fun StudentDashboardScreen(
             viewModelAssignment.clearError()
         }
     }
+    
+    // 온보딩 튜토리얼 (5단계)
+    if (showTutorial) {
+        OnboardingPager(
+            pages = StudentOnboardingData.studentOnboardingPages,
+            onComplete = {
+                tutorialPrefs.setStudentTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
+                showTutorial = false
+            },
+            onSkip = {
+                tutorialPrefs.setStudentTutorialCompleted()
+                tutorialPrefs.clearNewUserFlag()
+                showTutorial = false
+            }
+        )
+    }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Welcome section
