@@ -1508,8 +1508,17 @@ class AssignmentViewModel @Inject constructor(
                     }
                 }
                 .onFailure { e ->
+                    val msg = e.message ?: ""
                     println("AssignmentViewModel - Failed to refresh processing status: ${e.message}")
-                    // 에러라고 해서 isProcessing을 무조건 false로 내릴지 여부는 상황에 따라 선택
+                    // 1) "모든 문제를 완료했습니다" 인 경우 → 과제 완료 처리 + isProcessing 종료
+                    if (msg.contains("모든 문제를 완료했습니다")) {
+                        _isProcessing.value = false
+                        _isAssignmentCompleted.value = true
+                    } else {
+                        // 2) 네트워크 오류/기타 오류 → 스피너만 끄고 에러 표시
+                        _isProcessing.value = false
+                        _error.value = msg
+                    }
                 }
         }
     }
