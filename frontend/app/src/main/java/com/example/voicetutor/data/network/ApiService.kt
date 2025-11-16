@@ -206,6 +206,7 @@ data class CreateAssignmentRequest(
     val grade: String?,
     val type: String,
     val description: String?,
+    @SerializedName("total_questions") val total_questions: Int? = null,
     val questions: List<QuestionData>?
 )
 

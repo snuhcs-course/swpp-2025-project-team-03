@@ -445,7 +445,7 @@ fun AchievementStatisticCard(
     
     val statusText = when {
         isHighAccuracy -> "✅"
-        isMediumAccuracy -> "🟦"
+        isMediumAccuracy -> "⚠️"
         else -> "❌"
     }
     

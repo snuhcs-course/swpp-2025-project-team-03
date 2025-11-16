@@ -9,6 +9,7 @@ class AssignmentCreateRequestSerializer(serializers.Serializer):
     subject = serializers.CharField(max_length=50, required=False, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True)
     due_at = serializers.CharField()
+    total_questions = serializers.IntegerField(required=False, default=0)
 
 
 class AssignmentUpdateRequestSerializer(serializers.Serializer):

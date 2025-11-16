@@ -11,6 +11,7 @@ class Assignment(models.Model):
     visible_from = models.DateTimeField()
     due_at = models.DateTimeField()
     grade = models.CharField(max_length=16, blank=True)
+    is_question_created = models.BooleanField(default=False)
 
     class Meta:
         indexes = [

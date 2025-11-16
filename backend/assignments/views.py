@@ -94,6 +94,7 @@ class AssignmentListView(APIView):  # GET /assignments
 
             # total_questions가 0인 과제 제외
             assignments = assignments.exclude(total_questions=0)
+            assignments = assignments.exclude(is_question_created=False)
 
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
@@ -238,7 +239,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
         operation_id="과제 생성",
         operation_description=(
             "새로운 과제를 생성하고 업로드용 S3 presigned URL을 반환합니다.\n\n"
-            "- 요청: class_id, title, due_at, description\n"
+            "- 요청: class_id, title, due_at, description, total_questions\n"
             "- 응답: assignment_id, material_id, s3_key, upload_url"
         ),
         request_body=AssignmentCreateRequestSerializer,
@@ -293,7 +294,9 @@ class AssignmentCreateView(APIView):  # POST /assignments
             title=data["title"],
             grade=data.get("grade", ""),
             description=data.get("description", ""),
+            total_questions=data.get("total_questions", 0),
             visible_from=datetime.now(),
+            is_question_created=False,
             due_at=due_at,
         )
 
@@ -581,7 +584,9 @@ class TeacherDashboardStatsView(APIView):
             teacher = Account.objects.get(id=teacher_id, is_student=False)
 
             # 총 과제 수 계산 (해당 교사가 생성한 과제)
-            total_assignments = Assignment.objects.filter(course_class__teacher=teacher).count()
+            total_assignments = Assignment.objects.filter(
+                course_class__teacher=teacher, is_question_created=True
+            ).count()
 
             # 총 학생 수 계산 (해당 교사의 클래스에 등록된 학생들)
             total_students = (
