@@ -238,7 +238,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
         operation_id="과제 생성",
         operation_description=(
             "새로운 과제를 생성하고 업로드용 S3 presigned URL을 반환합니다.\n\n"
-            "- 요청: class_id, title, due_at, description\n"
+            "- 요청: class_id, title, due_at, description, total_questions\n"
             "- 응답: assignment_id, material_id, s3_key, upload_url"
         ),
         request_body=AssignmentCreateRequestSerializer,
@@ -293,6 +293,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
             title=data["title"],
             grade=data.get("grade", ""),
             description=data.get("description", ""),
+            total_questions=data.get("total_questions", 0),
             visible_from=datetime.now(),
             due_at=due_at,
         )

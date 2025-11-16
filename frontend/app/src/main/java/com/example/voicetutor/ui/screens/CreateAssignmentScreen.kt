@@ -956,6 +956,9 @@ fun CreateAssignmentScreen(
                         )
                     }
                     
+                    // 문제 개수를 정수로 파싱 (기본값 0)
+                    val questionCountInt = questionCount.toIntOrNull() ?: 0
+                    
                     val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest(
                         title = assignmentTitle,
                         subject = selectedSubject,
@@ -964,6 +967,7 @@ fun CreateAssignmentScreen(
                         grade = selectedGrade,
                         type = "Quiz",  // PDF 과제는 항상 Quiz 타입
                         description = assignmentDescription,
+                        total_questions = questionCountInt,
                         questions = sampleQuestions
                     )
                     
@@ -975,10 +979,8 @@ fun CreateAssignmentScreen(
                     println("selectedPdfFile: ${selectedPdfFile?.name}")
                     println("selectedPdfFile != null: ${selectedPdfFile != null}")
                     println("selectedFiles.size: ${selectedFiles.size}")
-                    
-                    // 문제 개수를 정수로 파싱 (기본값 5)
-                    val questionCountInt = questionCount.toIntOrNull() ?: 5
                     println("문제 개수: $questionCountInt (입력값: $questionCount)")
+                    println("total_questions: ${createRequest.total_questions}")
                     
                     // PDF 파일이 선택된 경우 PDF 업로드와 함께 과제 생성
                     val pdfFile = selectedPdfFile
