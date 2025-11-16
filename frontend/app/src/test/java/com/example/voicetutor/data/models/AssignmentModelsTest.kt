@@ -52,8 +52,8 @@ class AssignmentModelsTest {
             description = "Description",
             subject = subject,
             teacherName = "Teacher1",
-            startDate = "2025-01-01",
-            endDate = "2025-12-31",
+            
+            
             studentCount = 10,
             createdAt = "2025-01-01"
         )
@@ -63,7 +63,7 @@ class AssignmentModelsTest {
             description = "Description",
             totalQuestions = 5,
             createdAt = "2025-01-01",
-            visibleFrom = "2025-01-01",
+            
             dueAt = "2025-12-31",
             courseClass = courseClass,
             materials = null,
@@ -92,8 +92,8 @@ class AssignmentModelsTest {
             description = null,
             subject = subject,
             teacherName = "Teacher1",
-            startDate = "2025-01-01",
-            endDate = "2025-12-31",
+            
+            
             studentCount = 10,
             createdAt = "2025-01-01"
         )
@@ -103,7 +103,6 @@ class AssignmentModelsTest {
             description = null,
             totalQuestions = 0,
             createdAt = null,
-            visibleFrom = null,
             dueAt = "2025-12-31",
             courseClass = courseClass,
             materials = null,
@@ -116,7 +115,6 @@ class AssignmentModelsTest {
         // Assert
         assertNull(assignment.description)
         assertNull(assignment.createdAt)
-        assertNull(assignment.visibleFrom)
         assertNull(assignment.materials)
         assertNull(assignment.grade)
         assertNull(assignment.personalAssignmentStatus)
@@ -362,7 +360,7 @@ class AssignmentModelsTest {
             title = "Assignment1",
             description = "Description",
             totalQuestions = 5,
-            visibleFrom = "2025-01-01",
+            
             dueAt = "2025-12-31",
             grade = "1"
         )
@@ -409,7 +407,7 @@ class AssignmentModelsTest {
             title = "Assignment1",
             description = "Description",
             totalQuestions = 5,
-            visibleFrom = "2025-01-01",
+            
             dueAt = "2025-12-31",
             grade = "1"
         )

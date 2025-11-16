@@ -33,8 +33,8 @@ class ClassViewModelTest {
         subject = buildSubject(),
         description = "Description",
         teacherId = 1,
-        startDate = "2025-01-01",
-        endDate = "2025-12-31",
+        
+        
         studentCount = 10,
         createdAt = "2025-01-01"
     )
@@ -203,8 +203,7 @@ class ClassViewModelTest {
             description = "Description",
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         
         Mockito.`when`(classRepository.createClass(request)).thenReturn(Result.success(newClass))
@@ -234,8 +233,7 @@ class ClassViewModelTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         Mockito.`when`(classRepository.createClass(request)).thenReturn(Result.failure(Exception("Creation failed")))
 

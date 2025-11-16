@@ -229,8 +229,8 @@ class TeacherAssignmentResultsScreenTest {
             description = "테스트 반",
             subject = subject,
             teacherName = "이선생",
-            startDate = "2024-01-01",
-            endDate = "2024-12-31",
+            
+            
             studentCount = 30,
             createdAt = "2024-01-01T00:00:00Z"
         )
@@ -240,7 +240,7 @@ class TeacherAssignmentResultsScreenTest {
             description = "상세 설명",
             totalQuestions = 10,
             createdAt = "2024-01-01T09:00:00Z",
-            visibleFrom = "2024-01-01T09:00:00Z",
+            
             dueAt = "2024-02-01T23:59:59Z",
             courseClass = courseClass,
             materials = listOf(
@@ -279,7 +279,7 @@ class TeacherAssignmentResultsScreenTest {
                 title = "듣기 평가 과제",
                 description = "과제 설명",
                 totalQuestions = 10,
-                visibleFrom = "2024-01-01T09:00:00Z",
+                
                 dueAt = "2024-02-01T23:59:59Z",
                 grade = "중학교 2학년"
             ),

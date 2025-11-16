@@ -239,8 +239,6 @@ data class CreateClassRequest(
     val description: String?,
     val subject_name: String,
     val teacher_id: Int,
-    val start_date: String,
-    val end_date: String
 )
 
 data class UpdateAssignmentRequest(

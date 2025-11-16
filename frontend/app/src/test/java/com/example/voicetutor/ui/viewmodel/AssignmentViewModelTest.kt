@@ -44,8 +44,8 @@ class AssignmentViewModelTest {
         description = null,
         subject = buildSubject(),
         teacherName = "T",
-        startDate = "",
-        endDate = "",
+        
+        
         studentCount = 0,
         createdAt = ""
     )
@@ -56,7 +56,7 @@ class AssignmentViewModelTest {
         description = "desc",
         totalQuestions = 0,
         createdAt = null,
-        visibleFrom = "",
+        
         dueAt = "",
         courseClass = buildCourse(),
         materials = null,

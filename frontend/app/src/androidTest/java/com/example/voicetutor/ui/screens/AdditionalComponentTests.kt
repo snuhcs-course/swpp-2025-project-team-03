@@ -528,8 +528,8 @@ class AdditionalComponentTests {
                 name = className,
                 subject = Subject(id = 1, name = subjectName),
                 teacherName = "선생님",
-                startDate = "2024-01-01",
-                endDate = "2024-12-31",
+                
+                
                 studentCount = 10,
                 createdAt = "2024-01-01T00:00:00Z"
             ),

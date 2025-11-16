@@ -21,8 +21,8 @@ class NetworkModelsTest {
         description = null,
         subject = buildSubject(),
         teacherName = "Teacher1",
-        startDate = "2025-01-01",
-        endDate = "2025-12-31",
+        
+        
         studentCount = 10,
         createdAt = "2025-01-01"
     )
@@ -203,8 +203,6 @@ class NetworkModelsTest {
             description = "Description",
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
         )
 
         // Assert
@@ -222,8 +220,6 @@ class NetworkModelsTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
         )
 
         // Assert
@@ -237,7 +233,6 @@ class NetworkModelsTest {
             title = "Updated",
             description = "New description",
             totalQuestions = 10,
-            visibleFrom = "2025-01-01T00:00:00Z",
             dueAt = "2025-12-31T00:00:00Z",
             grade = "A",
             subject = SubjectUpdateRequest(id = 2, name = "Math", code = "MATH")
@@ -247,7 +242,6 @@ class NetworkModelsTest {
         assertEquals("Updated", request.title)
         assertEquals("New description", request.description)
         assertEquals(10, request.totalQuestions)
-        assertEquals("2025-01-01T00:00:00Z", request.visibleFrom)
         assertEquals("2025-12-31T00:00:00Z", request.dueAt)
         assertEquals("A", request.grade)
         assertEquals(2, request.subject?.id)
@@ -260,7 +254,6 @@ class NetworkModelsTest {
             title = null,
             description = null,
             totalQuestions = null,
-            visibleFrom = null,
             dueAt = null,
             grade = null,
             subject = null
@@ -270,7 +263,6 @@ class NetworkModelsTest {
         assertNull(request.title)
         assertNull(request.description)
         assertNull(request.totalQuestions)
-        assertNull(request.visibleFrom)
         assertNull(request.dueAt)
         assertNull(request.grade)
         assertNull(request.subject)

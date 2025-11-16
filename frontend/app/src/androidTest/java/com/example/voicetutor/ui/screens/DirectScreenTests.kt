@@ -41,7 +41,7 @@ class DirectScreenTests {
             description = "설명",
             totalQuestions = 5,
             dueAt = "2024-12-31T23:59:59Z",
-            visibleFrom = "2024-01-01T00:00:00Z",
+            
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -49,8 +49,8 @@ class DirectScreenTests {
                 description = null,
                 subject = Subject(id = 1, name = "수학", code = "MATH"),
                 teacherName = "선생님",
-                startDate = "2024-01-01T00:00:00Z",
-                endDate = "2024-12-31T23:59:59Z",
+                
+                
                 studentCount = 30,
                 createdAt = "2024-01-01T00:00:00Z"
             ),

@@ -20,8 +20,8 @@ class ClassModelsTest {
             subject = subject,
             description = "Description",
             teacherId = 1,
-            startDate = "2025-01-01",
-            endDate = "2025-12-31",
+            
+            
             studentCount = 10,
             createdAt = "2025-01-01"
         )
@@ -44,8 +44,8 @@ class ClassModelsTest {
             subject = subject,
             description = "",
             teacherId = 1,
-            startDate = "2025-01-01",
-            endDate = "2025-12-31",
+            
+            
             studentCount = 0,
             createdAt = "2025-01-01"
         )
@@ -65,8 +65,8 @@ class ClassModelsTest {
             subject = subject,
             description = "",
             teacherId = 1,
-            startDate = "2025-01-01",
-            endDate = "2025-12-31",
+            
+            
             studentCount = 0,
             createdAt = "2025-01-01"
         )

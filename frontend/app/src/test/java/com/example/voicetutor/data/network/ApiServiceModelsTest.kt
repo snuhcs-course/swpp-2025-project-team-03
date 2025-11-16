@@ -192,8 +192,6 @@ class ApiServiceModelsTest {
             description = "Advanced Mathematics",
             subject_name = "Mathematics",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
         )
 
         // Then
@@ -201,8 +199,6 @@ class ApiServiceModelsTest {
         assertEquals("Advanced Mathematics", request.description)
         assertEquals("Mathematics", request.subject_name)
         assertEquals(1, request.teacher_id)
-        assertEquals("2025-01-01", request.start_date)
-        assertEquals("2025-12-31", request.end_date)
     }
 
     @Test
@@ -213,8 +209,6 @@ class ApiServiceModelsTest {
             description = null,
             subject_name = "Mathematics",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
         )
 
         // Then

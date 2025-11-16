@@ -93,8 +93,8 @@ class ScreenDirectTests {
                 description = "설명",
                 teacherName = "선생님",
                 subject = Subject(id = 1, name = "수학", code = "MATH"),
-                startDate = "2024-01-01",
-                endDate = "2024-12-31",
+                
+                
                 studentCount = 10,
                 createdAt = "2024-01-01"
             )

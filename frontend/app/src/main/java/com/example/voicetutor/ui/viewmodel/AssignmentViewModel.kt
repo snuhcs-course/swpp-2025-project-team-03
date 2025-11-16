@@ -517,7 +517,6 @@ class AssignmentViewModel @Inject constructor(
                         description = assignment.description,
                         totalQuestions = assignment.questions?.size ?: 0,
                         createdAt = "", // 서버에서 받아올 수 있음
-                        visibleFrom = "",
                         dueAt = assignment.due_at,
                         courseClass = CourseClass(
                             id = assignment.class_id,
@@ -525,8 +524,8 @@ class AssignmentViewModel @Inject constructor(
                             description = "",
                             subject = Subject(id = 0, name = assignment.subject),
                             teacherName = "",
-                            startDate = "",
-                            endDate = "",
+                            
+                            
                             studentCount = 0,
                             createdAt = ""
                         ),
@@ -577,7 +576,6 @@ class AssignmentViewModel @Inject constructor(
                             description = personalAssignment.assignment.description,
                             totalQuestions = personalAssignment.assignment.totalQuestions,
                             createdAt = null,
-                            visibleFrom = personalAssignment.assignment.visibleFrom,
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
@@ -589,8 +587,8 @@ class AssignmentViewModel @Inject constructor(
                                     code = null
                                 ),
                                 teacherName = "",
-                                startDate = "",
-                                endDate = "",
+                                
+                                
                                 studentCount = 0,
                                 createdAt = ""
                             ),
@@ -671,7 +669,6 @@ class AssignmentViewModel @Inject constructor(
                             description = personalAssignment.assignment.description,
                             totalQuestions = personalAssignment.assignment.totalQuestions,
                             createdAt = null,
-                            visibleFrom = personalAssignment.assignment.visibleFrom,
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
@@ -683,8 +680,8 @@ class AssignmentViewModel @Inject constructor(
                                     code = null
                                 ),
                                 teacherName = "",
-                                startDate = "",
-                                endDate = "",
+                                
+                                
                                 studentCount = 0,
                                 createdAt = ""
                             ),
@@ -747,7 +744,6 @@ class AssignmentViewModel @Inject constructor(
                                     description = personalAssignment.assignment.description,
                                     totalQuestions = personalAssignment.assignment.totalQuestions,
                                     createdAt = fullAssignment.createdAt,
-                                    visibleFrom = personalAssignment.assignment.visibleFrom,
                                     dueAt = personalAssignment.assignment.dueAt,
                                     courseClass = fullAssignment.courseClass,  // 실제 courseClass 정보 사용
                                     materials = fullAssignment.materials,
@@ -775,12 +771,11 @@ class AssignmentViewModel @Inject constructor(
                                     description = personalAssignment.assignment.description,
                                     totalQuestions = personalAssignment.assignment.totalQuestions,
                                     createdAt = null,
-                                    visibleFrom = personalAssignment.assignment.visibleFrom,
                                     dueAt = personalAssignment.assignment.dueAt,
                                     courseClass = CourseClass(
                                         id = 0, name = "", description = null,
                                         subject = Subject(id = 0, name = "", code = null),
-                                        teacherName = "", startDate = "", endDate = "",
+                                        teacherName = "",  
                                         studentCount = 0, createdAt = ""
                                     ),
                                     materials = null,
@@ -846,7 +841,6 @@ class AssignmentViewModel @Inject constructor(
                                     description = personalAssignment.assignment.description,
                                     totalQuestions = personalAssignment.assignment.totalQuestions,
                                     createdAt = fullAssignment.createdAt,
-                                    visibleFrom = personalAssignment.assignment.visibleFrom,
                                     dueAt = personalAssignment.assignment.dueAt,
                                     courseClass = fullAssignment.courseClass,  // ✅ 실제 courseClass 정보 사용
                                     materials = fullAssignment.materials,
@@ -872,12 +866,11 @@ class AssignmentViewModel @Inject constructor(
                                     description = personalAssignment.assignment.description,
                                     totalQuestions = personalAssignment.assignment.totalQuestions,
                                     createdAt = null,
-                                    visibleFrom = personalAssignment.assignment.visibleFrom,
                                     dueAt = personalAssignment.assignment.dueAt,
                                     courseClass = CourseClass(
                                         id = 0, name = "", description = null,
                                         subject = Subject(id = 0, name = "", code = null),
-                                        teacherName = "", startDate = "", endDate = "",
+                                        teacherName = "",  
                                         studentCount = 0, createdAt = ""
                                     ),
                                     materials = null,
@@ -940,7 +933,6 @@ class AssignmentViewModel @Inject constructor(
                             description = assignment.description,
                             totalQuestions = totalNumber,
                             createdAt = "",
-                            visibleFrom = "",
                             dueAt = assignment.due_at,
                             courseClass = CourseClass(
                                 id = assignment.class_id,
@@ -948,8 +940,8 @@ class AssignmentViewModel @Inject constructor(
                                 description = "",
                                 subject = Subject(id = 0, name = assignment.subject),
                                 teacherName = "",
-                                startDate = "",
-                                endDate = "",
+                                
+                                
                                 studentCount = 0,
                                 createdAt = ""
                             ),
@@ -1251,7 +1243,6 @@ class AssignmentViewModel @Inject constructor(
                         title = null,
                         description = null,
                         totalQuestions = 0, // totalQuestions를 0으로 설정
-                        visibleFrom = null,
                         dueAt = null,
                         grade = null,
                         subject = null

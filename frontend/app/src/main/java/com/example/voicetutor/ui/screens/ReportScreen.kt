@@ -289,7 +289,7 @@ fun AssignmentReportCardPreview() {
                 description = "원소주기율표 기초 문제",
                 totalQuestions = 5,
                 createdAt = "2024-01-10T09:00:00Z",
-                visibleFrom = "2024-01-10T09:00:00Z",
+                
                 dueAt = "2024-01-15T10:00:00Z",
                 courseClass = CourseClass(
                     id = 1,
@@ -297,8 +297,8 @@ fun AssignmentReportCardPreview() {
                     description = "화학 기초반",
                     subject = Subject(id = 1, name = "화학"),
                     teacherName = "김선생님",
-                    startDate = "2024-01-01",
-                    endDate = "2024-12-31",
+                    
+                    
                     studentCount = 25,
                     createdAt = "2024-01-01T00:00:00Z"
                 ),

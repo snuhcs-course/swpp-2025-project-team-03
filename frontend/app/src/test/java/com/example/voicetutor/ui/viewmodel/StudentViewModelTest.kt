@@ -151,7 +151,7 @@ class StudentViewModelTest {
                 description = "desc",
                 totalQuestions = 5,
                 createdAt = null,
-                visibleFrom = "",
+                
                 dueAt = "",
                 courseClass = com.example.voicetutor.data.models.CourseClass(
                     id = 1,
@@ -159,8 +159,8 @@ class StudentViewModelTest {
                     description = null,
                     subject = com.example.voicetutor.data.models.Subject(id = 1, name = "Math"),
                     teacherName = "Teacher",
-                    startDate = "",
-                    endDate = "",
+                    
+                    
                     studentCount = 0,
                     createdAt = ""
                 ),

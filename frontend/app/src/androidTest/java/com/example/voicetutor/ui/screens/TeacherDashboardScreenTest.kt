@@ -117,8 +117,8 @@ class TeacherDashboardScreenTest {
             description = null,
             subject = testSubject,
             teacherName = "선생님",
-            startDate = "2025-01-01",
-            endDate = "2025-12-31",
+            
+            
             studentCount = 10,
             createdAt = "2025-01-01"
         )
@@ -130,7 +130,7 @@ class TeacherDashboardScreenTest {
                 description = "설명",
                 totalQuestions = 5,
                 createdAt = "2025-01-01",
-                visibleFrom = "2025-01-01",
+                
                 dueAt = "2025-01-15",
                 courseClass = testClass,
                 materials = null,

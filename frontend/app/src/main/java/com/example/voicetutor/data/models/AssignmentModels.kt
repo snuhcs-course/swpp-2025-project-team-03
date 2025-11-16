@@ -75,10 +75,6 @@ data class CourseClass(
     val subject: Subject,
     @SerializedName("teacher_name")
     val teacherName: String,
-    @SerializedName("start_date")
-    val startDate: String,
-    @SerializedName("end_date")
-    val endDate: String,
     @SerializedName("student_count")
     val studentCount: Int,
     @SerializedName("created_at")
