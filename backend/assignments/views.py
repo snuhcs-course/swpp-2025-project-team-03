@@ -94,6 +94,7 @@ class AssignmentListView(APIView):  # GET /assignments
 
             # total_questions가 0인 과제 제외
             assignments = assignments.exclude(total_questions=0)
+            assignments = assignments.exclude(is_question_created=False)
 
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
@@ -295,6 +296,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
             description=data.get("description", ""),
             total_questions=data.get("total_questions", 0),
             visible_from=datetime.now(),
+            is_question_created=False,
             due_at=due_at,
         )
 
