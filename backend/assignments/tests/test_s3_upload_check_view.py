@@ -52,7 +52,6 @@ def assignment(course_class, subject):
         subject=subject,
         title="Test Assignment",
         description="Test Description",
-        visible_from=timezone.now(),
         due_at=timezone.now() + timedelta(days=7),
     )
 

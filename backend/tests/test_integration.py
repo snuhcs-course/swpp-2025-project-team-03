@@ -137,7 +137,6 @@ class TestFullWorkflow:
             subject=subject,
             title="영어 발음 연습",
             description="기본 단어 발음",
-            visible_from=timezone.now(),  # 필수 필드 추가
             due_at=timezone.now() + timedelta(days=7),
         )
 
@@ -308,7 +307,6 @@ class TestCrossModuleIntegration:
             course_class=setup_data["course_class"],
             subject=setup_data["subject"],
             title="테스트 과제",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
 

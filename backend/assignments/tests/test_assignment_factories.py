@@ -16,7 +16,6 @@ class AssignmentFactory(DjangoModelFactory):
     course_class = factory.SubFactory("courses.tests.test_factories.CourseClassFactory")
     title = factory.Sequence(lambda n: f"Assignment {n}")
     description = factory.Faker("text", max_nb_chars=200)
-    visible_from = factory.LazyFunction(timezone.now)
     due_at = factory.LazyFunction(lambda: timezone.now() + timedelta(days=7))
 
 

@@ -459,7 +459,6 @@ class TestClassStudentsStatisticsView:
             course_class=course_class,
             subject=course_class.subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
 
@@ -514,7 +513,6 @@ class TestClassStudentsStatisticsView:
             course_class=course_class,
             subject=course_class.subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
 

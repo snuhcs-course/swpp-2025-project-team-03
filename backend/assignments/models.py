@@ -8,7 +8,6 @@ class Assignment(models.Model):
     description = models.TextField(blank=True)
     total_questions = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    visible_from = models.DateTimeField()
     due_at = models.DateTimeField()
     grade = models.CharField(max_length=16, blank=True)
     is_question_created = models.BooleanField(default=False)
@@ -16,7 +15,6 @@ class Assignment(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=["course_class"]),
-            models.Index(fields=["visible_from"]),
             models.Index(fields=["due_at"]),
         ]
 

@@ -70,7 +70,6 @@ def assignment(course_class, subject):
         title="HW 1",
         description="",
         total_questions=3,
-        visible_from=timezone.now(),
         due_at=timezone.now() + timedelta(days=7),
         grade="",
     )

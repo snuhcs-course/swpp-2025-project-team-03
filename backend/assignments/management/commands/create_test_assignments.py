@@ -17,7 +17,6 @@ class Command(BaseCommand):
                 "title": "호흡과 배설 단원 과제",
                 "description": "호흡 운동의 원리와 배설의 과정의 이해도를 평가하는 과제입니다.",
                 "total_questions": 3,
-                "visible_from": timezone.now(),
                 "due_at": timezone.now() + timedelta(days=2),
                 "grade": "중학교 2학년",
             },
@@ -27,7 +26,6 @@ class Command(BaseCommand):
                 "title": "함수의 개념 복습 과제",
                 "description": "함수의 정의를 복습하는 과제입니다.",
                 "total_questions": 2,
-                "visible_from": timezone.now(),
                 "due_at": timezone.now() + timedelta(days=10),
                 "grade": "초등학교 6학년",
             },
@@ -37,7 +35,6 @@ class Command(BaseCommand):
                 "title": "Reading Practice 1-A",
                 "description": "영어 독해 훈련 과제입니다.",
                 "total_questions": 3,
-                "visible_from": timezone.now(),
                 "due_at": timezone.now() + timedelta(days=5),
                 "grade": "중학교 3학년",
             },
@@ -57,7 +54,6 @@ class Command(BaseCommand):
                 grade=data["grade"],
                 defaults={
                     "description": data["description"],
-                    "visible_from": data["visible_from"],
                     "due_at": data["due_at"],
                 },
             )

@@ -18,7 +18,6 @@ class AssignmentUpdateRequestSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=False)
     description = serializers.CharField(required=False, allow_blank=True)
     total_questions = serializers.IntegerField(required=False)
-    visible_from = serializers.DateTimeField(required=False)
     due_at = serializers.DateTimeField(required=False)
     grade = serializers.CharField(max_length=16, required=False, allow_blank=True)
     subject = SubjectRequestSerializer(required=False)

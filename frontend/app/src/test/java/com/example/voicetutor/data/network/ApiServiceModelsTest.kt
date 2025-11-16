@@ -68,7 +68,6 @@ class ApiServiceModelsTest {
             subject = "Mathematics",
             class_id = 1,
             due_at = "2025-12-31T23:59:00Z",
-            visible_from = "2025-01-01T00:00:00Z",
             grade = "A",
             type = "quiz",
             description = "Test assignment",
@@ -80,7 +79,6 @@ class ApiServiceModelsTest {
         assertEquals("Mathematics", request.subject)
         assertEquals(1, request.class_id)
         assertEquals("2025-12-31T23:59:00Z", request.due_at)
-        assertEquals("2025-01-01T00:00:00Z", request.visible_from)
         assertEquals("A", request.grade)
         assertEquals("quiz", request.type)
         assertEquals("Test assignment", request.description)
@@ -95,7 +93,6 @@ class ApiServiceModelsTest {
             subject = "Math",
             class_id = 1,
             due_at = "2025-12-31T23:59:00Z",
-            visible_from = null,
             grade = null,
             type = "quiz",
             description = null,
@@ -104,7 +101,6 @@ class ApiServiceModelsTest {
 
         // Then
         assertEquals("Simple Assignment", request.title)
-        assertNull(request.visible_from)
         assertNull(request.grade)
         assertNull(request.description)
         assertNull(request.questions)
@@ -232,7 +228,6 @@ class ApiServiceModelsTest {
             title = "Updated Title",
             description = "Updated Description",
             totalQuestions = 20,
-            visibleFrom = "2025-01-01T00:00:00Z",
             dueAt = "2025-12-31T23:59:00Z",
             grade = "B",
             subject = SubjectUpdateRequest(id = 1, name = "Math", code = "MATH101")
@@ -242,7 +237,6 @@ class ApiServiceModelsTest {
         assertEquals("Updated Title", request.title)
         assertEquals("Updated Description", request.description)
         assertEquals(20, request.totalQuestions)
-        assertEquals("2025-01-01T00:00:00Z", request.visibleFrom)
         assertEquals("2025-12-31T23:59:00Z", request.dueAt)
         assertEquals("B", request.grade)
         assertNotNull(request.subject)
@@ -260,7 +254,6 @@ class ApiServiceModelsTest {
         assertNull(request.title)
         assertNull(request.description)
         assertNull(request.totalQuestions)
-        assertNull(request.visibleFrom)
         assertNull(request.dueAt)
         assertNull(request.grade)
         assertNull(request.subject)

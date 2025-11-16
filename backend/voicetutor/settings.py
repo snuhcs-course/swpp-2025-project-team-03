@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     "courses",
     "assignments",
     "submissions",
-    "feedbacks",
     "questions",
     "reports",
     "rest_framework",

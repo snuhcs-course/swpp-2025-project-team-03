@@ -42,7 +42,6 @@ class TestPersonalAssignmentModel:
             course_class=course_class,
             subject=subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
         personal_assignment = PersonalAssignment.objects.create(
@@ -84,7 +83,6 @@ class TestAnswerModel:
             course_class=course_class,
             subject=subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
         personal_assignment = PersonalAssignment.objects.create(

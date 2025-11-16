@@ -269,7 +269,6 @@ class TestStudentStatisticsView:
             title="Test Assignment 1",
             description="Test Description",
             total_questions=3,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -290,7 +289,6 @@ class TestStudentStatisticsView:
             title="Test Assignment 2",
             description="Test Description 2",
             total_questions=5,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -477,7 +475,6 @@ class TestStudentStatisticsView:
                     title=f"Assignment {i}",
                     description="Test",
                     total_questions=3,
-                    visible_from=timezone.now(),
                     due_at=timezone.now() + timedelta(days=7),
                     grade="",
                 )
@@ -578,7 +575,6 @@ class TestStudentStatisticsView:
             title="Test Assignment",
             description="Test",
             total_questions=3,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )

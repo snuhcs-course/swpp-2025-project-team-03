@@ -56,7 +56,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="In Progress Assignment",
             subject=subject,
-            visible_from=now,
             due_at=now + timedelta(days=7),
             total_questions=10,
         )
@@ -64,7 +63,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="Completed Assignment",
             subject=subject,
-            visible_from=now - timedelta(days=2),
             due_at=now - timedelta(days=1),
             total_questions=10,
         )
@@ -87,7 +85,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="In Progress Assignment",
             subject=subject,
-            visible_from=now,
             due_at=now + timedelta(days=7),
             total_questions=10,
         )
@@ -95,7 +92,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="Completed Assignment",
             subject=subject,
-            visible_from=now - timedelta(days=2),
             due_at=now - timedelta(days=1),
             total_questions=10,
         )
@@ -117,7 +113,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="In Progress Assignment",
             subject=subject,
-            visible_from=now,
             due_at=now + timedelta(days=7),
             total_questions=10,
         )
@@ -125,7 +120,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="Completed Assignment",
             subject=subject,
-            visible_from=now - timedelta(days=2),
             due_at=now - timedelta(days=1),
             total_questions=10,
         )
@@ -155,7 +149,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="Teacher Assignment",
             subject=subject,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             total_questions=10,
         )
@@ -163,7 +156,6 @@ class TestAssignmentListView:
             course_class=other_class,
             title="Other Teacher Assignment",
             subject=subject,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             total_questions=10,
         )
@@ -190,7 +182,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="Class Assignment",
             subject=subject,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             total_questions=10,
         )
@@ -198,7 +189,6 @@ class TestAssignmentListView:
             course_class=other_class,
             title="Other Class Assignment",
             subject=subject,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             total_questions=10,
         )
@@ -218,7 +208,6 @@ class TestAssignmentListView:
             course_class=course_class,
             title="Filtered Assignment",
             subject=subject,
-            visible_from=now,
             due_at=now + timedelta(days=7),
             total_questions=10,
         )

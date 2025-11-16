@@ -49,8 +49,6 @@ data class AssignmentData(
     val totalQuestions: Int,
     @SerializedName("created_at")
     val createdAt: String? = null,
-    @SerializedName("visible_from")
-    val visibleFrom: String? = null,
     @SerializedName("due_at")
     val dueAt: String,
     @SerializedName("course_class")
@@ -162,8 +160,6 @@ data class PersonalAssignmentInfo(
     val description: String,
     @SerializedName("total_questions")
     val totalQuestions: Int,
-    @SerializedName("visible_from")
-    val visibleFrom: String,
     @SerializedName("due_at")
     val dueAt: String,
     @SerializedName("grade")

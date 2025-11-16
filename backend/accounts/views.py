@@ -170,8 +170,6 @@ class DeleteAccountView(APIView):
                 # Delete dependent data explicitly to ensure full cleanup
                 user.answers.all().delete()
                 user.personal_assignments.all().delete()
-                user.received_feedbacks.all().delete()
-                user.given_feedbacks.all().delete()
                 user.enrollments.all().delete()
                 user.course_classes.all().delete()
 
