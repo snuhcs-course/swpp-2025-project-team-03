@@ -14,6 +14,9 @@ It is designed for elementary or middle school students, teachers, and parents w
 
 ## Demo 4: Teacher Screen & Student Screen
 
+[![demo_team3](https://raw.githubusercontent.com/snuhcs-course/swpp-2025-project-team-03/iteration-4-demo/demo/demo_team3.mp4)](https://github.com/snuhcs-course/swpp-2025-project-team-03/blob/iteration-4-demo/demo/demo_team3.mp4)
+
+
 ### How to Run Demo 4
 
 #### Environment Requirements
@@ -23,7 +26,16 @@ It is designed for elementary or middle school students, teachers, and parents w
 - **Database**: SQLite (development) / PostgreSQL (production)
 - **External Services**: OpenAI API, AWS S3, Google Cloud Speech-to-Text API
 
+
+
 #### Step 1: Backend Setup
+
+**Note**: The backend is currently running on Team 3's remote server. You can use the app directly without local backend setup.
+
+<details>
+<summary>Click to expand if you want to set up backend locally</summary>
+
+<br>
 
 1. **Poppler Installation**
 
@@ -98,24 +110,26 @@ It is designed for elementary or middle school students, teachers, and parents w
    python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('snunlp/KR-SBERT-V40K-klueNLI-augSTS'); model.save('submissions/utils/KR_SBERT_local')"
    ```
 
-#### Step 2: Run Django Server
+9. **Run Django Server**
 
-```bash
-# Run database migrations
-python manage.py makemigrations
-python manage.py migrate
+   ```bash
+   # Run database migrations
+   python manage.py makemigrations
+   python manage.py migrate
 
-# Create superuser (optional)
-python manage.py createsuperuser
+   # Create superuser (optional)
+   python manage.py createsuperuser
 
-# Create initial sample data for testing (recommended)
-python manage.py create_all
+   # Create initial sample data for testing (recommended)
+   python manage.py create_all
 
-# Run development server
-python manage.py runserver
-```
+   # Run development server
+   python manage.py runserver
+   ```
 
-#### Step 3: Run Android App
+</details>
+
+#### Step 2: Run Android App
 
 1. **Open Android Studio** and open the `frontend` directory
 
