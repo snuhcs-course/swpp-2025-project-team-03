@@ -584,7 +584,9 @@ class TeacherDashboardStatsView(APIView):
             teacher = Account.objects.get(id=teacher_id, is_student=False)
 
             # 총 과제 수 계산 (해당 교사가 생성한 과제)
-            total_assignments = Assignment.objects.filter(course_class__teacher=teacher).count()
+            total_assignments = Assignment.objects.filter(
+                course_class__teacher=teacher, is_question_created=True
+            ).count()
 
             # 총 학생 수 계산 (해당 교사의 클래스에 등록된 학생들)
             total_students = (

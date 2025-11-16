@@ -171,8 +171,16 @@ class QuestionCreateView(APIView):
 
             if assignment.total_questions != 0:
                 assignment.is_question_created = True
-
-            assignment.save()
+                assignment.save()
+            else:
+                assignment.delete()  # 시간 얼마 안 걸림
+                return Response(
+                    {
+                        "error": "Question generation cancelled",
+                        "message": f"Assignment {assignment_id}의 질문 생성이 취소되었습니다.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             return Response(
                 {
