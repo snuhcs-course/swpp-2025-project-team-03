@@ -458,6 +458,8 @@ class TestClassStudentsStatisticsView:
             subject=course_class.subject,
             title="Test Assignment",
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
         )
 
         # PersonalAssignment 생성 (SUBMITTED 상태)
@@ -512,6 +514,8 @@ class TestClassStudentsStatisticsView:
             subject=course_class.subject,
             title="Test Assignment",
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
         )
 
         # PersonalAssignment 생성 (SUBMITTED 상태)

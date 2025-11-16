@@ -60,6 +60,8 @@ class TestTeacherDashboardStatsView:
             subject=course_class.subject,
             title="Test Assignment",
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
         )
         Enrollment.objects.create(course_class=course_class, student=student, status=Enrollment.Status.ENROLLED)
 
