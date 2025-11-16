@@ -142,7 +142,6 @@ fun TeacherDashboardScreen(
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
             actualAssignmentViewModel.clearError()
         }
     }
@@ -221,7 +220,8 @@ fun TeacherDashboardScreen(
         ) {
             DashboardSummaryCard(
                 label = "수업",
-                value = dashboardStats?.totalAssignments?.toString() ?: (currentUser?.totalAssignments ?: assignments.size).toString(),
+                value = dashboardStats?.totalClasses?.toString() 
+                    ?: assignments.map { it.courseClass.id }.distinct().size.toString(),
                 icon = Icons.Filled.List,
                 tint = PrimaryIndigo,
                 modifier = Modifier.weight(1f),
@@ -230,10 +230,12 @@ fun TeacherDashboardScreen(
             
             DashboardSummaryCard(
                 label = "학생",
-                value = students.size.toString().takeIf { students.isNotEmpty() } 
-                    ?: dashboardStats?.totalStudents?.toString() 
-                    ?: currentUser?.totalStudents?.toString() 
-                    ?: "0",
+                value = dashboardStats?.totalStudents?.toString() 
+                    ?: (if (students.isNotEmpty()) {
+                        students.size.toString()
+                    } else {
+                        currentUser?.totalStudents?.toString() ?: "0"
+                    }),
                 icon = Icons.Filled.People,
                 tint = Success,
                 modifier = Modifier.weight(1f),

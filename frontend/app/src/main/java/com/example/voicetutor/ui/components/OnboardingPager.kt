@@ -10,7 +10,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.voicetutor.ui.theme.*
-import kotlinx.coroutines.launch
 
 /**
  * 온보딩 페이지 데이터 모델
@@ -48,7 +53,6 @@ fun OnboardingPager(
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val coroutineScope = rememberCoroutineScope()
     
     Dialog(
         onDismissRequest = { /* 배경 클릭으로 닫히지 않도록 */ },
@@ -72,7 +76,9 @@ fun OnboardingPager(
                 )
         ) {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.navigationBars),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 상단 헤더 (건너뛰기 버튼)
@@ -95,7 +101,7 @@ fun OnboardingPager(
                         onComplete()
                     }) {
                         Text(
-                            text = "건너뛰기",
+                            text = if (pagerState.currentPage == pages.size - 1) "시작하기" else "건너뛰기",
                             color = Color.White,
                             fontWeight = FontWeight.Medium
                         )
@@ -126,6 +132,9 @@ fun OnboardingPager(
                 }
                 
                 // Pager 콘텐츠
+                val isLastPage = remember { derivedStateOf { pagerState.currentPage == pages.size - 1 } }
+                val pageOffset = remember { derivedStateOf { pagerState.currentPageOffsetFraction } }
+                
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
@@ -138,42 +147,43 @@ fun OnboardingPager(
                     )
                 }
                 
-                // 하단 버튼
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (pagerState.currentPage > 0) {
-                        VTButton(
-                            text = "이전",
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                }
-                            },
-                            variant = ButtonVariant.Outline,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
+                // 마지막 페이지에서 오른쪽으로 스와이프 시 완료 처리
+                val onCompleteState = rememberUpdatedState(onComplete)
+                var hasCompleted by remember { mutableStateOf(false) }
+                var previousOffset by remember(pagerState.currentPage) { mutableStateOf(0f) }
+                
+                LaunchedEffect(pagerState.currentPage, pageOffset.value) {
+                    // 현재 페이지가 마지막 페이지인지 확인 (학생: 인덱스 5, 선생님: 인덱스 7)
+                    // 실제로는 학생: 인덱스 4 (5번째), 선생님: 인덱스 6 (7번째)이지만
+                    // 체크를 더 엄격하게 하기 위해 pages.size와 비교
+                    val currentPageIndex = pagerState.currentPage
+                    val isCurrentlyLastPage = currentPageIndex == pages.size - 1
+                    
+                    // 마지막 페이지가 아니면 리셋하고 종료
+                    if (!isCurrentlyLastPage) {
+                        previousOffset = 0f
+                        hasCompleted = false
+                        return@LaunchedEffect
                     }
                     
-                    VTButton(
-                        text = if (pagerState.currentPage == pages.size - 1) "시작하기" else "다음으로",
-                        onClick = {
-                            if (pagerState.currentPage == pages.size - 1) {
-                                onComplete()
-                            } else {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                }
-                            }
-                        },
-                        variant = ButtonVariant.Gradient,
-                        modifier = Modifier.weight(1f)
-                    )
+                    // 마지막 페이지에서만 처리
+                    // 페이지가 완전히 안정된 상태(오프셋이 0)에서 시작해서 음수로 변했을 때만 완료
+                    val isFullySettled = kotlin.math.abs(pageOffset.value) < 0.05f
+                    val wasFullySettled = kotlin.math.abs(previousOffset) < 0.05f
+                    
+                    // 안정된 상태에서 오른쪽으로 스와이프할 때만 완료
+                    if (wasFullySettled && pageOffset.value < -0.5f && !hasCompleted) {
+                        hasCompleted = true
+                        onCompleteState.value()
+                    }
+                    
+                    // 오프셋 업데이트
+                    previousOffset = pageOffset.value
+                    
+                    // 스와이프가 끝나면 플래그 리셋 (다시 시도할 수 있도록)
+                    if (isFullySettled) {
+                        hasCompleted = false
+                    }
                 }
             }
         }
@@ -192,12 +202,19 @@ private fun OnboardingPageContent(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 이미지 또는 아이콘 - 위쪽에 크게 배치
+        Spacer(modifier = Modifier.height(40.dp))
+        
+        // 이미지 또는 아이콘 - 위쪽에 액자 스타일로 배치 (9:16 비율)
         Box(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxWidth(0.80f)
+                .aspectRatio(9f / 16f)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White.copy(alpha = 0.1f))
+                .padding(12.dp),
             contentAlignment = Alignment.Center
         ) {
             if (page.icon != null) {
@@ -211,26 +228,19 @@ private fun OnboardingPageContent(
                 Image(
                     painter = painterResource(id = page.imageRes),
                     contentDescription = page.title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Fit
                 )
             }
         }
         
-        // 제목과 설명 - 아래쪽에 별도로 배치
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // 제목과 설명 - 이미지 아래에 배치
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            PrimaryIndigo.copy(alpha = 0.1f),
-                            PrimaryPurple.copy(alpha = 0.1f),
-                            LightBlue.copy(alpha = 0.1f)
-                        )
-                    )
-                )
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 제목
@@ -253,6 +263,8 @@ private fun OnboardingPageContent(
                 lineHeight = 24.sp
             )
         }
+        
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
