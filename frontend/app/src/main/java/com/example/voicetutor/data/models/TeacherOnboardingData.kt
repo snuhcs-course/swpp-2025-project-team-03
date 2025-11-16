@@ -36,35 +36,35 @@ object TeacherOnboardingData {
         
         OnboardingPage(
             title = "각 수업에 배당할 과제를 생성해요",
-            description = "과제 제목, 반 선택, 학년, 과목, 설명, 마감일을 설정하여\n새로운 과제를 만들고 수업에 배당할 수 있어요.",
+            description = "과제 제목, 반 선택, 학년, 과목, 설명, 마감일을 설정하여 새로운 과제를 만들고 수업에 배당할 수 있어요.",
             imageRes = R.drawable.assignmentcreate,
             icon = null
         ),
         
         OnboardingPage(
             title = "수업별 과제 진행 상황을 확인해요",
-            description = "내 수업의 모든 과제의 제출률과 평균 점수를 볼 수 있어요.\n.",
+            description = "내 수업의 모든 과제의 제출률과 평균 점수를 볼 수 있어요.",
             imageRes = R.drawable.teacherclassassignment,
             icon = null
         ),
         
         OnboardingPage(
             title = "학생별 과제 결과를 자세히 확인해요",
-            description = "제출 학생 수와 평균 점수를 한눈에 보고,\n학생별 점수와 제출 시간을 확인하며 개별 피드백을 줄 수 있어요.",
+            description = "제출 학생 수와 평균 점수를 한눈에 보고, 학생별 점수와 제출 시간을 확인하며 개별 피드백을 줄 수 있어요.",
             imageRes = R.drawable.teacherassignmentresult,
             icon = null
         ),
         
         OnboardingPage(
             title = "반별 학생 목록과 진도를 관리해요",
-            description = "반에 속한 학생들의 과제 완료 현황과 평균 점수를 확인하고\n학생을 등록하거나 삭제하여 명단을 관리할 수 있어요.",
+            description = "반에 속한 학생들의 과제 완료 현황과 평균 점수를 확인하고 학생을 등록하거나 삭제하여 명단을 관리할 수 있어요.",
             imageRes = R.drawable.teacherclassstudent,
             icon = null
         ),
         
         OnboardingPage(
             title = "성취기준 리포트로 취약 유형을 분석해요",
-            description = "반을 선택해 학생별 성취기준 리포트를 확인하고\n어떤 유형에서 어려움을 겪는지 한눈에 분석할 수 있어요.",
+            description = "반을 선택해 학생별 성취기준 리포트를 확인하고\n취약 유형을 한눈에 분석할 수 있어요.",
             imageRes = R.drawable.teacherreport,
             icon = null
         )
