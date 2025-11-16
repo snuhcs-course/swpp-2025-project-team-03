@@ -1,8 +1,5 @@
-from datetime import timedelta
-
 from courses.models import CourseClass
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -17,22 +14,16 @@ class Command(BaseCommand):
                 "name": "과학 기초반",
                 "description": "중등 과학을 예습하는 반입니다.",
                 "subject_id": 4,  # 과학
-                "start_date": timezone.now(),
-                "end_date": timezone.now() + timedelta(days=90),
             },
             {
                 "name": "초등 수학 심화반",
                 "description": "초등 수학을 심화 학습합니다.",
                 "subject_id": 3,  # 수학
-                "start_date": timezone.now() + timedelta(days=5),
-                "end_date": timezone.now() + timedelta(days=100),
             },
             {
                 "name": "영어 독해 집중반",
                 "description": "영어 지문의 독해 능력을 집중적으로 향상시키는 반입니다.",
                 "subject_id": 2,  # 영어
-                "start_date": timezone.now() + timedelta(days=10),
-                "end_date": timezone.now() + timedelta(days=120),
             },
         ]
 
@@ -48,8 +39,6 @@ class Command(BaseCommand):
                     "teacher_id": teacher_id,
                     "subject_id": data["subject_id"],
                     "description": data["description"],
-                    "start_date": data["start_date"],
-                    "end_date": data["end_date"],
                 },
             )
             if created:

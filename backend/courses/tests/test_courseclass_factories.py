@@ -41,8 +41,6 @@ class CourseClassFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("text", max_nb_chars=200)
     teacher = factory.SubFactory(TeacherFactory)
     subject = factory.SubFactory(SubjectFactory)
-    start_date = factory.Faker("date_time_this_year", before_now=False, after_now=True)
-    end_date = factory.Faker("date_time_this_year", before_now=False, after_now=True)
 
 
 class EnrollmentFactory(factory.django.DjangoModelFactory):

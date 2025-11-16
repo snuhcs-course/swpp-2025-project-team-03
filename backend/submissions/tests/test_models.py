@@ -35,8 +35,6 @@ class TestPersonalAssignmentModel:
             teacher=teacher,
             subject=subject,
             name="Math Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=30),
         )
         assignment = Assignment.objects.create(
             course_class=course_class,
@@ -76,8 +74,6 @@ class TestAnswerModel:
             teacher=teacher,
             subject=subject,
             name="Math Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=30),
         )
         assignment = Assignment.objects.create(
             course_class=course_class,

@@ -139,8 +139,6 @@ class TestClassDetailView:
         assert "description" in data
         assert "subject" in data
         assert "teacher_name" in data
-        assert "start_date" in data
-        assert "end_date" in data
         assert "student_count" in data
         assert "created_at" in data
 

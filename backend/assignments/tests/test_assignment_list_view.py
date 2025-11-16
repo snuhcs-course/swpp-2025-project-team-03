@@ -40,8 +40,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="Test Class",
         description="Test Description",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=90),
     )
 
 
@@ -141,8 +139,6 @@ class TestAssignmentListView:
             teacher=other_teacher,
             subject=course_class.subject,
             name="Other Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=90),
         )
 
         assignment1 = Assignment.objects.create(
@@ -174,8 +170,6 @@ class TestAssignmentListView:
             teacher=course_class.teacher,
             subject=course_class.subject,
             name="Other Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=90),
         )
 
         assignment1 = Assignment.objects.create(

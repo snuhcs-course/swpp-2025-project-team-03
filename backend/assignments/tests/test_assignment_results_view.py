@@ -44,8 +44,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="Result Class",
         description="Desc",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=30),
     )
 
 

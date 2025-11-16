@@ -5,7 +5,6 @@ CourseClass 순수 유닛 테스트
 - 단일 컴포넌트(Serializer, View 로직)만 검증
 """
 
-from datetime import datetime
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -45,8 +44,6 @@ class TestCourseClassSerializerUnit:
         mock_course_class.description = "Test Description"
         mock_course_class.subject = mock_subject
         mock_course_class.teacher = mock_teacher
-        mock_course_class.start_date = timezone.now()
-        mock_course_class.end_date = timezone.now()
         mock_course_class.created_at = timezone.now()
         mock_course_class.updated_at = timezone.now()
 
@@ -368,24 +365,3 @@ class TestClassStudentsViewUnit:
         mock_get_class.assert_called_once_with(id=1)
         # enrollments.filter가 ENROLLED 상태로 호출되었는지 확인
         mock_enrollments_manager.filter.assert_called_once_with(status=Enrollment.Status.ENROLLED)
-
-
-class TestCourseClassBusinessLogicUnit:
-    """CourseClass 비즈니스 로직 단위 테스트"""
-
-    def test_calculate_class_duration(self):
-        """클래스 기간 계산 로직 (순수 함수)"""
-
-        def calculate_duration_days(start_date, end_date):
-            """시작일과 종료일 사이의 일수 계산"""
-            if not start_date or not end_date:
-                return 0
-            delta = end_date - start_date
-            return delta.days
-
-        start = datetime(2024, 1, 1)
-        end = datetime(2024, 1, 31)
-
-        assert calculate_duration_days(start, end) == 30
-        assert calculate_duration_days(None, end) == 0
-        assert calculate_duration_days(start, None) == 0

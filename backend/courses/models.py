@@ -7,15 +7,12 @@ class CourseClass(models.Model):
     subject = models.ForeignKey("catalog.Subject", on_delete=models.CASCADE, related_name="course_classes")
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
             models.Index(fields=["teacher"]),
             models.Index(fields=["subject"]),
-            models.Index(fields=["start_date", "end_date"]),
         ]
 
     def __str__(self):

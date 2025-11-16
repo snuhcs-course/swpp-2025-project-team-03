@@ -25,8 +25,6 @@ class ClassCreateRequestSerializer(serializers.Serializer):
     description = serializers.CharField(required=False, allow_blank=True)
     subject_name = serializers.CharField(max_length=100)
     teacher_id = serializers.IntegerField()
-    start_date = serializers.DateTimeField()
-    end_date = serializers.DateTimeField()
 
     def create(self, validated_data):
         from .models import CourseClass
@@ -43,8 +41,6 @@ class ClassCreateRequestSerializer(serializers.Serializer):
             description=validated_data.get("description", ""),
             subject=subject,
             teacher=teacher,
-            start_date=validated_data["start_date"],
-            end_date=validated_data["end_date"],
         )
 
         return course_class

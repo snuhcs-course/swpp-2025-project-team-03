@@ -53,8 +53,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="Algebra 1",
         description="Desc",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=30),
     )
 
 

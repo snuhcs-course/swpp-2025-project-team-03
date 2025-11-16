@@ -54,8 +54,6 @@ class TestCourseClassSerializer:
         assert "description" in data
         assert "subject" in data
         assert "teacher_name" in data
-        assert "start_date" in data
-        assert "end_date" in data
         assert "student_count" in data
         assert "created_at" in data
 
@@ -140,10 +138,6 @@ class TestCourseClassSerializer:
         data = serializer.data
 
         # 날짜 필드가 ISO 형식으로 직렬화되는지 확인
-        assert "start_date" in data
-        assert "end_date" in data
-        assert data["start_date"] is not None
-        assert data["end_date"] is not None
 
     def test_serialize_multiple_course_classes(self, teacher, subject):
         """여러 클래스 직렬화 테스트"""
@@ -239,8 +233,6 @@ class TestCourseClassSerializerValidation:
         # 기본값들이 비어있거나 None이어야 함
         assert data["name"] == ""
         assert data["description"] == ""
-        assert data["start_date"] is None
-        assert data["end_date"] is None
 
     def test_serialize_course_class_with_missing_subject(self, teacher):
         """과목이 없는 클래스 직렬화 테스트"""

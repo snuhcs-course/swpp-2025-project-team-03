@@ -53,8 +53,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="과학 기초반",
         description="과학 기초 과정",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=90),
     )
 
 
