@@ -46,17 +46,22 @@ fun VTButton(
     fullWidth: Boolean = false,
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    maxLines: Int = 1,
+    lineHeightMultiplier: Float = 1.0f
 ) {
     val shape = RoundedCornerShape(16.dp)
     val contentPadding = when (size) {
-        ButtonSize.Small -> PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ButtonSize.Small -> PaddingValues(
+            horizontal = 12.dp, 
+            vertical = if (maxLines > 1) 6.dp else 8.dp
+        )
         ButtonSize.Medium -> PaddingValues(horizontal = 20.dp, vertical = 10.dp)
         ButtonSize.Large -> PaddingValues(horizontal = 24.dp, vertical = 12.dp)
     }
     
     val minHeight = when (size) {
-        ButtonSize.Small -> 36.dp
+        ButtonSize.Small -> if (maxLines > 1) 52.dp else 36.dp
         ButtonSize.Medium -> 40.dp
         ButtonSize.Large -> 44.dp
     }
@@ -168,23 +173,27 @@ fun VTButton(
     ) {
         Row(
             modifier = Modifier.padding(contentPadding),
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = if (maxLines > 1) Arrangement.Start else Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             leadingIcon?.let { 
                 it()
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(if (maxLines > 1) 4.dp else 8.dp))
             }
             
             Text(
                 text = text,
                 color = if (enabled) textColor else textColor.copy(alpha = 0.5f),
                 fontSize = fontSize,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = maxLines,
+                overflow = if (maxLines == 1) androidx.compose.ui.text.style.TextOverflow.Ellipsis else androidx.compose.ui.text.style.TextOverflow.Visible,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = (fontSize.value * lineHeightMultiplier).sp
             )
             
             trailingIcon?.let {
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(if (maxLines > 1) 4.dp else 8.dp))
                 it()
             }
         }

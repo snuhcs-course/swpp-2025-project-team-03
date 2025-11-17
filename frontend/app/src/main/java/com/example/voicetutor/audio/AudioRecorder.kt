@@ -309,6 +309,87 @@ class AudioRecorder(private val context: Context) {
     }
     
     /**
+     * WAV 파일 헤더만 생성 (44바이트)
+     */
+    private fun createWavHeader(dataSize: Int, sampleRate: Int): ByteArray {
+        val wavHeader = ByteArray(44)
+        val fileSize = dataSize + 36
+
+        // RIFF 헤더
+        wavHeader[0] = 'R'.code.toByte()
+        wavHeader[1] = 'I'.code.toByte()
+        wavHeader[2] = 'F'.code.toByte()
+        wavHeader[3] = 'F'.code.toByte()
+
+        // 파일 크기
+        wavHeader[4] = (fileSize and 0xFF).toByte()
+        wavHeader[5] = ((fileSize shr 8) and 0xFF).toByte()
+        wavHeader[6] = ((fileSize shr 16) and 0xFF).toByte()
+        wavHeader[7] = ((fileSize shr 24) and 0xFF).toByte()
+
+        // WAVE 포맷
+        wavHeader[8] = 'W'.code.toByte()
+        wavHeader[9] = 'A'.code.toByte()
+        wavHeader[10] = 'V'.code.toByte()
+        wavHeader[11] = 'E'.code.toByte()
+
+        // fmt 청크
+        wavHeader[12] = 'f'.code.toByte()
+        wavHeader[13] = 'm'.code.toByte()
+        wavHeader[14] = 't'.code.toByte()
+        wavHeader[15] = ' '.code.toByte()
+
+        // fmt 청크 크기
+        wavHeader[16] = 16
+        wavHeader[17] = 0
+        wavHeader[18] = 0
+        wavHeader[19] = 0
+
+        // 오디오 포맷 (PCM)
+        wavHeader[20] = 1
+        wavHeader[21] = 0
+
+        // 채널 수 (모노)
+        wavHeader[22] = 1
+        wavHeader[23] = 0
+
+        // 샘플 레이트
+        wavHeader[24] = (sampleRate and 0xFF).toByte()
+        wavHeader[25] = ((sampleRate shr 8) and 0xFF).toByte()
+        wavHeader[26] = ((sampleRate shr 16) and 0xFF).toByte()
+        wavHeader[27] = ((sampleRate shr 24) and 0xFF).toByte()
+
+        // 바이트 레이트
+        val byteRate = sampleRate * 2
+        wavHeader[28] = (byteRate and 0xFF).toByte()
+        wavHeader[29] = ((byteRate shr 8) and 0xFF).toByte()
+        wavHeader[30] = ((byteRate shr 16) and 0xFF).toByte()
+        wavHeader[31] = ((byteRate shr 24) and 0xFF).toByte()
+
+        // 블록 정렬
+        wavHeader[32] = 2
+        wavHeader[33] = 0
+
+        // 비트당 샘플
+        wavHeader[34] = 16
+        wavHeader[35] = 0
+
+        // data 청크
+        wavHeader[36] = 'd'.code.toByte()
+        wavHeader[37] = 'a'.code.toByte()
+        wavHeader[38] = 't'.code.toByte()
+        wavHeader[39] = 'a'.code.toByte()
+
+        // 데이터 크기
+        wavHeader[40] = (dataSize and 0xFF).toByte()
+        wavHeader[41] = ((dataSize shr 8) and 0xFF).toByte()
+        wavHeader[42] = ((dataSize shr 16) and 0xFF).toByte()
+        wavHeader[43] = ((dataSize shr 24) and 0xFF).toByte()
+
+        return wavHeader
+    }
+
+    /**
      * WAV 파일 헤더 생성
      */
     private fun createWavFile(pcmData: ByteArray, sampleRate: Int): ByteArray {
@@ -390,6 +471,46 @@ class AudioRecorder(private val context: Context) {
         return wavHeader + pcmData
     }
     
+    /**
+     * 1초짜리 빈 WAV 파일 생성 (건너뛰기용)
+     */
+    fun createEmptyWavFile(): File? {
+        return try {
+            println("AudioRecorder - Creating empty WAV file for skip")
+
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val fileName = "voice_skip_$timestamp.wav"
+
+            val audioDir = File(context.filesDir, "audio_recordings")
+            if (!audioDir.exists()) {
+                audioDir.mkdirs()
+            }
+
+            val wavFile = File(audioDir, fileName)
+
+            // 1초 분량의 무음 데이터 생성 (16000 샘플 * 2바이트 = 32000 바이트)
+            val sampleRate = 16000
+            val numSamples = sampleRate // 1초
+            val silentData = ByteArray(numSamples * 2) // 16-bit = 2 bytes per sample
+
+            // WAV 헤더 생성
+            val wavHeader = createWavHeader(silentData.size, sampleRate)
+
+            // 파일에 쓰기
+            FileOutputStream(wavFile).use { outputStream ->
+                outputStream.write(wavHeader)
+                outputStream.write(silentData)
+            }
+
+            println("AudioRecorder - Empty WAV file created: ${wavFile.absolutePath}")
+            wavFile
+        } catch (e: Exception) {
+            println("AudioRecorder - Error creating empty WAV file: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
+
     /**
      * 리소스 정리
      */

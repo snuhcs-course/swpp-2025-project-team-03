@@ -1,4 +1,5 @@
 import pytest
+from courses.models import Enrollment
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
@@ -189,42 +190,64 @@ class TestStudentEditView:
 
 
 class TestStudentDeleteView:
-    """학생 삭제 API 테스트"""
+    """반에서 학생 제거 API 테스트"""
 
-    def test_delete_student(self, api_client, student):
-        """학생 삭제 성공 테스트"""
-        url = reverse("student-detail", kwargs={"id": student.id})
-        data = {"reason": "Test deletion"}
+    def test_delete_student(self, api_client, student, course_class, enrollment):
+        """반에서 학생 제거 성공 테스트"""
+        url = reverse("class-student-delete", kwargs={"id": course_class.id, "student_id": student.id})
 
-        response = api_client.delete(url, data, format="json")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["success"] is True
-        assert "성공적으로 삭제" in response.data["data"]["message"]
-
-        # DB에서 확인 (실제로 삭제되었는지)
-        with pytest.raises(Account.DoesNotExist):
-            Account.objects.get(id=student.id)
-
-    def test_delete_student_without_reason(self, api_client, student):
-        """이유 없이 학생 삭제 테스트"""
-        url = reverse("student-detail", kwargs={"id": student.id})
-        data = {}
-
-        response = api_client.delete(url, data, format="json")
+        response = api_client.delete(url)
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["success"] is True
+        assert "성공적으로 제거되었습니다" in response.data["message"]
+        assert response.data["data"]["class_id"] == course_class.id
+        assert response.data["data"]["student_id"] == student.id
 
-    def test_delete_nonexistent_student(self, api_client):
-        """존재하지 않는 학생 삭제 시도 테스트"""
-        url = reverse("student-detail", kwargs={"id": 999})
-        data = {"reason": "Test deletion"}
+        # DB에서 확인 (Enrollment가 삭제되었는지)
+        with pytest.raises(Enrollment.DoesNotExist):
+            Enrollment.objects.get(course_class=course_class, student=student)
 
-        response = api_client.delete(url, data, format="json")
+        # 학생 계정은 삭제되지 않아야 함
+        assert Account.objects.filter(id=student.id).exists()
+
+    def test_delete_student_without_reason(self, api_client, student, course_class, enrollment):
+        """반에서 학생 제거 테스트 (request body 없음)"""
+        url = reverse("class-student-delete", kwargs={"id": course_class.id, "student_id": student.id})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["success"] is True
+
+    def test_delete_nonexistent_student(self, api_client, course_class):
+        """존재하지 않는 학생 제거 시도 테스트"""
+        url = reverse("class-student-delete", kwargs={"id": course_class.id, "student_id": 999})
+
+        response = api_client.delete(url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.data["success"] is False
+
+    def test_delete_student_not_enrolled(self, api_client, student, course_class):
+        """등록되지 않은 학생 제거 시도 테스트 (Enrollment.DoesNotExist)"""
+        url = reverse("class-student-delete", kwargs={"id": course_class.id, "student_id": student.id})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["success"] is False
+        assert "등록되어 있지 않습니다" in response.data["message"]
+
+    def test_delete_student_nonexistent_class(self, api_client, student):
+        """존재하지 않는 클래스에서 학생 제거 시도 테스트 (CourseClass.DoesNotExist)"""
+        url = reverse("class-student-delete", kwargs={"id": 999, "student_id": student.id})
+
+        response = api_client.delete(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["success"] is False
+        assert "클래스를 찾을 수 없습니다" in response.data["message"]
 
 
 class TestStudentStatisticsView:
@@ -246,7 +269,6 @@ class TestStudentStatisticsView:
             title="Test Assignment 1",
             description="Test Description",
             total_questions=3,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -267,7 +289,6 @@ class TestStudentStatisticsView:
             title="Test Assignment 2",
             description="Test Description 2",
             total_questions=5,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -454,7 +475,6 @@ class TestStudentStatisticsView:
                     title=f"Assignment {i}",
                     description="Test",
                     total_questions=3,
-                    visible_from=timezone.now(),
                     due_at=timezone.now() + timedelta(days=7),
                     grade="",
                 )
@@ -555,7 +575,6 @@ class TestStudentStatisticsView:
             title="Test Assignment",
             description="Test",
             total_questions=3,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )

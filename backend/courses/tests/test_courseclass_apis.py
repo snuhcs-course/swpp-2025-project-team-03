@@ -139,8 +139,6 @@ class TestClassDetailView:
         assert "description" in data
         assert "subject" in data
         assert "teacher_name" in data
-        assert "start_date" in data
-        assert "end_date" in data
         assert "student_count" in data
         assert "created_at" in data
 
@@ -346,47 +344,32 @@ class TestClassStudentsView:
         assert response.data["data"]["student_name"] == student.display_name
         assert response.data["data"]["class_name"] == course_class.name
 
-    def test_enroll_student_with_student_name(self, api_client, course_class, student):
-        """name으로 학생 등록 성공 테스트"""
-        url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?name={student.display_name}")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["success"] is True
-        assert response.data["data"]["student_name"] == student.display_name
-        assert response.data["data"]["class_name"] == course_class.name
-
-    def test_enroll_student_with_student_email(self, api_client, course_class, student):
-        """email로 학생 등록 성공 테스트"""
-        url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?email={student.email}")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["success"] is True
-        assert response.data["data"]["student_name"] == student.display_name
-        assert response.data["data"]["class_name"] == course_class.name
-
-    def test_enroll_student_with_multiple_params(self, api_client, course_class, student):
-        """여러 파라미터로 학생 등록 성공 테스트"""
-        url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?studentId={student.id}&name={student.display_name}&email={student.email}")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["success"] is True
-        assert response.data["data"]["student_name"] == student.display_name
-        assert response.data["data"]["class_name"] == course_class.name
-
-    def test_enroll_student_no_params(self, api_client, course_class):
-        """파라미터 없이 학생 등록 시도 시 에러 테스트"""
+    def test_enroll_student_no_student_id(self, api_client, course_class):
+        """studentId 없이 학생 등록 시도 시 에러 테스트"""
         url = reverse("class-students", kwargs={"id": course_class.id})
         response = api_client.put(url)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.data["success"] is False
-        assert "must be provided" in response.data["message"]
+        assert "학생 ID는 필수입니다" in response.data["message"]
+
+    def test_enroll_student_invalid_student_id_format(self, api_client, course_class):
+        """잘못된 형식의 studentId로 학생 등록 시도 시 에러 테스트"""
+        url = reverse("class-students", kwargs={"id": course_class.id})
+        response = api_client.put(f"{url}?studentId=abc")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["success"] is False
+        assert "학생 ID는 정수여야 합니다" in response.data["message"]
+
+    def test_enroll_student_invalid_student_id_value(self, api_client, course_class):
+        """음수 또는 0인 studentId로 학생 등록 시도 시 에러 테스트"""
+        url = reverse("class-students", kwargs={"id": course_class.id})
+        response = api_client.put(f"{url}?studentId=0")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["success"] is False
+        assert "학생 ID는 양수여야 합니다" in response.data["message"]
 
     def test_enroll_student_not_found(self, api_client, course_class):
         """존재하지 않는 학생 등록 시도 시 에러 테스트"""
@@ -423,18 +406,175 @@ class TestClassStudentsView:
         enrollments_count = Enrollment.objects.filter(student=student, course_class=course_class).count()
         assert enrollments_count == 1
 
-    def test_enroll_student_multiple_students_matched(self, api_client, course_class):
-        """여러 학생이 검색되는 경우 에러 테스트"""
-        # 같은 display_name을 가진 학생들 생성
-        student1 = StudentFactory(display_name="John Doe")
-        student2 = StudentFactory(display_name="John Doe")
-
+    def test_enroll_student_not_a_student(self, api_client, course_class, teacher):
+        """교사 계정을 studentId로 등록 시도 시 에러 테스트"""
         url = reverse("class-students", kwargs={"id": course_class.id})
-        # query parameter로 전달
-        response = api_client.put(f"{url}?name=John%20Doe")
+        response = api_client.put(f"{url}?studentId={teacher.id}")
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.data["success"] is False
-        # error 또는 message에 "Multiple students found" 메시지 확인
-        error_message = response.data.get("error") or response.data.get("message") or ""
-        assert "Multiple students found" in error_message
+        assert "학생을 찾을 수 없습니다" in response.data["message"]
+
+
+class TestClassStudentsStatisticsView:
+    """반 학생 통계 조회 API 테스트"""
+
+    def test_get_statistics_no_students(self, api_client, course_class):
+        """학생이 없는 반의 통계 조회 테스트"""
+        url = reverse("class-students-statistics", kwargs={"classId": course_class.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["success"] is True
+        # views.py line 584에서 overall_average_score를 직접 반환 (serializer를 거치지 않음)
+        assert "overall_average_score" in response.data["data"]
+        assert response.data["data"]["overall_average_score"] == 0.0
+        assert response.data["data"]["students"] == []
+
+    def test_get_statistics_no_assignments(self, api_client, course_class, student, enrollment):
+        """과제가 없는 반의 통계 조회 테스트"""
+        url = reverse("class-students-statistics", kwargs={"classId": course_class.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["success"] is True
+        assert len(response.data["data"]["students"]) == 1
+        assert response.data["data"]["students"][0]["student_id"] == student.id
+        assert response.data["data"]["students"][0]["average_score"] == 0.0
+        assert response.data["data"]["students"][0]["completion_rate"] == 0.0
+
+    def test_get_statistics_with_completed_assignment(self, api_client, course_class, student, enrollment):
+        """완료된 과제가 있는 반의 통계 조회 테스트"""
+        from datetime import timedelta
+
+        from assignments.models import Assignment
+        from django.utils import timezone
+        from questions.models import Question
+        from submissions.models import Answer, PersonalAssignment
+
+        # 과제 생성
+        assignment = Assignment.objects.create(
+            course_class=course_class,
+            subject=course_class.subject,
+            title="Test Assignment",
+            due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
+        )
+
+        # PersonalAssignment 생성 (SUBMITTED 상태)
+        personal_assignment = PersonalAssignment.objects.create(
+            student=student,
+            assignment=assignment,
+            status=PersonalAssignment.Status.SUBMITTED,
+        )
+
+        # Question 생성 (recalled_num=0, base question)
+        question = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=1,
+            content="Test Question",
+            model_answer="Test Answer",
+            difficulty=Question.Difficulty.EASY,
+            recalled_num=0,
+        )
+
+        # Answer 생성 (CORRECT 상태)
+        answer = Answer.objects.create(
+            question=question,
+            student=student,
+            text_answer="Test Answer",
+            state=Answer.State.CORRECT,
+        )
+
+        url = reverse("class-students-statistics", kwargs={"classId": course_class.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["success"] is True
+        assert len(response.data["data"]["students"]) == 1
+        assert response.data["data"]["students"][0]["student_id"] == student.id
+        assert response.data["data"]["students"][0]["average_score"] == 100.0
+        assert response.data["data"]["students"][0]["completion_rate"] == 100.0
+        assert response.data["data"]["students"][0]["total_assignments"] == 1
+        assert response.data["data"]["students"][0]["completed_assignments"] == 1
+
+    def test_get_statistics_with_recalled_questions(self, api_client, course_class, student, enrollment):
+        """recalled_num이 있는 질문이 있는 반의 통계 조회 테스트"""
+        from datetime import timedelta
+
+        from assignments.models import Assignment
+        from django.utils import timezone
+        from questions.models import Question
+        from submissions.models import Answer, PersonalAssignment
+
+        # 과제 생성
+        assignment = Assignment.objects.create(
+            course_class=course_class,
+            subject=course_class.subject,
+            title="Test Assignment",
+            due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
+        )
+
+        # PersonalAssignment 생성 (SUBMITTED 상태)
+        personal_assignment = PersonalAssignment.objects.create(
+            student=student,
+            assignment=assignment,
+            status=PersonalAssignment.Status.SUBMITTED,
+        )
+
+        # Base question (recalled_num=0)
+        base_question = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=1,
+            content="Base Question",
+            model_answer="Base Answer",
+            difficulty=Question.Difficulty.EASY,
+            recalled_num=0,
+        )
+
+        # Recalled question (recalled_num=1)
+        recalled_question = Question.objects.create(
+            personal_assignment=personal_assignment,
+            number=1,
+            content="Recalled Question",
+            model_answer="Recalled Answer",
+            difficulty=Question.Difficulty.EASY,
+            recalled_num=1,
+        )
+
+        # Base question에 대한 답변 (INCORRECT)
+        Answer.objects.create(
+            question=base_question,
+            student=student,
+            text_answer="Wrong Answer",
+            state=Answer.State.INCORRECT,
+        )
+
+        # Recalled question에 대한 답변 (CORRECT)
+        Answer.objects.create(
+            question=recalled_question,
+            student=student,
+            text_answer="Recalled Answer",
+            state=Answer.State.CORRECT,
+        )
+
+        url = reverse("class-students-statistics", kwargs={"classId": course_class.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["success"] is True
+        assert len(response.data["data"]["students"]) == 1
+        # recalled_num=1에서 정답이므로 75점
+        assert response.data["data"]["students"][0]["average_score"] == 75.0
+
+    def test_get_statistics_nonexistent_class(self, api_client):
+        """존재하지 않는 반의 통계 조회 테스트"""
+        url = reverse("class-students-statistics", kwargs={"classId": 999})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["success"] is False
+        assert "클래스를 찾을 수 없습니다" in response.data["message"]

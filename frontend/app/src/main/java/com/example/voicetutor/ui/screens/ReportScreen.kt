@@ -2,8 +2,8 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -21,24 +20,12 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
-// 날짜 포맷 유틸 함수
-private fun formatDate(dateString: String): String {
-    return try {
-        val zonedDateTime = ZonedDateTime.parse(dateString)
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        zonedDateTime.format(formatter)
-    } catch (e: Exception) {
-        dateString
-    }
-}
+import com.example.voicetutor.utils.formatDateOnly
 
 @Composable
 fun ReportScreen(
     studentId: Int? = null,
-    onNavigateToAssignmentReport: (String) -> Unit = {}
+    onNavigateToAssignmentReport: (Int, String) -> Unit = { _, _ -> }
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -49,7 +36,7 @@ fun ReportScreen(
     LaunchedEffect(Unit) {
         println("ReportScreen - Loading completed assignments for studentId: $studentId")
         if (studentId != null) {
-            // 학생의 완료한 과제만 로드 (GRADED 상태)
+            // 학생의 완료한 과제만 로드 (SUBMITTED 상태)
             viewModel.loadCompletedStudentAssignments(studentId)
         } else {
             println("ReportScreen - studentId is null, cannot load assignments")
@@ -71,58 +58,132 @@ fun ReportScreen(
         }
     }
     
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Loading indicator
-        if (isLoading) {
-            item {
+        // Welcome section (Header)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = PrimaryIndigo.copy(alpha = 0.15f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        color = PrimaryIndigo
+                    Icon(
+                        imageVector = Icons.Filled.Assessment,
+                        contentDescription = null,
+                        tint = PrimaryIndigo,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "학습 리포트",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "완료한 과제 결과를 확인해보세요",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray600
                     )
                 }
             }
-        } else if (assignments.isEmpty()) {
-            item {
-                Box(
+        }
+
+        // My completed assignments
+        Column {
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Assessment,
-                            contentDescription = null,
-                            tint = Gray400,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Column {
                         Text(
-                            text = "완료한 과제가 없습니다",
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = "완료한 과제 목록",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Text(
+                            text = "완료한 과제의 결과를 확인해보세요",
+                            style = MaterialTheme.typography.bodySmall,
                             color = Gray600
                         )
                     }
                 }
-            }
-        } else {
-            items(assignments) { assignment ->
-                AssignmentReportCard(
-                    assignment = assignment,
-                    onReportClick = { 
-                        // 과제 제목을 전달
-                        onNavigateToAssignmentReport(assignment.title)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Completed assignments from API
+            if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo
+                        )
                     }
-                )
+                } else if (assignments.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = null,
+                                tint = Gray400,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "완료한 과제가 없습니다",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Gray600
+                            )
+                        }
+                    }
+                } else {
+                    assignments.forEachIndexed { index, assignment ->
+                        AssignmentReportCard(
+                            assignment = assignment,
+                            onReportClick = {
+                                // personalAssignmentId와 과제 제목을 전달
+                                assignment.personalAssignmentId?.let { personalAssignmentId ->
+                                    onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
+                                }
+                            }
+                        )
+
+                    if (index < assignments.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
             }
         }
     }
@@ -138,38 +199,65 @@ fun AssignmentReportCard(
         onClick = onReportClick
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            //modifier = Modifier.padding(12.dp)
         ) {
-            // 과제 제목
-            Text(
-                text = assignment.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // 완료일
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Schedule,
-                    contentDescription = null,
-                    tint = Success,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "완료일: ${formatDate(assignment.dueAt)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
-                )
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    // Assignment title
+                    Text(
+                        text = assignment.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 제출일
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = null,
+                            tint = Success,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "제출일: ${formatDateOnly(assignment.submittedAt ?: assignment.dueAt)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray500
+                        )
+                    }
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    // Question count
+                    Text(
+                        text = "${assignment.totalQuestions}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryIndigo
+                    )
+                    Text(
+                        text = "문제",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
+                    )
+                }
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             // 리포트 보기 버튼
             VTButton(
                 text = "리포트 보기",
@@ -201,7 +289,7 @@ fun AssignmentReportCardPreview() {
                 description = "원소주기율표 기초 문제",
                 totalQuestions = 5,
                 createdAt = "2024-01-10T09:00:00Z",
-                visibleFrom = "2024-01-10T09:00:00Z",
+                
                 dueAt = "2024-01-15T10:00:00Z",
                 courseClass = CourseClass(
                     id = 1,
@@ -209,8 +297,8 @@ fun AssignmentReportCardPreview() {
                     description = "화학 기초반",
                     subject = Subject(id = 1, name = "화학"),
                     teacherName = "김선생님",
-                    startDate = "2024-01-01",
-                    endDate = "2024-12-31",
+                    
+                    
                     studentCount = 25,
                     createdAt = "2024-01-01T00:00:00Z"
                 ),

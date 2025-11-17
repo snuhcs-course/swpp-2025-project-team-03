@@ -13,15 +13,19 @@ data class ClassData(
     val description: String,
     @SerializedName("teacherId")
     val teacherId: Int,
+    @SerializedName("teacher_name")
+    val teacherName: String? = null,
     @SerializedName("studentCount")
     val studentCount: Int,
+    @SerializedName("student_count")
+    val studentCountAlt: Int? = null,
     @SerializedName("createdAt")
     val createdAt: String? = null,
-    @SerializedName("startDate")
-    val startDate: String? = null,
-    @SerializedName("endDate")
-    val endDate: String? = null
-)
+) {
+    // Helper property to get student count from either field
+    val actualStudentCount: Int
+        get() = studentCountAlt ?: studentCount
+}
 
 data class EnrollmentData(
     @SerializedName("student")
@@ -51,4 +55,43 @@ data class MessageData(
     val sentAt: String,
     // @SerializedName("isRead")
     // val isRead: Boolean = false
+)
+
+data class StudentClassStatistics(
+    @SerializedName("average_score")
+    val averageScore: Float,
+    @SerializedName("completion_rate")
+    val completionRate: Float
+)
+
+data class StudentStatisticsItem(
+    @SerializedName("student_id")
+    val studentId: Int,
+    @SerializedName("average_score")
+    val averageScore: Float,
+    @SerializedName("completion_rate")
+    val completionRate: Float,
+    @SerializedName("total_assignments")
+    val totalAssignments: Int,
+    @SerializedName("completed_assignments")
+    val completedAssignments: Int
+)
+
+data class ClassStudentsStatistics(
+    @SerializedName("overall_completion_rate")
+    val overallCompletionRate: Float,
+    @SerializedName("students")
+    val students: List<StudentStatisticsItem>
+)
+
+data class ClassCompletionRate(
+    @SerializedName("completion_rate")
+    val completionRate: Float
+)
+
+data class ClassInfo(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("name")
+    val name: String
 )

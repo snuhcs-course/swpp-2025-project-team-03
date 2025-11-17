@@ -1,6 +1,5 @@
 import logging
 import uuid
-from datetime import datetime
 
 import boto3
 from catalog.models import Subject
@@ -18,7 +17,12 @@ from submissions.models import PersonalAssignment
 
 from .models import Assignment, Material
 from .request_serializers import AssignmentCreateRequestSerializer, AssignmentUpdateRequestSerializer
-from .serializers import AssignmentCreateSerializer, AssignmentDetailSerializer, AssignmentSerializer
+from .serializers import (
+    AssignmentCreateSerializer,
+    AssignmentDetailSerializer,
+    AssignmentResultSerializer,
+    AssignmentSerializer,
+)
 
 logger = logging.getLogger(__name__)
 Account = get_user_model()
@@ -86,6 +90,10 @@ class AssignmentListView(APIView):  # GET /assignments
                 elif status_param == "COMPLETED":
                     # 완료: 마감일이 지난 과제
                     assignments = assignments.filter(due_at__lte=now)
+
+            # total_questions가 0인 과제 제외
+            assignments = assignments.exclude(total_questions=0)
+            assignments = assignments.exclude(is_question_created=False)
 
             serializer = AssignmentSerializer(assignments, many=True)
             return create_api_response(data=serializer.data, message="과제 목록 조회 성공")
@@ -230,7 +238,7 @@ class AssignmentCreateView(APIView):  # POST /assignments
         operation_id="과제 생성",
         operation_description=(
             "새로운 과제를 생성하고 업로드용 S3 presigned URL을 반환합니다.\n\n"
-            "- 요청: class_id, title, due_at, description\n"
+            "- 요청: class_id, title, due_at, description, total_questions\n"
             "- 응답: assignment_id, material_id, s3_key, upload_url"
         ),
         request_body=AssignmentCreateRequestSerializer,
@@ -285,7 +293,8 @@ class AssignmentCreateView(APIView):  # POST /assignments
             title=data["title"],
             grade=data.get("grade", ""),
             description=data.get("description", ""),
-            visible_from=datetime.now(),
+            total_questions=data.get("total_questions", 0),
+            is_question_created=False,
             due_at=due_at,
         )
 
@@ -391,11 +400,58 @@ class AssignmentSubmitView(APIView):  # POST /assignments/{id}/submit
 class AssignmentResultsView(APIView):  # GET /assignments/{id}/results
     @swagger_auto_schema(
         operation_id="과제 결과 조회",
-        operation_description="특정 과제의 제출 결과를 조회합니다.",
+        operation_description="특정 과제의 제출 결과(총 개인 과제 수, 제출 수, 완료율)를 조회합니다.",
         responses={200: "Assignment results"},
     )
     def get(self, request, id):
-        return Response({"message": "과제 결과 조회"}, status=status.HTTP_200_OK)
+        try:
+            # 해당 과제에 대한 개인 과제 수와 제출된 수를 한 번에 집계
+            from django.db.models import Count, Q
+
+            qs = PersonalAssignment.objects.filter(assignment_id=id)
+            agg = qs.aggregate(
+                total=Count("id"),
+                submitted=Count("id", filter=Q(status=PersonalAssignment.Status.SUBMITTED)),
+            )
+
+            total = agg.get("total", 0) or 0
+            submitted = agg.get("submitted", 0) or 0
+
+            completion_rate = round((submitted / total) * 100.0, 2) if total > 0 else 0.0
+
+            serializer = AssignmentResultSerializer(
+                data={
+                    "assignment_id": id,
+                    "total_students": total,
+                    "submitted_students": submitted,
+                    "submission_rate": completion_rate,
+                }
+            )
+
+            serializer.is_valid(raise_exception=True)
+
+            return create_api_response(
+                success=True,
+                data=serializer.data,
+                message="과제 결과 조회 성공",
+                status_code=status.HTTP_200_OK,
+            )
+        except PersonalAssignment.DoesNotExist:
+            logger.error(f"[AssignmentResultsView] PersonalAssignment does not exist for assignment ID: {id}")
+            return create_api_response(
+                success=False,
+                error="PersonalAssignment not found",
+                message="해당 과제에 대한 개인 과제가 없습니다.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"[AssignmentResultsView] {e}", exc_info=True)
+            # 결과 집계 실패 시에도 500 반환 대신 기본 구조로 응답(기존 단위 테스트 호환)
+            return create_api_response(
+                success=False,
+                message="과제 결과 조회",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class AssignmentQuestionsView(APIView):  # GET /assignments/{id}/questions
@@ -526,7 +582,9 @@ class TeacherDashboardStatsView(APIView):
             teacher = Account.objects.get(id=teacher_id, is_student=False)
 
             # 총 과제 수 계산 (해당 교사가 생성한 과제)
-            total_assignments = Assignment.objects.filter(course_class__teacher=teacher).count()
+            total_assignments = Assignment.objects.filter(
+                course_class__teacher=teacher, is_question_created=True
+            ).count()
 
             # 총 학생 수 계산 (해당 교사의 클래스에 등록된 학생들)
             total_students = (

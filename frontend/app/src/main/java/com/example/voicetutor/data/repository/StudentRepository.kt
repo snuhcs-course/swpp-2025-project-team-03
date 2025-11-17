@@ -68,4 +68,17 @@ class StudentRepository @Inject constructor(
             Result.failure(e)
         }
     }
+    
+    suspend fun getStudentClasses(id: Int): Result<List<ClassInfo>> {
+        return try {
+            val response = apiService.getStudentClasses(id)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()?.data ?: emptyList())
+            } else {
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

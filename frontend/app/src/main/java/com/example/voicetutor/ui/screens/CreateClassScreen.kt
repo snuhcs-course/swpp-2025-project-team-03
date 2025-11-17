@@ -26,11 +26,13 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.data.network.CreateClassRequest
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateClassScreen(
     onBackClick: () -> Unit = {},
@@ -40,13 +42,6 @@ fun CreateClassScreen(
     var className by remember { mutableStateOf("") }
     var subject by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedGrade by remember { mutableStateOf("1학년") }
-    var selectedClass by remember { mutableStateOf("A반") }
-    var showGradeDropdown by remember { mutableStateOf(false) }
-    var showClassDropdown by remember { mutableStateOf(false) }
-    
-    val grades = listOf("1학년", "2학년", "3학년")
-    val classOptions = listOf("A반", "B반", "C반", "D반")
     
     // ViewModel 상태 관찰
     val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
@@ -66,14 +61,11 @@ fun CreateClassScreen(
             .background(Color.White)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
-            .clickable { 
-                showGradeDropdown = false
-                showClassDropdown = false
-            }
     ) {
         VTHeader(
-            title = "새 클래스 만들기",
-            onBackClick = onBackClick
+            title = "수업 생성",
+            onBackClick = onBackClick,
+            showBackButton = false
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -82,7 +74,7 @@ fun CreateClassScreen(
         VTCard(variant = CardVariant.Outlined) {
             Column {
                 Text(
-                    text = "클래스 이름",
+                    text = "수업 이름",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
@@ -104,146 +96,6 @@ fun CreateClassScreen(
                         cursorColor = Color.Black
                     )
                 )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Grade and Class selection
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
-                Text(
-                    text = "학년 및 반",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Grade selection
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "학년",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box {
-                            OutlinedTextField(
-                                value = selectedGrade,
-                                onValueChange = { },
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = { 
-                                    Icon(
-                                        imageVector = Icons.Filled.ArrowDropDown,
-                                        contentDescription = null,
-                                        tint = Gray800
-                                    )
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showGradeDropdown = true }
-                            )
-                            
-                            // Grade dropdown
-                            if (showGradeDropdown) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                                ) {
-                                    Column {
-                                        grades.forEach { grade ->
-                                            Text(
-                                                text = grade,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        selectedGrade = grade
-                                                        showGradeDropdown = false
-                                                    }
-                                                    .padding(12.dp),
-                                                color = if (grade == selectedGrade) Color.Black else Color.Black,
-                                                fontWeight = if (grade == selectedGrade) FontWeight.Bold else FontWeight.Normal
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Class selection
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "반",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box {
-                            OutlinedTextField(
-                                value = selectedClass,
-                                onValueChange = { },
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = { 
-                                    Icon(
-                                        imageVector = Icons.Filled.ArrowDropDown,
-                                        contentDescription = null,
-                                        tint = Gray800
-                                    )
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showClassDropdown = true }
-                            )
-                            
-                            // Class dropdown
-                            if (showClassDropdown) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                                ) {
-                                    Column {
-                                        classOptions.forEach { classOption ->
-                                            Text(
-                                                text = classOption,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        selectedClass = classOption
-                                                        showClassDropdown = false
-                                                    }
-                                                    .padding(12.dp),
-                                                color = if (classOption == selectedClass) Color.Black else Color.Black,
-                                                fontWeight = if (classOption == selectedClass) FontWeight.Bold else FontWeight.Normal
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
         
@@ -284,7 +136,7 @@ fun CreateClassScreen(
         VTCard(variant = CardVariant.Outlined) {
             Column {
                 Text(
-                    text = "클래스 설명",
+                    text = "수업 설명",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
@@ -294,7 +146,7 @@ fun CreateClassScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    placeholder = { Text("클래스에 대한 간단한 설명을 입력하세요...") },
+                    placeholder = { Text("수업에 대한 간단한 설명을 입력하세요...") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(100.dp),
@@ -316,20 +168,11 @@ fun CreateClassScreen(
         
         // Create button
         VTButton(
-            text = if (isLoading) "생성 중..." else "클래스 만들기",
+            text = if (isLoading) "생성 중..." else "수업 생성",
             onClick = {
-                val fullClassName = if (className.isNotBlank()) {
-                    className
-                } else {
-                    "$selectedGrade $selectedClass"
-                }
-                
                 // 현재 시간을 ISO 형식으로 변환
                 val now = LocalDateTime.now()
-                val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                val startDate = now.format(formatter)
-                val endDate = now.plusMonths(6).format(formatter) // 6개월 후
-                
+                val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME               
                 // teacherId 사용 (파라미터로 받은 값 사용)
                 println("CreateClassScreen - teacherId: $teacherId")
                 
@@ -339,12 +182,10 @@ fun CreateClassScreen(
                         
                         // 클래스 생성 요청
                         val createClassRequest = CreateClassRequest(
-                            name = fullClassName,
+                            name = className,
                             description = description,
                             subject_name = subject,
                             teacher_id = teacherIdInt,
-                            start_date = startDate,
-                            end_date = endDate
                         )
                         
                         println("CreateClassScreen - createClassRequest: $createClassRequest")
@@ -359,7 +200,7 @@ fun CreateClassScreen(
                 }
             },
             fullWidth = true,
-            enabled = !isLoading && (className.isNotBlank() || (selectedGrade.isNotBlank() && selectedClass.isNotBlank())),
+            enabled = !isLoading && className.isNotBlank(),
             variant = ButtonVariant.Gradient
         )
         
@@ -367,7 +208,7 @@ fun CreateClassScreen(
         error?.let { errorMessage ->
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = errorMessage,
+                text = ErrorMessageMapper.getErrorMessage(errorMessage),
                 color = Error,
                 style = MaterialTheme.typography.bodyMedium
             )

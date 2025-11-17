@@ -7,7 +7,6 @@ class PersonalAssignment(models.Model):
         NOT_STARTED = "NOT_STARTED", "Not Started"
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         SUBMITTED = "SUBMITTED", "Submitted"
-        GRADED = "GRADED", "Graded"
 
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="personal_assignments")
     assignment = models.ForeignKey(
@@ -35,6 +34,7 @@ class Answer(models.Model):
     class State(models.TextChoices):
         CORRECT = "correct", "Correct"
         INCORRECT = "incorrect", "Incorrect"
+        PROCESSING = "PROCESSING", "Processing"
 
     question = models.ForeignKey("questions.Question", on_delete=models.CASCADE, related_name="answers")
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="answers")

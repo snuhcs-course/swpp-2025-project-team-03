@@ -21,13 +21,13 @@ class GetPageTitleTest {
     @Test
     fun getPageTitle_assignmentDetailedResults_returnsCorrectTitle() {
         val title = getPageTitle(VoiceTutorScreens.AssignmentDetailedResults.route, UserRole.STUDENT)
-        assertEquals("과제 결과", title)
+        assertEquals("리포트", title)
     }
 
     @Test
     fun getPageTitle_progress_returnsCorrectTitle() {
         val title = getPageTitle(VoiceTutorScreens.Progress.route, UserRole.STUDENT)
-        assertEquals("진도 리포트", title)
+        assertEquals("학습 리포트", title)
     }
 
     @Test
@@ -79,12 +79,6 @@ class GetPageTitleTest {
     }
 
     @Test
-    fun getPageTitle_teacherStudentDetail_returnsCorrectTitle() {
-        val title = getPageTitle(VoiceTutorScreens.TeacherStudentDetail.route, UserRole.TEACHER)
-        assertEquals("학생 상세", title)
-    }
-
-    @Test
     fun getPageTitle_teacherStudentAssignmentDetail_returnsCorrectTitle() {
         val title = getPageTitle(VoiceTutorScreens.TeacherStudentAssignmentDetail.route, UserRole.TEACHER)
         assertEquals("과제 결과", title)
@@ -93,7 +87,7 @@ class GetPageTitleTest {
     @Test
     fun getPageTitle_settings_returnsCorrectTitle() {
         val title = getPageTitle(VoiceTutorScreens.Settings.route, UserRole.STUDENT)
-        assertEquals("설정", title)
+        assertEquals("계정", title)
     }
 
     @Test

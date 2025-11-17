@@ -1,15 +1,19 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,39 +22,68 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
+import com.example.voicetutor.ui.viewmodel.ClassViewModel
 
 // AllStudentsStudent는 StudentModels.kt에서 정의된 것을 사용
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllStudentsScreen(
     teacherId: String = "1", // 임시로 기본값 설정
-    onNavigateToStudentDetail: (Int) -> Unit = {},
-    onNavigateToMessage: (String) -> Unit = {}
+    onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> }  // 리포트용
 ) {
-    val viewModel: StudentViewModel = hiltViewModel()
-    val apiStudents by viewModel.students.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
+    val studentViewModel: StudentViewModel = hiltViewModel()
+    val classViewModel: ClassViewModel = hiltViewModel()
     
-    var searchQuery by remember { mutableStateOf("") }
+    val apiStudents by studentViewModel.students.collectAsStateWithLifecycle()
+    val isLoading by studentViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by studentViewModel.error.collectAsStateWithLifecycle()
     
-    // Load students on first composition
+    val classes by classViewModel.classes.collectAsStateWithLifecycle()
+    val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
+    val studentClasses by studentViewModel.studentClasses.collectAsStateWithLifecycle()
+    val loadingStudentClasses by studentViewModel.loadingStudentClasses.collectAsStateWithLifecycle()
+    
+    var selectedClassId by rememberSaveable(stateSaver = Saver(
+        save = { it ?: -1 },
+        restore = { if (it == -1) null else it }
+    )) { mutableStateOf<Int?>(null) }
+    var expandedClassDropdown by remember { mutableStateOf(false) }
+    
+    // Load classes for teacher
     LaunchedEffect(teacherId) {
-        println("AllStudentsScreen - Loading students for teacher ID: $teacherId")
-        viewModel.loadAllStudents(teacherId = teacherId)
+        println("AllStudentsScreen - Loading classes for teacher ID: $teacherId")
+        classViewModel.loadClasses(teacherId)
+    }
+    
+    // Auto-select first class if not already selected
+    LaunchedEffect(classes) {
+        if (classes.isNotEmpty() && selectedClassId == null) {
+            selectedClassId = classes.first().id
+            println("AllStudentsScreen - Auto-selecting first class: ${classes.first().id}")
+        }
+    }
+    
+    // Load students when class is selected
+    LaunchedEffect(selectedClassId) {
+        if (selectedClassId != null) {
+            println("AllStudentsScreen - Loading students for class ID: $selectedClassId")
+            studentViewModel.loadAllStudents(teacherId = teacherId, classId = selectedClassId.toString())
+        }
     }
     
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show error message
-            viewModel.clearError()
+            studentViewModel.clearError()
         }
     }
     
@@ -64,26 +97,11 @@ fun AllStudentsScreen(
         )
     }
     
-    // Filter and search students
-    val filteredStudents = remember(allStudents, searchQuery) {
-        allStudents.filter { student ->
-            val matchesSearch = searchQuery.isEmpty() || 
-                student.name.contains(searchQuery, ignoreCase = true) ||
-                student.email.contains(searchQuery, ignoreCase = true)
-            
-            val matchesFilter = true // 모든 학생 표시
-            
-            matchesSearch && matchesFilter
-        }
-    }
-    
     // Calculate stats
     val totalStudents = allStudents.size
-    val averageScore = 0 // 평균 점수 정보가 없으므로 0으로 설정
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -92,85 +110,80 @@ fun AllStudentsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Column {
                     Text(
-                        text = "전체 학생 관리",
+                        text = "성취기준 리포트",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "학생들의 학습 현황을 확인하고 관리하세요",
+                        text = "학생들의 학습 현황을 확인하고 취약 유형을 분석하세요",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                    Text(
-                        text = "총 ${totalStudents}명의 학생",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = Gray600
                     )
                 }
             }
         }
         
         item {
-            // Stats cards
-            Row(
+            // Stats card
+            VTStatsCard(
+                title = "전체 학생",
+                value = "${totalStudents}명",
+                icon = Icons.Filled.People,
+                iconColor = PrimaryIndigo,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                VTStatsCard(
-                    title = "전체 학생",
-                    value = "${totalStudents}명",
-                    icon = Icons.Filled.People,
-                    iconColor = PrimaryIndigo,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
-                )
-                
-                
-                VTStatsCard(
-                    title = "평균 점수",
-                    value = "${averageScore}점",
-                    icon = Icons.Filled.Star,
-                    iconColor = Warning,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
-                )
-            }
+                variant = CardVariant.Gradient
+            )
         }
         
         item {
-            // Search and filter
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Class selector dropdown only (no search)
+            ExposedDropdownMenuBox(
+                expanded = expandedClassDropdown,
+                onExpandedChange = { expandedClassDropdown = it }
             ) {
                 OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("학생 검색") },
-                    placeholder = { Text("이름, 이메일, 학급으로 검색") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = null
-                        )
+                    value = classes.find { it.id == selectedClassId }?.name ?: "반 선택",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("반 선택") },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = Gray800),
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                        focusedTextColor = Gray800,
+                        unfocusedTextColor = Gray800,
+                        focusedLabelColor = PrimaryIndigo,
+                        unfocusedLabelColor = Gray600
+                    )
                 )
                 
+                ExposedDropdownMenu(
+                    expanded = expandedClassDropdown,
+                    onDismissRequest = { expandedClassDropdown = false }
+                ) {
+                    classes.forEach { classData ->
+                        DropdownMenuItem(
+                            text = { Text(classData.name) },
+                            onClick = {
+                                selectedClassId = classData.id
+                                expandedClassDropdown = false
+                            }
+                        )
+                    }
+                }
             }
         }
         
@@ -189,7 +202,7 @@ fun AllStudentsScreen(
                 )
                 
                 Text(
-                    text = "${filteredStudents.size}명",
+                    text = "${allStudents.size}명",
                     style = MaterialTheme.typography.bodyMedium,
                     color = PrimaryIndigo,
                     fontWeight = FontWeight.Medium
@@ -209,7 +222,7 @@ fun AllStudentsScreen(
                     )
                 }
             }
-        } else if (filteredStudents.isEmpty()) {
+        } else if (allStudents.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -226,11 +239,7 @@ fun AllStudentsScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (searchQuery.isNotEmpty()) {
-                                "검색 결과가 없습니다"
-                            } else {
-                                "학생이 없습니다"
-                            },
+                            text = "학생이 없습니다",
                             style = MaterialTheme.typography.bodyLarge,
                             color = Gray600
                         )
@@ -238,11 +247,27 @@ fun AllStudentsScreen(
                 }
             }
         } else {
-            items(filteredStudents) { student ->
+            itemsIndexed(
+                items = allStudents,
+                key = { _, student -> student.id }  // 각 학생의 고유 ID를 키로 사용
+            ) { index, student ->
+                val classesForStudent = studentClasses[student.id]
+                val isClassesLoading = loadingStudentClasses.contains(student.id)
+                LaunchedEffect(student.id) {
+                    if (classesForStudent == null && !isClassesLoading) {
+                        studentViewModel.loadStudentClasses(student.id)
+                    }
+                }
+
                 AllStudentsCard(
                     student = student,
-                    onStudentClick = { onNavigateToStudentDetail(student.id) },
-                    onMessageClick = { onNavigateToMessage(student.name) }
+                    classNames = classesForStudent?.map { it.name } ?: emptyList(),
+                    isLoadingClasses = classesForStudent == null || isClassesLoading,
+                    onReportClick = {
+                        // 리포트 페이지로 이동
+                        val classId = selectedClassId ?: 0
+                        onNavigateToStudentDetail(classId, student.id, student.name)
+                    }
                 )
             }
         }
@@ -252,39 +277,44 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: com.example.voicetutor.data.models.AllStudentsStudent,
-    onStudentClick: () -> Unit,
-    onMessageClick: () -> Unit
+    classNames: List<String>,
+    isLoadingClasses: Boolean,
+    onReportClick: () -> Unit
 ) {
-    VTCard(
-        variant = CardVariant.Elevated,
-        onClick = onStudentClick
+    VTCard2(
+        modifier = Modifier.fillMaxWidth(),
+        variant = CardVariant.Elevated
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Student info header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(PrimaryIndigo.copy(alpha = 0.1f)),
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryIndigo.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = student.name.first().toString(),
+                        text = student.name.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
                         color = PrimaryIndigo,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
                         text = student.name,
                         style = MaterialTheme.typography.titleSmall,
@@ -296,71 +326,61 @@ fun AllStudentsCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
-                    Text(
-                        text = "학생", // 클래스 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
-                    )
                 }
-                
             }
-            
-            // Progress info
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "과제 진행률",
+                Text(
+                    text = "반: ",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = Gray600
+                )
+                when {
+                    isLoadingClasses -> Text(
+                        text = "불러오는 중...",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "정보 없음", // 과제 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
                         color = Gray500
                     )
-                }
-                
-                Column {
-                    Text(
-                        text = "평균 점수",
+                    classNames.isEmpty() -> Text(
+                        text = "배정된 반이 없습니다",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                    Text(
-                        text = "정보 없음", // 평균 점수 정보가 없으므로 기본값
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
                         color = Gray500
                     )
+                    else -> classNames.forEachIndexed { index, name ->
+                        if (index > 0) {
+                            Text(
+                                text = ", ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Gray500
+                            )
+                        }
+                        Text(
+                            text = "$name",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray700
+                        )
+                    }
                 }
             }
-            
-            // Progress bar
-            VTProgressBar(
-                progress = 0f, // 과제 정보가 없으므로 0으로 설정
-                showPercentage = true
-            )
-            
-            // Action buttons
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = onMessageClick
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Message,
-                        contentDescription = "메시지 보내기",
-                        tint = PrimaryIndigo
-                    )
-                }
+                VTButton(
+                    text = "리포트 보기",
+                    onClick = onReportClick,
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Medium,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

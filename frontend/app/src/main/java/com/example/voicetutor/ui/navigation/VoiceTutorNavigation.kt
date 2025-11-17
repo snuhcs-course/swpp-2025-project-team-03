@@ -148,18 +148,12 @@ fun VoiceTutorNavigation(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
                     dashboardViewModel = dashboardViewModel,
-                    onNavigateToAllAssignments = { studentId ->
-                        // 학생은 PendingAssignments로 이동 (해야 할 과제)
-                        navController.navigate(VoiceTutorScreens.PendingAssignments.createRoute(studentId))
-                    },
-                    onNavigateToCompletedAssignments = { studentId ->
-                        navController.navigate(VoiceTutorScreens.CompletedAssignments.createRoute(studentId))
-                    },
-                    onNavigateToAllStudentAssignments = { studentId ->
-                        navController.navigate(VoiceTutorScreens.AllStudentAssignments.createRoute(studentId))
-                    },
                     onNavigateToProgressReport = {
                         navController.navigate(VoiceTutorScreens.Progress.route)
+                    },
+                    onNavigateToAssignment = { assignmentId ->
+                        // personalAssignmentId를 사용하여 과제 시작
+                        navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
                     },
                     onNavigateToAssignmentDetail = { assignmentId ->
                         // assignmentId는 PersonalAssignment ID (String 형태로 전달됨)
@@ -216,40 +210,15 @@ fun VoiceTutorNavigation(
             ) {
                 ReportScreen(
                     studentId = currentUser?.id,
-                    onNavigateToAssignmentReport = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.AssignmentDetailedResults.createRoute(assignmentTitle))
+                    onNavigateToAssignmentReport = { personalAssignmentId: Int, assignmentTitle: String ->
+                        navController.navigate(VoiceTutorScreens.AssignmentDetailedResults.createRoute(personalAssignmentId, assignmentTitle))
                     }
                 )
             }
         }
-        
+
         composable(
-            route = VoiceTutorScreens.CompletedAssignments.route,
-            arguments = listOf(
-                navArgument("studentId") {
-                    type = NavType.IntType
-                }
-            )
-        ) { backStackEntry ->
-            val studentId = backStackEntry.arguments?.getInt("studentId")
-            MainLayout(
-                navController = navController,
-                userRole = UserRole.STUDENT
-            ) {
-                CompletedAssignmentsScreen(
-                    studentId = studentId,
-                    onNavigateToAssignmentDetail = { assignmentId ->
-                        navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId.toString(), "과제"))
-                    },
-                    onNavigateToAssignmentReport = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.AssignmentDetailedResults.createRoute(assignmentTitle))
-                    }
-                )
-            }
-        }
-        
-        composable(
-            route = VoiceTutorScreens.AllStudentAssignments.route,
+            route = VoiceTutorScreens.NoRecentAssignment.route,
             arguments = listOf(
                 navArgument("studentId") {
                     type = NavType.IntType
@@ -262,69 +231,30 @@ fun VoiceTutorNavigation(
                     navController = navController,
                     userRole = UserRole.STUDENT
                 ) {
-                    AllStudentAssignmentsScreen(
-                        studentId = studentId,
-                        onNavigateToAssignmentDetail = { assignmentId ->
-                            navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId, "과제"))
-                        },
-                        onNavigateToAssignment = { assignmentId ->
-                            navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
-                        },
-                        onNavigateToAssignmentReport = { assignmentTitle ->
-                            navController.navigate(VoiceTutorScreens.AssignmentDetailedResults.createRoute(assignmentTitle))
-                        }
-                    )
+                    NoRecentAssignmentScreen()
                 }
             }
         }
-        
-        // Pending Assignments Screen (해야 할 과제)
-        composable(
-            route = VoiceTutorScreens.PendingAssignments.route,
-            arguments = listOf(
-                navArgument("studentId") {
-                    type = NavType.IntType
-                }
-            )
-        ) { backStackEntry ->
-            val studentId = backStackEntry.arguments?.getInt("studentId")
-            if (studentId != null) {
-                MainLayout(
-                    navController = navController,
-                    userRole = UserRole.STUDENT
-                ) {
-                    val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
-                    PendingAssignmentsScreen(
-                        studentId = studentId,
-                        onNavigateToAssignment = { assignmentId ->
-                            // assignmentId는 Assignment ID가 아니라 Personal Assignment ID
-                            // AssignmentScreen에서 Personal Assignment ID를 사용해야 함
-                            navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
-                        },
-                        onNavigateToAssignmentDetail = { assignmentId ->
-                            // assignmentId는 Assignment ID
-                            navController.navigate(VoiceTutorScreens.AssignmentDetail.createRoute(assignmentId, "과제"))
-                        },
-                        assignmentViewModel = assignmentViewModel
-                    )
-                }
-            }
-        }
-        
+
         composable(
             route = VoiceTutorScreens.AssignmentDetailedResults.route,
             arguments = listOf(
+                navArgument("personalAssignmentId") {
+                    type = NavType.IntType
+                },
                 navArgument("title") {
                     type = NavType.StringType
                 }
             )
         ) { backStackEntry ->
+            val personalAssignmentId = backStackEntry.arguments?.getInt("personalAssignmentId") ?: 0
             val assignmentTitle = backStackEntry.arguments?.getString("title") ?: "과제 결과"
             MainLayout(
                 navController = navController,
                 userRole = UserRole.STUDENT
             ) {
                 AssignmentDetailedResultsScreen(
+                    personalAssignmentId = personalAssignmentId,
                     assignmentTitle = assignmentTitle,
                     onBackClick = {
                         navController.popBackStack()
@@ -364,20 +294,23 @@ fun VoiceTutorNavigation(
                     onNavigateToAllStudents = {
                         navController.navigate(VoiceTutorScreens.AllStudents.route)
                     },
+                    onNavigateToClasses = {
+                        navController.navigate(VoiceTutorScreens.TeacherClasses.route)
+                    },
                     onCreateNewAssignment = {
-                        navController.navigate(VoiceTutorScreens.CreateAssignment.route)
+                        navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(null))
                     },
-                    onNavigateToAssignmentDetail = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentTitle))
+                    onNavigateToCreateClass = {
+                        navController.navigate(VoiceTutorScreens.CreateClass.route)
                     },
-                    onNavigateToAssignmentResults = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentTitle))
+                    onNavigateToAssignmentDetail = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     },
-                    onNavigateToEditAssignment = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentTitle))
+                    onNavigateToAssignmentResults = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentId))
                     },
-                    onNavigateToStudentDetail = { studentName ->
-                        navController.navigate(VoiceTutorScreens.TeacherStudentDetail.createRoute(studentName))
+                    onNavigateToEditAssignment = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentId))
                     }
                 )
             }
@@ -402,8 +335,8 @@ fun VoiceTutorNavigation(
                         navController.navigate(VoiceTutorScreens.CreateClass.route)
                         println("Navigate to create class")
                     },
-                    onNavigateToCreateAssignment = {
-                        navController.navigate(VoiceTutorScreens.CreateAssignment.route)
+                    onNavigateToCreateAssignment = { classId ->
+                        navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(classId))
                     },
                     onNavigateToStudents = { classId ->
                         navController.navigate(VoiceTutorScreens.TeacherStudents.createRoute(classId.toString()))
@@ -412,18 +345,28 @@ fun VoiceTutorNavigation(
             }
         }
         
-        composable(VoiceTutorScreens.TeacherStudents.route) {
+        composable(
+            route = VoiceTutorScreens.TeacherStudents.route,
+            arguments = listOf(
+                navArgument("classId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val classId = backStackEntry.arguments?.getString("classId")?.toIntOrNull()
+            val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+            val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+            
             MainLayout(
                 navController = navController,
                 userRole = UserRole.TEACHER
             ) {
                 TeacherStudentsScreen(
-                    onNavigateToStudentDetail = { studentId ->
-                        navController.navigate(VoiceTutorScreens.TeacherStudentDetail.createRoute(studentId.toString()))
-                    },
-                    onNavigateToMessage = { studentId ->
-                        navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentId.toString()))
-                    },
+                    classId = classId,
+                    teacherId = currentUser?.id?.toString(),
+//                    onNavigateToStudentDetail = { studentId ->
+//                        navController.navigate(VoiceTutorScreens.TeacherStudentDetail.createRoute(studentId))
+//                    },
                     navController = navController
                 )
             }
@@ -440,14 +383,14 @@ fun VoiceTutorNavigation(
             ) {
                 AllAssignmentsScreen(
                     teacherId = currentUser?.id?.toString(),
-                    onNavigateToAssignmentResults = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentTitle))
+                    onNavigateToAssignmentResults = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(assignmentId))
                     },
-                    onNavigateToEditAssignment = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentTitle))
+                    onNavigateToEditAssignment = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentId))
                     },
-                    onNavigateToAssignmentDetail = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentTitle))
+                    onNavigateToAssignmentDetail = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     }
                 )
             }
@@ -464,45 +407,13 @@ fun VoiceTutorNavigation(
             ) {
                 AllStudentsScreen(
                     teacherId = currentUser?.id?.toString() ?: "1",
-                    onNavigateToStudentDetail = { studentId ->
-                        // 클릭해도 페이지 넘어가는 것 없도록 설정
-                        // No navigation on student click
-                    },
-                    onNavigateToMessage = { studentName ->
-                        navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentName))
+                    onNavigateToStudentDetail = { classId, studentId, studentName ->
+                        // 리포트 버튼 클릭 시 리포트로 이동 (선택된 반의 클래스 ID 전달)
+                        navController.navigate(VoiceTutorScreens.TeacherStudentReport.createRoute(classId, studentId, studentName))
                     }
                 )
             }
         }
-        
-        // Teacher student detail screen
-        composable(
-            route = VoiceTutorScreens.TeacherStudentDetail.route,
-            arguments = listOf(
-                navArgument("name") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val studentName = backStackEntry.arguments?.getString("name") ?: "학생"
-            MainLayout(
-                navController = navController,
-                userRole = UserRole.TEACHER
-            ) {
-                TeacherStudentDetailScreen(
-                    onNavigateToAllAssignments = {
-                        navController.navigate(VoiceTutorScreens.AllAssignments.route)
-                    },
-                    onNavigateToAssignmentDetail = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentTitle))
-                    },
-                    onNavigateToMessage = { studentId ->
-                        navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentId.toString()))
-                    }
-                )
-            }
-        }
-        
         // Assignment detail screen
         composable(
             route = VoiceTutorScreens.AssignmentDetail.route,
@@ -543,7 +454,16 @@ fun VoiceTutorNavigation(
         }
         
         // Create assignment screen
-        composable(VoiceTutorScreens.CreateAssignment.route) {
+        composable(
+            route = VoiceTutorScreens.CreateAssignment.route,
+            arguments = listOf(
+                navArgument("classId") {
+                    type = NavType.IntType
+                    defaultValue = 0
+                }
+            )
+        ) { backStackEntry ->
+            val classId = backStackEntry.arguments?.getInt("classId") ?: 0
             val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             
@@ -554,6 +474,7 @@ fun VoiceTutorNavigation(
                 CreateAssignmentScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
+                    initialClassId = if (classId > 0) classId else null,
                     onCreateAssignment = { assignmentTitle ->
                         // Navigate back to teacher dashboard with refresh flag
                         val timestamp = System.currentTimeMillis()
@@ -576,12 +497,12 @@ fun VoiceTutorNavigation(
         composable(
             route = VoiceTutorScreens.EditAssignment.route,
             arguments = listOf(
-                navArgument("title") {
-                    type = NavType.StringType
+                navArgument("assignment_id") {
+                    type = NavType.IntType
                 }
             )
         ) { backStackEntry ->
-            val assignmentTitle = backStackEntry.arguments?.getString("title") ?: "과제"
+            val assignmentId = backStackEntry.arguments?.getInt("assignment_id") ?: 0
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             
             MainLayout(
@@ -590,10 +511,10 @@ fun VoiceTutorNavigation(
             ) {
                 EditAssignmentScreen(
                     assignmentViewModel = assignmentViewModel,
-                    assignmentTitle = assignmentTitle,
+                    assignmentId = assignmentId,
                     onSaveAssignment = {
                         // Save edited assignment and navigate back
-                        println("Saving edited assignment: $assignmentTitle")
+                        println("Saving edited assignment: $assignmentId")
                         navController.popBackStack()
                     }
                 )
@@ -603,12 +524,12 @@ fun VoiceTutorNavigation(
         composable(
             route = VoiceTutorScreens.TeacherAssignmentResults.route,
             arguments = listOf(
-                navArgument("title") {
-                    type = NavType.StringType
+                navArgument("assignment_id") {
+                    type = NavType.IntType
                 }
             )
         ) { backStackEntry ->
-            val assignmentTitle = backStackEntry.arguments?.getString("title") ?: "과제"
+            val assignmentId = backStackEntry.arguments?.getInt("assignment_id") ?: 0
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             
             MainLayout(
@@ -617,10 +538,15 @@ fun VoiceTutorNavigation(
             ) {
                 TeacherAssignmentResultsScreen(
                     assignmentViewModel = assignmentViewModel,
-                    assignmentTitle = assignmentTitle,
-                    onNavigateToStudentDetail = { studentId ->
-                        // 특정 학생의 특정 과제 상세 결과 화면으로 이동
-                        navController.navigate(VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute(studentId, assignmentTitle))
+                    assignmentId = assignmentId,
+                    onNavigateToStudentDetail = { studentId, targetAssignmentId, assignmentTitle ->
+                        navController.navigate(
+                            VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute(
+                                studentId,
+                                targetAssignmentId,
+                                assignmentTitle
+                            )
+                        )
                     }
                 )
             }
@@ -633,12 +559,17 @@ fun VoiceTutorNavigation(
                 navArgument("studentId") {
                     type = NavType.StringType
                 },
+                navArgument("assignmentId") {
+                    type = NavType.IntType
+                    defaultValue = 0
+                },
                 navArgument("assignmentTitle") {
                     type = NavType.StringType
                 }
             )
         ) { backStackEntry ->
             val studentId = backStackEntry.arguments?.getString("studentId") ?: "1"
+            val assignmentId = backStackEntry.arguments?.getInt("assignmentId") ?: 0
             val assignmentTitle = backStackEntry.arguments?.getString("assignmentTitle")?.replace("_", "/") ?: "과제"
             
             MainLayout(
@@ -647,6 +578,7 @@ fun VoiceTutorNavigation(
             ) {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
+                    assignmentId = assignmentId,
                     assignmentTitle = assignmentTitle
                 )
             }
@@ -655,12 +587,12 @@ fun VoiceTutorNavigation(
         composable(
             route = VoiceTutorScreens.TeacherAssignmentDetail.route,
             arguments = listOf(
-                navArgument("title") {
-                    type = NavType.StringType
+                navArgument("id") {
+                    type = NavType.IntType
                 }
             )
         ) { backStackEntry ->
-            val assignmentTitle = backStackEntry.arguments?.getString("title") ?: "과제"
+            val assignmentId = backStackEntry.arguments?.getInt("id") ?: 0
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             
             MainLayout(
@@ -669,35 +601,18 @@ fun VoiceTutorNavigation(
             ) {
                 TeacherAssignmentDetailScreen(
                     assignmentViewModel = assignmentViewModel,
-                    assignmentTitle = assignmentTitle,
-                    onNavigateToAssignmentResults = { title ->
-                        navController.navigate(VoiceTutorScreens.TeacherAssignmentResults.createRoute(title))
+                    assignmentId = assignmentId,
+                    onNavigateToEditAssignment = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentId))
                     },
-                    onNavigateToEditAssignment = { title ->
-                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(title))
-                    }
-                )
-            }
-        }
-        
-        // Teacher message screen
-        composable(
-            route = VoiceTutorScreens.TeacherMessage.route,
-            arguments = listOf(
-                navArgument("studentName") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val unusedStudentName = backStackEntry.arguments?.getString("studentName") ?: "학생"
-            MainLayout(
-                navController = navController,
-                userRole = UserRole.TEACHER
-            ) {
-                TeacherMessageScreen(
-                    studentId = 1, // TODO: studentName으로부터 studentId를 조회
-                    onBackClick = {
-                        navController.popBackStack()
+                    onNavigateToStudentDetail = { studentId, targetAssignmentId, assignmentTitle ->
+                        navController.navigate(
+                            VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute(
+                                studentId,
+                                targetAssignmentId,
+                                assignmentTitle
+                            )
+                        )
                     }
                 )
             }
@@ -724,37 +639,11 @@ fun VoiceTutorNavigation(
                 TeacherClassDetailScreen(
                     classId = classId,
                     className = className,
-                    onNavigateToClassMessage = {
-                        navController.navigate(VoiceTutorScreens.ClassMessage.createRoute(className))
+                    onNavigateToCreateAssignment = { classId ->
+                        navController.navigate(VoiceTutorScreens.CreateAssignment.createRoute(classId))
                     },
-                    onNavigateToCreateAssignment = {
-                        navController.navigate(VoiceTutorScreens.CreateAssignment.route)
-                    },
-                    onNavigateToAssignmentDetail = { assignmentTitle ->
-                        navController.navigate(VoiceTutorScreens.EditAssignment.createRoute(assignmentTitle))
-                    }
-                )
-            }
-        }
-        
-        // Class message screen
-        composable(
-            route = VoiceTutorScreens.ClassMessage.route,
-            arguments = listOf(
-                navArgument("className") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val className = backStackEntry.arguments?.getString("className") ?: "반"
-            MainLayout(
-                navController = navController,
-                userRole = UserRole.TEACHER
-            ) {
-                ClassMessageScreen(
-                    className = className,
-                    onNavigateToMessage = { studentName ->
-                        navController.navigate(VoiceTutorScreens.TeacherMessage.createRoute(studentName))
+                    onNavigateToAssignmentDetail = { assignmentId ->
+                        navController.navigate(VoiceTutorScreens.TeacherAssignmentDetail.createRoute(assignmentId))
                     }
                 )
             }
@@ -782,11 +671,6 @@ fun VoiceTutorNavigation(
                 SettingsScreen(
                     userRole = userRole,
                     studentId = if (studentId != -1) studentId else null,
-                    onLogout = {
-                        navController.navigate(VoiceTutorScreens.Login.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
                     navController = navController
                 )
             }
@@ -810,6 +694,40 @@ fun VoiceTutorNavigation(
             }
         }
         
+        
+        // Teacher student report screen
+        composable(
+            route = VoiceTutorScreens.TeacherStudentReport.route,
+            arguments = listOf(
+                navArgument("classId") {
+                    type = NavType.IntType
+                },
+                navArgument("studentId") {
+                    type = NavType.IntType
+                },
+                navArgument("studentName") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val classId = backStackEntry.arguments?.getInt("classId") ?: 0
+            val studentId = backStackEntry.arguments?.getInt("studentId") ?: 0
+            val studentName = backStackEntry.arguments?.getString("studentName")?.replace("_", " ") ?: "학생"
+            
+            MainLayout(
+                navController = navController,
+                userRole = UserRole.TEACHER
+            ) {
+                TeacherStudentReportScreen(
+                    classId = classId,
+                    studentId = studentId,
+                    studentName = studentName,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
         
         // App info screen
         composable(VoiceTutorScreens.AppInfo.route) {
@@ -839,18 +757,12 @@ sealed class VoiceTutorScreens(val route: String) {
     object AssignmentDetail : VoiceTutorScreens("assignment_detail/{id}/{title}") {
         fun createRoute(id: String, title: String) = "assignment_detail/$id/$title"
     }
-    object AssignmentDetailedResults : VoiceTutorScreens("assignment_detailed_results/{title}") {
-        fun createRoute(title: String) = "assignment_detailed_results/$title"
+    object AssignmentDetailedResults : VoiceTutorScreens("assignment_detailed_results/{personalAssignmentId}/{title}") {
+        fun createRoute(personalAssignmentId: Int, title: String) = "assignment_detailed_results/$personalAssignmentId/$title"
     }
     object Progress : VoiceTutorScreens("progress")
-    object CompletedAssignments : VoiceTutorScreens("completed_assignments/{studentId}") {
-        fun createRoute(studentId: Int) = "completed_assignments/$studentId"
-    }
-    object AllStudentAssignments : VoiceTutorScreens("all_student_assignments/{studentId}") {
-        fun createRoute(studentId: Int) = "all_student_assignments/$studentId"
-    }
-    object PendingAssignments : VoiceTutorScreens("pending_assignments/{studentId}") {
-        fun createRoute(studentId: Int) = "pending_assignments/$studentId"
+    object NoRecentAssignment : VoiceTutorScreens("no_recent_assignment/{studentId}") {
+        fun createRoute(studentId: Int) = "no_recent_assignment/$studentId"
     }
     object CreateClass : VoiceTutorScreens("create_class")
     object AppInfo : VoiceTutorScreens("app_info")
@@ -862,32 +774,28 @@ sealed class VoiceTutorScreens(val route: String) {
     }
     object AllAssignments : VoiceTutorScreens("all_assignments")
     object AllStudents : VoiceTutorScreens("all_students")
-    object CreateAssignment : VoiceTutorScreens("create_assignment")
-    object EditAssignment : VoiceTutorScreens("edit_assignment/{title}") {
-        fun createRoute(title: String) = "edit_assignment/$title"
+    object CreateAssignment : VoiceTutorScreens("create_assignment/{classId}") {
+        fun createRoute(classId: Int? = null) = if (classId != null && classId > 0) "create_assignment/$classId" else "create_assignment/0"
     }
-    object TeacherAssignmentResults : VoiceTutorScreens("teacher_assignment_results/{title}") {
-        fun createRoute(title: String) = "teacher_assignment_results/$title"
+    object EditAssignment : VoiceTutorScreens("edit_assignment/{assignment_id}") {
+        fun createRoute(assignmentId: Int) = "edit_assignment/$assignmentId"
     }
-    object TeacherAssignmentDetail : VoiceTutorScreens("teacher_assignment_detail/{title}") {
-        fun createRoute(title: String) = "teacher_assignment_detail/$title"
+    object TeacherAssignmentResults : VoiceTutorScreens("teacher_assignment_results/{assignment_id}") {
+        fun createRoute(assignmentId: Int) = "teacher_assignment_results/$assignmentId"
     }
-    object TeacherStudentDetail : VoiceTutorScreens("teacher_student_detail/{name}") {
-        fun createRoute(name: String) = "teacher_student_detail/$name"
+    object TeacherAssignmentDetail : VoiceTutorScreens("teacher_assignment_detail/{id}") {
+        fun createRoute(id: Int) = "teacher_assignment_detail/$id"
     }
-    object TeacherStudentAssignmentDetail : VoiceTutorScreens("teacher_student_assignment_detail/{studentId}/{assignmentTitle}") {
-        fun createRoute(studentId: String, assignmentTitle: String) = "teacher_student_assignment_detail/$studentId/${assignmentTitle.replace("/", "_")}"
-    }
-    object TeacherMessage : VoiceTutorScreens("teacher_message/{studentName}") {
-        fun createRoute(studentName: String) = "teacher_message/$studentName"
+    object TeacherStudentAssignmentDetail : VoiceTutorScreens("teacher_student_assignment_detail/{studentId}/{assignmentId}/{assignmentTitle}") {
+        fun createRoute(studentId: String, assignmentId: Int, assignmentTitle: String) = "teacher_student_assignment_detail/$studentId/$assignmentId/${assignmentTitle.replace("/", "_")}"
     }
     object TeacherClassDetail : VoiceTutorScreens("teacher_class_detail/{className}/{classId}") {
         fun createRoute(className: String, classId: Int) = "teacher_class_detail/$className/$classId"
     }
-    object ClassMessage : VoiceTutorScreens("class_message/{className}") {
-        fun createRoute(className: String) = "class_message/$className"
-    }
     object AttendanceManagement : VoiceTutorScreens("attendance_management/{classId}") {
         fun createRoute(classId: Int) = "attendance_management/$classId"
+    }
+    object TeacherStudentReport : VoiceTutorScreens("teacher_student_report/{classId}/{studentId}/{studentName}") {
+        fun createRoute(classId: Int, studentId: Int, studentName: String) = "teacher_student_report/$classId/$studentId/${studentName.replace("/", "_")}"
     }
 }

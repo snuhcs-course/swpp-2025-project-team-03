@@ -225,11 +225,49 @@ class AnswerSubmitView(APIView):
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
+            processing_answer = (
+                Answer.objects.filter(
+                    question__in=questions,
+                    student=personal_assignment.student,
+                    state=Answer.State.PROCESSING,  # 새로 추가한 state
+                )
+                .select_related("question")
+                .first()
+            )
+            if processing_answer:
+                q = processing_answer.question
+
+                # number 표기 (1 또는 1-1 형태)
+                if q.recalled_num == 0:
+                    number_str = f"{q.number}"
+                else:
+                    number_str = f"{q.number}-{q.recalled_num}"
+
+                question_data = {
+                    "id": q.id,
+                    "number": number_str,
+                    "question": q.content,
+                    "answer": q.model_answer,
+                    "explanation": q.explanation,
+                    "difficulty": q.difficulty,
+                    # [추가 포인트] 프론트가 인지할 수 있는 플래그
+                    "is_processing": True,
+                }
+
+                logger.info(
+                    f"[AnswerSubmitView GET] PROCESSING 상태 Answer 발견: question_id={q.id}, number={number_str}"
+                )
+
+                return create_api_response(
+                    data=question_data,
+                    message="현재 채점 중인 문제가 있습니다.",
+                    status_code=status.HTTP_200_OK,
+                )
             # 최적화: 한 번의 쿼리로 모든 답변 정보 가져오기
             answered_question_ids = set(
-                Answer.objects.filter(question__in=questions, student=personal_assignment.student).values_list(
-                    "question_id", flat=True
-                )
+                Answer.objects.filter(question__in=questions, student=personal_assignment.student)
+                .exclude(state=Answer.State.PROCESSING)
+                .values_list("question_id", flat=True)
             )
 
             # number별로 그룹화하여 처리
@@ -371,6 +409,9 @@ class AnswerSubmitView(APIView):
         Step 1: multipart/form-data로 .wav 파일을 받아서 STT 변환 및 Feature 추출
         - extract_all_features() 함수 사용 (STT + 음향 특징 + 스크립트 특징 + 의미론적 특징)
         """
+
+        answer = None
+
         try:
             # Step 1-1: 요청 데이터 검증
             student_id = request.data.get("studentId")
@@ -431,7 +472,18 @@ class AnswerSubmitView(APIView):
                     message=f"ID가 {question_id}인 문제를 찾을 수 없습니다.",
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
-
+            answer, _ = Answer.objects.update_or_create(
+                question=question,
+                student=student,
+                defaults={
+                    "state": Answer.State.PROCESSING,
+                    "text_answer": "",
+                    "eval_grade": None,
+                    "started_at": timezone.now(),  # 임시값, 나중에 audio_duration 기반으로 덮어씀
+                    "submitted_at": None,
+                },
+            )
+            logger.info(f"[AnswerSubmitView] Answer를 PROCESSING 상태로 설정 - id={answer.id}")
             # 임시 파일 생성 (extract_all_features 함수용)
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
                 # 업로드된 파일 내용을 임시 파일에 쓰기
@@ -449,12 +501,25 @@ class AnswerSubmitView(APIView):
 
                 # features 에서 음성 파일 길이 구해서 timezone.now()에 빼는 로직
                 audio_duration_sec = features.get("total_length", 0.0)
-                started_at = timezone.now() - timedelta(seconds=audio_duration_sec)
+                if audio_duration_sec is None or audio_duration_sec <= 0:
+                    # fallback: 현재 시간 사용
+                    started_at = timezone.now()
+                else:
+                    started_at = timezone.now() - timedelta(seconds=audio_duration_sec)
                 logger.info(f"[AnswerSubmitView] 음성 길이: {audio_duration_sec:.2f}초, 시작 시간: {started_at}")
 
                 # STT 결과 (transcript) 확인
                 transcript = features.get("script", "")
                 if not transcript or transcript.strip() == "":
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] STT 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                            answer = None
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] STT 실패 시 Answer 삭제 중 에러: {del_err}", exc_info=True
+                            )
                     return create_api_response(
                         success=False,
                         error="STT failed",
@@ -478,6 +543,15 @@ class AnswerSubmitView(APIView):
                     logger.info(f"[AnswerSubmitView] ML 추론 완료 - Confidence: {confidence_score}")
                 except Exception as inf_error:
                     logger.error(f"[AnswerSubmitView] ML 추론 실패: {inf_error}", exc_info=True)
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] Inference 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                            answer = None
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] Inference 실패 시 Answer 삭제 중 에러: {del_err}", exc_info=True
+                            )
                     return create_api_response(
                         success=False,
                         error="Inference failed",
@@ -495,6 +569,7 @@ class AnswerSubmitView(APIView):
                         student_answer=transcript,
                         eval_grade=confidence_score,
                         recalled_time=question.recalled_num,
+                        high_thr=3.45,
                     )
 
                     if not tail_payload:
@@ -503,6 +578,15 @@ class AnswerSubmitView(APIView):
                     logger.info(f"[AnswerSubmitView] Tail Question 생성 완료 - Plan: {tail_payload.get('plan')}")
                 except Exception as tail_error:
                     logger.error(f"[AnswerSubmitView] Tail Question 생성 실패: {tail_error}", exc_info=True)
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] Tail 생성 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                            answer = None
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] Tail 실패 시 Answer 삭제 중 에러: {del_err}", exc_info=True
+                            )
                     return create_api_response(
                         success=False,
                         error="Tail question generation failed",
@@ -524,6 +608,7 @@ class AnswerSubmitView(APIView):
                     # plan 이 ONLY_CORRECT 면 STATUS: SUBMITTED 로 변경, solved_num +1
                     if personal_assignment.status == PersonalAssignment.Status.NOT_STARTED:
                         personal_assignment.status = PersonalAssignment.Status.IN_PROGRESS
+                        personal_assignment.started_at = started_at
 
                     plan = tail_payload.get("plan")
                     old_solved_num = personal_assignment.solved_num
@@ -547,22 +632,23 @@ class AnswerSubmitView(APIView):
                     )
 
                     # Answer 생성 또는 업데이트
-                    answer, created = Answer.objects.update_or_create(
-                        question=question,
-                        student=student,
-                        defaults={
-                            "text_answer": transcript,
-                            "state": answer_state,
-                            "eval_grade": confidence_score,
-                            "started_at": started_at,
-                            "submitted_at": timezone.now(),
-                        },
-                    )
+                    answer.text_answer = transcript
+                    answer.eval_grade = confidence_score
+                    answer.started_at = started_at
+                    answer.submitted_at = timezone.now()
 
-                    action = "생성" if created else "업데이트"
-                    logger.info(f"[AnswerSubmitView] Answer 레코드 {action} 완료 - Answer ID: {answer.id}")
+                    logger.info(f"[AnswerSubmitView] Answer 레코드 생성 완료 - Answer ID: {answer.id}")
                 except Exception as answer_error:
                     logger.error(f"[AnswerSubmitView] Answer 레코드 생성 실패: {answer_error}", exc_info=True)
+                    if answer is not None:
+                        try:
+                            logger.info(f"[AnswerSubmitView] Answer 생성 실패로 Answer 삭제 - id={answer.id}")
+                            answer.delete()
+                        except Exception as del_err:
+                            logger.error(
+                                f"[AnswerSubmitView] Answer 생성 실패 시 Answer 삭제 중 에러: {del_err}",
+                                exc_info=True,
+                            )
                     return create_api_response(
                         success=False,
                         error="Answer creation failed",
@@ -609,7 +695,6 @@ class AnswerSubmitView(APIView):
                                     recalled_num=recalled_time,
                                     base_question=question,  # 원본 질문 연결
                                 )
-
                                 logger.info(
                                     f"[AnswerSubmitView] Tail Question 객체 생성 완료 - Question ID: {tail_question_obj.id}"
                                 )
@@ -632,7 +717,14 @@ class AnswerSubmitView(APIView):
                             f"[AnswerSubmitView] 다음 base Question이 존재하지 않음 - PersonalAssignment ID: {personal_assignment.id}, Number: {question.number + 1}"
                         )
                         tail_question_obj = None
-
+                        personal_assignment.status = PersonalAssignment.Status.SUBMITTED
+                        personal_assignment.submitted_at = timezone.now()
+                        personal_assignment.save()
+                        logger.info(
+                            f"[AnswerSubmitView] PersonalAssignment 상태를 SUBMITTED로 변경 - ID: {personal_assignment.id}"
+                        )
+                answer.state = answer_state
+                answer.save()
                 # Step 6: 응답 데이터 준비
                 # TailQuestionSerializer 사용
                 if tail_question_obj:
@@ -678,7 +770,13 @@ class AnswerSubmitView(APIView):
 
         except Exception as e:
             logger.error(f"[AnswerSubmitView] {e}", exc_info=True)
-
+            if answer and answer.state == Answer.State.PROCESSING:
+                answer.delete()
+                logger.info(
+                    f"[AnswerSubmitView] 전역 예외 발생으로 PROCESSING Answer 삭제 - "
+                    f"question_id={getattr(answer, 'question_id', None)}, "
+                    f"student_id={getattr(answer, 'student_id', None)}"
+                )
             return create_api_response(
                 success=False,
                 error=str(e),
@@ -701,22 +799,73 @@ class PersonalAssignmentStatisticsView(APIView):
             - id: PersonalAssignment ID
         """
         try:
-            # PersonalAssignment 조회
-            personal_assignment = PersonalAssignment.objects.get(id=id)
+            # PersonalAssignment 조회 (관련 데이터 한번에 로드)
+            personal_assignment = PersonalAssignment.objects.select_related("assignment", "student").get(id=id)
+
+            # 모든 질문과 답변을 한번에 가져오기 (N+1 쿼리 방지)
+            all_questions = list(personal_assignment.questions.all().order_by("number", "recalled_num"))
+
+            # 해당 학생의 모든 답변을 한번에 가져와서 딕셔너리로 변환
+            answers_qs = Answer.objects.filter(
+                question__in=all_questions, student=personal_assignment.student
+            ).select_related("question")
+
+            # question_id를 키로 하는 딕셔너리 생성 (O(1) 조회)
+            answers_by_question_id = {answer.question_id: answer for answer in answers_qs}
 
             # 통계 정보 계산
-            total_questions = personal_assignment.questions.count()
-            answered_questions = Answer.objects.filter(
-                question__in=personal_assignment.questions.all(), student=personal_assignment.student
-            ).count()
-            correct_answers = Answer.objects.filter(
-                question__in=personal_assignment.questions.all(),
-                student=personal_assignment.student,
-                state=Answer.State.CORRECT,
-            ).count()
+            total_questions = len(all_questions)
+            answered_questions = len(answers_by_question_id)
+            correct_answers = sum(
+                1 for answer in answers_by_question_id.values() if answer.state == Answer.State.CORRECT
+            )
 
             total_problem = personal_assignment.assignment.total_questions
             solved_problem = personal_assignment.solved_num
+
+            # average_score 계산
+            # question_number별로 질문들을 그룹화 (메모리 내에서 처리)
+            questions_by_number = {}
+            base_question_count = 0
+
+            for question in all_questions:
+                if question.number not in questions_by_number:
+                    questions_by_number[question.number] = []
+                questions_by_number[question.number].append(question)
+
+                if question.recalled_num == 0:
+                    base_question_count += 1
+
+            total_score = 0
+
+            # 각 question_number별로 점수 계산
+            for question_number, questions in questions_by_number.items():
+                # recalled_num 순으로 정렬되어 있음 (이미 order_by 적용됨)
+                question_score = 0
+
+                for question in questions:
+                    # 딕셔너리에서 답변 조회 (O(1))
+                    answer = answers_by_question_id.get(question.id)
+
+                    if answer is None:
+                        # 답변이 없으면 더 이상 진행 불가
+                        break
+
+                    # 정답인 경우 recalled_num에 따라 점수 부여
+                    if answer.state == Answer.State.CORRECT:
+                        if question.recalled_num == 0:
+                            question_score = 100
+                        elif question.recalled_num == 1:
+                            question_score = 75
+                        elif question.recalled_num == 2:
+                            question_score = 50
+                        elif question.recalled_num == 3:
+                            question_score = 25
+                        break  # 처음으로 정답인 경우 점수 확정
+
+                total_score += question_score
+
+            average_score = (total_score / base_question_count) if base_question_count > 0 else 0
 
             statistics = {
                 "total_questions": total_questions,
@@ -726,6 +875,7 @@ class PersonalAssignmentStatisticsView(APIView):
                 "total_problem": total_problem,
                 "solved_problem": solved_problem,
                 "progress": (solved_problem / total_problem * 100) if total_problem > 0 else 0,
+                "average_score": average_score,
             }
 
             serializer = PersonalAssignmentStatisticsSerializer(data=statistics)
@@ -813,13 +963,18 @@ class AnswerCorrectnessView(APIView):
             # PersonalAssignment 조회
             personal_assignment = PersonalAssignment.objects.get(pk=id)
 
-            questions = personal_assignment.questions.filter(recalled_num=0).order_by("number")
+            questions = personal_assignment.questions.order_by("number", "recalled_num")
 
             answer_correctness_list = []
             for question in questions:
                 try:
                     answer = Answer.objects.get(question=question, student=personal_assignment.student)
                     is_correct = answer.state == Answer.State.CORRECT
+                    question_num = (
+                        f"{question.number}-{question.recalled_num}"
+                        if question.recalled_num > 0
+                        else f"{question.number}"
+                    )
                 except Answer.DoesNotExist:
                     continue  # 답안이 없는 경우 건너뜀
 
@@ -827,8 +982,11 @@ class AnswerCorrectnessView(APIView):
                     {
                         "question_content": question.content,
                         "question_model_answer": question.model_answer,
+                        "student_answer": answer.text_answer,
                         "is_correct": is_correct,
                         "answered_at": answer.submitted_at,
+                        "question_number": question_num,
+                        "explanation": question.explanation,
                     }
                 )
 
@@ -881,59 +1039,42 @@ class PersonalAssignmentRecentView(APIView):
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # 최근 답변 조회
-            recent_answers = Answer.objects.filter(student_id=student_id).order_by("-submitted_at")
+            # 최근 답변 조회 (submitted_at이 NULL이 아닌 답변만, N+1 쿼리 방지)
+            recent_answers = (
+                Answer.objects.filter(student_id=student_id, submitted_at__isnull=False)
+                .select_related("question__personal_assignment")  # N+1 쿼리 방지
+                .order_by("-submitted_at")
+            )
             personal_assignment = None
-            recent_answer = None
 
             # 가장 최근에 풀이된 문제중 personal_assignment.status가 SUBMITTED가 아닌 것을 찾음
-            while recent_answers:
-                recent_answer = recent_answers.first()
-                personal_assignment = recent_answer.question.personal_assignment
-
-                if (personal_assignment.status != PersonalAssignment.Status.SUBMITTED) and (
-                    personal_assignment.status != PersonalAssignment.Status.GRADED
-                ):
+            for answer in recent_answers:
+                if answer.question.personal_assignment.status != PersonalAssignment.Status.SUBMITTED:
+                    personal_assignment = answer.question.personal_assignment
                     break
-                else:
-                    recent_answers = recent_answers.exclude(id=recent_answer.id)
-                    recent_answer = None
 
-            if not recent_answer:
+            if not personal_assignment:
                 # 최근 답변이 없는 경우, 가장 최근에 생성된 personal_assignment 조회
-                personal_assignment = PersonalAssignment.objects.filter(student_id=student_id).order_by("-id").first()
+                # IN_PROGRESS 상태의 과제를 조회 , NOT STARTED 는 제외함.
+                personal_assignment = (
+                    PersonalAssignment.objects.filter(
+                        student_id=student_id,
+                        status__in=[PersonalAssignment.Status.IN_PROGRESS],
+                    )
+                    .order_by("-id")
+                    .first()
+                )
+
                 if not personal_assignment:
                     return create_api_response(
                         success=False,
                         error="No personal assignments found",
                         message="해당 학생의 개인 과제가 없습니다.",
                         status_code=status.HTTP_404_NOT_FOUND,
-                    )
-
-            # 다음 풀이할 문제 조회 (number, recalled_num 순으로 정렬하여 아직 풀이되지 않은 문제)
-            questions = personal_assignment.questions.order_by("number", "recalled_num")
-
-            next_question = None
-            for question in questions:
-                # 해당 question에 대한 답변이 존재하는지 확인
-                answered = Answer.objects.filter(question=question, student_id=student_id).exists()
-                if not answered:
-                    next_question = question
-                    break
-
-            if next_question:
-                # next_question
-                result = {
-                    "personal_assignment_id": personal_assignment.id,
-                    "next_question_id": next_question.id,
-                }
-            else:
-                return create_api_response(
-                    success=False,
-                    error="No personal assignments found",
-                    message="해당 학생의 개인 과제가 없습니다.",
-                    status_code=status.HTTP_404_NOT_FOUND,
-                )
+                    )  # personal_assignment_id만 반환
+            result = {
+                "personal_assignment_id": personal_assignment.id,
+            }
 
             serializer = PersonalAssignmentRecentSerializer(result)
 

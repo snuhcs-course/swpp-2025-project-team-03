@@ -1,0 +1,160 @@
+package com.example.voicetutor.ui.navigation
+
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.example.voicetutor.HiltComponentActivity
+import com.example.voicetutor.data.network.ApiService
+import com.example.voicetutor.data.network.FakeApiService
+import com.example.voicetutor.di.NetworkModule
+import com.example.voicetutor.ui.theme.VoiceTutorTheme
+import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.ui.viewmodel.AuthViewModel
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import javax.inject.Inject
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+
+@HiltAndroidTest
+@UninstallModules(NetworkModule::class)
+class VoiceTutorNavigationRouteCoverageTest {
+
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createAndroidComposeRule<HiltComponentActivity>()
+
+    @Inject
+    lateinit var apiService: ApiService
+
+    private lateinit var navController: NavHostController
+
+    private val fakeApi: FakeApiService
+        get() = apiService as FakeApiService
+
+    @Before
+    fun setUp() {
+        hiltRule.inject()
+        resetFakeApi()
+        setContent()
+        loginTeacher()
+    }
+
+    private fun resetFakeApi() {
+        fakeApi.apply {
+            shouldFailAssignmentResult = false
+            shouldFailPersonalAssignments = false
+            personalAssignmentsDelayMillis = 0
+        }
+    }
+
+    private fun setContent() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                val controller = rememberNavController()
+                SideEffect { navController = controller }
+                VoiceTutorNavigation(navController = controller)
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    private fun loginTeacher() {
+        var authViewModel: AuthViewModel? = null
+        composeRule.runOnIdle {
+            val entry = navController.getBackStackEntry(navController.graph.id)
+            authViewModel = ViewModelProvider(entry)[AuthViewModel::class.java]
+        }
+        val viewModel = checkNotNull(authViewModel)
+        composeRule.runOnIdle {
+            viewModel.login("teacher@voicetutor.com", "teacher123")
+        }
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            viewModel.currentUser.value != null
+        }
+        waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
+    }
+
+    private fun loginStudent() {
+        var authViewModel: AuthViewModel? = null
+        composeRule.runOnIdle {
+            val entry = navController.getBackStackEntry(navController.graph.id)
+            authViewModel = ViewModelProvider(entry)[AuthViewModel::class.java]
+        }
+        val viewModel = checkNotNull(authViewModel)
+        composeRule.runOnIdle {
+            viewModel.login("student@voicetutor.com", "student123")
+        }
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            viewModel.currentUser.value != null
+        }
+        waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
+    }
+
+    private fun assignmentViewModel(): AssignmentViewModel {
+        var viewModel: AssignmentViewModel? = null
+        composeRule.runOnIdle {
+            val entry = navController.getBackStackEntry(navController.graph.id)
+            viewModel = ViewModelProvider(entry)[AssignmentViewModel::class.java]
+        }
+        return checkNotNull(viewModel)
+    }
+
+    private fun waitForRoutePrefix(prefix: String, timeoutMillis: Long = 15_000) {
+        composeRule.waitUntil(timeoutMillis) {
+            var matches = false
+            composeRule.runOnIdle {
+                val currentRoute = navController.currentBackStackEntry?.destination?.route
+                matches = currentRoute?.startsWith(prefix) == true
+            }
+            matches
+        }
+    }
+
+    private fun navigateAndAssert(route: String, expectedText: String, substring: Boolean = true, timeoutMillis: Long = 20_000) {
+        val prefix = route.substringBefore("{")
+        composeRule.runOnIdle {
+            navController.navigate(route)
+        }
+        waitForRoutePrefix(prefix.ifEmpty { route }, timeoutMillis = timeoutMillis)
+        
+        // Wait for screen to load and display expected text
+        composeRule.waitUntil(timeoutMillis = timeoutMillis) {
+            try {
+                composeRule
+                    .onAllNodesWithText(
+                        expectedText,
+                        substring = substring,
+                        useUnmergedTree = true
+                    )
+                    .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                    .isNotEmpty()
+            } catch (e: Exception) {
+                false
+            }
+        }
+        
+        // Verify the text is displayed
+        composeRule
+            .onAllNodesWithText(expectedText, substring = substring, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+        
+        // Wait a bit for screen to fully render
+        composeRule.waitForIdle()
+    }
+
+}
+
+

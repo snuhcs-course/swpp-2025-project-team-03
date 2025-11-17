@@ -28,8 +28,8 @@ class ClassRepositoryTest {
         subject = buildSubject(),
         description = "Description",
         teacherId = 1,
-        startDate = "2025-01-01",
-        endDate = "2025-12-31",
+        
+        
         studentCount = 10,
         createdAt = "2025-01-01"
     )
@@ -229,8 +229,6 @@ class ClassRepositoryTest {
             description = "Description",
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
         )
         val classData = buildClassData(1, "New Class")
         val apiResponse = ApiResponse(
@@ -258,8 +256,7 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         val apiResponse = ApiResponse<ClassData>(
             success = true,
@@ -286,8 +283,7 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Creation failed"}""")
         whenever(apiService.createClass(request)).thenReturn(Response.error(400, errorBody))
@@ -318,7 +314,7 @@ class ClassRepositoryTest {
             message = "Success",
             error = null
         )
-        whenever(apiService.enrollStudentToClass(1, studentId = 1, name = null, email = null))
+        whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.success(apiResponse))
 
         // Act
@@ -329,33 +325,6 @@ class ClassRepositoryTest {
         assert(result.getOrNull() == enrollment)
     }
 
-    @Test
-    fun enrollStudentToClass_withNameAndEmail_success_returnsEnrollment() = runTest {
-        // Arrange
-        val repo = ClassRepository(apiService)
-        val student = Student(id = 1, name = "New Student", email = "new@test.com", role = UserRole.STUDENT)
-        val classData = buildClassData(1)
-        val enrollment = EnrollmentData(
-            student = student,
-            courseClass = classData,
-            status = "enrolled"
-        )
-        val apiResponse = ApiResponse(
-            success = true,
-            data = enrollment,
-            message = "Success",
-            error = null
-        )
-        whenever(apiService.enrollStudentToClass(1, studentId = null, name = "New Student", email = "new@test.com"))
-            .thenReturn(Response.success(apiResponse))
-
-        // Act
-        val result = repo.enrollStudentToClass(1, name = "New Student", email = "new@test.com")
-
-        // Assert
-        assert(result.isSuccess)
-        assert(result.getOrNull() == enrollment)
-    }
 
     @Test
     fun enrollStudentToClass_noData_returnsFailure() = runTest {
@@ -367,7 +336,7 @@ class ClassRepositoryTest {
             message = "Success",
             error = null
         )
-        whenever(apiService.enrollStudentToClass(1, studentId = 1, name = null, email = null))
+        whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.success(apiResponse))
 
         // Act
@@ -383,7 +352,7 @@ class ClassRepositoryTest {
         // Arrange
         val repo = ClassRepository(apiService)
         val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Enrollment failed"}""")
-        whenever(apiService.enrollStudentToClass(1, studentId = 1, name = null, email = null))
+        whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.error(400, errorBody))
 
         // Act
@@ -399,7 +368,7 @@ class ClassRepositoryTest {
     fun enrollStudentToClass_networkException_returnsFailure() = runTest {
         // Arrange
         val repo = ClassRepository(apiService)
-        whenever(apiService.enrollStudentToClass(1, studentId = 1, name = null, email = null))
+        whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenThrow(RuntimeException("Network error"))
 
         // Act

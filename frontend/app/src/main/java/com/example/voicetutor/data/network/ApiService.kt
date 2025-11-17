@@ -22,6 +22,9 @@ interface ApiService {
     @POST("auth/logout/")
     suspend fun logout(): Response<ApiResponse<Unit>>
     
+    @DELETE("auth/account/")
+    suspend fun deleteAccount(): Response<ApiResponse<Unit>>
+    
     // Assignment APIs
     @GET("assignments/")
     suspend fun getAllAssignments(
@@ -42,7 +45,10 @@ interface ApiService {
     @DELETE("assignments/{id}/")
     suspend fun deleteAssignment(@Path("id") id: Int): Response<ApiResponse<Unit>>
     
-    // removed: saveAssignmentDraft, getAssignmentResults
+    @GET("assignments/{id}/results/")
+    suspend fun getAssignmentResult(@Path("id") id: Int): Response<ApiResponse<AssignmentResultData>>
+
+    // removed: saveAssignmentDraft
     
     // Student APIs (Backend: /api/courses/students/)
     @GET("courses/students/")
@@ -92,10 +98,13 @@ interface ApiService {
     
     @POST("personal_assignments/{id}/complete/")
     suspend fun completePersonalAssignment(@Path("id") id: Int): Response<ApiResponse<Unit>>
-    
+
+    @GET("personal_assignments/{id}/correctness/")
+    suspend fun getAssignmentCorrectness(@Path("id") id: Int): Response<ApiResponse<List<AssignmentCorrectnessItem>>>
+
     @GET("courses/students/{id}/progress/")
     suspend fun getStudentProgress(@Path("id") id: Int): Response<ApiResponse<StudentProgress>>
-    
+
     // Class APIs (Backend: /api/courses/classes/)
     @GET("courses/classes/")
     suspend fun getClasses(@Query("teacherId") teacherId: String): Response<ApiResponse<List<ClassData>>>
@@ -109,21 +118,31 @@ interface ApiService {
     @GET("courses/classes/{id}/students/")
     suspend fun getClassStudents(@Path("id") id: Int): Response<ApiResponse<List<Student>>>
     
+    // Student's enrolled classes (Backend: GET /api/courses/students/{id}/classes/)
+    @GET("courses/students/{id}/classes/")
+    suspend fun getStudentClasses(
+        @Path("id") id: Int
+    ): Response<ApiResponse<List<ClassInfo>>>
+    
     // Enroll student to class (Backend: PUT /api/courses/classes/{id}/students/)
     @PUT("courses/classes/{id}/students/")
     suspend fun enrollStudentToClass(
         @Path("id") id: Int,
-        @Query("studentId") studentId: Int? = null,
-        @Query("name") name: String? = null,
-        @Query("email") email: String? = null
+        @Query("studentId") studentId: Int
     ): Response<ApiResponse<EnrollmentData>>
     
-    // Message APIs (Backend: /api/feedbacks/messages/)
-    @POST("feedbacks/messages/send/")
-    suspend fun sendMessage(@Body request: SendMessageRequest): Response<ApiResponse<SendMessageResponse>>
+    // Remove student from class (Backend: DELETE /api/courses/classes/{id}/students/{student_id}/)
+    @DELETE("courses/classes/{id}/students/{student_id}/")
+    suspend fun removeStudentFromClass(
+        @Path("id") id: Int,
+        @Path("student_id") student_id: Int
+    ): Response<ApiResponse<Unit>>
     
-    @GET("feedbacks/messages/{classId}/")
-    suspend fun getClassMessages(@Path("classId") classId: Int): Response<ApiResponse<List<MessageData>>>
+    // Class Students Statistics API
+    @GET("courses/classes/{classId}/students-statistics/")
+    suspend fun getClassStudentsStatistics(
+        @Path("classId") classId: Int
+    ): Response<ApiResponse<ClassStudentsStatistics>>
     
     // Progress Report APIs
     @GET("reports/progress/")
@@ -132,6 +151,13 @@ interface ApiService {
         @Query("classId") classId: String? = null,
         @Query("period") period: String = "week"
     ): Response<ApiResponse<ProgressReportData>>
+    
+    // Curriculum Report API (선생님용 학생 리포트)
+    @GET("reports/{class_id}/{student_id}/")
+    suspend fun getCurriculumReport(
+        @Path("class_id") classId: Int,
+        @Path("student_id") studentId: Int
+    ): Response<ApiResponse<com.example.voicetutor.data.models.CurriculumReportData>>
     
     // Quiz/Assignment Submission APIs
     @POST("assignments/{id}/submit/")
@@ -157,21 +183,11 @@ interface ApiService {
     
     // AI/Quiz APIs removed
     
-    @GET("messages/")
-    suspend fun getMessages(
-        @Query("userId") userId: Int,
-        @Query("messageType") messageType: String? = null,
-        @Query("limit") limit: Int = 50,
-        @Query("offset") offset: Int = 0
-    ): Response<ApiResponse<MessageListResponse>>
-    
 }
 
 // Minimal response model for recent personal assignment lookup
 data class RecentAnswerData(
-    @SerializedName("personal_assignment_id") val personalAssignmentId: Int,
-    // Optional next question preview fields if backend returns them (safe to ignore if absent)
-    @SerializedName("next_question_id") val nextQuestionId: Int? = null
+    @SerializedName("personal_assignment_id") val personalAssignmentId: Int
 )
 
 data class ApiResponse<T>(
@@ -189,6 +205,7 @@ data class CreateAssignmentRequest(
     val grade: String?,
     val type: String,
     val description: String?,
+    @SerializedName("total_questions") val total_questions: Int? = null,
     val questions: List<QuestionData>?
 )
 
@@ -222,18 +239,21 @@ data class CreateClassRequest(
     val description: String?,
     val subject_name: String,
     val teacher_id: Int,
-    val start_date: String,
-    val end_date: String
 )
 
 data class UpdateAssignmentRequest(
-    val title: String?,
-    val subject: String?,
-    val classId: Int?,
-    val dueDate: String?,
-    val type: String?,
-    val description: String?,
-    val questions: List<QuestionData>?
+    val title: String? = null,
+    val description: String? = null,
+    @SerializedName("total_questions") val totalQuestions: Int? = null,
+    @SerializedName("due_at") val dueAt: String? = null,
+    val grade: String? = null,
+    val subject: SubjectUpdateRequest? = null
+)
+
+data class SubjectUpdateRequest(
+    val id: Int? = null,
+    val name: String? = null,
+    val code: String? = null
 )
 
 

@@ -1,13 +1,12 @@
 import logging
 
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from django.db.models import ProtectedError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-# from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .request_serializers import LoginRequestSerializer, SignupRequestSerializer
@@ -81,11 +80,19 @@ class LoginView(APIView):
         responses={200: "로그인 성공", 400: "잘못된 요청", 401: "인증 실패"},
     )
     def post(self, request):
+        logger.info("[LoginView] 로그인 요청 도착함")
+        logger.info(f"[LoginView] request.data: {request.data}")
+        logger.info(f"[LoginView] request.data type: {type(request.data)}")
+        logger.info(
+            f"[LoginView] request.data keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}"
+        )
+
         email = request.data.get("email")
         password = request.data.get("password")
-        logger.info("로그인 요청 도착함")
+        logger.info(f"[LoginView] Extracted email: {email}, password: {'***' if password else None}")
 
         if not email or not password:
+            logger.warning(f"[LoginView] Missing email or password - email: {email}, password: {bool(password)}")
             return Response(
                 {"success": False, "message": "email/password 필수 입력"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -93,16 +100,19 @@ class LoginView(APIView):
 
         try:
             user = Account.objects.get(email=email)
+            logger.info(f"[LoginView] User found: {user.id}, checking password...")
             if not user.check_password(password):
+                logger.warning(f"[LoginView] Password mismatch for user {user.id}")
                 return Response(
                     {"success": False, "message": "비밀번호가 일치하지 않습니다."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            logger.info("로그인 성공함")
+            logger.info(f"[LoginView] 로그인 성공함 - user_id: {user.id}")
             return set_jwt_cookie_response(user, status_code=status.HTTP_200_OK)
 
         except Account.DoesNotExist:
+            logger.warning(f"[LoginView] User not found for email: {email}")
             return Response(
                 {"success": False, "message": "해당 이메일의 사용자가 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -137,4 +147,61 @@ class LogoutView(APIView):
         )
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
+        return response
+
+
+class DeleteAccountView(APIView):
+    @swagger_auto_schema(
+        operation_id="계정 삭제",
+        operation_description="현재 로그인한 사용자의 계정을 삭제하고 JWT 쿠키를 제거합니다.",
+        responses={200: "계정 삭제 성공", 401: "인증 실패", 404: "사용자를 찾을 수 없음"},
+    )
+    def delete(self, request):
+        if not request.user or not request.user.is_authenticated:
+            return Response(
+                {"success": False, "message": "access token이 없습니다.", "error": "missing_access_token"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user = request.user
+
+        try:
+            with transaction.atomic():
+                # Delete dependent data explicitly to ensure full cleanup
+                user.answers.all().delete()
+                user.personal_assignments.all().delete()
+                user.enrollments.all().delete()
+                user.course_classes.all().delete()
+
+                deleted_count, _ = Account.objects.filter(id=user.id).delete()
+
+                if deleted_count == 0:
+                    raise ValueError("사용자 삭제에 실패했습니다.")
+        except ProtectedError as exc:
+            logger.error(
+                f"[DeleteAccountView] Related objects prevented deletion for user {user.id}: {exc}", exc_info=True
+            )
+            return Response(
+                {
+                    "success": False,
+                    "message": "관련 데이터 때문에 계정을 삭제할 수 없습니다.",
+                    "error": "protected_related_data",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+        except Exception as exc:
+            logger.error(f"[DeleteAccountView] Failed to delete user {user.id}: {exc}", exc_info=True)
+            return Response(
+                {"success": False, "message": "계정 삭제 중 오류가 발생했습니다.", "error": "delete_failed"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        response = Response(
+            {"success": True, "message": "계정이 삭제되었습니다.", "error": None},
+            status=status.HTTP_200_OK,
+        )
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+
+        logger.info(f"[DeleteAccountView] Account deleted for user_id={user.id}")
         return response

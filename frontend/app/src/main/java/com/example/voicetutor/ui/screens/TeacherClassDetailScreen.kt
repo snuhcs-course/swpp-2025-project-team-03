@@ -29,6 +29,8 @@ import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
+import java.time.ZonedDateTime
+import java.time.ZoneId
 
 data class ClassAssignment(
     val id: Int,
@@ -47,9 +49,8 @@ fun TeacherClassDetailScreen(
     classId: Int? = null, // 실제 클래스 ID 사용
     className: String? = null, // 실제 클래스 이름 사용
     subject: String? = null, // 실제 과목명 사용
-    onNavigateToClassMessage: () -> Unit = {},
-    onNavigateToCreateAssignment: () -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
+    onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     val assignmentViewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: StudentViewModel = hiltViewModel()
@@ -65,6 +66,9 @@ fun TeacherClassDetailScreen(
     val dynamicClassName = currentClass?.name ?: className
     val dynamicSubject = currentClass?.subject?.name ?: subject
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
+    
+    // 필터 상태
+    var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
     // Load data on first composition and when screen becomes visible
     LaunchedEffect(Unit) {
@@ -99,26 +103,68 @@ fun TeacherClassDetailScreen(
     var showEnrollSheet by remember { mutableStateOf(false) }
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     
-    // Convert API data to ClassAssignment format
-    val classAssignments = assignments.map { assignment ->
+    // 제출 현황을 저장하는 StateMap
+    val assignmentStatsMap = remember { mutableStateMapOf<Int, Triple<Int, Int, Int>>() }
+    
+    // 각 과제의 제출 현황을 로드
+    assignments.forEach { assignment ->
+        LaunchedEffect(assignment.id) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val stats = assignmentViewModel.getAssignmentSubmissionStats(assignment.id)
+                assignmentStatsMap[assignment.id] = Triple(
+                    stats.submittedStudents,
+                    stats.totalStudents,
+                    stats.averageScore
+                )
+            }
+        }
+    }
+    
+    // Convert API data to ClassAssignment format with real submission stats
+    val allClassAssignments = assignments.map { assignment ->
+        val stats = assignmentStatsMap[assignment.id] ?: Triple(0, classStudents.size, 0)
         ClassAssignment(
             id = assignment.id,
             title = assignment.title,
-                        subject = assignment.courseClass.subject.name,
+            subject = assignment.courseClass.subject.name,
             dueDate = assignment.dueAt,
-            completionRate = 0.0f, // 임시로 0% 설정
-            totalStudents = classStudents.size,
-            completedStudents = classStudents.count { student ->
-                // 임시로 완료된 학생 수 계산
-                0 > 0
+            completionRate = if (stats.second > 0) {
+                stats.first.toFloat() / stats.second
+            } else {
+                0.0f
             },
-            averageScore = 85 // 임시로 기본값 사용
+            totalStudents = stats.second,
+            completedStudents = stats.first,
+            averageScore = stats.third
         )
+    }
+    
+    // 필터링된 과제 목록
+    val classAssignments = remember(allClassAssignments, selectedFilter) {
+        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        when (selectedFilter) {
+            AssignmentFilter.ALL -> allClassAssignments
+            AssignmentFilter.IN_PROGRESS -> allClassAssignments.filter { assignment ->
+                try {
+                    val dueDate = ZonedDateTime.parse(assignment.dueDate)
+                    dueDate.isAfter(now)
+                } catch (e: Exception) {
+                    true // 파싱 실패 시 포함
+                }
+            }
+            AssignmentFilter.COMPLETED -> allClassAssignments.filter { assignment ->
+                try {
+                    val dueDate = ZonedDateTime.parse(assignment.dueDate)
+                    dueDate.isBefore(now) || dueDate.isEqual(now)
+                } catch (e: Exception) {
+                    false // 파싱 실패 시 제외
+                }
+            }
+        }
     }
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -127,28 +173,23 @@ fun TeacherClassDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = PrimaryIndigo,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                        color = PrimaryIndigo.copy(alpha = 0.08f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                        ambientColor = PrimaryIndigo.copy(alpha = 0.3f),
-                        spotColor = PrimaryIndigo.copy(alpha = 0.3f)
-                    )
-                    .padding(24.dp)
+                    .padding(20.dp)
             ) {
                 Column {
                     Text(
-                        text = dynamicClassName ?: "클래스",
+                        text = dynamicClassName ?: "수업",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = dynamicSubject ?: "과목",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Gray600
                     )
                 }
             }
@@ -161,109 +202,91 @@ fun TeacherClassDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 VTStatsCard(
-                    title = "총 학생",
+                    title = "학생",
                     value = "${classStudents.size}명",
                     icon = Icons.Filled.People,
                     iconColor = PrimaryIndigo,
                     modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
+                    variant = CardVariant.Gradient,
+                    layout = StatsCardLayout.Horizontal
                 )
                 
                 VTStatsCard(
-                    title = "진행 중인 과제",
-                    value = "${classAssignments.count { it.completionRate < 1.0f }}개",
+                    title = "과제",
+                    value = "${classAssignments.size}개",
                     icon = Icons.Filled.Assignment,
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
-                )
-                
-                VTStatsCard(
-                    title = "평균 점수",
-                    value = "${if (classAssignments.isNotEmpty()) classAssignments.map { it.averageScore }.average().toInt() else 0}점",
-                    icon = Icons.Filled.Star,
-                    iconColor = Success,
-                    modifier = Modifier.weight(1f),
-                    variant = CardVariant.Gradient
+                    variant = CardVariant.Gradient,
+                    layout = StatsCardLayout.Horizontal
                 )
             }
         }
         
         item {
             // Quick actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                VTButton(
-                    text = "클래스 메시지",
-                    onClick = onNavigateToClassMessage,
-                    variant = ButtonVariant.Gradient,
-                    modifier = Modifier.weight(1f),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Message,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                )
-                
-                VTButton(
-                    text = "과제 생성",
-                    onClick = onNavigateToCreateAssignment,
-                    variant = ButtonVariant.Outline,
-                    modifier = Modifier.weight(1f),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                )
-
-                VTButton(
-                    text = "학생 등록하기",
-                    onClick = {
-                        // 전체 학생 목록 로드 후 시트 오픈
-                        studentViewModel.loadAllStudents()
-                        selectedToEnroll.clear()
-                        showEnrollSheet = true
-                    },
-                    variant = ButtonVariant.Primary,
-                    modifier = Modifier.weight(1f),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.PersonAdd,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                )
-            }
+            VTButton(
+                text = "과제 생성",
+                onClick = { onNavigateToCreateAssignment(classId) },
+                variant = ButtonVariant.Outline,
+                size = ButtonSize.Small,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
         }
         
         item {
-            // Assignments section header
+            // Assignments section header with filter
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "과제 목록",
+                    text = " 과제 목록",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
                 
-                Text(
-                    text = "${classAssignments.size}개",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PrimaryIndigo,
-                    fontWeight = FontWeight.Medium
-                )
+                // Filter chips
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedFilter == AssignmentFilter.ALL,
+                        onClick = { selectedFilter = AssignmentFilter.ALL },
+                        label = { Text("전체", style = MaterialTheme.typography.bodySmall) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.List,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+                    
+                    FilterChip(
+                        selected = selectedFilter == AssignmentFilter.IN_PROGRESS,
+                        onClick = { selectedFilter = AssignmentFilter.IN_PROGRESS },
+                        label = { Text("진행중", style = MaterialTheme.typography.bodySmall) }
+                    )
+                    
+                    FilterChip(
+                        selected = selectedFilter == AssignmentFilter.COMPLETED,
+                        onClick = { selectedFilter = AssignmentFilter.COMPLETED },
+                        label = { Text("마감", style = MaterialTheme.typography.bodySmall) }
+                    )
+                }
             }
         }
         
@@ -308,7 +331,7 @@ fun TeacherClassDetailScreen(
             items(classAssignments) { assignment ->
                 ClassAssignmentCard(
                     assignment = assignment,
-                    onNavigateToAssignmentDetail = onNavigateToAssignmentDetail
+                    onNavigateToAssignmentDetail = { onNavigateToAssignmentDetail(assignment.id) }
                 )
             }
         }
@@ -317,7 +340,12 @@ fun TeacherClassDetailScreen(
     // 학생 등록 바텀시트
     if (showEnrollSheet) {
         ModalBottomSheet(onDismissRequest = { showEnrollSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
                 Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
 
@@ -379,62 +407,23 @@ fun TeacherClassDetailScreen(
 @Composable
 fun ClassAssignmentCard(
     assignment: ClassAssignment,
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onNavigateToAssignmentDetail(assignment.title) }
+        onClick = { onNavigateToAssignmentDetail(assignment.id) }
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Assignment header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = assignment.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    Text(
-                        text = assignment.subject,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
-                    )
-                }
-                
-                // Status badge
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = when {
-                                assignment.completionRate >= 0.8f -> Success.copy(alpha = 0.1f)
-                                assignment.completionRate >= 0.5f -> Warning.copy(alpha = 0.1f)
-                                else -> Error.copy(alpha = 0.1f)
-                            },
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = when {
-                            assignment.completionRate >= 0.8f -> "완료"
-                            assignment.completionRate >= 0.5f -> "진행중"
-                            else -> "시작전"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = when {
-                            assignment.completionRate >= 0.8f -> Success
-                            assignment.completionRate >= 0.5f -> Warning
-                            else -> Error
-                        },
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = assignment.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
             }
             
             // Progress info
@@ -444,7 +433,7 @@ fun ClassAssignmentCard(
             ) {
                 Column {
                     Text(
-                        text = "완료율",
+                        text = "제출률",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
@@ -458,7 +447,7 @@ fun ClassAssignmentCard(
                 
                 Column {
                     Text(
-                        text = "완료 학생",
+                        text = "제출 학생",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
@@ -504,7 +493,7 @@ fun ClassAssignmentCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "마감일: ${assignment.dueDate}",
+                    text = "마감일: ${com.example.voicetutor.utils.formatDueDate(assignment.dueDate)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600
                 )

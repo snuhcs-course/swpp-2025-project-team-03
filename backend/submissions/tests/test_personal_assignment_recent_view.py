@@ -1,6 +1,7 @@
 """
 PersonalAssignmentRecentView unit tests
 - GET /api/personal_assignments/recent/: 최근 개인 과제 조회
+- next_question_id 제거 후 personal_assignment_id만 반환하도록 수정됨
 """
 
 from datetime import timedelta
@@ -53,8 +54,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="Algebra 1",
         description="Desc",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=30),
     )
 
 
@@ -66,7 +65,6 @@ def assignment(course_class, subject):
         title="HW 1",
         description="",
         total_questions=3,
-        visible_from=timezone.now(),
         due_at=timezone.now() + timedelta(days=7),
         grade="",
     )
@@ -100,8 +98,8 @@ def questions(personal_assignment):
     return questions
 
 
-class TestPersonalAssignmentRecentView:
-    """PersonalAssignmentRecentView API 테스트"""
+class TestPersonalAssignmentRecentViewUpdated:
+    """PersonalAssignmentRecentView API 테스트 (personal_assignment_id만 반환)"""
 
     def test_missing_student_id(self, api_client):
         """student_id 파라미터가 없으면 400 에러"""
@@ -138,20 +136,18 @@ class TestPersonalAssignmentRecentView:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["success"] is True
         assert resp.data["data"]["personal_assignment_id"] == personal_assignment.id
-        assert resp.data["data"]["next_question_id"] == questions[1].id  # 두 번째 질문이 다음
+        # next_question_id는 더 이상 반환하지 않음
+        assert "next_question_id" not in resp.data["data"]
 
-    def test_returns_latest_personal_assignment_without_answer(
-        self, api_client, student, assignment, course_class, subject
-    ):
-        """답변이 없는 경우 가장 최근 생성된 personal_assignment 반환"""
-        # 두 개의 personal_assignment 생성 (다른 assignment)
+    def test_returns_latest_not_started_or_in_progress_pa(self, api_client, student, assignment, course_class, subject):
+        """답변이 없는 경우 NOT_STARTED 또는 IN_PROGRESS 상태의 personal_assignment 반환"""
+        # 두 개의 personal_assignment 생성
         assignment2 = Assignment.objects.create(
             course_class=course_class,
             subject=subject,
             title="HW 2",
             description="",
             total_questions=2,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -166,19 +162,8 @@ class TestPersonalAssignmentRecentView:
         pa2 = PersonalAssignment.objects.create(
             student=student,
             assignment=assignment2,
-            status=PersonalAssignment.Status.NOT_STARTED,
+            status=PersonalAssignment.Status.IN_PROGRESS,
             solved_num=0,
-        )
-
-        # pa2에 질문 추가
-        q = Question.objects.create(
-            personal_assignment=pa2,
-            number=1,
-            content="Q1",
-            model_answer="A1",
-            explanation="E1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
         )
 
         url = reverse("personal-assignment-recent")
@@ -187,90 +172,6 @@ class TestPersonalAssignmentRecentView:
         assert resp.status_code == status.HTTP_200_OK
         # 가장 최근에 생성된 pa2 반환 (id가 더 큼)
         assert resp.data["data"]["personal_assignment_id"] == pa2.id
-        assert resp.data["data"]["next_question_id"] == q.id
-
-    def test_next_question_is_unanswered(self, api_client, student, personal_assignment, questions):
-        """다음 문제는 아직 답변하지 않은 첫 번째 문제"""
-        # 첫 번째와 두 번째 질문에만 답변
-        for q in questions[:2]:
-            Answer.objects.create(
-                question=q,
-                student=student,
-                text_answer="answer",
-                state=Answer.State.CORRECT,
-                eval_grade=0.8,
-                started_at=timezone.now(),
-                submitted_at=timezone.now(),
-            )
-
-        url = reverse("personal-assignment-recent")
-        resp = api_client.get(url, {"student_id": student.id})
-
-        assert resp.status_code == status.HTTP_200_OK
-        # 세 번째 질문이 다음
-        assert resp.data["data"]["next_question_id"] == questions[2].id
-
-    def test_all_questions_answered(self, api_client, student, personal_assignment, questions):
-        """모든 질문에 답변한 경우 404 에러"""
-        # 모든 질문에 답변
-        for q in questions:
-            Answer.objects.create(
-                question=q,
-                student=student,
-                text_answer="answer",
-                state=Answer.State.CORRECT,
-                eval_grade=0.8,
-                started_at=timezone.now(),
-                submitted_at=timezone.now(),
-            )
-
-        url = reverse("personal-assignment-recent")
-        resp = api_client.get(url, {"student_id": student.id})
-
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
-        assert resp.data["success"] is False
-
-    def test_ordered_by_number_and_recalled_num(self, api_client, student, personal_assignment):
-        """number, recalled_num 순으로 정렬하여 다음 질문 선택"""
-        # number=1의 base와 tail 생성
-        base = Question.objects.create(
-            personal_assignment=personal_assignment,
-            number=1,
-            content="Q1",
-            model_answer="A1",
-            explanation="E1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
-        )
-
-        tail1 = Question.objects.create(
-            personal_assignment=personal_assignment,
-            number=1,
-            content="TQ1-1",
-            model_answer="TA1-1",
-            explanation="TE1-1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=1,
-            base_question=base,
-        )
-
-        # base에만 답변
-        Answer.objects.create(
-            question=base,
-            student=student,
-            text_answer="answer",
-            state=Answer.State.INCORRECT,
-            eval_grade=0.4,
-            started_at=timezone.now(),
-            submitted_at=timezone.now(),
-        )
-
-        url = reverse("personal-assignment-recent")
-        resp = api_client.get(url, {"student_id": student.id})
-
-        assert resp.status_code == status.HTTP_200_OK
-        # tail1이 다음 질문
-        assert resp.data["data"]["next_question_id"] == tail1.id
 
     def test_skips_submitted_personal_assignment(self, api_client, student, assignment, course_class, subject):
         """SUBMITTED 상태의 PA는 건너뛰고 다음 PA를 찾음"""
@@ -303,14 +204,13 @@ class TestPersonalAssignmentRecentView:
             submitted_at=timezone.now(),
         )
 
-        # 두 번째 PA (IN_PROGRESS 상태) - 이전 생성
+        # 두 번째 PA (IN_PROGRESS 상태)
         assignment2 = Assignment.objects.create(
             course_class=course_class,
             subject=subject,
             title="HW 2",
             description="",
             total_questions=2,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -322,29 +222,19 @@ class TestPersonalAssignmentRecentView:
             solved_num=1,
         )
 
-        q2_1 = Question.objects.create(
+        q2 = Question.objects.create(
             personal_assignment=pa2,
             number=1,
-            content="Q2-1",
-            model_answer="A2-1",
-            explanation="E2-1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
-        )
-
-        q2_2 = Question.objects.create(
-            personal_assignment=pa2,
-            number=2,
-            content="Q2-2",
-            model_answer="A2-2",
-            explanation="E2-2",
+            content="Q2",
+            model_answer="A2",
+            explanation="E2",
             difficulty=Question.Difficulty.MEDIUM,
             recalled_num=0,
         )
 
         # pa2에 이전 답변
         Answer.objects.create(
-            question=q2_1,
+            question=q2,
             student=student,
             text_answer="answer2",
             state=Answer.State.CORRECT,
@@ -359,10 +249,9 @@ class TestPersonalAssignmentRecentView:
         assert resp.status_code == status.HTTP_200_OK
         # SUBMITTED인 pa1을 건너뛰고 IN_PROGRESS인 pa2 선택
         assert resp.data["data"]["personal_assignment_id"] == pa2.id
-        assert resp.data["data"]["next_question_id"] == q2_2.id
 
     def test_response_fields_complete(self, api_client, student, personal_assignment, questions):
-        """응답에 필요한 모든 필드가 포함되어 있는지 확인"""
+        """응답에 personal_assignment_id 필드만 포함되어 있는지 확인"""
         Answer.objects.create(
             question=questions[0],
             student=student,
@@ -378,9 +267,9 @@ class TestPersonalAssignmentRecentView:
 
         assert resp.status_code == status.HTTP_200_OK
         assert "personal_assignment_id" in resp.data["data"]
-        assert "next_question_id" in resp.data["data"]
         assert isinstance(resp.data["data"]["personal_assignment_id"], int)
-        assert isinstance(resp.data["data"]["next_question_id"], int)
+        # next_question_id는 제거됨
+        assert "next_question_id" not in resp.data["data"]
 
     def test_success_message(self, api_client, student, personal_assignment, questions):
         """성공 메시지 확인"""
@@ -410,7 +299,6 @@ class TestPersonalAssignmentRecentView:
             title="HW 2",
             description="",
             total_questions=2,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -440,22 +328,12 @@ class TestPersonalAssignmentRecentView:
             recalled_num=0,
         )
 
-        q2_1 = Question.objects.create(
+        q2 = Question.objects.create(
             personal_assignment=pa2,
             number=1,
-            content="Q2-1",
-            model_answer="A2-1",
-            explanation="E2-1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
-        )
-
-        q2_2 = Question.objects.create(
-            personal_assignment=pa2,
-            number=2,
-            content="Q2-2",
-            model_answer="A2-2",
-            explanation="E2-2",
+            content="Q2",
+            model_answer="A2",
+            explanation="E2",
             difficulty=Question.Difficulty.MEDIUM,
             recalled_num=0,
         )
@@ -473,7 +351,7 @@ class TestPersonalAssignmentRecentView:
 
         # pa2에 나중에 답변 (더 최근)
         Answer.objects.create(
-            question=q2_1,
+            question=q2,
             student=student,
             text_answer="answer2",
             state=Answer.State.CORRECT,
@@ -488,7 +366,6 @@ class TestPersonalAssignmentRecentView:
         assert resp.status_code == status.HTTP_200_OK
         # 가장 최근 답변이 있는 pa2 선택
         assert resp.data["data"]["personal_assignment_id"] == pa2.id
-        assert resp.data["data"]["next_question_id"] == q2_2.id
 
     def test_serializer_validation(self, api_client, student, personal_assignment, questions):
         """Serializer를 통한 데이터 검증"""
@@ -509,23 +386,8 @@ class TestPersonalAssignmentRecentView:
         # Serializer가 올바르게 동작했는지 확인
         assert "data" in resp.data
         assert "personal_assignment_id" in resp.data["data"]
-        assert "next_question_id" in resp.data["data"]
-
-    def test_no_questions_in_personal_assignment(self, api_client, student, assignment):
-        """personal_assignment에 질문이 없는 경우 404 에러"""
-        pa = PersonalAssignment.objects.create(
-            student=student,
-            assignment=assignment,
-            status=PersonalAssignment.Status.NOT_STARTED,
-            solved_num=0,
-        )
-        # 질문을 추가하지 않음
-
-        url = reverse("personal-assignment-recent")
-        resp = api_client.get(url, {"student_id": student.id})
-
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
-        assert resp.data["success"] is False
+        # next_question_id는 더 이상 포함되지 않음
+        assert "next_question_id" not in resp.data["data"]
 
     def test_unexpected_exception(self, api_client, student, personal_assignment, monkeypatch):
         """예상치 못한 예외 발생 시 500 에러"""
@@ -541,134 +403,8 @@ class TestPersonalAssignmentRecentView:
         assert resp.data["success"] is False
         assert "오류가 발생했습니다" in resp.data["message"]
 
-    def test_next_question_after_multiple_answers(self, api_client, student, personal_assignment):
-        """여러 답변 후 다음 질문이 올바르게 선택되는지 확인"""
-        # 여러 질문 생성
-        questions = []
-        for i in range(1, 6):
-            q = Question.objects.create(
-                personal_assignment=personal_assignment,
-                number=i,
-                content=f"Question {i}",
-                model_answer=f"Answer {i}",
-                explanation=f"Explanation {i}",
-                difficulty=Question.Difficulty.MEDIUM,
-                recalled_num=0,
-            )
-            questions.append(q)
-
-        # 1, 2, 4번 질문에만 답변 (3번 건너뜀)
-        for idx in [0, 1, 3]:
-            Answer.objects.create(
-                question=questions[idx],
-                student=student,
-                text_answer="answer",
-                state=Answer.State.CORRECT,
-                eval_grade=0.8,
-                started_at=timezone.now(),
-                submitted_at=timezone.now(),
-            )
-
-        url = reverse("personal-assignment-recent")
-        resp = api_client.get(url, {"student_id": student.id})
-
-        assert resp.status_code == status.HTTP_200_OK
-        # 3번 질문(인덱스 2)이 다음
-        assert resp.data["data"]["next_question_id"] == questions[2].id
-
-    def test_all_pas_submitted_returns_latest_with_unanswered(
-        self, api_client, student, assignment, course_class, subject
-    ):
-        """모든 PA가 SUBMITTED 상태면 가장 최근 PA를 반환 (답변 안 한 질문이 있는 경우)"""
-        # 두 개의 SUBMITTED PA 생성
-        pa1 = PersonalAssignment.objects.create(
-            student=student,
-            assignment=assignment,
-            status=PersonalAssignment.Status.SUBMITTED,
-            solved_num=3,
-        )
-
-        assignment2 = Assignment.objects.create(
-            course_class=course_class,
-            subject=subject,
-            title="HW 2",
-            description="",
-            total_questions=2,
-            visible_from=timezone.now(),
-            due_at=timezone.now() + timedelta(days=7),
-            grade="",
-        )
-
-        pa2 = PersonalAssignment.objects.create(
-            student=student,
-            assignment=assignment2,
-            status=PersonalAssignment.Status.SUBMITTED,
-            solved_num=2,
-        )
-
-        # 각각에 질문 추가
-        q1 = Question.objects.create(
-            personal_assignment=pa1,
-            number=1,
-            content="Q1",
-            model_answer="A1",
-            explanation="E1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
-        )
-
-        q2_1 = Question.objects.create(
-            personal_assignment=pa2,
-            number=1,
-            content="Q2-1",
-            model_answer="A2-1",
-            explanation="E2-1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
-        )
-
-        q2_2 = Question.objects.create(
-            personal_assignment=pa2,
-            number=2,
-            content="Q2-2",
-            model_answer="A2-2",
-            explanation="E2-2",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
-        )
-
-        # pa1은 모두 답변, pa2는 부분 답변
-        Answer.objects.create(
-            question=q1,
-            student=student,
-            text_answer="answer1",
-            state=Answer.State.CORRECT,
-            eval_grade=0.8,
-            started_at=timezone.now() - timedelta(minutes=10),
-            submitted_at=timezone.now() - timedelta(minutes=10),
-        )
-
-        Answer.objects.create(
-            question=q2_1,
-            student=student,
-            text_answer="answer2",
-            state=Answer.State.CORRECT,
-            eval_grade=0.8,
-            started_at=timezone.now(),
-            submitted_at=timezone.now(),
-        )
-        # q2_2는 답변 안 함
-
-        url = reverse("personal-assignment-recent")
-        resp = api_client.get(url, {"student_id": student.id})
-
-        # 모든 PA가 SUBMITTED이므로 가장 최근 생성된 pa2 반환
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["data"]["personal_assignment_id"] == pa2.id
-        assert resp.data["data"]["next_question_id"] == q2_2.id
-
-    def test_while_loop_finds_non_submitted_pa(self, api_client, student, assignment, course_class, subject):
-        """while 루프를 통해 SUBMITTED 아닌 PA를 찾는지 확인"""
+    def test_for_loop_finds_non_submitted_pa(self, api_client, student, assignment, course_class, subject):
+        """for 루프를 통해 SUBMITTED 아닌 PA를 찾는지 확인"""
         # 3개의 PA 생성: SUBMITTED, SUBMITTED, IN_PROGRESS
         assignment2 = Assignment.objects.create(
             course_class=course_class,
@@ -676,7 +412,6 @@ class TestPersonalAssignmentRecentView:
             title="HW 2",
             description="",
             total_questions=2,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -687,7 +422,6 @@ class TestPersonalAssignmentRecentView:
             title="HW 3",
             description="",
             total_questions=2,
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
             grade="",
         )
@@ -734,29 +468,19 @@ class TestPersonalAssignmentRecentView:
             recalled_num=0,
         )
 
-        q3_1 = Question.objects.create(
+        q3 = Question.objects.create(
             personal_assignment=pa3,
             number=1,
-            content="Q3-1",
-            model_answer="A3-1",
-            explanation="E3-1",
-            difficulty=Question.Difficulty.MEDIUM,
-            recalled_num=0,
-        )
-
-        q3_2 = Question.objects.create(
-            personal_assignment=pa3,
-            number=2,
-            content="Q3-2",
-            model_answer="A3-2",
-            explanation="E3-2",
+            content="Q3",
+            model_answer="A3",
+            explanation="E3",
             difficulty=Question.Difficulty.MEDIUM,
             recalled_num=0,
         )
 
         # 답변 추가 (제출 시간 순서: pa3 -> pa2 -> pa1)
         Answer.objects.create(
-            question=q3_1,
+            question=q3,
             student=student,
             text_answer="answer3",
             state=Answer.State.CORRECT,
@@ -793,4 +517,24 @@ class TestPersonalAssignmentRecentView:
         # pa2도 SUBMITTED이므로 건너뛰고,
         # pa3이 IN_PROGRESS이므로 선택
         assert resp.data["data"]["personal_assignment_id"] == pa3.id
-        assert resp.data["data"]["next_question_id"] == q3_2.id
+
+    def test_null_submitted_at_is_excluded(self, api_client, student, personal_assignment, questions):
+        """submitted_at이 NULL인 답변은 무시됨"""
+        # submitted_at이 NULL인 답변 생성
+        Answer.objects.create(
+            question=questions[0],
+            student=student,
+            text_answer="answer",
+            state=Answer.State.CORRECT,
+            eval_grade=0.8,
+            started_at=timezone.now(),
+            submitted_at=None,  # NULL
+        )
+
+        url = reverse("personal-assignment-recent")
+        resp = api_client.get(url, {"student_id": student.id})
+
+        # submitted_at이 NULL이므로 최근 답변으로 취급하지 않음
+        # 따라서 personal_assignment를 반환
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["data"]["personal_assignment_id"] == personal_assignment.id

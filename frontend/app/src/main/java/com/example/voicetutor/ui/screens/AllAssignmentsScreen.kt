@@ -21,26 +21,14 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
-// 날짜 포맷 유틸 함수
-private fun formatDueDate(dueDate: String): String {
-    return try {
-        val zonedDateTime = ZonedDateTime.parse(dueDate)
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        zonedDateTime.format(formatter)
-    } catch (e: Exception) {
-        dueDate
-    }
-}
+import com.example.voicetutor.utils.formatDueDate
 
 @Composable
 fun AllAssignmentsScreen(
     teacherId: String? = null,
-    onNavigateToAssignmentResults: (String) -> Unit = {},
-    onNavigateToEditAssignment: (String) -> Unit = {},
-    onNavigateToAssignmentDetail: (String) -> Unit = {}
+    onNavigateToAssignmentResults: (Int) -> Unit = {},
+    onNavigateToEditAssignment: (Int) -> Unit = {},
+    onNavigateToAssignmentDetail: (Int) -> Unit = {}
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
@@ -62,6 +50,16 @@ fun AllAssignmentsScreen(
         } else {
             println("AllAssignmentsScreen - No teacher ID available, loading all assignments")
             viewModel.loadAllAssignments()
+        }
+    }
+    
+    // Reload when screen becomes visible (for refresh after creating assignment)
+    LaunchedEffect(Unit) {
+        // This will run when the composable is first created
+        // Additional reload can be triggered by navigation lifecycle
+        if (actualTeacherId != null) {
+            println("AllAssignmentsScreen - Screen visible, ensuring assignments are loaded for teacher ID: $actualTeacherId")
+            viewModel.loadAllAssignments(teacherId = actualTeacherId)
         }
     }
     
@@ -94,18 +92,29 @@ fun AllAssignmentsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Column {
-            Text(
-                text = "모든 과제",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Gray800
-            )
-            Text(
-                text = "총 ${assignments.size}개의 과제",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray600
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                Text(
+                    text = "모든 과제",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "총 ${assignments.size}개의 과제",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600
+                )
+            }
         }
         
         // Filter tabs (Teacher only)
@@ -135,7 +144,7 @@ fun AllAssignmentsScreen(
             FilterChip(
                 selected = selectedFilter == AssignmentFilter.COMPLETED,
                 onClick = { selectedFilter = AssignmentFilter.COMPLETED },
-                label = { Text("완료") }
+                label = { Text("마감") }
             )
         }
         
@@ -174,13 +183,30 @@ fun AllAssignmentsScreen(
                     }
                 }
             } else {
+                // 제출 현황을 저장하는 StateMap
+                val assignmentStatsMap = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
+                
+                // 각 과제의 제출 현황을 로드
                 assignments.forEach { assignment ->
+                    LaunchedEffect(assignment.id) {
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            val stats = viewModel.getAssignmentSubmissionStats(assignment.id)
+                            assignmentStatsMap[assignment.id] = stats.submittedStudents to stats.totalStudents
+                        }
+                    }
+                }
+                
+                assignments.forEach { assignment ->
+                    val stats = assignmentStatsMap[assignment.id] ?: (0 to assignment.courseClass.studentCount)
+                    
                     AssignmentCard(
                         assignment = assignment,
-                        onAssignmentClick = { onNavigateToAssignmentDetail("${assignment.courseClass.subject.name} - ${assignment.title}") },
-                        onEditClick = { onNavigateToEditAssignment("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                        submittedCount = stats.first,
+                        totalCount = stats.second,
+                        onAssignmentClick = { onNavigateToAssignmentDetail(assignment.id) },
+                        onEditClick = { onNavigateToEditAssignment(assignment.id) },
                         onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
-                        onViewResults = { onNavigateToAssignmentResults("${assignment.courseClass.subject.name} - ${assignment.title}") }
+                        onViewResults = { onNavigateToAssignmentResults(assignment.id) }
                     )
                 }
             }
@@ -191,14 +217,16 @@ fun AllAssignmentsScreen(
 @Composable
 fun AssignmentCard(
     assignment: AssignmentData,
-    onAssignmentClick: (String) -> Unit,
-    onEditClick: (String) -> Unit,
+    submittedCount: Int = 0,
+    totalCount: Int = 0,
+    onAssignmentClick: (Int) -> Unit,
+    onEditClick: (Int) -> Unit,
     onDeleteClick: (Int) -> Unit,
     onViewResults: () -> Unit
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onAssignmentClick("${assignment.courseClass.subject.name} - ${assignment.title}") }
+        onClick = { onAssignmentClick(assignment.id) }
     ) {
         Column {
             Row(
@@ -268,10 +296,16 @@ fun AssignmentCard(
             Spacer(modifier = Modifier.height(12.dp))
             
             // Progress bar
+            val progress = if (totalCount > 0) {
+                submittedCount.toFloat() / totalCount
+            } else {
+                0f
+            }
+            
             VTProgressBar(
-                progress = 0f, // 제출 정보가 없으므로 0으로 설정
+                progress = progress,
                 showPercentage = false,
-                color = PrimaryIndigo, // 기본 색상으로 설정
+                color = PrimaryIndigo,
                 height = 6
             )
             
@@ -283,7 +317,7 @@ fun AssignmentCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 VTButton(
-                    text = "결과 보기",
+                    text = "과제 결과",
                     onClick = onViewResults,
                     variant = ButtonVariant.Primary,
                     size = ButtonSize.Small,
@@ -291,8 +325,8 @@ fun AssignmentCard(
                 )
                 
                 VTButton(
-                    text = "편집",
-                    onClick = { onEditClick("${assignment.courseClass.subject.name} - ${assignment.title}") },
+                    text = "과제 편집",
+                    onClick = { onEditClick(assignment.id) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
                     modifier = Modifier.weight(1f)

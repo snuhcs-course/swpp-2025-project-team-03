@@ -8,6 +8,8 @@ import com.example.voicetutor.data.models.PersonalAssignmentData
 import com.example.voicetutor.data.models.PersonalAssignmentQuestion
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.AnswerSubmissionResponse
+import com.example.voicetutor.data.models.AssignmentCorrectnessItem
+import com.example.voicetutor.data.models.AssignmentResultData
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.QuestionCreateRequest
 import com.example.voicetutor.data.network.S3UploadStatus
@@ -22,6 +24,7 @@ import okhttp3.RequestBody
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.emptyList
 
 @Singleton
 class AssignmentRepository @Inject constructor(
@@ -146,6 +149,20 @@ class AssignmentRepository @Inject constructor(
     suspend fun updateAssignment(id: Int, assignment: com.example.voicetutor.data.network.UpdateAssignmentRequest): Result<AssignmentData> {
         return try {
             val response = apiService.updateAssignment(id, assignment)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()?.data ?: throw Exception("No data"))
+            } else {
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getAssignmentResult(id: Int): Result<AssignmentResultData> {
+        return try {
+            val response = apiService.getAssignmentResult(id)
             
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()?.data ?: throw Exception("No data"))
@@ -480,4 +497,23 @@ class AssignmentRepository @Inject constructor(
             Result.failure(e)
         }
     }
+    suspend fun getAssignmentCorrectness(personalAssignmentId: Int): Result<List<AssignmentCorrectnessItem>> {
+        return try {
+            println("AssignmentRepository - Getting correctness for personal assignment $personalAssignmentId")
+            val response = apiService.getAssignmentCorrectness(personalAssignmentId)
+
+            if (response.isSuccessful && response.body()?.success == true) {
+                val correctnessData = response.body()?.data ?: emptyList()
+                println("AssignmentRepository - Assignment correctness API returned ${correctnessData.size} items")
+                Result.success(correctnessData)
+            } else {
+                println("AssignmentRepository - Assignment correctness API error: ${response.body()?.error}")
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            println("AssignmentRepository - Assignment correctness Exception: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
 }

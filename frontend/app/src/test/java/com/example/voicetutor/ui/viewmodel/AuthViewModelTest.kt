@@ -4,6 +4,8 @@ import app.cash.turbine.test
 import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.repository.AuthRepository
+import com.example.voicetutor.data.repository.LoginException
+import com.example.voicetutor.data.repository.SignupException
 import com.example.voicetutor.testing.MainDispatcherRule
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -322,7 +324,7 @@ class AuthViewModelTest {
                 description = "desc",
                 totalQuestions = 5,
                 createdAt = null,
-                visibleFrom = "",
+                
                 dueAt = "",
                 courseClass = com.example.voicetutor.data.models.CourseClass(
                     id = 1,
@@ -330,8 +332,8 @@ class AuthViewModelTest {
                     description = null,
                     subject = com.example.voicetutor.data.models.Subject(id = 1, name = "Math"),
                     teacherName = "Teacher",
-                    startDate = "",
-                    endDate = "",
+                    
+                    
                     studentCount = 0,
                     createdAt = ""
                 ),
@@ -375,6 +377,372 @@ class AuthViewModelTest {
         // Then: initialAssignments가 빈 리스트로 유지됨
         vm.initialAssignments.test {
             assert(awaitItem().isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun setError_setsErrorState() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+
+        // When
+        vm.setError("테스트 에러 메시지")
+
+        // Then
+        vm.error.test {
+            assert(awaitItem() == "테스트 에러 메시지")
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun setSignupInputError_setsSignupError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+
+        // When
+        vm.setSignupInputError(SignupField.EMAIL, "이메일 형식이 올바르지 않습니다")
+
+        // Then
+        vm.signupError.test {
+            val error = awaitItem()
+            assert(error is SignupError.Input)
+            assert((error as SignupError.Input).field == SignupField.EMAIL)
+            assert(error.message == "이메일 형식이 올바르지 않습니다")
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.error.test {
+            assert(awaitItem() == "이메일 형식이 올바르지 않습니다")
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun clearSignupError_clearsSignupError() = runTest {
+        // Given: signup error가 설정된 상태
+        val vm = AuthViewModel(authRepository)
+        vm.setSignupInputError(SignupField.PASSWORD, "비밀번호 오류")
+
+        // When
+        vm.clearSignupError()
+
+        // Then
+        vm.signupError.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.error.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun clearFieldError_withMatchingField_clearsError() = runTest {
+        // Given: 특정 필드에 에러가 설정된 상태
+        val vm = AuthViewModel(authRepository)
+        vm.setSignupInputError(SignupField.EMAIL, "이메일 오류")
+
+        // When: 해당 필드의 에러를 클리어
+        vm.clearFieldError(SignupField.EMAIL)
+
+        // Then: 에러가 클리어됨
+        vm.signupError.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun clearFieldError_withDifferentField_keepsError() = runTest {
+        // Given: EMAIL 필드에 에러가 설정된 상태
+        val vm = AuthViewModel(authRepository)
+        vm.setSignupInputError(SignupField.EMAIL, "이메일 오류")
+
+        // When: 다른 필드의 에러를 클리어 시도
+        vm.clearFieldError(SignupField.PASSWORD)
+
+        // Then: 에러가 유지됨
+        vm.signupError.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert((error as SignupError.Input).field == SignupField.EMAIL)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun setLoginInputError_setsLoginError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+
+        // When
+        vm.setLoginInputError(LoginField.PASSWORD, "비밀번호가 올바르지 않습니다")
+
+        // Then
+        vm.loginError.test {
+            val error = awaitItem()
+            assert(error is LoginError.Input)
+            assert((error as LoginError.Input).field == LoginField.PASSWORD)
+            assert(error.message == "비밀번호가 올바르지 않습니다")
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.error.test {
+            assert(awaitItem() == "비밀번호가 올바르지 않습니다")
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun clearLoginError_clearsLoginError() = runTest {
+        // Given: login error가 설정된 상태
+        val vm = AuthViewModel(authRepository)
+        vm.setLoginInputError(LoginField.EMAIL, "이메일 오류")
+
+        // When
+        vm.clearLoginError()
+
+        // Then
+        vm.loginError.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.error.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun clearLoginFieldError_withMatchingField_clearsError() = runTest {
+        // Given: 특정 필드에 에러가 설정된 상태
+        val vm = AuthViewModel(authRepository)
+        vm.setLoginInputError(LoginField.EMAIL, "이메일 오류")
+
+        // When: 해당 필드의 에러를 클리어
+        vm.clearLoginFieldError(LoginField.EMAIL)
+
+        // Then: 에러가 클리어됨
+        vm.loginError.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun clearLoginFieldError_withDifferentField_keepsError() = runTest {
+        // Given: EMAIL 필드에 에러가 설정된 상태
+        val vm = AuthViewModel(authRepository)
+        vm.setLoginInputError(LoginField.EMAIL, "이메일 오류")
+
+        // When: 다른 필드의 에러를 클리어 시도
+        vm.clearLoginFieldError(LoginField.PASSWORD)
+
+        // Then: 에러가 유지됨
+        vm.loginError.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert((error as LoginError.Input).field == LoginField.EMAIL)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun login_withLoginExceptionInvalidCredentials_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.login("test@ex.com", "wrong"))
+            .thenReturn(Result.failure(LoginException.InvalidCredentials("이메일 또는 비밀번호가 올바르지 않습니다")))
+
+        // When
+        vm.login("test@ex.com", "wrong")
+        advanceUntilIdle()
+
+        // Then
+        vm.loginError.test {
+            val error = awaitItem()
+            assert(error is LoginError.General.InvalidCredentials)
+            val generalError = error as LoginError.General.InvalidCredentials
+            assert(generalError.message.contains("이메일") || generalError.message.contains("비밀번호"))
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun login_withLoginExceptionAccountNotFound_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.login("test@ex.com", "pw"))
+            .thenReturn(Result.failure(LoginException.AccountNotFound("계정을 찾을 수 없습니다")))
+
+        // When
+        vm.login("test@ex.com", "pw")
+        advanceUntilIdle()
+
+        // Then
+        vm.loginError.test {
+            val error = awaitItem()
+            assert(error is LoginError.General.AccountNotFound)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun login_withLoginExceptionAccountLocked_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.login("test@ex.com", "pw"))
+            .thenReturn(Result.failure(LoginException.AccountLocked("계정이 잠겨 있습니다")))
+
+        // When
+        vm.login("test@ex.com", "pw")
+        advanceUntilIdle()
+
+        // Then
+        vm.loginError.test {
+            val error = awaitItem()
+            assert(error is LoginError.General.AccountLocked)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun login_withLoginExceptionServer_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.login("test@ex.com", "pw"))
+            .thenReturn(Result.failure(LoginException.Server("서버 오류")))
+
+        // When
+        vm.login("test@ex.com", "pw")
+        advanceUntilIdle()
+
+        // Then
+        vm.loginError.test {
+            val error = awaitItem()
+            assert(error is LoginError.General.Server)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun login_withLoginExceptionNetwork_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.login("test@ex.com", "pw"))
+            .thenReturn(Result.failure(LoginException.Network("네트워크 오류")))
+
+        // When
+        vm.login("test@ex.com", "pw")
+        advanceUntilIdle()
+
+        // Then
+        vm.loginError.test {
+            val error = awaitItem()
+            assert(error is LoginError.General.Network)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun signup_withSignupExceptionDuplicateEmail_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT))
+            .thenReturn(Result.failure(SignupException.DuplicateEmail("이미 사용 중인 이메일입니다")))
+
+        // When
+        vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT)
+        advanceUntilIdle()
+
+        // Then
+        vm.signupError.test {
+            val error = awaitItem()
+            assert(error is SignupError.General.DuplicateEmail)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun signup_withSignupExceptionServer_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT))
+            .thenReturn(Result.failure(SignupException.Server("서버 오류")))
+
+        // When
+        vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT)
+        advanceUntilIdle()
+
+        // Then
+        vm.signupError.test {
+            val error = awaitItem()
+            assert(error is SignupError.General.Server)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun signup_withSignupExceptionNetwork_setsCorrectError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT))
+            .thenReturn(Result.failure(SignupException.Network("네트워크 오류")))
+
+        // When
+        vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT)
+        advanceUntilIdle()
+
+        // Then
+        vm.signupError.test {
+            val error = awaitItem()
+            assert(error is SignupError.General.Network)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun logout_clearsAllErrors() = runTest {
+        // Given: 에러가 설정된 상태
+        val vm = AuthViewModel(authRepository)
+        vm.setError("일반 에러")
+        vm.setSignupInputError(SignupField.EMAIL, "이메일 에러")
+        vm.setLoginInputError(LoginField.PASSWORD, "비밀번호 에러")
+
+        // When
+        vm.logout()
+
+        // Then: 모든 에러가 클리어됨
+        vm.error.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.signupError.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.loginError.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun signup_withClassName_handlesCorrectly() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        val user = User(id = 1, name = "Alice", email = "a@ex.com", role = UserRole.STUDENT)
+        Mockito.`when`(authRepository.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT))
+            .thenReturn(Result.success(user))
+
+        // When: className 파라미터를 포함하여 signup 호출
+        vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT, "Class A")
+        advanceUntilIdle()
+
+        // Then: 정상적으로 처리됨 (className은 현재 사용되지 않지만 파라미터는 받음)
+        vm.currentUser.test {
+            assert(awaitItem() == user)
             cancelAndIgnoreRemainingEvents()
         }
     }

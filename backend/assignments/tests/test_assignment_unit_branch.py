@@ -218,8 +218,21 @@ def test_createview_invalid_due(mock_serializer, mock_course, mock_subject):
 # ---------------------------------------------------------------------
 # 기타 단순 View (Submit / Results / Questions)
 # ---------------------------------------------------------------------
-def test_assignment_simple_views_all():
+@patch("assignments.views.PersonalAssignment.objects")
+@patch("assignments.views.AssignmentResultSerializer")
+def test_assignment_simple_views_all(mock_serializer, mock_pa_objects):
     v1 = views.AssignmentSubmitView().post(Mock(), id=1)
+
+    # Mock AssignmentResultsView dependencies
+    mock_qs = Mock()
+    mock_qs.aggregate.return_value = {"total": 0, "submitted": 0}
+    mock_pa_objects.filter.return_value = mock_qs
+
+    mock_ser_instance = Mock()
+    mock_ser_instance.is_valid.return_value = True
+    mock_ser_instance.data = {"assignment_id": 1, "total_students": 0, "submitted_students": 0, "submission_rate": 0.0}
+    mock_serializer.return_value = mock_ser_instance
+
     v2 = views.AssignmentResultsView().get(Mock(), id=1)
     v3 = views.AssignmentQuestionsView().get(Mock(), id=1)
     assert v1.status_code == 201

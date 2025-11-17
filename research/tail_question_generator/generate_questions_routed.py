@@ -389,14 +389,109 @@ PLANNER_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are a strict grader. Determine ONLY whether the student's answer is semantically consistent with the model answer.
+            """You are a semantic grader for short answers that may include Korean ASR (speech-to-text) noise.
 
 Output one JSON object ONLY:
 {{"is_correct": true|false}}
 
-Rules:
-- Compare meaning; ignore stylistic differences.
-- No extra text or keys. Only the JSON above.""",
+Decision policy (VERY IMPORTANT):
+- Judge MEANING, not wording. You may internally normalize and translate.
+- TREAT as NOISE and IGNORE: fillers ("음", "어", "그…"), hesitations, repetitions, spacing/punctuation/case, particles/josa errors, honorifics, common ASR confusions (e.g., ㄴ/ㄹ omission, spacing variants), minor morphological errors.
+- Consider SYNONYMS, paraphrases, and concise restatements as correct if they entail the model answer.
+- NUMERIC/UNITS: allow rounding ±5% or equivalent units (e.g., 0.5 kg == 500 g). If direction/sign or order flips the fact, it's wrong.
+- MULTI-CONDITION answers: all ESSENTIAL facts in the model answer must be present or clearly implied; trivial details can be omitted.
+- UNCERTAINTY language like "모르겠어요/잘 기억 안 나요/아마" without giving the correct content → false.
+- CONTRADICTION with the model answer → false.
+- If the student answer is off-topic or too vague to entail the model answer → false.
+- Enumerations & Alternatives (OR): If the model answer lists alternatives or examples
+   ("또는/혹은/… 등/예:"), the student mentioning ANY one correct alternative is sufficient → true.
+- Conjunctive Requirements (AND): If the model answer requires multiple essential parts
+   ("A와 B 모두/각각/동시에/둘 다"), ALL essential parts must be present → otherwise false.
+- For open-ended '방법' questions, a single correct representative method suffices unless it contradicts the model answer.
+
+Output rules:
+- No extra text or keys. Only the JSON above.
+
+Examples:
+        
+        
+# Correct despite ASR noise / paraphrase
+
+Input:
+("user", 
+"Question: 광합성의 주 생성물은?\n"
+"ModelAnswer: 광합성은 식물이 빛 에너지를 이용하여 이산화탄소와 물로부터 포도당을 생성하고, 그 과정에서 산소를 부산물로 방출하는 과정입니다.\n"
+"Student: 음 식물은 빚빚 바드면 당 만들고 산소 나와요"),
+
+Output:
+{{"is_correct": true}}
+
+# Numeric rounding / unit conversion
+
+Input:
+("user",
+"Question: 지구 중력가속도 값은?\n"
+"ModelAnswer: 지구 표면에서의 중력가속도는 약 9.8 m/s^2 정도로, 이는 물체가 자유 낙하할 때 초당 약 9.8m씩 속도가 증가함을 의미합니다.\n"
+"Student: 한 9.8쯤? 대략 10이라고도 하죠"),
+Output:
+{{"is_correct": true}}
+
+# Missing essential part
+
+Input:
+("user",
+"Question: 물의 끓는점과 어는점은?\n"
+"ModelAnswer: 순수한 물은 표준기압에서 약 100도에서 끓고, 0도에서 어는 성질을 가집니다.\n"
+"Student: 백도요"),
+
+Output:
+{{"is_correct": true}}
+
+# Contradiction
+
+Input:
+("user",
+"Question: 전자는 양전하인가 음전하인가?\n"
+"ModelAnswer: 전자는 음전하를 띤 입자로, 원자핵 주위를 돌며 음의 전하를 가지고 있습니다.\n"
+"Student: 어.. 양전하였나?"),
+
+Output:
+{{"is_correct": true}}
+
+# Concise entailment
+
+Input:
+("user",
+"Question: 피타고라스 정리는 무엇인가요요?\n"
+"ModelAnswer: 직각삼각형에서 빗변의 길이의 제곱은 나머지 두 변의 길이의 제곱을 더한 것과 같다는 정리로, a^2 + b^2 = c^2 형태로 표현됩니다.\n"
+"Student: 직각이면 두 변 제곱 합이 빗변 제곱  입니다다"),
+
+Output:
+{{"is_correct": true}}
+
+
+# Alternative(OR) 열거: 하나만 말해도 정답
+
+Input:
+("user",
+ "Question: 실험 결과의 신뢰도를 어떻게 확인할 수 있나요?\n"
+ "ModelAnswer: 결과를 여러 번 반복 측정하거나, 다른 변수를 통제/조정해 재검증하는 방법이 있습니다.\n"
+ "Student: 결과를 여러 번 반복 측정하는 것이요"),
+ 
+Output:
+{{"is_correct": true}}
+
+# 결합(AND) 요구: 일부만 말하면 오답
+
+Input:
+("user",
+ "Question: 정확한 비교 실험을 위해 필요한 핵심 절차는 무엇인가요?\n"
+ "ModelAnswer: 대조군을 두고, 표본수를 충분히 확보해야 합니다. (둘 다 필요)\n"
+ "Student: 대조군을 둡니다"),
+ 
+Output:
+{{"is_correct": false}}
+""",
         ),
         ("user", "Question: {question}\nModelAnswer: {model_answer}\nStudent: {student_answer}"),
     ]

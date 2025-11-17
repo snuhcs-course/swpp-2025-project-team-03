@@ -46,8 +46,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="Test Class",
         description="Test Description",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=90),
     )
 
 
@@ -61,8 +59,9 @@ class TestTeacherDashboardStatsView:
             course_class=course_class,
             subject=course_class.subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
         )
         Enrollment.objects.create(course_class=course_class, student=student, status=Enrollment.Status.ENROLLED)
 

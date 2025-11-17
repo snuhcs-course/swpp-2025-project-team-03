@@ -5,9 +5,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,7 +24,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,8 +36,15 @@ import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.file.FileManager
 import com.example.voicetutor.file.FileType
 import com.example.voicetutor.file.FileInfo
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +52,7 @@ fun CreateAssignmentScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null,
+    initialClassId: Int? = null,
     onCreateAssignment: (String) -> Unit = {} // Pass assignment title on success
 ) {
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
@@ -58,12 +65,15 @@ fun CreateAssignmentScreen(
     
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val students by studentViewModel.students.collectAsStateWithLifecycle()
-    val isLoading by actualAssignmentViewModel.isLoading.collectAsStateWithLifecycle()
+    val isCreatingAssignment by actualAssignmentViewModel.isCreatingAssignment.collectAsStateWithLifecycle()  // 변경
     val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
     val currentAssignment by actualAssignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
     val isUploading by actualAssignmentViewModel.isUploading.collectAsStateWithLifecycle()
     val uploadProgress by actualAssignmentViewModel.uploadProgress.collectAsStateWithLifecycle()
     val uploadSuccess by actualAssignmentViewModel.uploadSuccess.collectAsStateWithLifecycle()
+    val isGeneratingQuestions by actualAssignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
+    val questionGenerationSuccess by actualAssignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
+    val questionGenerationError by actualAssignmentViewModel.questionGenerationError.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
     val fileManager = remember { FileManager(context) }
@@ -127,12 +137,20 @@ fun CreateAssignmentScreen(
     var selectedClassId by remember { mutableStateOf<Int?>(null) }
     var selectedGrade by remember { mutableStateOf("") }
     var selectedSubject by remember { mutableStateOf("") }
-    var dueDate by remember { mutableStateOf("") }
+    var dueDateText by remember { mutableStateOf("") }
+    var dueDateRequest by remember { mutableStateOf("") }
+    var dueDateTime by remember { mutableStateOf<LocalDateTime?>(null) }
     var questionCount by remember { mutableStateOf("5") }
     var assignToAll by remember { mutableStateOf(true) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
     var gradeSelectionExpanded by remember { mutableStateOf(false) }
     var subjectSelectionExpanded by remember { mutableStateOf(false) }
+    var dueShowDatePicker by remember { mutableStateOf(false) }
+    var dueShowTimePicker by remember { mutableStateOf(false) }
+    var duePendingDate by remember { mutableStateOf<LocalDate?>(null) }
+
+    val displayDateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") }
+    val zoneId = remember { ZoneId.systemDefault() }
     
     // Load data on first composition
     LaunchedEffect(actualTeacherId) {
@@ -140,19 +158,30 @@ fun CreateAssignmentScreen(
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
     
-    // Navigate to assignment detail when creation succeeds
-    LaunchedEffect(currentAssignment, assignmentCreated, uploadSuccess) {
-        if (assignmentCreated && (currentAssignment != null || uploadSuccess)) {
-            println("Assignment created successfully: ${currentAssignment?.title}")
-            currentAssignment?.let { assignment ->
-                onCreateAssignment(assignment.title)
-            }
-            // 업로드 성공 시 상태 리셋
-            if (uploadSuccess) {
-                actualAssignmentViewModel.resetUploadState()
+    // Set initial class when classes are loaded and initialClassId is provided
+    // Use a flag to ensure it only happens once to avoid animation issues
+    var hasSetInitialClass by remember { mutableStateOf(false) }
+    LaunchedEffect(classes.size, initialClassId) {
+        if (initialClassId != null && classes.isNotEmpty() && !hasSetInitialClass) {
+            val targetClass = classes.find { it.id == initialClassId }
+            targetClass?.let { classData ->
+                selectedClassId = classData.id
+                selectedClass = "${classData.name} - ${classData.subject.name}"
+                hasSetInitialClass = true
             }
         }
     }
+    // Navigate to assignment detail when creation succeeds (after upload, not waiting for question generation)
+    LaunchedEffect(currentAssignment, assignmentCreated, uploadSuccess) {
+        if (assignmentCreated && uploadSuccess) {
+            currentAssignment?.let { assignment ->
+                println("Assignment and PDF upload completed successfully: ${assignment.title}")
+                onCreateAssignment(assignment.title)
+                // Note: 문제 생성은 백그라운드에서 계속 진행됨
+            }
+        }
+    }
+
     
     // Handle error
     error?.let { errorMessage ->
@@ -178,17 +207,18 @@ fun CreateAssignmentScreen(
     
     val studentNames = students.map { it.name }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         // Header removed - now handled by MainLayout
         
-        // Loading indicator
-        if (isLoading) {
+        // Loading indicator (과제 생성 중에만 표시, 다른 UI 블로킹 안 함)
+        if (isCreatingAssignment) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -295,125 +325,93 @@ fun CreateAssignmentScreen(
                     }
                     
                     // Grade selection
-                    ExposedDropdownMenuBox(
-                        expanded = gradeSelectionExpanded,
-                        onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = selectedGrade,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("학년") },
-                            placeholder = { Text("학년을 선택하세요") },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = gradeSelectionExpanded)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.School,
-                                    contentDescription = null,
-                                    tint = PrimaryIndigo
-                                )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryIndigo,
-                                focusedLabelColor = PrimaryIndigo,
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                unfocusedBorderColor = Gray300,
-                                cursorColor = Color.Black
-                            ),
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth()
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "학년",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
                         )
-                        ExposedDropdownMenu(
+                        Spacer(modifier = Modifier.height(4.dp))
+                        ExposedDropdownMenuBox(
                             expanded = gradeSelectionExpanded,
-                            onDismissRequest = { gradeSelectionExpanded = false }
+                            onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            grades.forEach { grade ->
-                                DropdownMenuItem(
-                                    text = { 
-                                        Text(
-                                            text = grade,
-                                            fontWeight = FontWeight.Medium
-                                        ) 
-                                    },
-                                    onClick = {
-                                        selectedGrade = grade
-                                        gradeSelectionExpanded = false
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Filled.School,
-                                            contentDescription = null,
-                                            tint = PrimaryIndigo
-                                        )
-                                    }
-                                )
+                            OutlinedTextField(
+                                value = selectedGrade,
+                                onValueChange = {},
+                                readOnly = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    focusedBorderColor = PrimaryIndigo,
+                                    unfocusedBorderColor = Gray400
+                                ),
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = gradeSelectionExpanded)
+                                },
+                                modifier = Modifier.menuAnchor()
+                            )
+                            
+                            ExposedDropdownMenu(
+                                expanded = gradeSelectionExpanded,
+                                onDismissRequest = { gradeSelectionExpanded = false }
+                            ) {
+                                grades.forEach { grade ->
+                                    DropdownMenuItem(
+                                        text = { Text(grade) },
+                                        onClick = {
+                                            selectedGrade = grade
+                                            gradeSelectionExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                     
                     // Subject selection
-                    ExposedDropdownMenuBox(
-                        expanded = subjectSelectionExpanded,
-                        onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = selectedSubject,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("과목") },
-                            placeholder = { Text("과목을 선택하세요") },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectSelectionExpanded)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.MenuBook,
-                                    contentDescription = null,
-                                    tint = PrimaryIndigo
-                                )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryIndigo,
-                                focusedLabelColor = PrimaryIndigo,
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                unfocusedBorderColor = Gray300,
-                                cursorColor = Color.Black
-                            ),
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth()
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "과목",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
                         )
-                        ExposedDropdownMenu(
+                        Spacer(modifier = Modifier.height(4.dp))
+                        ExposedDropdownMenuBox(
                             expanded = subjectSelectionExpanded,
-                            onDismissRequest = { subjectSelectionExpanded = false }
+                            onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            subjects.forEach { subject ->
-                                DropdownMenuItem(
-                                    text = { 
-                                        Text(
-                                            text = subject,
-                                            fontWeight = FontWeight.Medium
-                                        ) 
-                                    },
-                                    onClick = {
-                                        selectedSubject = subject
-                                        subjectSelectionExpanded = false
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Filled.MenuBook,
-                                            contentDescription = null,
-                                            tint = PrimaryIndigo
-                                        )
-                                    }
-                                )
+                            OutlinedTextField(
+                                value = selectedSubject,
+                                onValueChange = {},
+                                readOnly = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    focusedBorderColor = PrimaryIndigo,
+                                    unfocusedBorderColor = Gray400
+                                ),
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectSelectionExpanded)
+                                },
+                                modifier = Modifier.menuAnchor()
+                            )
+                            
+                            ExposedDropdownMenu(
+                                expanded = subjectSelectionExpanded,
+                                onDismissRequest = { subjectSelectionExpanded = false }
+                            ) {
+                                subjects.forEach { subject ->
+                                    DropdownMenuItem(
+                                        text = { Text(subject) },
+                                        onClick = {
+                                            selectedSubject = subject
+                                            subjectSelectionExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -442,17 +440,31 @@ fun CreateAssignmentScreen(
                     )
                     
                     // Due date
+                    val dueDateInteractionSource = remember { MutableInteractionSource() }
+                    LaunchedEffect(dueDateInteractionSource) {
+                        dueDateInteractionSource.interactions.collect { interaction ->
+                            if (interaction is PressInteraction.Release) {
+                                dueShowDatePicker = true
+                            }
+                        }
+                    }
                     OutlinedTextField(
-                        value = dueDate,
-                        onValueChange = { dueDate = it },
+                        value = dueDateText,
+                        onValueChange = {},
+                        readOnly = true,
                         label = { Text("마감일") },
-                        placeholder = { Text("2024-01-15") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
+                        placeholder = { Text("날짜와 시간을 선택하세요") },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Event,
+                                contentDescription = null,
+                                tint = PrimaryIndigo
+                            )
+                        },
                         singleLine = true,
+                        interactionSource = dueDateInteractionSource,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryIndigo,
                             focusedLabelColor = PrimaryIndigo,
@@ -461,6 +473,7 @@ fun CreateAssignmentScreen(
                             cursorColor = Color.Black
                         )
                     )
+
                 }
             }
         }
@@ -776,7 +789,7 @@ fun CreateAssignmentScreen(
         val isFormValid = assignmentTitle.isNotBlank() && assignmentDescription.isNotBlank() && 
             selectedClass.isNotBlank() && selectedClassId != null && 
             selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
-            dueDate.isNotBlank() && 
+            dueDateRequest.isNotBlank() && 
             questionCount.isNotBlank() && selectedFiles.isNotEmpty()
         
         VTButton(
@@ -943,14 +956,18 @@ fun CreateAssignmentScreen(
                         )
                     }
                     
+                    // 문제 개수를 정수로 파싱 (기본값 0)
+                    val questionCountInt = questionCount.toIntOrNull() ?: 0
+                    
                     val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest(
                         title = assignmentTitle,
                         subject = selectedSubject,
                         class_id = selectedClassId!!,
-                        due_at = dueDate,
+                        due_at = dueDateRequest,
                         grade = selectedGrade,
                         type = "Quiz",  // PDF 과제는 항상 Quiz 타입
                         description = assignmentDescription,
+                        total_questions = questionCountInt,
                         questions = sampleQuestions
                     )
                     
@@ -962,10 +979,8 @@ fun CreateAssignmentScreen(
                     println("selectedPdfFile: ${selectedPdfFile?.name}")
                     println("selectedPdfFile != null: ${selectedPdfFile != null}")
                     println("selectedFiles.size: ${selectedFiles.size}")
-                    
-                    // 문제 개수를 정수로 파싱 (기본값 5)
-                    val questionCountInt = questionCount.toIntOrNull() ?: 5
                     println("문제 개수: $questionCountInt (입력값: $questionCount)")
+                    println("total_questions: ${createRequest.total_questions}")
                     
                     // PDF 파일이 선택된 경우 PDF 업로드와 함께 과제 생성
                     val pdfFile = selectedPdfFile
@@ -985,7 +1000,7 @@ fun CreateAssignmentScreen(
             },
             variant = ButtonVariant.Gradient,
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid && !isLoading,
+            enabled = isFormValid && !isCreatingAssignment,  // 변경: isCreatingAssignment 사용
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Add,
@@ -994,6 +1009,180 @@ fun CreateAssignmentScreen(
                 )
             }
         )
+        }
+    }
+
+    if (dueShowDatePicker) {
+        val initialDateMillis = dueDateTime
+            ?.atZone(zoneId)
+            ?.toInstant()
+            ?.toEpochMilli()
+            ?: Instant.now().toEpochMilli()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
+
+        DatePickerDialog(
+            onDismissRequest = {
+                dueShowDatePicker = false
+                duePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            duePendingDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(zoneId)
+                                .toLocalDate()
+                            dueShowDatePicker = false
+                            dueShowTimePicker = true
+                        }
+                    },
+                    enabled = datePickerState.selectedDateMillis != null,
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("시간 선택")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        dueShowDatePicker = false
+                        duePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = Color.White,
+                    titleContentColor = Gray800,
+                    headlineContentColor = Gray800,
+                    weekdayContentColor = Gray600,
+                    dayContentColor = Gray800,
+                    selectedDayContainerColor = PrimaryIndigo,
+                    selectedDayContentColor = Color.White,
+                    todayDateBorderColor = PrimaryIndigo
+                )
+            )
+        }
+    }
+
+    if (dueShowTimePicker) {
+        val initialHour = dueDateTime?.hour ?: LocalTime.now().hour
+        val initialMinute = dueDateTime?.minute ?: LocalTime.now().minute
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            is24Hour = true
+        )
+
+        AlertDialog(
+            onDismissRequest = {
+                dueShowTimePicker = false
+                duePendingDate = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedDate = duePendingDate ?: dueDateTime?.toLocalDate() ?: LocalDate.now()
+                        val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        val finalDateTime = LocalDateTime.of(selectedDate, selectedTime)
+                        dueDateTime = finalDateTime
+                        dueDateText = finalDateTime.format(displayDateFormatter)
+                        dueDateRequest = finalDateTime
+                            .atZone(zoneId)
+                            .toOffsetDateTime()
+                            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                        dueShowTimePicker = false
+                        duePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                ) {
+                    Text("확인")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        dueShowTimePicker = false
+                        duePendingDate = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                ) {
+                    Text("취소")
+                }
+            },
+            title = {
+                Text(
+                    text = "시간 선택",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Gray800
+                )
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
+    }
+
+
+    // Loading overlay for PDF upload only (not for question generation)
+        if (isUploading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .clickable(enabled = false) { },
+                contentAlignment = Alignment.Center
+            ) {
+                VTCard(
+                    variant = CardVariant.Elevated,
+                    modifier = Modifier
+                        .padding(32.dp)
+                        .wrapContentSize()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        
+                        Text(
+                            text = "PDF 업로드 중...",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LinearProgressIndicator(
+                                progress = uploadProgress,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp),
+                                color = PrimaryIndigo,
+                                trackColor = Gray200
+                            )
+                            Text(
+                                text = "${(uploadProgress * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Gray600
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

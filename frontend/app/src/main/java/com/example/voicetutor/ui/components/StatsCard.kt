@@ -47,15 +47,6 @@ fun VTStatsCard(
     
     val cardModifier = modifier
         .clip(shape)
-        .background(
-            when (variant) {
-                CardVariant.Default -> Color.White
-                CardVariant.Elevated -> Color.White
-                CardVariant.Outlined -> Color.White
-                CardVariant.Gradient -> Color.White
-                CardVariant.Selected -> Color.White
-            }
-        )
         .then(
             if (variant == CardVariant.Gradient) {
                 Modifier.background(
@@ -67,7 +58,15 @@ fun VTStatsCard(
                     )
                 )
             } else {
-                Modifier
+                Modifier.background(
+                    when (variant) {
+                        CardVariant.Default -> Color.White
+                        CardVariant.Elevated -> Color.White
+                        CardVariant.Outlined -> Color.White
+                        CardVariant.Selected -> Color.White
+                        CardVariant.Gradient -> Color.White // This case won't be reached
+                    }
+                )
             }
         )
         .shadow(
@@ -177,14 +176,14 @@ fun VTStatsCard(
         
         StatsCardLayout.Vertical -> {
             Column(
-                modifier = cardModifier.padding(20.dp),
+                modifier = cardModifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Icon at the top
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .background(iconColor.copy(alpha = 0.08f)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -192,24 +191,26 @@ fun VTStatsCard(
                         imageVector = icon,
                         contentDescription = null,
                         tint = iconColor,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 
                 // Title
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = Gray600,
                     fontWeight = FontWeight.Medium,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    maxLines = 1,
+                    maxLines = 2,
+                    fontSize = 11.sp,
+                    lineHeight = 14.sp,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 
                 // Value
                 Text(
@@ -217,8 +218,10 @@ fun VTStatsCard(
                     style = MaterialTheme.typography.titleLarge,
                     color = Gray900,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    fontSize = 20.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 
                 // Trend indicator

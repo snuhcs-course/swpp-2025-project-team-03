@@ -1,10 +1,7 @@
-from datetime import timedelta
-
 import pytest
 from catalog.models import Subject
 from courses.request_serializers import ClassCreateRequestSerializer
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 Account = get_user_model()
 
@@ -27,8 +24,6 @@ class TestClassCreateRequestSerializer:
             "description": "Test Description",
             "subject_name": "New Subject",
             "teacher_id": teacher.id,
-            "start_date": timezone.now(),
-            "end_date": timezone.now() + timedelta(days=30),
         }
 
         serializer = ClassCreateRequestSerializer(data=data)
@@ -54,8 +49,6 @@ class TestClassCreateRequestSerializer:
             "name": "Class with Existing Subject",
             "subject_name": "Existing Subject",
             "teacher_id": teacher.id,
-            "start_date": timezone.now(),
-            "end_date": timezone.now() + timedelta(days=30),
         }
 
         serializer = ClassCreateRequestSerializer(data=data)

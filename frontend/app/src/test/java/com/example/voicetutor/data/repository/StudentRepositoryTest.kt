@@ -34,8 +34,8 @@ class StudentRepositoryTest {
         description = null,
         subject = buildSubject(),
         teacherName = "Teacher1",
-        startDate = "2025-01-01",
-        endDate = "2025-12-31",
+        
+        
         studentCount = 10,
         createdAt = "2025-01-01"
     )
@@ -46,7 +46,6 @@ class StudentRepositoryTest {
         description = "Description",
         totalQuestions = 5,
         createdAt = null,
-        visibleFrom = "",
         dueAt = "2025-12-31",
         courseClass = buildCourseClass(),
         materials = null,

@@ -1,6 +1,7 @@
 package com.example.voicetutor.di
 
 import com.example.voicetutor.data.network.ApiService
+import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AuthRepository
 import com.example.voicetutor.data.repository.fake.FakeAuthRepositoryWrapper
 import dagger.Module
@@ -30,12 +31,7 @@ object FakeNetworkModule {
     @Provides
     @Singleton
     fun provideApiService(): ApiService {
-        // This baseUrl will NEVER be accessed in tests
-        return retrofit2.Retrofit.Builder()
-            .baseUrl("http://dummy.com/")
-            .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
+        return FakeApiService()
     }
     
     @Provides

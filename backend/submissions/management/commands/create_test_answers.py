@@ -39,11 +39,7 @@ class Command(BaseCommand):
             skipped_count = 0
 
             # PersonalAssignment 상태에 따라 답안 생성
-            if personal_assignment.status == PersonalAssignment.Status.GRADED:
-                # GRADED: 모든 질문에 대해 완전한 답안 생성
-                created_count, skipped_count = self._create_graded_answers(personal_assignment, questions)
-
-            elif personal_assignment.status == PersonalAssignment.Status.SUBMITTED:
+            if personal_assignment.status == PersonalAssignment.Status.SUBMITTED:
                 # SUBMITTED: 모든 질문에 대해 답안 생성 (state와 eval_grade는 null)
                 created_count, skipped_count = self._create_submitted_answers(personal_assignment, questions)
 
@@ -72,39 +68,6 @@ class Command(BaseCommand):
                 f"Answer 생성 완료!\n총 새로 생성된 항목: {total_created}개, 이미 존재한 항목: {total_skipped}개"
             )
         )
-
-    def _create_graded_answers(self, personal_assignment, questions):
-        """GRADED 상태의 PersonalAssignment에 대해 완전한 답안 생성"""
-        created_count = 0
-        skipped_count = 0
-
-        for question in questions:
-            answer, created = Answer.objects.get_or_create(
-                question=question,
-                student=personal_assignment.student,
-                defaults={
-                    "started_at": personal_assignment.started_at or timezone.now() - timedelta(hours=2),
-                    "submitted_at": personal_assignment.submitted_at or timezone.now() - timedelta(hours=1),
-                    "state": self._get_random_answer_state(),
-                    "text_answer": self._get_answer_text(question),
-                    "eval_grade": self._get_random_grade(),
-                },
-            )
-
-            if created:
-                created_count += 1
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"✓ 생성됨 (GRADED): {personal_assignment.student} - Q{question.number} [{answer.state}]"
-                    )
-                )
-            else:
-                skipped_count += 1
-                self.stdout.write(
-                    self.style.WARNING(f"⚠ 이미 존재함: {personal_assignment.student} - Q{question.number}")
-                )
-
-        return created_count, skipped_count
 
     def _create_submitted_answers(self, personal_assignment, questions):
         """SUBMITTED 상태의 PersonalAssignment에 대해 답안 생성 (state와 eval_grade는 null)"""

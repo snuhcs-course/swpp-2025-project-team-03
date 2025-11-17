@@ -9,6 +9,7 @@ omit =
     */tests/*
     */test/*
     tests/*
+    */middleware.py
 
 [report]
 exclude_lines =

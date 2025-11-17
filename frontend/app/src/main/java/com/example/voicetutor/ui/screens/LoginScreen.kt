@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -17,9 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -32,6 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
+import com.example.voicetutor.ui.viewmodel.LoginError
+import com.example.voicetutor.ui.viewmodel.LoginField
 
 @Composable
 fun LoginScreen(
@@ -44,14 +50,36 @@ fun LoginScreen(
     val viewModelAuth = authViewModel ?: hiltViewModel()
     val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
     val isLoading by viewModelAuth.isLoading.collectAsStateWithLifecycle()
-    val error by viewModelAuth.error.collectAsStateWithLifecycle()
+    val loginError by viewModelAuth.loginError.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val autoFillCredentials by viewModelAuth.autoFillCredentials.collectAsStateWithLifecycle()
     
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    
+    val focusManager = LocalFocusManager.current
+
+    val inputError = loginError as? LoginError.Input
+    val emailErrorMessage = if (inputError?.field == LoginField.EMAIL) inputError.message else null
+    val passwordErrorMessage = if (inputError?.field == LoginField.PASSWORD) inputError.message else null
+    val generalError = loginError as? LoginError.General
+
+    // 로그인 로직을 함수로 분리
+    val performLogin = {
+        viewModelAuth.clearLoginError()
+        when {
+            email.isBlank() -> {
+                viewModelAuth.setLoginInputError(LoginField.EMAIL, "이메일을 입력해주세요")
+            }
+            password.isBlank() -> {
+                viewModelAuth.setLoginInputError(LoginField.PASSWORD, "비밀번호를 입력해주세요")
+            }
+            else -> {
+                viewModelAuth.login(email, password)
+            }
+        }
+    }
+
     // 자동 입력 정보가 있을 때 필드에 설정
     LaunchedEffect(autoFillCredentials) {
         autoFillCredentials?.let { (autoEmail, autoPassword) ->
@@ -77,13 +105,6 @@ fun LoginScreen(
             }
             
             onLoginSuccess()
-        }
-    }
-    
-    // Handle error
-    LaunchedEffect(error) {
-        error?.let {
-            // Error is already handled by AuthViewModel
         }
     }
 
@@ -137,6 +158,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,7 +173,7 @@ fun LoginScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     
                     // Logo
                     Box(
@@ -173,7 +195,7 @@ fun LoginScreen(
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     
                     // Title
                     Text(
@@ -183,113 +205,157 @@ fun LoginScreen(
                         color = PrimaryIndigo
                     )
                     
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     
                     Text(
-                        text = "말하기로 배우고, 듣기로 완성하세요",
+                        text = "말하는 순간, 나만의 AI 튜터가 시작됩니다",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray600,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Medium
                     )
                     
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     
-                    // Email field
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { 
-                            email = it
-                            viewModelAuth.clearError()
-                        },
-                        label = { Text("이메일") },
-                        placeholder = { Text("이메일을 입력하세요") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Email,
-                                contentDescription = null,
-                                tint = PrimaryIndigo
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        shape = RoundedCornerShape(16.dp),
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo,
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            cursorColor = Color.Black
-                        )
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Password field
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { 
-                            password = it
-                            viewModelAuth.clearError()
-                        },
-                        label = { Text("비밀번호") },
-                        placeholder = { Text("••••••••") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Lock,
-                                contentDescription = null,
-                                tint = PrimaryIndigo
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        // Email field
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { 
+                                email = it
+                                viewModelAuth.clearLoginFieldError(LoginField.EMAIL)
+                            },
+                            label = { Text("이메일") },
+                            placeholder = { Text("이메일을 입력하세요") },
+                            leadingIcon = {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                    contentDescription = if (passwordVisible) "비밀번호 숨기기" else "비밀번호 보기",
-                                    tint = Gray500
+                                    imageVector = Icons.Filled.Email,
+                                    contentDescription = null,
+                                    tint = PrimaryIndigo
                                 )
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Email,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                }
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = emailErrorMessage != null,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                focusedLabelColor = PrimaryIndigo,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
+                            ),
+                            supportingText = {
+                                if (emailErrorMessage != null) {
+                                    Text(
+                                        text = emailErrorMessage,
+                                        color = Error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
-                        },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryIndigo,
-                            focusedLabelColor = PrimaryIndigo,
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            cursorColor = Color.Black
                         )
-                    )
+                        
+                        // Password field
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { 
+                                password = it
+                                viewModelAuth.clearLoginFieldError(LoginField.PASSWORD)
+                            },
+                            label = { Text("비밀번호") },
+                            placeholder = { Text("비밀번호를 입력하세요") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Lock,
+                                    contentDescription = null,
+                                    tint = PrimaryIndigo
+                                )
+                            },
+                            trailingIcon = {
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Icon(
+                                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                        contentDescription = if (passwordVisible) "비밀번호 숨기기" else "비밀번호 보기",
+                                        tint = Gray500
+                                    )
+                                }
+                            },
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    focusManager.clearFocus()
+                                    performLogin()
+                                }
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = passwordErrorMessage != null,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                focusedLabelColor = PrimaryIndigo,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
+                            ),
+                            supportingText = {
+                                if (passwordErrorMessage != null) {
+                                    Text(
+                                        text = passwordErrorMessage,
+                                        color = Error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        )
+                    }
                     
-                    if (error != null) {
+                    if (generalError != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         VTCard(
                             variant = CardVariant.Outlined,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = error ?: "",
-                                color = Error,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = generalError.message,
+                                    color = Error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     
                     // Login button
                     VTButton(
                         text = if (isLoading) "로그인 중..." else "로그인",
                         onClick = {
-                            if (email.isBlank() || password.isBlank()) {
-                                return@VTButton
-                            }
-                            
-                            // Call actual login API
-                            viewModelAuth.login(email, password)
+                            focusManager.clearFocus()
+                            performLogin()
                         },
                         variant = ButtonVariant.Gradient,
                         size = ButtonSize.Large,
@@ -297,63 +363,7 @@ fun LoginScreen(
                         enabled = !isLoading
                     )
                     
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Forgot password
-                    TextButton(
-                        onClick = onForgotPasswordClick
-                    ) {
-                        Text(
-                            text = "비밀번호를 잊으셨나요?",
-                            color = PrimaryIndigo,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Test accounts info
-                    VTCard(variant = CardVariant.Outlined) {
-                        Column {
-                            Text(
-                                text = "🧪 테스트 계정",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = PrimaryIndigo
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            Text(
-                                text = "선생님 계정:",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Gray700
-                            )
-                            Text(
-                                text = "teacher@voicetutor.com / teacher123",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            )
-                            
-                            Spacer(modifier = Modifier.height(6.dp))
-                            
-                            Text(
-                                text = "학생 계정:",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Gray700
-                            )
-                            Text(
-                                text = "student@voicetutor.com / student123",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     
                     // Divider
                     HorizontalDivider(color = Gray200)
