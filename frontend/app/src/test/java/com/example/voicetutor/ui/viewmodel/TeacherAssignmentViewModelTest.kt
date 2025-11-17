@@ -475,7 +475,6 @@ class TeacherAssignmentViewModelTest {
         description = "",
         totalQuestions = 3,
         createdAt = null,
-        visibleFrom = null,
         dueAt = "2025-12-31",
         courseClass = CourseClass(
             id = 1,
@@ -483,8 +482,8 @@ class TeacherAssignmentViewModelTest {
             description = "",
             subject = Subject(1, "수학", null),
             teacherName = "teacher",
-            startDate = "",
-            endDate = "",
+            
+            
             studentCount = 0,
             createdAt = ""
         ),

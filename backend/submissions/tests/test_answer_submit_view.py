@@ -57,8 +57,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="Algebra 1",
         description="Desc",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=30),
     )
 
 
@@ -70,7 +68,6 @@ def assignment(course_class, subject):
         title="HW 1",
         description="",
         total_questions=3,
-        visible_from=timezone.now(),
         due_at=timezone.now() + timedelta(days=7),
         grade="",
     )

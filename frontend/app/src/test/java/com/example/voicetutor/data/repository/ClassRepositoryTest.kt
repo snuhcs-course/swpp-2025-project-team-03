@@ -28,8 +28,8 @@ class ClassRepositoryTest {
         subject = buildSubject(),
         description = "Description",
         teacherId = 1,
-        startDate = "2025-01-01",
-        endDate = "2025-12-31",
+        
+        
         studentCount = 10,
         createdAt = "2025-01-01"
     )
@@ -229,8 +229,6 @@ class ClassRepositoryTest {
             description = "Description",
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
         )
         val classData = buildClassData(1, "New Class")
         val apiResponse = ApiResponse(
@@ -258,8 +256,7 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         val apiResponse = ApiResponse<ClassData>(
             success = true,
@@ -286,8 +283,7 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Creation failed"}""")
         whenever(apiService.createClass(request)).thenReturn(Response.error(400, errorBody))

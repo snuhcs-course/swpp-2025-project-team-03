@@ -59,8 +59,8 @@ class TeacherStudentsScreenTest {
             studentCount = 2,
             studentCountAlt = 2,
             createdAt = "2024-01-01T00:00:00Z",
-            startDate = "2024-01-01",
-            endDate = "2024-12-31"
+            
+            
         )
 
         val defaultStudents = listOf(

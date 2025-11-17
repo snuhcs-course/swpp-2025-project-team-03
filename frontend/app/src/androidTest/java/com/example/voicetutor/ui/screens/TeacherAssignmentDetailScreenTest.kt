@@ -57,7 +57,7 @@ class TeacherAssignmentDetailScreenTest {
         description = "테스트 설명",
         totalQuestions = 10,
         createdAt = "2024-01-01T09:00:00Z",
-        visibleFrom = "2024-01-01T09:00:00Z",
+        
         dueAt = "2024-02-01T23:59:59Z",
         courseClass = CourseClass(
             id = 1,
@@ -65,8 +65,8 @@ class TeacherAssignmentDetailScreenTest {
             description = "기초 수학 수업",
             subject = Subject(id = 1, name = "수학", code = "MATH"),
             teacherName = "김선생님",
-            startDate = "2024-01-01",
-            endDate = "2024-12-31",
+            
+            
             studentCount = 25,
             createdAt = "2024-01-01T00:00:00Z"
         ),
@@ -81,7 +81,7 @@ class TeacherAssignmentDetailScreenTest {
             description = "테스트 설명",
             totalQuestions = 10,
             createdAt = "2024-01-01T09:00:00Z",
-            visibleFrom = "2024-01-01T09:00:00Z",
+            
             dueAt = "2024-02-01T23:59:59Z",
             courseClass = CourseClass(
                 id = 1,
@@ -89,8 +89,8 @@ class TeacherAssignmentDetailScreenTest {
                 description = "기초 수학 수업",
                 subject = Subject(id = 1, name = "수학", code = "MATH"),
                 teacherName = "김선생님",
-                startDate = "2024-01-01",
-                endDate = "2024-12-31",
+                
+                
                 studentCount = 25,
                 createdAt = "2024-01-01T00:00:00Z"
             ),

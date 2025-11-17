@@ -125,7 +125,7 @@ class ScreenComposableTests {
             description = "설명",
             totalQuestions = 5,
             dueAt = "2024-12-31T23:59:59Z",
-            visibleFrom = "2024-01-01T00:00:00Z",
+            
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -133,8 +133,8 @@ class ScreenComposableTests {
                 description = null,
                 subject = Subject(id = 1, name = "수학", code = "MATH"),
                 teacherName = "선생님",
-                startDate = "2024-01-01T00:00:00Z",
-                endDate = "2024-12-31T23:59:59Z",
+                
+                
                 studentCount = 30,
                 createdAt = "2024-01-01T00:00:00Z"
             ),
@@ -277,7 +277,7 @@ class ScreenComposableTests {
             description = "원소주기율표 기초 문제",
             totalQuestions = 5,
             dueAt = "2024-12-31T23:59:59Z",
-            visibleFrom = "2024-01-01T00:00:00Z",
+            
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -285,8 +285,8 @@ class ScreenComposableTests {
                 description = null,
                 subject = Subject(id = 1, name = "화학", code = "CHEM"),
                 teacherName = "선생님",
-                startDate = "2024-01-01T00:00:00Z",
-                endDate = "2024-12-31T23:59:59Z",
+                
+                
                 studentCount = 30,
                 createdAt = "2024-01-01T00:00:00Z"
             ),

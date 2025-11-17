@@ -72,8 +72,6 @@ class CourseClassSerializer(serializers.ModelSerializer):
             "description",
             "subject",
             "teacher_name",
-            "start_date",
-            "end_date",
             "student_count",
             "created_at",
         ]

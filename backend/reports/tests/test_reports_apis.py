@@ -53,8 +53,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="과학 기초반",
         description="과학 기초 과정",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=90),
     )
 
 
@@ -70,7 +68,6 @@ def assignment(course_class, subject):
         subject=subject,
         title="호흡과 배설 단원 과제",
         description="호흡 운동의 원리와 배설의 과정의 이해도를 평가하는 과제입니다.",
-        visible_from=timezone.now(),
         due_at=timezone.now() + timedelta(days=2),
         grade="중학교 2학년",
     )

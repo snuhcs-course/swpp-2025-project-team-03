@@ -36,7 +36,7 @@ class AssignmentViewModelFlowTest {
     private fun subject(name: String = "S") = Subject(id = 1, name = name)
     private fun course(name: String = "C") = CourseClass(
         id = 1, name = name, description = null, subject = subject(),
-        teacherName = "T", startDate = "", endDate = "", studentCount = 0, createdAt = ""
+        teacherName = "T",   studentCount = 0, createdAt = ""
     )
     private fun studentInfo(id: Int = 1) = StudentInfo(id = id, displayName = "S$id", email = "s$id@ex.com")
     private fun paInfo(id: Int, total: Int = 4) = PersonalAssignmentInfo(
@@ -44,7 +44,7 @@ class AssignmentViewModelFlowTest {
         title = "A$id",
         description = "d",
         totalQuestions = total,
-        visibleFrom = "",
+        
         dueAt = "",
         grade = "1"
     )
@@ -61,7 +61,7 @@ class AssignmentViewModelFlowTest {
         description = "desc",
         totalQuestions = 0,
         createdAt = null,
-        visibleFrom = "",
+        
         dueAt = "",
         courseClass = course(),
         materials = null,
@@ -89,8 +89,8 @@ class AssignmentViewModelFlowTest {
     @Test
     fun loadAllAssignments_success_updatesAssignments() = runTest {
         val items = listOf(
-            AssignmentData(1, "A1", "d", 0, null, "", "", course(), null, null),
-            AssignmentData(2, "A2", "d", 0, null, "", "", course(), null, null)
+            AssignmentData(1, "A1", "d", 0, null, "", course(), null, null),
+            AssignmentData(2, "A2", "d", 0, null, "", course(), null, null)
         )
         Mockito.`when`(assignmentRepository.getAllAssignments(null, null, null))
             .thenReturn(Result.success(items))
@@ -347,7 +347,7 @@ class AssignmentViewModelFlowTest {
                     title = "Title",
                     description = "d",
                     totalQuestions = 10,
-                    visibleFrom = "",
+                    
                     dueAt = "",
                     grade = "1"
                 ),
@@ -379,7 +379,7 @@ class AssignmentViewModelFlowTest {
     @Ignore("NPE issue")
     fun loadAssignmentById_success_setsCurrentAssignment() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val a = AssignmentData(6, "Title", "d", 1, null, "", "", course(), null, null)
+        val a = AssignmentData(6, "Title", "d", 1, null, "", course(), null, null)
         Mockito.`when`(assignmentRepository.getAssignmentById(6)).thenReturn(Result.success(a))
         vm.currentAssignment.test {
             // 초기값은 null
@@ -859,8 +859,8 @@ class AssignmentViewModelFlowTest {
     fun setInitialAssignments_updatesAssignments() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val assignments = listOf(
-            AssignmentData(1, "A1", "d", 0, null, "", "", course(), null, null),
-            AssignmentData(2, "A2", "d", 0, null, "", "", course(), null, null)
+            AssignmentData(1, "A1", "d", 0, null, "", course(), null, null),
+            AssignmentData(2, "A2", "d", 0, null, "", course(), null, null)
         )
         
         vm.assignments.test {
@@ -1023,7 +1023,7 @@ class AssignmentViewModelFlowTest {
                     title = "Test Assignment",
                     description = "desc",
                     totalQuestions = 10,
-                    visibleFrom = "",
+                    
                     dueAt = "",
                     grade = "1"
                 ),
@@ -1316,12 +1316,11 @@ class AssignmentViewModelFlowTest {
     fun updateAssignment_success_updatesCurrentAndList() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val assignmentId = 15
-        val updatedAssignment = AssignmentData(assignmentId, "Updated", "new desc", 0, null, "", "", course(), null, null)
+        val updatedAssignment = AssignmentData(assignmentId, "Updated", "new desc", 0, null, "", course(), null, null)
         val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
             title = "Updated",
             description = "new desc",
             totalQuestions = null,
-            visibleFrom = null,
             dueAt = null,
             grade = null,
             subject = null
@@ -1331,7 +1330,7 @@ class AssignmentViewModelFlowTest {
 
         // 초기에 assignment를 리스트에 추가
         vm.updatePersonalAssignmentQuestions(emptyList())
-        vm.setInitialAssignments(listOf(AssignmentData(assignmentId, "Original", "desc", 0, null, "", "", course(), null, null)))
+        vm.setInitialAssignments(listOf(AssignmentData(assignmentId, "Original", "desc", 0, null, "", course(), null, null)))
 
         vm.currentAssignment.test {
             awaitItem() // initial null
@@ -1350,7 +1349,6 @@ class AssignmentViewModelFlowTest {
             title = "Updated",
             description = "new desc",
             totalQuestions = null,
-            visibleFrom = null,
             dueAt = null,
             grade = null,
             subject = null
@@ -1373,8 +1371,8 @@ class AssignmentViewModelFlowTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val assignmentId = 20
         val assignments = listOf(
-            AssignmentData(assignmentId, "A1", "d", 0, null, "", "", course(), null, null),
-            AssignmentData(21, "A2", "d", 0, null, "", "", course(), null, null)
+            AssignmentData(assignmentId, "A1", "d", 0, null, "", course(), null, null),
+            AssignmentData(21, "A2", "d", 0, null, "",  course(), null, null)
         )
         vm.setInitialAssignments(assignments)
         Mockito.`when`(assignmentRepository.deleteAssignment(assignmentId))
@@ -1427,7 +1425,7 @@ class AssignmentViewModelFlowTest {
                     title = "Test Assignment",
                     description = "Description",
                     totalQuestions = 10,
-                    visibleFrom = "",
+                    
                     dueAt = "",
                     grade = "1"
                 ),

@@ -1,10 +1,7 @@
-from datetime import timedelta
-
 import pytest
 from catalog.models import Subject
 from courses.models import CourseClass, Enrollment
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 Account = get_user_model()
 
@@ -33,8 +30,6 @@ class TestEnrollmentModel:
             teacher=teacher,
             subject=subject,
             name="Math Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=30),
         )
         enrollment = Enrollment.objects.create(
             student=student,
@@ -61,8 +56,6 @@ class TestCourseClassModel:
             teacher=teacher,
             subject=subject,
             name="Math Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=30),
         )
 
         assert str(course_class) == "Math Class (Mathematics)"

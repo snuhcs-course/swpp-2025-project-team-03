@@ -61,8 +61,8 @@ class ExtendedScreenTests {
                     name = "1학년 1반",
                     teacherName = "김선생님",
                     subject = Subject(id = 1, name = "수학"),
-                    startDate = "2024-01-01",
-                    endDate = "2024-12-31",
+                    
+                    
                     studentCount = 20,
                     createdAt = "2024-01-01"
                 )
@@ -77,8 +77,8 @@ class ExtendedScreenTests {
                     name = "2학년 1반",
                     teacherName = "이선생님",
                     subject = Subject(id = 2, name = "과학"),
-                    startDate = "2024-01-01",
-                    endDate = "2024-12-31",
+                    
+                    
                     studentCount = 25,
                     createdAt = "2024-01-01"
                 )

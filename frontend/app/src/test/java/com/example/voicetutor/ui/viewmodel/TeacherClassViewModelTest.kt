@@ -98,8 +98,6 @@ class TeacherClassViewModelTest {
         teacherId = 1,
         studentCount = 0,
         createdAt = null,
-        startDate = null,
-        endDate = null
     )
 
     private fun student(id: Int) = Student(
@@ -174,8 +172,7 @@ class TeacherClassViewModelTest {
             description = "",
             subject_name = "수학",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         whenever(repository.createClass(request)).thenReturn(Result.success(newClass))
 
@@ -204,8 +201,7 @@ class TeacherClassViewModelTest {
             description = "",
             subject_name = "수학",
             teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            
         )
         whenever(repository.createClass(request)).thenReturn(Result.failure(Exception("Creation failed")))
 
@@ -357,9 +353,7 @@ class TeacherClassViewModelTest {
             name = "C3",
             description = "",
             subject_name = "수학",
-            teacher_id = 1,
-            start_date = "2025-01-01",
-            end_date = "2025-12-31"
+            teacher_id = 1,         
         )
         whenever(repository.createClass(request)).thenReturn(Result.success(newClass))
 

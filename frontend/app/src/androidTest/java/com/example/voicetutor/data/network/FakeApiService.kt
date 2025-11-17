@@ -21,8 +21,8 @@ class FakeApiService : ApiService {
         description = "기초 수학 수업",
         subject = subject,
         teacherName = "김선생님",
-        startDate = "2024-01-01",
-        endDate = "2024-12-31",
+        
+        
         studentCount = 25,
         createdAt = "2024-01-01T00:00:00Z"
     )
@@ -37,8 +37,8 @@ class FakeApiService : ApiService {
         studentCount = 25,
         studentCountAlt = 25,
         createdAt = "2024-01-01T00:00:00Z",
-        startDate = "2024-01-01",
-        endDate = "2024-12-31"
+        
+        
     )
 
     private val assignmentData = AssignmentData(
@@ -47,7 +47,7 @@ class FakeApiService : ApiService {
         description = "기초 개념을 복습하는 과제입니다.",
         totalQuestions = 10,
         createdAt = "2024-01-01T09:00:00Z",
-        visibleFrom = "2024-01-01T09:00:00Z",
+        
         dueAt = "2024-02-01T23:59:59Z",
         courseClass = courseClass,
         materials = listOf(
@@ -124,7 +124,6 @@ class FakeApiService : ApiService {
             title = assignmentData.title,
             description = assignmentData.description ?: "",
             totalQuestions = assignmentData.totalQuestions,
-            visibleFrom = assignmentData.visibleFrom ?: "2024-01-01T09:00:00Z",
             dueAt = assignmentData.dueAt,
             grade = assignmentData.grade ?: "중학교 1학년"
         ),

@@ -44,8 +44,6 @@ class TestFullWorkflow:
             "name": "1학년 A반",
             "teacher_id": teacher.id,
             "subject_name": subject.name,
-            "start_date": timezone.now().isoformat(),
-            "end_date": (timezone.now() + timedelta(days=180)).isoformat(),
         }
 
         response = api_client.post("/api/courses/classes/", class_data, format="json")
@@ -127,8 +125,6 @@ class TestFullWorkflow:
             name="1학년 A반",
             teacher=teacher,
             subject=subject,
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=180),
         )
         Enrollment.objects.create(student=student, course_class=course_class, status=Enrollment.Status.ENROLLED)
 
@@ -137,7 +133,6 @@ class TestFullWorkflow:
             subject=subject,
             title="영어 발음 연습",
             description="기본 단어 발음",
-            visible_from=timezone.now(),  # 필수 필드 추가
             due_at=timezone.now() + timedelta(days=7),
         )
 
@@ -220,8 +215,7 @@ class TestErrorHandling:
             "name": "테스트반",
             "teacher_id": 99999,
             "subject_name": "영어",
-            "start_date": timezone.now().isoformat(),
-            "end_date": (timezone.now() + timedelta(days=180)).isoformat(),
+            "": (timezone.now() + timedelta(days=180)).isoformat(),
         }
         response = api_client.post("/api/courses/classes/", class_data, format="json")
         assert response.status_code in [
@@ -264,8 +258,6 @@ class TestCrossModuleIntegration:
             name="1학년 A반",
             teacher=teacher,
             subject=subject,
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=180),
         )
 
         students = []
@@ -308,7 +300,6 @@ class TestCrossModuleIntegration:
             course_class=setup_data["course_class"],
             subject=setup_data["subject"],
             title="테스트 과제",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
 
@@ -342,8 +333,6 @@ class TestAPIResponseFormat:
             name="1학년 A반",
             teacher=teacher,
             subject=subject,
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=180),
         )
 
         return {"teacher": teacher, "subject": subject, "course_class": course_class}

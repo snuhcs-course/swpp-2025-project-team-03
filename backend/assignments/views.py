@@ -1,6 +1,5 @@
 import logging
 import uuid
-from datetime import datetime
 
 import boto3
 from catalog.models import Subject
@@ -295,7 +294,6 @@ class AssignmentCreateView(APIView):  # POST /assignments
             grade=data.get("grade", ""),
             description=data.get("description", ""),
             total_questions=data.get("total_questions", 0),
-            visible_from=datetime.now(),
             is_question_created=False,
             due_at=due_at,
         )

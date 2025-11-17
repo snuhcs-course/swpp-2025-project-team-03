@@ -21,10 +21,6 @@ data class ClassData(
     val studentCountAlt: Int? = null,
     @SerializedName("createdAt")
     val createdAt: String? = null,
-    @SerializedName("startDate")
-    val startDate: String? = null,
-    @SerializedName("endDate")
-    val endDate: String? = null
 ) {
     // Helper property to get student count from either field
     val actualStudentCount: Int

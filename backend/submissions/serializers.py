@@ -1,5 +1,5 @@
 from assignments.models import Assignment
-from feedbacks.serializers import StudentInfoSerializer
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import PersonalAssignment
@@ -10,7 +10,15 @@ class AssignmentInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assignment
-        fields = ["id", "title", "description", "total_questions", "visible_from", "due_at", "grade"]
+        fields = ["id", "title", "description", "total_questions", "due_at", "grade"]
+
+
+class StudentInfoSerializer(serializers.ModelSerializer):
+    """학생 정보 serializer"""
+
+    class Meta:
+        model = get_user_model()
+        fields = ["id", "email", "display_name"]
 
 
 class PersonalAssignmentSerializer(serializers.ModelSerializer):

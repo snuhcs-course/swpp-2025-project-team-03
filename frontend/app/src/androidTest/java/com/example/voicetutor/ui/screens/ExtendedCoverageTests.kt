@@ -229,7 +229,7 @@ class ExtendedCoverageTests {
                             description = "설명",
                             totalQuestions = 10,
                             dueAt = "2024-12-31T23:59:59Z",
-                            visibleFrom = "2024-01-01T00:00:00Z",
+                            
                             createdAt = "2024-01-01T00:00:00Z",
                             courseClass = CourseClass(
                                 id = 1,
@@ -237,8 +237,8 @@ class ExtendedCoverageTests {
                                 description = null,
                                 subject = Subject(1, "수학", "MATH"),
                                 teacherName = "선생님",
-                                startDate = "2024-01-01T00:00:00Z",
-                                endDate = "2024-12-31T23:59:59Z",
+                                
+                                
                                 studentCount = 30,
                                 createdAt = "2024-01-01T00:00:00Z"
                             ),
@@ -418,7 +418,7 @@ class ExtendedCoverageTests {
             description = "설명",
             totalQuestions = 10,
             dueAt = "2024-12-31T23:59:59Z",
-            visibleFrom = "2024-01-01T00:00:00Z",
+            
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -426,8 +426,8 @@ class ExtendedCoverageTests {
                 description = null,
                 subject = Subject(1, "수학", "MATH"),
                 teacherName = "선생님",
-                startDate = "2024-01-01T00:00:00Z",
-                endDate = "2024-12-31T23:59:59Z",
+                
+                
                 studentCount = 30,
                 createdAt = "2024-01-01T00:00:00Z"
             ),
@@ -457,7 +457,7 @@ class ExtendedCoverageTests {
             description = "설명",
             totalQuestions = 10,
             dueAt = "2024-12-31T23:59:59Z",
-            visibleFrom = "2024-01-01T00:00:00Z",
+            
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -465,8 +465,8 @@ class ExtendedCoverageTests {
                 description = null,
                 subject = Subject(1, "수학", "MATH"),
                 teacherName = "선생님",
-                startDate = "2024-01-01T00:00:00Z",
-                endDate = "2024-12-31T23:59:59Z",
+                
+                
                 studentCount = 30,
                 createdAt = "2024-01-01T00:00:00Z"
             ),

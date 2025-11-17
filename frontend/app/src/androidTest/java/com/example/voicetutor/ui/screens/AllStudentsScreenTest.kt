@@ -65,8 +65,8 @@ class AllStudentsScreenTest {
                 studentCount = 25,
                 studentCountAlt = 25,
                 createdAt = "2024-01-01T00:00:00Z",
-                startDate = "2024-01-01",
-                endDate = "2024-12-31"
+                
+                
             ),
             ClassData(
                 id = 2,
@@ -78,8 +78,8 @@ class AllStudentsScreenTest {
                 studentCount = 20,
                 studentCountAlt = 20,
                 createdAt = "2024-01-01T00:00:00Z",
-                startDate = "2024-01-01",
-                endDate = "2024-12-31"
+                
+                
             )
         )
 
@@ -434,8 +434,8 @@ class AllStudentsScreenTest {
                 studentCount = 25,
                 studentCountAlt = 25,
                 createdAt = "2024-01-01T00:00:00Z",
-                startDate = "2024-01-01",
-                endDate = "2024-12-31"
+                
+                
             )
         )
 

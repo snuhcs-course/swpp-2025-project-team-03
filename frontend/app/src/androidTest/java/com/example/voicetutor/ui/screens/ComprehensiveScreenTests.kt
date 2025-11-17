@@ -269,8 +269,8 @@ class ComprehensiveScreenTests {
                 name = "테스트 클래스",
                 teacherName = "선생님",
                 subject = Subject(id = 1, name = "수학"),
-                startDate = "2024-01-01",
-                endDate = "2024-12-31",
+                
+                
                 studentCount = 10,
                 createdAt = "2024-01-01"
             )
@@ -560,8 +560,8 @@ class ComprehensiveScreenTests {
                     name = "클래스 1",
                     teacherName = "선생님",
                     subject = Subject(id = 1, name = "수학"),
-                    startDate = "2024-01-01",
-                    endDate = "2024-12-31",
+                    
+                    
                     studentCount = 10,
                     createdAt = "2024-01-01"
                 )
@@ -576,8 +576,8 @@ class ComprehensiveScreenTests {
                     name = "클래스 2",
                     teacherName = "선생님",
                     subject = Subject(id = 2, name = "과학"),
-                    startDate = "2024-01-01",
-                    endDate = "2024-12-31",
+                    
+                    
                     studentCount = 15,
                     createdAt = "2024-01-01"
                 )

@@ -67,15 +67,15 @@ class AssignmentRepositoryTest {
     private fun subject() = Subject(id = 1, name = "S")
     private fun course() = CourseClass(
         id = 1, name = "C", description = null, subject = subject(),
-        teacherName = "T", startDate = "", endDate = "", studentCount = 0, createdAt = ""
+        teacherName = "T",   studentCount = 0, createdAt = ""
     )
 
     @Test
     fun getAllAssignments_success_returnsList() = runTest {
         val repo = AssignmentRepository(apiService)
         val items = listOf(
-            AssignmentData(1, "A1", "d", 0, null, "", "", course(), null, null),
-            AssignmentData(2, "A2", "d", 0, null, "", "", course(), null, null)
+            AssignmentData(1, "A1", "d", 0, null, "",  course(), null, null),
+            AssignmentData(2, "A2", "d", 0, null, "",  course(), null, null)
         )
         whenever(apiService.getAllAssignments(null, null, null)).thenReturn(
             Response.success(ApiResponse(success = true, data = items, message = null, error = null))
@@ -88,7 +88,7 @@ class AssignmentRepositoryTest {
     @Test
     fun getAssignmentById_success_returnsItem() = runTest {
         val repo = AssignmentRepository(apiService)
-        val item = AssignmentData(3, "A3", "d", 0, null, "", "", course(), null, null)
+        val item = AssignmentData(3, "A3", "d", 0, null, "", course(), null, null)
         whenever(apiService.getAssignmentById(3)).thenReturn(
             Response.success(ApiResponse(success = true, data = item, message = null, error = null))
         )
@@ -179,7 +179,6 @@ class AssignmentRepositoryTest {
             com.example.voicetutor.data.network.UpdateAssignmentRequest(
                 title = "t",
                 subject = null,
-                visibleFrom = null,
                 dueAt = null,
                 grade = null,
                 description = null,
@@ -229,7 +228,7 @@ class AssignmentRepositoryTest {
             com.example.voicetutor.data.models.PersonalAssignmentData(
                 id = 1,
                 student = com.example.voicetutor.data.models.StudentInfo(1, "S1", "s1@test.com"),
-                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(1, "A1", "d", 5, "", "", "1"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(1, "A1", "d", 5, "", "1"),
                 status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
                 solvedNum = 2
             )
@@ -249,7 +248,7 @@ class AssignmentRepositoryTest {
             com.example.voicetutor.data.models.PersonalAssignmentData(
                 id = 1,
                 student = com.example.voicetutor.data.models.StudentInfo(1, "S1", "s1@test.com"),
-                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(1, "A1", "d", 5, "", "", "1"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(1, "A1", "d", 5, "", "1"),
                 status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
                 solvedNum = 2
             )
@@ -328,7 +327,7 @@ class AssignmentRepositoryTest {
             grade = "A",
             subject = com.example.voicetutor.data.network.SubjectUpdateRequest(id = 1, name = "Math")
         )
-        val updated = AssignmentData(1, "Updated", "New desc", 0, null, "", "", course(), null, null)
+        val updated = AssignmentData(1, "Updated", "New desc", 0, null, "", course(), null, null)
         whenever(apiService.updateAssignment(eq(1), any())).thenReturn(
             Response.success(ApiResponse(success = true, data = updated, message = null, error = null))
         )
@@ -516,7 +515,7 @@ class AssignmentRepositoryTest {
     @Test
     fun getAllAssignments_withFilters_success_returnsFilteredList() = runTest {
         val repo = AssignmentRepository(apiService)
-        val items = listOf(AssignmentData(1, "A1", "d", 0, null, "", "", course(), null, null))
+        val items = listOf(AssignmentData(1, "A1", "d", 0, null, "", course(), null, null))
         whenever(apiService.getAllAssignments("1", "10", AssignmentStatus.IN_PROGRESS.name)).thenReturn(
             Response.success(ApiResponse(success = true, data = items, message = null, error = null))
         )

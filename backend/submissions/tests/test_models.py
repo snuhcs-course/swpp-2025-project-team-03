@@ -35,14 +35,11 @@ class TestPersonalAssignmentModel:
             teacher=teacher,
             subject=subject,
             name="Math Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=30),
         )
         assignment = Assignment.objects.create(
             course_class=course_class,
             subject=subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
         personal_assignment = PersonalAssignment.objects.create(
@@ -77,14 +74,11 @@ class TestAnswerModel:
             teacher=teacher,
             subject=subject,
             name="Math Class",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(days=30),
         )
         assignment = Assignment.objects.create(
             course_class=course_class,
             subject=subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
         )
         personal_assignment = PersonalAssignment.objects.create(

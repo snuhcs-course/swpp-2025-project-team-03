@@ -172,10 +172,7 @@ fun CreateClassScreen(
             onClick = {
                 // 현재 시간을 ISO 형식으로 변환
                 val now = LocalDateTime.now()
-                val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                val startDate = now.format(formatter)
-                val endDate = now.plusMonths(6).format(formatter) // 6개월 후
-                
+                val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME               
                 // teacherId 사용 (파라미터로 받은 값 사용)
                 println("CreateClassScreen - teacherId: $teacherId")
                 
@@ -189,8 +186,6 @@ fun CreateClassScreen(
                             description = description,
                             subject_name = subject,
                             teacher_id = teacherIdInt,
-                            start_date = startDate,
-                            end_date = endDate
                         )
                         
                         println("CreateClassScreen - createClassRequest: $createClassRequest")

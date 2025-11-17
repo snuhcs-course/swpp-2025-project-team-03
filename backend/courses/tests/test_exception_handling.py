@@ -1,4 +1,3 @@
-from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
@@ -6,7 +5,6 @@ from catalog.models import Subject
 from courses.models import CourseClass
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -48,8 +46,6 @@ def course_class(teacher, subject):
         subject=subject,
         name="Test Class",
         description="Test Description",
-        start_date=timezone.now(),
-        end_date=timezone.now() + timedelta(days=90),
     )
 
 
@@ -92,7 +88,9 @@ class TestCoursesExceptionHandling:
             mock_get.side_effect = Exception("Database error")
 
             response = api_client.put(
-                url, {"display_name": "Updated Name", "phone_number": "010-1234-5678"}, format="json"
+                url,
+                data={"display_name": "Updated Name", "phone_number": "010-1234-5678"},
+                format="json",
             )
 
             assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -158,7 +156,7 @@ class TestCoursesExceptionHandling:
         with patch("courses.views.CourseClass.objects.get") as mock_get:
             mock_get.side_effect = Exception("Database error")
 
-            response = api_client.put(url, {"name": "Updated Class"}, format="json")
+            response = api_client.put(url, data={"name": "Updated Class"}, format="json")
 
             assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
             assert response.data["success"] is False
@@ -194,7 +192,7 @@ class TestCoursesExceptionHandling:
         with patch("courses.views.CourseClass.objects.get") as mock_get:
             mock_get.side_effect = Exception("Database error")
 
-            response = api_client.put(url, {"student_ids": [student.id]}, format="json")
+            response = api_client.put(url, data={"student_ids": [student.id]}, format="json")
 
             assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
             assert response.data["success"] is False

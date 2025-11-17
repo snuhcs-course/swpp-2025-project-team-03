@@ -139,8 +139,6 @@ class TestClassDetailView:
         assert "description" in data
         assert "subject" in data
         assert "teacher_name" in data
-        assert "start_date" in data
-        assert "end_date" in data
         assert "student_count" in data
         assert "created_at" in data
 
@@ -459,8 +457,9 @@ class TestClassStudentsStatisticsView:
             course_class=course_class,
             subject=course_class.subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
         )
 
         # PersonalAssignment 생성 (SUBMITTED 상태)
@@ -514,8 +513,9 @@ class TestClassStudentsStatisticsView:
             course_class=course_class,
             subject=course_class.subject,
             title="Test Assignment",
-            visible_from=timezone.now(),
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=1,
+            is_question_created=True,
         )
 
         # PersonalAssignment 생성 (SUBMITTED 상태)
