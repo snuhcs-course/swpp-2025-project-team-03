@@ -68,11 +68,14 @@ fun CreateClassScreen(
             showBackButton = false
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         
-        // Class name input
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
+        // All inputs in one card
+        VTCard(variant = CardVariant.Elevated) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Class name input
                 OutlinedTextField(
                     value = className,
                     onValueChange = { className = it },
@@ -89,14 +92,8 @@ fun CreateClassScreen(
                         cursorColor = Color.Black
                     )
                 )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Subject input
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
+                
+                // Subject input
                 OutlinedTextField(
                     value = subject,
                     onValueChange = { subject = it },
@@ -113,14 +110,8 @@ fun CreateClassScreen(
                         cursorColor = Color.Black
                     )
                 )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Description input
-        VTCard(variant = CardVariant.Outlined) {
-            Column {
+                
+                // Description input
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
@@ -143,7 +134,7 @@ fun CreateClassScreen(
             }
         }
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
         // Create button
         VTButton(
