@@ -97,7 +97,7 @@ fun VoiceTutorNavigation(
                 val user = currentUser
                 println("VoiceTutorNavigation - Signup screen: isLoggedIn=$isLoggedIn, currentUser=${user?.email}, role=${user?.role}, id=${user?.id}")
                 if (isLoggedIn && user != null) {
-                    println("VoiceTutorNavigation - ✅ Navigating to dashboard for role: ${user.role}")
+                    println("VoiceTutorNavigation -  Navigating to dashboard for role: ${user.role}")
                     when (user.role) {
                         com.example.voicetutor.data.models.UserRole.TEACHER -> {
                             navController.navigate(VoiceTutorScreens.TeacherDashboard.route) {
@@ -110,7 +110,7 @@ fun VoiceTutorNavigation(
                             }
                         }
                         null -> {
-                            println("VoiceTutorNavigation - ❌ User role is null!")
+                            println("VoiceTutorNavigation -  User role is null!")
                         }
                     }
                 } else {

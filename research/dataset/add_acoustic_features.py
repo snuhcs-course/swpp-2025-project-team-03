@@ -38,7 +38,7 @@ def extract_acoustic_features_from_audio(json_path, audio_root="data", label_roo
         )
         return feats
     except Exception as e:
-        print(f"❌ Feature extraction failed for {audio_path}: {e}")
+        print(f" Feature extraction failed for {audio_path}: {e}")
         return {}
 
 
@@ -71,9 +71,9 @@ def add_acoustic_features_inplace(label_root="label", audio_root="data", save_ba
                     with open(json_path, "w", encoding="utf-8") as f:
                         json.dump(data, f, ensure_ascii=False, indent=2)
 
-                    print(f"✅ Updated: {json_path}")
+                    print(f" Updated: {json_path}")
                 except Exception as e:
-                    print(f"❌ Failed: {json_path} ({e})")
+                    print(f" Failed: {json_path} ({e})")
 
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ def add_semantic_features_inplace(
                 with open(json_path, "w", encoding="utf-8") as f:
                     json.dump(data, f, ensure_ascii=False, indent=2)
 
-                print(f"✅ Updated: {json_path}")
+                print(f" Updated: {json_path}")
                 n_ok += 1
 
             except ValueError as ve:
@@ -63,7 +63,7 @@ def add_semantic_features_inplace(
                 print(f"⚠️ Skip (no script?): {json_path} ({ve})")
                 n_skip += 1
             except Exception as e:
-                print(f"❌ Failed: {json_path} ({e})")
+                print(f" Failed: {json_path} ({e})")
                 n_err += 1
 
     print(f"\n[SUMMARY] ok={n_ok}, skip={n_skip}, err={n_err}")

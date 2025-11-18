@@ -46,14 +46,14 @@ class AssignmentRepository @Inject constructor(
             
             if (response.isSuccessful && response.body()?.success == true) {
                 val assignments = response.body()?.data ?: emptyList()
-                println("AssignmentRepository - ✅ Got ${assignments.size} assignments")
+                println("AssignmentRepository -  Got ${assignments.size} assignments")
                 assignments.forEach {
                     println("  - ${it.title} (teacher: ${it.courseClass.teacherName})")
                 }
                 Result.success(assignments)
             } else {
                 val errorMsg = response.body()?.error ?: "Unknown error"
-                println("AssignmentRepository - ❌ Error: $errorMsg")
+                println("AssignmentRepository -  Error: $errorMsg")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -224,7 +224,7 @@ class AssignmentRepository @Inject constructor(
                 val fileBytes = pdfFile.readBytes()
                 println("파일 읽기 성공: ${fileBytes.size} bytes")
             } catch (e: Exception) {
-                println("❌ 파일 읽기 실패: ${e.message}")
+                println(" 파일 읽기 실패: ${e.message}")
                 throw e
             }
             
@@ -251,15 +251,15 @@ class AssignmentRepository @Inject constructor(
                     println("응답 메시지: ${response.message}")
                     
                     if (response.isSuccessful) {
-                        println("✅ S3 업로드 성공")
+                        println(" S3 업로드 성공")
                         Result.success(true)
                     } else {
                         val errorBody = response.body?.string()
-                        println("❌ S3 업로드 실패: ${response.code} - $errorBody")
+                        println(" S3 업로드 실패: ${response.code} - $errorBody")
                         Result.failure(Exception("Upload failed with status ${response.code}: $errorBody"))
                     }
                 } catch (e: java.net.UnknownHostException) {
-                    println("❌ 네트워크 연결 실패: ${e.message}")
+                    println(" 네트워크 연결 실패: ${e.message}")
                     println("에뮬레이터에서 S3에 접근할 수 없습니다.")
                     println("해결 방법:")
                     println("1. 에뮬레이터 재시작")
@@ -267,12 +267,12 @@ class AssignmentRepository @Inject constructor(
                     println("3. 네트워크 설정 확인")
                     Result.failure(e)
                 } catch (e: Exception) {
-                    println("❌ S3 업로드 예외: ${e.message}")
+                    println(" S3 업로드 예외: ${e.message}")
                     Result.failure(e)
                 }
             }
         } catch (e: Exception) {
-            println("❌ S3 업로드 예외: ${e.message}")
+            println(" S3 업로드 예외: ${e.message}")
             println("예외 타입: ${e.javaClass.simpleName}")
             println("예외 스택: ${e.stackTrace.joinToString("\n")}")
             Result.failure(e)
