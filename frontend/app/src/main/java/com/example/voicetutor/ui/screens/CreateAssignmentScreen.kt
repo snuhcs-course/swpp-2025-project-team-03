@@ -166,7 +166,7 @@ fun CreateAssignmentScreen(
             val targetClass = classes.find { it.id == initialClassId }
             targetClass?.let { classData ->
                 selectedClassId = classData.id
-                selectedClass = "${classData.name} - ${classData.subject.name}"
+                selectedClass = classData.name
                 hasSetInitialClass = true
             }
         }
@@ -190,9 +190,6 @@ fun CreateAssignmentScreen(
             actualAssignmentViewModel.clearError()
         }
     }
-    
-    // Convert API data to UI format
-    val classNames = classes.map { "${it.name} - ${it.subject}" }
     
     // 학년 리스트
     val grades = listOf(
@@ -273,8 +270,8 @@ fun CreateAssignmentScreen(
                             value = selectedClass,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("반 선택") },
-                            placeholder = { Text("과제를 배정할 반을 선택하세요") },
+                            label = { Text("수업 선택") },
+                            placeholder = { Text("과제를 배정할 수업을 선택하세요") },
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = classSelectionExpanded)
                             },
@@ -299,7 +296,7 @@ fun CreateAssignmentScreen(
                             onDismissRequest = { classSelectionExpanded = false }
                         ) {
                             classes.forEachIndexed { index, classData ->
-                                val className = "${classData.name} - ${classData.subject.name}"
+                                val className = classData.name
                                 DropdownMenuItem(
                                     text = { 
                                         Text(

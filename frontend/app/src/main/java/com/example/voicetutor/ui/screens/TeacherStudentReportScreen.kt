@@ -151,7 +151,7 @@ fun TeacherStudentReportScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "반 선택",
+                            text = "수업 선택",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = Gray800

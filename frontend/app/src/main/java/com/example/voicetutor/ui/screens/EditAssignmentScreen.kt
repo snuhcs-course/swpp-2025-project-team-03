@@ -129,7 +129,7 @@ fun EditAssignmentScreen(
             title = assignment.title
             description = assignment.description ?: ""
             selectedClassId = assignment.courseClass.id
-            selectedClass = "${assignment.courseClass.name} - ${assignment.courseClass.subject.name}"
+            selectedClass = assignment.courseClass.name
             
             // 학년과 과목 설정
             // assignment.grade가 있으면 사용, 없으면 빈 문자열
@@ -162,8 +162,6 @@ fun EditAssignmentScreen(
         }
     }
     
-    // Convert API data to UI format
-    val classNames = classes.map { "${it.name} - ${it.subject.name}" }
     
     Column(
         modifier = Modifier
@@ -257,7 +255,7 @@ fun EditAssignmentScreen(
                                 onDismissRequest = { classSelectionExpanded = false }
                             ) {
                                 classes.forEachIndexed { index, classData ->
-                                    val className = "${classData.name} - ${classData.subject.name}"
+                                    val className = classData.name
                                     DropdownMenuItem(
                                         text = { 
                                             Text(
