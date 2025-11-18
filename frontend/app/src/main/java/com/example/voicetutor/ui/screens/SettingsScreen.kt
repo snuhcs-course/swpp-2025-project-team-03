@@ -103,6 +103,15 @@ fun SettingsScreen(
     val context = LocalContext.current
     val tutorialPrefs = remember { TutorialPreferences(context) }
     var showResetDialog by remember { mutableStateOf(false) }
+    var tutorialResetTrigger by remember { mutableStateOf(0) }
+    
+    // 튜토리얼 초기화 후 대시보드로 돌아가서 튜토리얼이 표시되도록
+    LaunchedEffect(tutorialResetTrigger) {
+        if (tutorialResetTrigger > 0) {
+            // 초기화 후 대시보드로 돌아가기
+            navController?.popBackStack()
+        }
+    }
     
     Column(
         modifier = Modifier
@@ -426,6 +435,8 @@ fun SettingsScreen(
                     onClick = {
                         tutorialPrefs.resetAllTutorials()
                         showResetDialog = false
+                        // 초기화 후 바로 대시보드로 돌아가서 튜토리얼이 표시되도록
+                        tutorialResetTrigger++
                     },
                     variant = ButtonVariant.Primary,
                     size = ButtonSize.Small
