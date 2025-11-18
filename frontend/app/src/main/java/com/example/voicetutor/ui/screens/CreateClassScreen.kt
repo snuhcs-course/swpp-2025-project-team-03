@@ -73,17 +73,10 @@ fun CreateClassScreen(
         // Class name input
         VTCard(variant = CardVariant.Outlined) {
             Column {
-                Text(
-                    text = "수업 이름",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                
                 OutlinedTextField(
                     value = className,
                     onValueChange = { className = it },
+                    label = { Text("수업 이름") },
                     placeholder = { Text("예: 고등학교 1학년 A반") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -104,17 +97,10 @@ fun CreateClassScreen(
         // Subject input
         VTCard(variant = CardVariant.Outlined) {
             Column {
-                Text(
-                    text = "과목",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                
                 OutlinedTextField(
                     value = subject,
                     onValueChange = { subject = it },
+                    label = { Text("과목") },
                     placeholder = { Text("예: 영어, 수학, 과학") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -135,17 +121,10 @@ fun CreateClassScreen(
         // Description input
         VTCard(variant = CardVariant.Outlined) {
             Column {
-                Text(
-                    text = "수업 설명",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
+                    label = { Text("수업 설명") },
                     placeholder = { Text("수업에 대한 간단한 설명을 입력하세요...") },
                     modifier = Modifier
                         .fillMaxWidth()

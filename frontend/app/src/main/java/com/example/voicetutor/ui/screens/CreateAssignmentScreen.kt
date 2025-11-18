@@ -325,93 +325,85 @@ fun CreateAssignmentScreen(
                     }
                     
                     // Grade selection
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "학년",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ExposedDropdownMenuBox(
-                            expanded = gradeSelectionExpanded,
-                            onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = selectedGrade,
-                                onValueChange = {},
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = gradeSelectionExpanded)
-                                },
-                                modifier = Modifier.menuAnchor()
+                    ExposedDropdownMenuBox(
+                        expanded = gradeSelectionExpanded,
+                        onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = selectedGrade,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("학년") },
+                            placeholder = { Text("학년을 선택하세요") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = gradeSelectionExpanded)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                focusedLabelColor = PrimaryIndigo,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
                             )
-                            
-                            ExposedDropdownMenu(
-                                expanded = gradeSelectionExpanded,
-                                onDismissRequest = { gradeSelectionExpanded = false }
-                            ) {
-                                grades.forEach { grade ->
-                                    DropdownMenuItem(
-                                        text = { Text(grade) },
-                                        onClick = {
-                                            selectedGrade = grade
-                                            gradeSelectionExpanded = false
-                                        }
-                                    )
-                                }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = gradeSelectionExpanded,
+                            onDismissRequest = { gradeSelectionExpanded = false }
+                        ) {
+                            grades.forEach { grade ->
+                                DropdownMenuItem(
+                                    text = { Text(grade) },
+                                    onClick = {
+                                        selectedGrade = grade
+                                        gradeSelectionExpanded = false
+                                    }
+                                )
                             }
                         }
                     }
                     
                     // Subject selection
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "과목",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ExposedDropdownMenuBox(
-                            expanded = subjectSelectionExpanded,
-                            onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = selectedSubject,
-                                onValueChange = {},
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectSelectionExpanded)
-                                },
-                                modifier = Modifier.menuAnchor()
+                    ExposedDropdownMenuBox(
+                        expanded = subjectSelectionExpanded,
+                        onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = selectedSubject,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("과목") },
+                            placeholder = { Text("과목을 선택하세요") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectSelectionExpanded)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                focusedLabelColor = PrimaryIndigo,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
                             )
-                            
-                            ExposedDropdownMenu(
-                                expanded = subjectSelectionExpanded,
-                                onDismissRequest = { subjectSelectionExpanded = false }
-                            ) {
-                                subjects.forEach { subject ->
-                                    DropdownMenuItem(
-                                        text = { Text(subject) },
-                                        onClick = {
-                                            selectedSubject = subject
-                                            subjectSelectionExpanded = false
-                                        }
-                                    )
-                                }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = subjectSelectionExpanded,
+                            onDismissRequest = { subjectSelectionExpanded = false }
+                        ) {
+                            subjects.forEach { subject ->
+                                DropdownMenuItem(
+                                    text = { Text(subject) },
+                                    onClick = {
+                                        selectedSubject = subject
+                                        subjectSelectionExpanded = false
+                                    }
+                                )
                             }
                         }
                     }
