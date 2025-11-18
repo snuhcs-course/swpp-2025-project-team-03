@@ -1,6 +1,5 @@
 package com.example.voicetutor.data.network
 
-import com.example.voicetutor.data.models.QuestionData
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -53,25 +52,13 @@ class ApiServiceModelsTest {
     @Test
     fun createAssignmentRequest_createsCorrectly() {
         // Given
-        val questions = listOf(
-            QuestionData(
-                id = 1,
-                question = "What is 2+2?",
-                type = "multiple_choice",
-                options = listOf("3", "4", "5"),
-                correctAnswer = "4",
-                points = 1
-            )
-        )
         val request = CreateAssignmentRequest(
             title = "Math Assignment",
             subject = "Mathematics",
             class_id = 1,
             due_at = "2025-12-31T23:59:00Z",
             grade = "A",
-            type = "quiz",
             description = "Test assignment",
-            questions = questions
         )
 
         // Then
@@ -80,9 +67,7 @@ class ApiServiceModelsTest {
         assertEquals(1, request.class_id)
         assertEquals("2025-12-31T23:59:00Z", request.due_at)
         assertEquals("A", request.grade)
-        assertEquals("quiz", request.type)
         assertEquals("Test assignment", request.description)
-        assertEquals(questions, request.questions)
     }
 
     @Test
@@ -94,16 +79,13 @@ class ApiServiceModelsTest {
             class_id = 1,
             due_at = "2025-12-31T23:59:00Z",
             grade = null,
-            type = "quiz",
             description = null,
-            questions = null
         )
 
         // Then
         assertEquals("Simple Assignment", request.title)
         assertNull(request.grade)
         assertNull(request.description)
-        assertNull(request.questions)
     }
 
     @Test
