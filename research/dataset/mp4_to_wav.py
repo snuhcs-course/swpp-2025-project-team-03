@@ -31,7 +31,7 @@ def gather_mp4_files(root_dir="."):
 def convert_all(root_dir=".", max_workers=4):
     mp4_files = gather_mp4_files(root_dir)
     if not mp4_files:
-        print("⚠️ No mp4 files found.")
+        print(" No mp4 files found.")
         return
 
     print(f"Found {len(mp4_files)} mp4 files. Starting conversion with {max_workers} workers...")

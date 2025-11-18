@@ -60,7 +60,7 @@ def add_semantic_features_inplace(
 
             except ValueError as ve:
                 #'script 없음' 같은 케이스
-                print(f"⚠️ Skip (no script?): {json_path} ({ve})")
+                print(f" Skip (no script?): {json_path} ({ve})")
                 n_skip += 1
             except Exception as e:
                 print(f" Failed: {json_path} ({e})")

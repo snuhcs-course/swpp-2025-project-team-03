@@ -114,7 +114,7 @@ fun VoiceTutorNavigation(
                         }
                     }
                 } else {
-                    println("VoiceTutorNavigation - ⚠️ Waiting for user data: isLoggedIn=$isLoggedIn, currentUser=${user?.email}")
+                    println("VoiceTutorNavigation -  Waiting for user data: isLoggedIn=$isLoggedIn, currentUser=${user?.email}")
                 }
             }
             

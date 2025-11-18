@@ -22,7 +22,7 @@ def extract_acoustic_features_from_audio(json_path, audio_root="data", label_roo
     audio_path = os.path.join(audio_root, rel_dir, base_wav)
 
     if not os.path.exists(audio_path):
-        print(f"⚠️ Audio not found: {audio_path}")
+        print(f" Audio not found: {audio_path}")
         return {}
 
     try:

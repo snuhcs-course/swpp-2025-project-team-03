@@ -144,7 +144,7 @@ def main():
 
     # 환경변수 확인
     if not GOOGLE_APPLICATION_CREDENTIALS:
-        print("⚠️  경고: GOOGLE_APPLICATION_CREDENTIALS 환경변수가 설정되지 않았습니다.")
+        print("  경고: GOOGLE_APPLICATION_CREDENTIALS 환경변수가 설정되지 않았습니다.")
         print("Google Cloud 서비스 계정 키 파일 경로를 설정해주세요.")
         print("예: export GOOGLE_APPLICATION_CREDENTIALS='path/to/service-account-key.json'")
         return

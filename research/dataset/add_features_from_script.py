@@ -73,7 +73,7 @@ def add_features_inplace(
 
             except (ValueError, FileNotFoundError) as ve:
                 # 예: script 없음, total_length 없음/0 이하 등
-                print(f"⚠️ Skip: {json_path} ({ve})")
+                print(f" Skip: {json_path} ({ve})")
                 n_skip += 1
             except Exception as e:
                 print(f" Failed: {json_path} ({e})")
