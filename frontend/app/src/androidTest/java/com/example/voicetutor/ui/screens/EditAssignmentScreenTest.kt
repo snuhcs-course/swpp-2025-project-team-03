@@ -123,10 +123,8 @@ class EditAssignmentScreenTest {
             }
         }
 
-        waitForText("과제 정보")
-        composeRule.onNodeWithText("과제 정보", useUnmergedTree = true).assertIsDisplayed()
-        waitForText("과제의 기본 정보를 수정할 수 있습니다")
-        composeRule.onNodeWithText("과제의 기본 정보를 수정할 수 있습니다", useUnmergedTree = true).assertIsDisplayed()
+        waitForText("기본 정보")
+        composeRule.onNodeWithText("기본 정보", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test

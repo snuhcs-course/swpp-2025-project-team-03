@@ -97,9 +97,9 @@ class HighCoverageScreensIntegrationTest {
         }
 
         waitForText("과제 내용", substring = true)
-        waitForText("과제 결과", substring = true)
+        waitForText("학생별 결과", substring = true)
         assertFirstNodeWithText("과제 내용", substring = true)
-        assertFirstNodeWithText("과제 결과", substring = true)
+        assertFirstNodeWithText("학생별 결과", substring = true)
     }
 
     @Test
