@@ -2,8 +2,8 @@ package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.AchievementStatistics
 import com.example.voicetutor.data.models.CurriculumReportData
-import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.ApiResponse
+import com.example.voicetutor.data.network.ApiService
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody
@@ -30,9 +30,9 @@ class ReportRepositoryTest {
                 totalQuestions = 10,
                 correctQuestions = 9,
                 accuracy = 0.9,
-                content = "Content 1"
-            )
-        )
+                content = "Content 1",
+            ),
+        ),
     )
 
     @Test
@@ -44,7 +44,7 @@ class ReportRepositoryTest {
             success = true,
             data = reportData,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getCurriculumReport(1, 1)).thenReturn(Response.success(apiResponse))
 
@@ -53,7 +53,7 @@ class ReportRepositoryTest {
 
         // Assert
         assert(result.isSuccess)
-         assertEquals(reportData, result.getOrNull())
+        assertEquals(reportData, result.getOrNull())
     }
 
     @Test
@@ -64,7 +64,7 @@ class ReportRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getCurriculumReport(1, 1)).thenReturn(Response.success(apiResponse))
 
@@ -84,7 +84,7 @@ class ReportRepositoryTest {
             success = false,
             data = null,
             message = null,
-            error = "Report not found"
+            error = "Report not found",
         )
         whenever(apiService.getCurriculumReport(1, 1)).thenReturn(Response.success(apiResponse))
 
@@ -133,7 +133,7 @@ class ReportRepositoryTest {
             success = false,
             data = null,
             message = null,
-            error = null
+            error = null,
         )
         whenever(apiService.getCurriculumReport(1, 1)).thenReturn(Response.success(apiResponse))
 
@@ -145,4 +145,3 @@ class ReportRepositoryTest {
         assertEquals("Unknown error", result.exceptionOrNull()?.message)
     }
 }
-

@@ -1,9 +1,9 @@
 package com.example.voicetutor.ui.components
 
-import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import org.junit.Rule
@@ -23,7 +23,7 @@ class StatsCardTest {
                 VTStatsCard(
                     title = "총 과제",
                     value = "10",
-                    icon = Icons.Filled.List
+                    icon = Icons.Filled.List,
                 )
             }
         }
@@ -38,7 +38,7 @@ class StatsCardTest {
                 VTStatsCard(
                     title = "총 과제",
                     value = "10",
-                    icon = Icons.Filled.List
+                    icon = Icons.Filled.List,
                 )
             }
         }
@@ -54,7 +54,7 @@ class StatsCardTest {
                     title = "테스트",
                     value = "100",
                     icon = Icons.Filled.Star,
-                    layout = StatsCardLayout.Horizontal
+                    layout = StatsCardLayout.Horizontal,
                 )
             }
         }
@@ -71,7 +71,7 @@ class StatsCardTest {
                     title = "테스트",
                     value = "100",
                     icon = Icons.Filled.Star,
-                    layout = StatsCardLayout.Vertical
+                    layout = StatsCardLayout.Vertical,
                 )
             }
         }
@@ -89,7 +89,7 @@ class StatsCardTest {
                     value = "100",
                     icon = Icons.Filled.TrendingUp,
                     trend = TrendDirection.Up,
-                    trendValue = "+10"
+                    trendValue = "+10",
                 )
             }
         }
@@ -106,7 +106,7 @@ class StatsCardTest {
                     value = "100",
                     icon = Icons.Filled.TrendingDown,
                     trend = TrendDirection.Down,
-                    trendValue = "-5"
+                    trendValue = "-5",
                 )
             }
         }
@@ -123,7 +123,7 @@ class StatsCardTest {
                     value = "100",
                     icon = Icons.Filled.Remove,
                     trend = TrendDirection.None,
-                    trendValue = ""
+                    trendValue = "",
                 )
             }
         }
@@ -136,14 +136,14 @@ class StatsCardTest {
     @Test
     fun statsCard_callsOnClick_whenClickable() {
         var clicked = false
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTStatsCard(
                     title = "클릭 가능",
                     value = "50",
                     icon = Icons.Filled.Info,
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 )
             }
         }
@@ -155,14 +155,14 @@ class StatsCardTest {
     @Test
     fun statsCard_doesNotCallOnClick_whenNotClickable() {
         var clicked = false
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTStatsCard(
                     title = "클릭 불가",
                     value = "50",
                     icon = Icons.Filled.Block,
-                    onClick = null
+                    onClick = null,
                 )
             }
         }
@@ -179,7 +179,7 @@ class StatsCardTest {
                     title = "Default",
                     value = "100",
                     icon = Icons.Filled.Info,
-                    variant = CardVariant.Default
+                    variant = CardVariant.Default,
                 )
             }
         }
@@ -195,7 +195,7 @@ class StatsCardTest {
                     title = "Elevated",
                     value = "100",
                     icon = Icons.Filled.Star,
-                    variant = CardVariant.Elevated
+                    variant = CardVariant.Elevated,
                 )
             }
         }
@@ -211,7 +211,7 @@ class StatsCardTest {
                     title = "Outlined",
                     value = "100",
                     icon = Icons.Filled.Edit,
-                    variant = CardVariant.Outlined
+                    variant = CardVariant.Outlined,
                 )
             }
         }
@@ -227,7 +227,7 @@ class StatsCardTest {
                     title = "Gradient",
                     value = "100",
                     icon = Icons.Filled.ColorLens,
-                    variant = CardVariant.Gradient
+                    variant = CardVariant.Gradient,
                 )
             }
         }
@@ -243,7 +243,7 @@ class StatsCardTest {
                     title = "Selected",
                     value = "100",
                     icon = Icons.Filled.CheckCircle,
-                    variant = CardVariant.Selected
+                    variant = CardVariant.Selected,
                 )
             }
         }
@@ -254,13 +254,13 @@ class StatsCardTest {
     @Test
     fun statsCard_handlesLongTitle() {
         val longTitle = "이것은 매우 긴 제목입니다. " + "반복 ".repeat(20)
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTStatsCard(
                     title = longTitle,
                     value = "100",
-                    icon = Icons.Filled.Title
+                    icon = Icons.Filled.Title,
                 )
             }
         }
@@ -271,13 +271,13 @@ class StatsCardTest {
     @Test
     fun statsCard_handlesLongValue() {
         val longValue = "12345678901234567890"
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTStatsCard(
                     title = "테스트",
                     value = longValue,
-                    icon = Icons.Filled.List
+                    icon = Icons.Filled.List,
                 )
             }
         }
@@ -292,7 +292,7 @@ class StatsCardTest {
                 VTStatsCard(
                     title = "빈 값",
                     value = "",
-                    icon = Icons.Filled.Close
+                    icon = Icons.Filled.Close,
                 )
             }
         }
@@ -307,7 +307,7 @@ class StatsCardTest {
                 VTStatsCard(
                     title = "영",
                     value = "0",
-                    icon = Icons.Filled.Info
+                    icon = Icons.Filled.Info,
                 )
             }
         }
@@ -322,7 +322,7 @@ class StatsCardTest {
                 VTStatsCard(
                     title = "완료율",
                     value = "75%",
-                    icon = Icons.Filled.Percent
+                    icon = Icons.Filled.Percent,
                 )
             }
         }
@@ -339,7 +339,7 @@ class StatsCardTest {
                     value = "50",
                     icon = Icons.Filled.ArrowDownward,
                     trend = TrendDirection.Down,
-                    trendValue = "-10"
+                    trendValue = "-10",
                 )
             }
         }
@@ -356,7 +356,7 @@ class StatsCardTest {
                     value = "50",
                     icon = Icons.Filled.ArrowUpward,
                     trend = TrendDirection.Up,
-                    trendValue = "+20"
+                    trendValue = "+20",
                 )
             }
         }
@@ -372,7 +372,7 @@ class StatsCardTest {
                     title = "커스텀 색상",
                     value = "100",
                     icon = Icons.Filled.ColorLens,
-                    iconColor = androidx.compose.ui.graphics.Color.Red
+                    iconColor = androidx.compose.ui.graphics.Color.Red,
                 )
             }
         }
@@ -383,14 +383,14 @@ class StatsCardTest {
     @Test
     fun statsCard_handlesMultipleClicks() {
         var clickCount = 0
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTStatsCard(
                     title = "여러 번 클릭",
                     value = "100",
                     icon = Icons.Filled.Add,
-                    onClick = { clickCount++ }
+                    onClick = { clickCount++ },
                 )
             }
         }
@@ -412,7 +412,7 @@ class StatsCardTest {
                     value = "100",
                     icon = Icons.Filled.TrendingUp,
                     trend = TrendDirection.Up,
-                    trendValue = "+5"
+                    trendValue = "+5",
                 )
             }
         }
@@ -429,7 +429,7 @@ class StatsCardTest {
                     value = "100",
                     icon = Icons.Filled.Remove,
                     trend = TrendDirection.Up,
-                    trendValue = ""
+                    trendValue = "",
                 )
             }
         }
@@ -445,7 +445,7 @@ class StatsCardTest {
                 VTStatsCard(
                     title = "특수문자: !@#$%",
                     value = "100%",
-                    icon = Icons.Filled.Star
+                    icon = Icons.Filled.Star,
                 )
             }
         }
@@ -453,4 +453,3 @@ class StatsCardTest {
         composeTestRule.onNodeWithText("특수문자: !@#$%", substring = true).assertExists()
     }
 }
-

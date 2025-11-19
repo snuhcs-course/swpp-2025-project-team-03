@@ -2,8 +2,8 @@ package com.example.voicetutor.audio
 
 import android.media.AudioFormat
 import android.media.MediaRecorder
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Additional unit tests for AudioRecorder helper methods and edge cases.
@@ -16,9 +16,9 @@ class AudioRecorderHelperTest {
             RecordingState(isRecording = false, isRecordingComplete = false),
             RecordingState(isRecording = false, isRecordingComplete = true),
             RecordingState(isRecording = true, isRecordingComplete = false),
-            RecordingState(isRecording = true, isRecordingComplete = true)
+            RecordingState(isRecording = true, isRecordingComplete = true),
         )
-        
+
         combinations.forEach { state ->
             assertNotNull(state)
         }
@@ -41,7 +41,7 @@ class AudioRecorderHelperTest {
             "",
             "Short error",
             "A".repeat(1000),
-            "Error with special chars: !@#$%^&*()"
+            "Error with special chars: !@#$%^&*()",
         )
         errors.forEach { error ->
             val state = RecordingState(error = error)
@@ -62,7 +62,7 @@ class AudioRecorderHelperTest {
     fun audioConfig_withVariousChannelConfigs_handlesCorrectly() {
         val channelConfigs = listOf(
             AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.CHANNEL_IN_STEREO
+            AudioFormat.CHANNEL_IN_STEREO,
         )
         channelConfigs.forEach { channel ->
             val config = AudioConfig(channelConfig = channel)
@@ -74,7 +74,7 @@ class AudioRecorderHelperTest {
     fun audioConfig_withVariousAudioFormats_handlesCorrectly() {
         val formats = listOf(
             AudioFormat.ENCODING_PCM_16BIT,
-            AudioFormat.ENCODING_PCM_8BIT
+            AudioFormat.ENCODING_PCM_8BIT,
         )
         formats.forEach { format ->
             val config = AudioConfig(audioFormat = format)
@@ -87,7 +87,7 @@ class AudioRecorderHelperTest {
         val sources = listOf(
             MediaRecorder.AudioSource.MIC,
             MediaRecorder.AudioSource.VOICE_RECOGNITION,
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
         )
         sources.forEach { source ->
             val config = AudioConfig(audioSource = source)
@@ -121,14 +121,14 @@ class AudioRecorderHelperTest {
             recordingTime = 60,
             audioFilePath = "/path/to/file",
             isRecordingComplete = false,
-            error = null
+            error = null,
         )
         val state2 = RecordingState(
             isRecording = true,
             recordingTime = 60,
             audioFilePath = "/path/to/file",
             isRecordingComplete = false,
-            error = null
+            error = null,
         )
         assertEquals(state1.hashCode(), state2.hashCode())
     }
@@ -139,13 +139,13 @@ class AudioRecorderHelperTest {
             sampleRate = 16000,
             channelConfig = AudioFormat.CHANNEL_IN_MONO,
             audioFormat = AudioFormat.ENCODING_PCM_16BIT,
-            audioSource = MediaRecorder.AudioSource.MIC
+            audioSource = MediaRecorder.AudioSource.MIC,
         )
         val config2 = AudioConfig(
             sampleRate = 16000,
             channelConfig = AudioFormat.CHANNEL_IN_MONO,
             audioFormat = AudioFormat.ENCODING_PCM_16BIT,
-            audioSource = MediaRecorder.AudioSource.MIC
+            audioSource = MediaRecorder.AudioSource.MIC,
         )
         assertEquals(config1.hashCode(), config2.hashCode())
     }
@@ -155,7 +155,7 @@ class AudioRecorderHelperTest {
         val state = RecordingState(
             isRecording = true,
             recordingTime = 60,
-            audioFilePath = "/path/to/file"
+            audioFilePath = "/path/to/file",
         )
         val string = state.toString()
         assertTrue(string.contains("60") || string.contains("true") || string.contains("/path"))
@@ -194,4 +194,3 @@ class AudioRecorderHelperTest {
         assertEquals(Int.MIN_VALUE, state.recordingTime)
     }
 }
-

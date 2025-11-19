@@ -5,8 +5,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.performClick
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
@@ -40,7 +38,7 @@ class StudentScreenEdgeCasesTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -73,7 +71,7 @@ class StudentScreenEdgeCasesTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -112,7 +110,7 @@ class StudentScreenEdgeCasesTest {
                 AssignmentDetailedResultsScreen(
                     personalAssignmentId = 1,
                     assignmentTitle = "상세 결과 테스트",
-                    viewModel = assignmentViewModel
+                    viewModel = assignmentViewModel,
                 )
             }
         }
@@ -136,4 +134,3 @@ class StudentScreenEdgeCasesTest {
         composeRule.onAllNodesWithText("은하수", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 }
-

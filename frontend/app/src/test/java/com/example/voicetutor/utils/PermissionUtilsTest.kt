@@ -3,12 +3,10 @@ package com.example.voicetutor.utils
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.whenever
 
 @RunWith(MockitoJUnitRunner::class)
 class PermissionUtilsTest {
@@ -38,7 +36,7 @@ class PermissionUtilsTest {
         val grantResults = intArrayOf(
             PackageManager.PERMISSION_GRANTED,
             PackageManager.PERMISSION_GRANTED,
-            PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_GRANTED,
         )
 
         // Act
@@ -54,7 +52,7 @@ class PermissionUtilsTest {
         val grantResults = intArrayOf(
             PackageManager.PERMISSION_GRANTED,
             PackageManager.PERMISSION_DENIED,
-            PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_GRANTED,
         )
 
         // Act
@@ -82,7 +80,7 @@ class PermissionUtilsTest {
         val grantResults = intArrayOf(
             PackageManager.PERMISSION_DENIED,
             PackageManager.PERMISSION_DENIED,
-            PackageManager.PERMISSION_DENIED
+            PackageManager.PERMISSION_DENIED,
         )
 
         // Act
@@ -98,4 +96,3 @@ class PermissionUtilsTest {
         assert(PermissionUtils.RECORD_AUDIO_PERMISSION_REQUEST_CODE == 1001)
     }
 }
-

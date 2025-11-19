@@ -1,7 +1,7 @@
 package com.example.voicetutor.data.models
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class QuestionResultModelsTest {
 
@@ -14,7 +14,7 @@ class QuestionResultModelsTest {
             myAnswer = "4",
             correctAnswer = "4",
             isCorrect = true,
-            explanation = "Basic addition"
+            explanation = "Basic addition",
         )
 
         // Then
@@ -34,7 +34,7 @@ class QuestionResultModelsTest {
             question = "What is 3+3?",
             myAnswer = "5",
             correctAnswer = "6",
-            isCorrect = false
+            isCorrect = false,
         )
 
         // Then
@@ -51,26 +51,26 @@ class QuestionResultModelsTest {
             question = "Base question",
             myAnswer = "Answer",
             correctAnswer = "Answer",
-            isCorrect = true
+            isCorrect = true,
         )
         val tailQuestion1 = DetailedQuestionResult(
             questionNumber = "1-1",
             question = "Tail question 1",
             myAnswer = "Answer",
             correctAnswer = "Answer",
-            isCorrect = true
+            isCorrect = true,
         )
         val tailQuestion2 = DetailedQuestionResult(
             questionNumber = "1-2",
             question = "Tail question 2",
             myAnswer = "Wrong",
             correctAnswer = "Answer",
-            isCorrect = false
+            isCorrect = false,
         )
 
         val questionGroup = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = listOf(tailQuestion1, tailQuestion2)
+            tailQuestions = listOf(tailQuestion1, tailQuestion2),
         )
 
         // Then
@@ -88,12 +88,12 @@ class QuestionResultModelsTest {
             question = "Base question",
             myAnswer = "Answer",
             correctAnswer = "Answer",
-            isCorrect = true
+            isCorrect = true,
         )
 
         val questionGroup = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = emptyList()
+            tailQuestions = emptyList(),
         )
 
         // Then
@@ -109,7 +109,7 @@ class QuestionResultModelsTest {
             question = "Base question",
             myAnswer = "Answer",
             correctAnswer = "Answer",
-            isCorrect = true
+            isCorrect = true,
         )
 
         val questionGroup = QuestionGroup(baseQuestion = baseQuestion)
@@ -119,4 +119,3 @@ class QuestionResultModelsTest {
         assertTrue(questionGroup.tailQuestions.isEmpty())
     }
 }
-

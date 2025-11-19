@@ -29,9 +29,21 @@ class AuthViewModelTest {
     @Test
     fun initialStates_areSane_withoutCrashing() = runTest {
         val vm = AuthViewModel(authRepository)
-        vm.currentUser.test { val u = awaitItem(); assert(u == null); cancelAndIgnoreRemainingEvents() }
-        vm.isLoggedIn.test { val logged = awaitItem(); assert(!logged); cancelAndIgnoreRemainingEvents() }
-        vm.error.test { val e = awaitItem(); assert(e == null); cancelAndIgnoreRemainingEvents() }
+        vm.currentUser.test {
+            val u = awaitItem()
+            assert(u == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.isLoggedIn.test {
+            val logged = awaitItem()
+            assert(!logged)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.error.test {
+            val e = awaitItem()
+            assert(e == null)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -45,7 +57,11 @@ class AuthViewModelTest {
         // When
         vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT)
         advanceUntilIdle()
-        vm.autoFillCredentials.test { val creds = awaitItem(); assert(creds == ("a@ex.com" to "pw")); cancelAndIgnoreRemainingEvents() }
+        vm.autoFillCredentials.test {
+            val creds = awaitItem()
+            assert(creds == ("a@ex.com" to "pw"))
+            cancelAndIgnoreRemainingEvents()
+        }
 
         // Collect after action: first emission is the latest state
         vm.currentUser.test {
@@ -123,10 +139,10 @@ class AuthViewModelTest {
 
         vm.error.test {
             assert(awaitItem() != null) // 에러 설정 확인
-            
+
             // When: clearError 호출
             vm.clearError()
-            
+
             // Then: 에러가 null로 변경
             assert(awaitItem() == null)
             cancelAndIgnoreRemainingEvents()
@@ -146,10 +162,10 @@ class AuthViewModelTest {
 
         vm.autoFillCredentials.test {
             assert(awaitItem() == ("a@ex.com" to "pw")) // 자동 입력 정보 확인
-            
+
             // When: clearAutoFillCredentials 호출
             vm.clearAutoFillCredentials()
-            
+
             // Then: 자동 입력 정보가 null로 변경
             assert(awaitItem() == null)
             cancelAndIgnoreRemainingEvents()
@@ -166,7 +182,7 @@ class AuthViewModelTest {
         // When
         vm.error.test {
             awaitItem() // initial null
-            
+
             vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT)
             advanceUntilIdle()
 
@@ -187,7 +203,7 @@ class AuthViewModelTest {
         // When
         vm.error.test {
             awaitItem() // initial null
-            
+
             vm.login("test@ex.com", "wrong")
             advanceUntilIdle()
 
@@ -221,7 +237,7 @@ class AuthViewModelTest {
         // When
         vm.isLoading.test {
             assert(!awaitItem()) // initial false
-            
+
             vm.login("a@ex.com", "pw")
             advanceUntilIdle()
 
@@ -324,7 +340,7 @@ class AuthViewModelTest {
                 description = "desc",
                 totalQuestions = 5,
                 createdAt = null,
-                
+
                 dueAt = "",
                 courseClass = com.example.voicetutor.data.models.CourseClass(
                     id = 1,
@@ -332,21 +348,20 @@ class AuthViewModelTest {
                     description = null,
                     subject = com.example.voicetutor.data.models.Subject(id = 1, name = "Math"),
                     teacherName = "Teacher",
-                    
-                    
+
                     studentCount = 0,
-                    createdAt = ""
+                    createdAt = "",
                 ),
                 materials = null,
-                grade = null
-            )
+                grade = null,
+            ),
         )
         val user = User(
             id = 1,
             name = "Alice",
             email = "a@ex.com",
             role = UserRole.STUDENT,
-            assignments = assignments
+            assignments = assignments,
         )
         Mockito.`when`(authRepository.login("a@ex.com", "pw"))
             .thenReturn(Result.success(user))
@@ -747,5 +762,3 @@ class AuthViewModelTest {
         }
     }
 }
-
-

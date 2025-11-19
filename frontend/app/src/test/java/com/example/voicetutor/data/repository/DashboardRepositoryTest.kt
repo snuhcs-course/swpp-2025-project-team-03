@@ -1,8 +1,8 @@
 package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.DashboardStats
-import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.ApiResponse
+import com.example.voicetutor.data.network.ApiService
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody
@@ -24,7 +24,7 @@ class DashboardRepositoryTest {
         totalStudents = 50,
         totalClasses = 5,
         completedAssignments = 15,
-        inProgressAssignments = 5
+        inProgressAssignments = 5,
     )
 
     @Test
@@ -36,7 +36,7 @@ class DashboardRepositoryTest {
             success = true,
             data = stats,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
 
@@ -58,7 +58,7 @@ class DashboardRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
 
@@ -124,13 +124,13 @@ class DashboardRepositoryTest {
             totalStudents = 0,
             totalClasses = 0,
             completedAssignments = 0,
-            inProgressAssignments = 0
+            inProgressAssignments = 0,
         )
         val apiResponse = ApiResponse(
             success = true,
             data = stats,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
 
@@ -143,4 +143,3 @@ class DashboardRepositoryTest {
         assert(result.getOrNull()?.totalStudents == 0)
     }
 }
-

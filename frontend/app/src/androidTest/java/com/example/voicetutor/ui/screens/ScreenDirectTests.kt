@@ -12,12 +12,12 @@ import org.junit.runner.RunWith
 
 /**
  * FUNDAMENTAL SOLUTION: Test Screen composables directly.
- * 
+ *
  * This approach maximizes coverage by:
  * 1. Calling Screen composables that don't require ViewModels (AppInfoScreen, SettingsScreen)
  * 2. Calling Preview functions directly
  * 3. Testing all small composable functions within screens
- * 
+ *
  * Expected coverage increase: 3% -> 30-50%+
  */
 @RunWith(AndroidJUnit4::class)
@@ -33,7 +33,7 @@ class ScreenDirectTests {
                 AppInfoScreen()
             }
         }
-        
+
         composeTestRule.waitForIdle()
         // AppInfoScreen renders without ViewModel - covers entire screen
         composeTestRule.waitForIdle()
@@ -47,7 +47,7 @@ class ScreenDirectTests {
                 SettingsScreen(userRole = UserRole.STUDENT)
             }
         }
-        
+
         composeTestRule.waitForIdle()
         // SettingsScreen renders - covers screen code
         composeTestRule.waitForIdle()
@@ -61,7 +61,7 @@ class ScreenDirectTests {
                 SettingsScreen(userRole = UserRole.TEACHER)
             }
         }
-        
+
         composeTestRule.waitForIdle()
         // SettingsScreen renders with teacher role - covers different code path
         composeTestRule.waitForIdle()
@@ -74,7 +74,7 @@ class ScreenDirectTests {
                 NoRecentAssignmentScreen()
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("홈 화면에서 새로운 과제를 확인해보세요", substring = true).assertExists()
     }
@@ -93,22 +93,21 @@ class ScreenDirectTests {
                 description = "설명",
                 teacherName = "선생님",
                 subject = Subject(id = 1, name = "수학", code = "MATH"),
-                
-                
+
                 studentCount = 10,
-                createdAt = "2024-01-01"
-            )
+                createdAt = "2024-01-01",
+            ),
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AssignmentReportCard(
                     assignment = assignment,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("테스트 과제", substring = true).assertExists()
     }
@@ -122,7 +121,7 @@ class ScreenDirectTests {
                 StudentDashboardScreenPreview()
             }
         }
-        
+
         composeTestRule.waitForIdle()
         // Preview function covers screen code
         composeTestRule.waitForIdle()
@@ -136,7 +135,7 @@ class ScreenDirectTests {
                 TeacherDashboardScreenPreview()
             }
         }
-        
+
         composeTestRule.waitForIdle()
         // Preview function covers screen code
         composeTestRule.waitForIdle()
@@ -150,7 +149,7 @@ class ScreenDirectTests {
                 AppInfoScreen()
             }
         }
-        
+
         composeTestRule.waitForIdle()
         // AppInfoScreen renders without ViewModel
         composeTestRule.waitForIdle()
@@ -164,7 +163,7 @@ class ScreenDirectTests {
                 SettingsScreenPreview()
             }
         }
-        
+
         composeTestRule.waitForIdle()
         // Preview function covers screen code
         composeTestRule.waitForIdle()

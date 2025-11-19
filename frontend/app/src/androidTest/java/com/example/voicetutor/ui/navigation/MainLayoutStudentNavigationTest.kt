@@ -2,34 +2,27 @@ package com.example.voicetutor.ui.navigation
 
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
-import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.di.NetworkModule
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
-import com.example.voicetutor.ui.navigation.VoiceTutorScreens
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -108,8 +101,8 @@ class MainLayoutStudentNavigationTest {
         fakeApi.personalAssignmentsResponse = listOf(
             fakeApi.personalAssignmentData.copy(
                 status = PersonalAssignmentStatus.IN_PROGRESS,
-                submittedAt = null
-            )
+                submittedAt = null,
+            ),
         )
 
         setContent()
@@ -159,8 +152,8 @@ class MainLayoutStudentNavigationTest {
             navController.navigate(
                 VoiceTutorScreens.AssignmentDetailedResults.createRoute(
                     personalAssignment.id,
-                    personalAssignment.assignment.title
-                )
+                    personalAssignment.assignment.title,
+                ),
             )
         }
 
@@ -174,5 +167,3 @@ class MainLayoutStudentNavigationTest {
             .assertIsDisplayed()
     }
 }
-
-

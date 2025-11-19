@@ -12,7 +12,7 @@ import org.junit.runner.Description
  * JUnit Rule to swap the main dispatcher with a [StandardTestDispatcher].
  */
 class MainDispatcherRule(
-    val testDispatcher: TestDispatcher = StandardTestDispatcher()
+    val testDispatcher: TestDispatcher = StandardTestDispatcher(),
 ) : TestWatcher() {
 
     override fun starting(description: Description) {
@@ -23,4 +23,3 @@ class MainDispatcherRule(
         Dispatchers.resetMain()
     }
 }
-

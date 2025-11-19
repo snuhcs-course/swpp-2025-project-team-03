@@ -2,9 +2,7 @@ package com.example.voicetutor.ui.navigation
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.navigation.compose.rememberNavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -130,7 +128,7 @@ class VoiceTutorNavigationTest {
             VoiceTutorScreens.AllStudents.route,
             VoiceTutorScreens.CreateAssignment.route,
             VoiceTutorScreens.CreateClass.route,
-            VoiceTutorScreens.AppInfo.route
+            VoiceTutorScreens.AppInfo.route,
         )
 
         // 모든 기본 라우트가 고유한지 확인
@@ -264,7 +262,7 @@ class VoiceTutorNavigationTest {
             VoiceTutorScreens.Settings.createRoute(),
             VoiceTutorScreens.EditAssignment.createRoute(1),
             VoiceTutorScreens.TeacherAssignmentResults.createRoute(1),
-            VoiceTutorScreens.TeacherAssignmentDetail.createRoute(1)
+            VoiceTutorScreens.TeacherAssignmentDetail.createRoute(1),
         )
 
         // 모든 라우트가 비어있지 않은지 확인
@@ -278,7 +276,7 @@ class VoiceTutorNavigationTest {
         // 특수 문자가 포함된 제목으로 라우트 생성 테스트
         val specialTitle = "과제: 테스트/문제"
         val route = VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute("1", 2, specialTitle)
-        
+
         // 슬래시는 언더스코어로 치환되어야 함
         assertTrue(route.contains("테스트_문제") || route.contains("테스트/문제"))
     }
@@ -307,7 +305,7 @@ class VoiceTutorNavigationTest {
             VoiceTutorScreens.AttendanceManagement.route,
             VoiceTutorScreens.Settings.route,
             VoiceTutorScreens.CreateClass.route,
-            VoiceTutorScreens.AppInfo.route
+            VoiceTutorScreens.AppInfo.route,
         )
 
         allRoutes.forEach { route ->
@@ -315,4 +313,3 @@ class VoiceTutorNavigationTest {
         }
     }
 }
-

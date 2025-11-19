@@ -13,5 +13,3 @@ object StatisticsUtils {
         return (active.toFloat() / total) to (completed.toFloat() / total)
     }
 }
-
-

@@ -33,15 +33,15 @@ class ReportViewModelTest {
                 totalQuestions = 10,
                 correctQuestions = 9,
                 accuracy = 0.9,
-                content = "Content 1"
-            )
-        )
+                content = "Content 1",
+            ),
+        ),
     )
 
     @Test
     fun initialStates_areCorrect() = runTest {
         val vm = ReportViewModel(reportRepository)
-        
+
         vm.curriculumReport.test {
             assert(awaitItem() == null)
             cancelAndIgnoreRemainingEvents()
@@ -153,7 +153,7 @@ class ReportViewModelTest {
 
         // When
         vm.loadCurriculumReport(1, 1)
-        
+
         // Then - verify loading state changes
         vm.isLoading.test {
             // Skip initial false state
@@ -167,4 +167,3 @@ class ReportViewModelTest {
         advanceUntilIdle()
     }
 }
-

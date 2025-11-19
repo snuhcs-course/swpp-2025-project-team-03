@@ -1,13 +1,14 @@
 import org.gradle.api.tasks.testing.Test
-import org.gradle.testing.jacoco.tasks.JacocoReport
-import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.spotless)
     id("jacoco")
 }
 
@@ -28,7 +29,7 @@ android {
             useSupportLibrary = true
         }
     }
-    
+
     applicationVariants.all {
         kotlin.sourceSets {
             getByName(name) {
@@ -46,11 +47,11 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
-    
+
     // Test coverage configuration for Android Studio
     testOptions {
         unitTests {
@@ -148,11 +149,11 @@ dependencies {
     androidTestImplementation("io.mockk:mockk-android:1.13.10")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     androidTestImplementation(kotlin("test"))
-    
+
     // Hilt testing - must match the hilt version in libs.versions.toml
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.48")
     kspAndroidTest("com.google.dagger:hilt-android-compiler:2.48")
-    
+
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
@@ -168,7 +169,7 @@ tasks.withType<Test> {
         isIncludeNoLocationClasses = true
         excludes = listOf("jdk.internal.*")
         // Ensure execution data is generated in a predictable location
-        destinationFile = file("${layout.buildDirectory.get().asFile}/jacoco/${name}.exec")
+        destinationFile = file("${layout.buildDirectory.get().asFile}/jacoco/$name.exec")
     }
 }
 
@@ -180,14 +181,14 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
     // This ensures tests are executed before report generation
     val testTask = tasks.named<Test>("testDebugUnitTest")
     dependsOn(testTask)
-    
+
     // Android tests - generate report after they run (if they run)
     // Note: Run connectedDebugAndroidTest first manually, then jacocoTestReport
     val uiTestTask = tasks.findByName("connectedDebugAndroidTest")
     if (uiTestTask != null) {
         mustRunAfter(uiTestTask)
     }
-    
+
     // Log execution data files for debugging
     doFirst {
         val execFile = file("${layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec")
@@ -198,75 +199,80 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             logger.warn("Execution data file not found. Make sure tests have been run.")
         }
     }
-    
+
     reports {
         xml.required.set(true)
         html.required.set(true)
         csv.required.set(false)
     }
-    
-    val fileFilter = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "android/**/*.*",
-        "**/*_Hilt_*.*",
-        "**/Hilt_*.*",
-        "**/*_Factory.*",
-        "**/*_MembersInjector.*",
-        "**/*_Provide*Factory.*"
-    )
-    
+
+    val fileFilter =
+        listOf(
+            "**/R.class",
+            "**/R$*.class",
+            "**/BuildConfig.*",
+            "**/Manifest*.*",
+            "**/*Test*.*",
+            "android/**/*.*",
+            "**/*_Hilt_*.*",
+            "**/Hilt_*.*",
+            "**/*_Factory.*",
+            "**/*_MembersInjector.*",
+            "**/*_Provide*Factory.*",
+        )
+
     // Android projects use multiple class output directories
-    val debugTree = fileTree(layout.buildDirectory.get().asFile) {
-        include("**/intermediates/javac/debug/**/*.class")
-        include("**/tmp/kotlin-classes/debug/**/*.class")
-        exclude(fileFilter)
-    }
-    
+    val debugTree =
+        fileTree(layout.buildDirectory.get().asFile) {
+            include("**/intermediates/javac/debug/**/*.class")
+            include("**/tmp/kotlin-classes/debug/**/*.class")
+            exclude(fileFilter)
+        }
+
     // Include both Java and Kotlin source directories
-    val mainSrc = listOf(
-        "${project.projectDir}/src/main/java",
-        "${project.projectDir}/src/main/kotlin"
-    )
-    
+    val mainSrc =
+        listOf(
+            "${project.projectDir}/src/main/java",
+            "${project.projectDir}/src/main/kotlin",
+        )
+
     sourceDirectories.setFrom(files(mainSrc))
     classDirectories.setFrom(files(debugTree))
-    
+
     // JaCoCo execution data files - Android Gradle Plugin stores them here
     // Include both unit test and Android test coverage data
-    val executionDataFiles = fileTree(layout.buildDirectory.get().asFile) {
-        include("**/jacoco/*.exec")
-        include("**/jacoco/*.ec")
-        include("**/test-results/**/*.exec")
-        include("**/outputs/**/*.exec")
-        include("**/outputs/**/*.ec")
-        include("**/outputs/code-coverage/**/*.ec")
-        include("**/outputs/unit_test_code_coverage/**/*.exec")
-        include("**/outputs/androidTest-results/**/*.ec")
-    }
-    
+    val executionDataFiles =
+        fileTree(layout.buildDirectory.get().asFile) {
+            include("**/jacoco/*.exec")
+            include("**/jacoco/*.ec")
+            include("**/test-results/**/*.exec")
+            include("**/outputs/**/*.exec")
+            include("**/outputs/**/*.ec")
+            include("**/outputs/code-coverage/**/*.ec")
+            include("**/outputs/unit_test_code_coverage/**/*.exec")
+            include("**/outputs/androidTest-results/**/*.ec")
+        }
+
     // Android Gradle Plugin stores execution data in multiple locations
     // Check standard locations for both unit tests and Android tests
-    val standardExecFiles = listOf(
-        // Unit test execution data
-        file("${layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec"),
-        file("${layout.buildDirectory.get().asFile}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
-        // Android test execution data (coverage.ec files)
-        file("${layout.buildDirectory.get().asFile}/outputs/code-coverage/connected/*coverage.ec")
-    )
-    
+    val standardExecFiles =
+        listOf(
+            // Unit test execution data
+            file("${layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec"),
+            file("${layout.buildDirectory.get().asFile}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
+            // Android test execution data (coverage.ec files)
+            file("${layout.buildDirectory.get().asFile}/outputs/code-coverage/connected/*coverage.ec"),
+        )
+
     val existingExecFiles = standardExecFiles.filter { it.exists() }
     val allExecutionData = mutableListOf<File>()
-    
+
     // Add file tree results
     executionDataFiles.forEach { allExecutionData.add(it) }
-    
+
     // Add specific files if they exist
     existingExecFiles.forEach { allExecutionData.add(it) }
-    
+
     // Also check for connectedDebugAndroidTest coverage files
     val androidTestCoverageDir = file("${layout.buildDirectory.get().asFile}/outputs/code-coverage/connected")
     if (androidTestCoverageDir.exists() && androidTestCoverageDir.isDirectory) {
@@ -274,7 +280,7 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             allExecutionData.add(it)
         }
     }
-    
+
     executionData.setFrom(allExecutionData)
 }
 
@@ -282,27 +288,51 @@ tasks.register("jacocoTestCoverageVerification", JacocoCoverageVerification::cla
     group = "verification"
     description = "Verifies code coverage meets minimum requirements (80%)"
     dependsOn("jacocoTestReport")
-    
+
     violationRules {
         rule {
             limit {
                 minimum = "0.80".toBigDecimal() // 80% minimum coverage
             }
         }
-        
+
         rule {
             element = "CLASS"
-            excludes = listOf(
-                "*.BuildConfig",
-                "*.R",
-                "*.R\$*",
-                "*.*_Hilt_*",
-                "*.*_Factory",
-                "*.*_MembersInjector"
-            )
+            excludes =
+                listOf(
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R\$*",
+                    "*.*_Hilt_*",
+                    "*.*_Factory",
+                    "*.*_MembersInjector",
+                )
             limit {
                 minimum = "0.70".toBigDecimal() // 70% minimum per class
             }
         }
+    }
+}
+
+// Spotless configuration
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint(libs.versions.ktlint.get())
+            .editorConfigOverride(
+                mapOf(
+                    // 자동으로 고칠 수 없는 규칙들 비활성화
+                    "ktlint_standard_no-wildcard-imports" to "disabled",
+                    "ktlint_standard_package-name" to "disabled",
+                    "ktlint_standard_filename" to "disabled",
+                    "ktlint_standard_function-naming" to "disabled",
+                    "ktlint_standard_value-argument-comment" to "disabled",
+                    "ktlint_standard_value-parameter-comment" to "disabled",
+                ),
+            )
+    }
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint(libs.versions.ktlint.get())
     }
 }

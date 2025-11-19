@@ -7,13 +7,13 @@ import javax.inject.Singleton
 
 @Singleton
 class DashboardRepository @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
 ) {
-    
+
     suspend fun getDashboardStats(teacherId: String): Result<DashboardStats> {
         return try {
             val response = apiService.getDashboardStats(teacherId)
-            
+
             if (response.isSuccessful && response.body()?.success == true) {
                 val stats = response.body()?.data
                 if (stats != null) {

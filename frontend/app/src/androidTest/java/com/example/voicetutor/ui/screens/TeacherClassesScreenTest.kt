@@ -17,11 +17,11 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -87,4 +87,3 @@ class TeacherClassesScreenTest {
         composeRule.onNodeWithText("수학 A반", useUnmergedTree = true).assertIsDisplayed()
     }
 }
-

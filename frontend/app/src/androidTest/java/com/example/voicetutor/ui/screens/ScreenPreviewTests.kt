@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 /**
  * Tests that call actual Screen Preview composables.
  * This ensures the actual Screen code is executed, increasing coverage.
- * 
+ *
  * Note: Most Preview tests are ignored because they require ViewModel setup.
  * Only tests for screens without ViewModel dependencies are enabled.
  */
@@ -264,4 +264,3 @@ class ScreenPreviewTests {
         composeTestRule.waitForIdle()
     }
 }
-

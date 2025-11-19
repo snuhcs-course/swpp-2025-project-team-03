@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -15,22 +14,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
-import java.time.ZonedDateTime
+import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 data class ClassAssignment(
     val id: Int,
@@ -40,7 +36,7 @@ data class ClassAssignment(
     val completionRate: Float,
     val totalStudents: Int,
     val completedStudents: Int,
-    val averageScore: Int
+    val averageScore: Int,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,26 +46,26 @@ fun TeacherClassDetailScreen(
     className: String? = null, // 실제 클래스 이름 사용
     subject: String? = null, // 실제 과목명 사용
     onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
-    onNavigateToAssignmentDetail: (Int) -> Unit = {}
+    onNavigateToAssignmentDetail: (Int) -> Unit = {},
 ) {
     val assignmentViewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: StudentViewModel = hiltViewModel()
     val classViewModel: ClassViewModel = hiltViewModel()
-    
+
     val assignments by assignmentViewModel.assignments.collectAsStateWithLifecycle()
     val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
     val allStudents by studentViewModel.students.collectAsStateWithLifecycle()
     val currentClass by classViewModel.currentClass.collectAsStateWithLifecycle()
     val isLoading by assignmentViewModel.isLoading.collectAsStateWithLifecycle()
-    
+
     // 동적 클래스 정보 가져오기
     val dynamicClassName = currentClass?.name ?: className
     val dynamicSubject = currentClass?.subject?.name ?: subject
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
-    
+
     // 필터 상태
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
-    
+
     // Load data on first composition and when screen becomes visible
     LaunchedEffect(Unit) {
         classId?.let { id ->
@@ -82,7 +78,7 @@ fun TeacherClassDetailScreen(
             classViewModel.loadClassById(id)
         }
     }
-    
+
     // Refresh assignments when assignments list changes (e.g., after creating new assignment)
     LaunchedEffect(assignments.size) {
         classId?.let { id ->
@@ -90,7 +86,7 @@ fun TeacherClassDetailScreen(
             assignmentViewModel.loadAllAssignments(classId = id.toString())
         }
     }
-    
+
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
@@ -98,14 +94,14 @@ fun TeacherClassDetailScreen(
             assignmentViewModel.clearError()
         }
     }
-    
+
     // 학생 등록 바텀시트 상태
     var showEnrollSheet by remember { mutableStateOf(false) }
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
-    
+
     // 제출 현황을 저장하는 StateMap
     val assignmentStatsMap = remember { mutableStateMapOf<Int, Triple<Int, Int, Int>>() }
-    
+
     // 각 과제의 제출 현황을 로드
     assignments.forEach { assignment ->
         LaunchedEffect(assignment.id) {
@@ -114,12 +110,12 @@ fun TeacherClassDetailScreen(
                 assignmentStatsMap[assignment.id] = Triple(
                     stats.submittedStudents,
                     stats.totalStudents,
-                    stats.averageScore
+                    stats.averageScore,
                 )
             }
         }
     }
-    
+
     // Convert API data to ClassAssignment format with real submission stats
     val allClassAssignments = assignments.map { assignment ->
         val stats = assignmentStatsMap[assignment.id] ?: Triple(0, classStudents.size, 0)
@@ -135,10 +131,10 @@ fun TeacherClassDetailScreen(
             },
             totalStudents = stats.second,
             completedStudents = stats.first,
-            averageScore = stats.third
+            averageScore = stats.third,
         )
     }
-    
+
     // 필터링된 과제 목록
     val classAssignments = remember(allClassAssignments, selectedFilter) {
         val now = ZonedDateTime.now(ZoneId.systemDefault())
@@ -162,10 +158,10 @@ fun TeacherClassDetailScreen(
             }
         }
     }
-    
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
             // Header
@@ -174,32 +170,32 @@ fun TeacherClassDetailScreen(
                     .fillMaxWidth()
                     .background(
                         color = PrimaryIndigo.copy(alpha = 0.08f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     )
-                    .padding(20.dp)
+                    .padding(20.dp),
             ) {
                 Column {
                     Text(
                         text = dynamicClassName ?: "수업",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = dynamicSubject ?: "과목",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
+                        color = Gray600,
                     )
                 }
             }
         }
-        
+
         item {
             // Stats overview
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 VTStatsCard(
                     title = "학생",
@@ -208,9 +204,9 @@ fun TeacherClassDetailScreen(
                     iconColor = PrimaryIndigo,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Horizontal
+                    layout = StatsCardLayout.Horizontal,
                 )
-                
+
                 VTStatsCard(
                     title = "과제",
                     value = "${classAssignments.size}개",
@@ -218,11 +214,11 @@ fun TeacherClassDetailScreen(
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
                     variant = CardVariant.Gradient,
-                    layout = StatsCardLayout.Horizontal
+                    layout = StatsCardLayout.Horizontal,
                 )
             }
         }
-        
+
         item {
             // Quick actions
             VTButton(
@@ -237,30 +233,30 @@ fun TeacherClassDetailScreen(
                     Icon(
                         imageVector = Icons.Filled.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
-                }
+                },
             )
         }
-        
+
         item {
             // Assignments section header with filter
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = " 과제 목록",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
-                
+
                 // Filter chips
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     FilterChip(
                         selected = selectedFilter == AssignmentFilter.ALL,
@@ -270,35 +266,35 @@ fun TeacherClassDetailScreen(
                             Icon(
                                 imageVector = Icons.Filled.List,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
-                        }
+                        },
                     )
-                    
+
                     FilterChip(
                         selected = selectedFilter == AssignmentFilter.IN_PROGRESS,
                         onClick = { selectedFilter = AssignmentFilter.IN_PROGRESS },
-                        label = { Text("진행중", style = MaterialTheme.typography.bodySmall) }
+                        label = { Text("진행중", style = MaterialTheme.typography.bodySmall) },
                     )
-                    
+
                     FilterChip(
                         selected = selectedFilter == AssignmentFilter.COMPLETED,
                         onClick = { selectedFilter = AssignmentFilter.COMPLETED },
-                        label = { Text("마감", style = MaterialTheme.typography.bodySmall) }
+                        label = { Text("마감", style = MaterialTheme.typography.bodySmall) },
                     )
                 }
             }
         }
-        
+
         // Loading indicator
         if (isLoading) {
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                 }
             }
@@ -306,22 +302,22 @@ fun TeacherClassDetailScreen(
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Assignment,
                             contentDescription = null,
                             tint = Gray400,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(48.dp),
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "과제가 없습니다",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
@@ -331,7 +327,7 @@ fun TeacherClassDetailScreen(
             items(classAssignments) { assignment ->
                 ClassAssignmentCard(
                     assignment = assignment,
-                    onNavigateToAssignmentDetail = { onNavigateToAssignmentDetail(assignment.id) }
+                    onNavigateToAssignmentDetail = { onNavigateToAssignmentDetail(assignment.id) },
                 )
             }
         }
@@ -344,7 +340,7 @@ fun TeacherClassDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 Text("학생 등록", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
@@ -360,7 +356,7 @@ fun TeacherClassDetailScreen(
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
@@ -380,7 +376,7 @@ fun TeacherClassDetailScreen(
                         text = "취소",
                         onClick = { showEnrollSheet = false },
                         variant = ButtonVariant.Outline,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     VTButton(
                         text = "등록",
@@ -395,7 +391,7 @@ fun TeacherClassDetailScreen(
                             showEnrollSheet = false
                         },
                         variant = ButtonVariant.Primary,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
                 Spacer(Modifier.height(8.dp))
@@ -407,14 +403,14 @@ fun TeacherClassDetailScreen(
 @Composable
 fun ClassAssignmentCard(
     assignment: ClassAssignment,
-    onNavigateToAssignmentDetail: (Int) -> Unit = {}
+    onNavigateToAssignmentDetail: (Int) -> Unit = {},
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onNavigateToAssignmentDetail(assignment.id) }
+        onClick = { onNavigateToAssignmentDetail(assignment.id) },
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Assignment header
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -422,80 +418,80 @@ fun ClassAssignmentCard(
                     text = assignment.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
             }
-            
+
             // Progress info
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
                     Text(
                         text = "제출률",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
                     )
                     Text(
                         text = "${(assignment.completionRate * 100).toInt()}%",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                 }
-                
+
                 Column {
                     Text(
                         text = "제출 학생",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
                     )
                     Text(
                         text = "${assignment.completedStudents}/${assignment.totalStudents}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Gray800
+                        color = Gray800,
                     )
                 }
-                
+
                 Column {
                     Text(
                         text = "평균 점수",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
                     )
                     Text(
                         text = "${assignment.averageScore}점",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (assignment.averageScore >= 80) Success else Warning
+                        color = if (assignment.averageScore >= 80) Success else Warning,
                     )
                 }
             }
-            
+
             // Progress bar
             VTProgressBar(
                 progress = assignment.completionRate,
-                showPercentage = false
+                showPercentage = false,
             )
-            
+
             // Due date
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = Icons.Filled.Schedule,
                     contentDescription = null,
                     tint = Gray500,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "마감일: ${com.example.voicetutor.utils.formatDueDate(assignment.dueDate)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
+                    color = Gray600,
                 )
             }
         }

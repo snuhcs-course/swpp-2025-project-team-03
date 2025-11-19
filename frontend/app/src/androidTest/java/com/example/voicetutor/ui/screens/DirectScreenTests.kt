@@ -27,7 +27,7 @@ class DirectScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify all UI elements
         composeTestRule.onNodeWithText("이어할 과제가 없습니다", substring = true).assertExists()
         composeTestRule.onNodeWithText("홈 화면에서 새로운 과제를 확인해보세요", substring = true).assertExists()
@@ -41,7 +41,7 @@ class DirectScreenTests {
             description = "설명",
             totalQuestions = 5,
             dueAt = "2024-12-31T23:59:59Z",
-            
+
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -49,26 +49,24 @@ class DirectScreenTests {
                 description = null,
                 subject = Subject(id = 1, name = "수학", code = "MATH"),
                 teacherName = "선생님",
-                
-                
+
                 studentCount = 30,
-                createdAt = "2024-01-01T00:00:00Z"
+                createdAt = "2024-01-01T00:00:00Z",
             ),
             grade = "1",
-            materials = null
+            materials = null,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AssignmentReportCard(
                     assignment = testAssignment,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("테스트 과제", substring = true).assertExists()
     }
 }
-

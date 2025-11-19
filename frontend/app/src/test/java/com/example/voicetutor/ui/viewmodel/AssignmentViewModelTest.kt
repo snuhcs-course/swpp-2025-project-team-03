@@ -2,22 +2,21 @@ package com.example.voicetutor.ui.viewmodel
 
 import app.cash.turbine.test
 import com.example.voicetutor.data.models.AssignmentData
-import com.example.voicetutor.data.models.CourseClass
 import com.example.voicetutor.data.models.AssignmentResultData
-import com.example.voicetutor.data.models.Subject
-import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.AssignmentStatus
-import com.example.voicetutor.data.network.CreateAssignmentRequest
+import com.example.voicetutor.data.models.CourseClass
+import com.example.voicetutor.data.models.PersonalAssignmentStatistics
+import com.example.voicetutor.data.models.Subject
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.testing.MainDispatcherRule
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.assertFalse
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -44,10 +43,9 @@ class AssignmentViewModelTest {
         description = null,
         subject = buildSubject(),
         teacherName = "T",
-        
-        
+
         studentCount = 0,
-        createdAt = ""
+        createdAt = "",
     )
 
     private fun buildAssignment(id: Int): AssignmentData = AssignmentData(
@@ -56,14 +54,14 @@ class AssignmentViewModelTest {
         description = "desc",
         totalQuestions = 0,
         createdAt = null,
-        
+
         dueAt = "",
         courseClass = buildCourse(),
         materials = null,
         grade = null,
         personalAssignmentStatus = null,
         solvedNum = null,
-        personalAssignmentId = null
+        personalAssignmentId = null,
     )
 
     @Test
@@ -219,7 +217,7 @@ class AssignmentViewModelTest {
             totalProblem = 8,
             solvedProblem = 6,
             progress = 0.75f,
-            averageScore = 0.8f
+            averageScore = 0.8f,
         )
         Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(26))
             .thenReturn(Result.success(statistics))
@@ -248,9 +246,9 @@ class AssignmentViewModelTest {
         // When
         viewModel.isAssignmentCompleted.test {
             assert(!awaitItem()) // initial false
-            
+
             viewModel.setAssignmentCompleted(true)
-            
+
             // Then
             assert(awaitItem())
             cancelAndIgnoreRemainingEvents()
@@ -268,7 +266,7 @@ class AssignmentViewModelTest {
         // When
         viewModel.isLoading.test {
             assert(!awaitItem()) // initial false
-            
+
             viewModel.loadAllAssignments()
             runCurrent()
 
@@ -290,9 +288,9 @@ class AssignmentViewModelTest {
             totalAssignments = 10,
             completedAssignments = 5,
             inProgressAssignments = 3,
-            completionRate = 0.5f
+            completionRate = 0.5f,
         )
-        
+
         // then: 모든 필드가 올바르게 설정됨
         assert(stats.totalAssignments == 10)
         assert(stats.completedAssignments == 5)
@@ -308,9 +306,9 @@ class AssignmentViewModelTest {
             totalAssignments = 0,
             completedAssignments = 0,
             inProgressAssignments = 0,
-            completionRate = 0.0f
+            completionRate = 0.0f,
         )
-        
+
         // then: 모든 필드가 0으로 설정됨
         assert(stats.totalAssignments == 0)
         assert(stats.completedAssignments == 0)
@@ -322,7 +320,7 @@ class AssignmentViewModelTest {
     fun StudentStats_copy_createsNewInstance() {
         val original = com.example.voicetutor.ui.viewmodel.StudentStats(10, 5, 3, 0.5f)
         val copy = original.copy(completedAssignments = 7)
-        
+
         assertEquals(7, copy.completedAssignments)
         assertEquals(original.totalAssignments, copy.totalAssignments)
     }
@@ -332,7 +330,7 @@ class AssignmentViewModelTest {
         val stats1 = com.example.voicetutor.ui.viewmodel.StudentStats(10, 5, 3, 0.5f)
         val stats2 = com.example.voicetutor.ui.viewmodel.StudentStats(10, 5, 3, 0.5f)
         val stats3 = com.example.voicetutor.ui.viewmodel.StudentStats(10, 6, 3, 0.5f)
-        
+
         assertEquals(stats1, stats2)
         assertNotEquals(stats1, stats3)
     }
@@ -341,21 +339,21 @@ class AssignmentViewModelTest {
     fun StudentStats_hashCode_worksCorrectly() {
         val stats1 = com.example.voicetutor.ui.viewmodel.StudentStats(10, 5, 3, 0.5f)
         val stats2 = com.example.voicetutor.ui.viewmodel.StudentStats(10, 5, 3, 0.5f)
-        
+
         assertEquals(stats1.hashCode(), stats2.hashCode())
     }
 
     @Test
     fun setSelectedAssignmentIds_setsBothIds() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // Verify initial state
         assertEquals(null, viewModel.selectedAssignmentId.value)
         assertEquals(null, viewModel.selectedPersonalAssignmentId.value)
-        
+
         // Set both IDs
         viewModel.setSelectedAssignmentIds(1, 2)
-        
+
         // Values are set synchronously, no need for runCurrent()
         assertEquals(1, viewModel.selectedAssignmentId.value)
         assertEquals(2, viewModel.selectedPersonalAssignmentId.value)
@@ -364,11 +362,11 @@ class AssignmentViewModelTest {
     @Test
     fun setSelectedAssignmentIds_withNullPersonalId_setsNull() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // First set a value
         viewModel.setSelectedAssignmentIds(1, 2)
         assertEquals(2, viewModel.selectedPersonalAssignmentId.value)
-        
+
         // Then set to null
         viewModel.setSelectedAssignmentIds(1, null)
         assertEquals(null, viewModel.selectedPersonalAssignmentId.value)
@@ -377,7 +375,7 @@ class AssignmentViewModelTest {
     @Test
     fun clearError_clearsErrorState() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // First set an error
         viewModel.error.test {
             awaitItem() // initial null
@@ -391,7 +389,7 @@ class AssignmentViewModelTest {
                 runCurrent()
                 val error = awaitItem()
                 assert(error != null)
-                
+
                 // Now clear error
                 viewModel.clearError()
                 runCurrent()
@@ -406,7 +404,7 @@ class AssignmentViewModelTest {
     fun setInitialAssignments_setsAssignments() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
         val assignments = listOf(buildAssignment(1), buildAssignment(2))
-        
+
         viewModel.assignments.test {
             awaitItem() // initial empty
             viewModel.setInitialAssignments(assignments)
@@ -418,11 +416,11 @@ class AssignmentViewModelTest {
     @Test
     fun resetUploadState_resetsUploadStates() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // resetUploadState sets values to initial state synchronously
         // Verify it can be called and sets initial values
         viewModel.resetUploadState()
-        
+
         // Verify initial states are set
         assertEquals(0f, viewModel.uploadProgress.value)
         assertFalse(viewModel.isUploading.value)
@@ -433,11 +431,11 @@ class AssignmentViewModelTest {
     @Test
     fun clearQuestionGenerationStatus_clearsStatus() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // clearQuestionGenerationStatus sets values to initial state synchronously
         // Verify it can be called and sets initial values
         viewModel.clearQuestionGenerationStatus()
-        
+
         // Verify initial states are set
         assertFalse(viewModel.questionGenerationSuccess.value)
         assertNull(viewModel.questionGenerationError.value)
@@ -446,7 +444,7 @@ class AssignmentViewModelTest {
     @Test
     fun setAssignmentCompleted_updatesState() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         viewModel.isAssignmentCompleted.test {
             assert(!awaitItem()) // initial false
             viewModel.setAssignmentCompleted(true)
@@ -460,11 +458,11 @@ class AssignmentViewModelTest {
     @Test
     fun updateRecordingDuration_updatesDuration() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         viewModel.audioRecordingState.test {
             val initialState = awaitItem()
             assertEquals(0, initialState.recordingTime)
-            
+
             viewModel.updateRecordingDuration(30)
             runCurrent()
             val updatedState = awaitItem()
@@ -476,11 +474,11 @@ class AssignmentViewModelTest {
     @Test
     fun setAudioFilePath_updatesFilePath() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         viewModel.audioRecordingState.test {
             val initialState = awaitItem()
             assertNull(initialState.audioFilePath)
-            
+
             viewModel.setAudioFilePath("/path/to/audio.wav")
             runCurrent()
             val updatedState = awaitItem()
@@ -492,11 +490,11 @@ class AssignmentViewModelTest {
     @Test
     fun setRecordingComplete_updatesCompleteState() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         viewModel.audioRecordingState.test {
             val initialState = awaitItem()
             assertFalse(initialState.isRecordingComplete)
-            
+
             viewModel.setRecordingComplete(true)
             runCurrent()
             val updatedState = awaitItem()
@@ -508,11 +506,11 @@ class AssignmentViewModelTest {
     @Test
     fun clearAnswerSubmissionResponse_clearsResponse() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // Set a response first (we can't easily create AnswerSubmissionResponse, so just verify it clears)
         // The function sets value to null synchronously
         viewModel.clearAnswerSubmissionResponse()
-        
+
         // Value is set synchronously
         assertNull(viewModel.answerSubmissionResponse.value)
     }
@@ -520,19 +518,19 @@ class AssignmentViewModelTest {
     @Test
     fun resetAudioRecording_resetsState() = runTest {
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // Set some state first
         viewModel.setAudioFilePath("/path/to/audio.wav")
         viewModel.updateRecordingDuration(30)
         runCurrent()
-        
+
         // Verify state was set
         assertEquals(30, viewModel.audioRecordingState.value.recordingTime)
         assertEquals("/path/to/audio.wav", viewModel.audioRecordingState.value.audioFilePath)
-        
+
         // Reset (synchronous)
         viewModel.resetAudioRecording()
-        
+
         // Verify reset state
         val resetState = viewModel.audioRecordingState.value
         assertEquals(0, resetState.recordingTime)
@@ -545,22 +543,22 @@ class AssignmentViewModelTest {
         val items = listOf(buildAssignment(1))
         Mockito.`when`(assignmentRepository.getAllAssignments(null, null, null))
             .thenReturn(Result.success(items))
-        
+
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         // Verify initial state
         assertFalse(viewModel.isLoading.value)
-        
+
         // Load with silent flag (doesn't set loading state)
         viewModel.loadAllAssignments(silent = true)
-        
+
         // Wait for coroutine to complete
         runCurrent()
         advanceUntilIdle()
-        
+
         // Should remain false when silent (no loading state change)
         assertFalse(viewModel.isLoading.value)
-        
+
         // Verify assignments were loaded
         assertEquals(items, viewModel.assignments.value)
     }
@@ -570,12 +568,12 @@ class AssignmentViewModelTest {
         val items = listOf(buildAssignment(1))
         Mockito.`when`(assignmentRepository.getAllAssignments(null, null, AssignmentStatus.IN_PROGRESS))
             .thenReturn(Result.success(items))
-        
+
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         viewModel.loadAllAssignments(status = AssignmentStatus.IN_PROGRESS)
         runCurrent()
-        
+
         Mockito.verify(assignmentRepository, times(1))
             .getAllAssignments(null, null, AssignmentStatus.IN_PROGRESS)
     }
@@ -585,15 +583,13 @@ class AssignmentViewModelTest {
         val items = listOf(buildAssignment(1))
         Mockito.`when`(assignmentRepository.getAllAssignments(null, "1", null))
             .thenReturn(Result.success(items))
-        
+
         val viewModel = AssignmentViewModel(assignmentRepository)
-        
+
         viewModel.loadAllAssignments(classId = "1")
         runCurrent()
-        
+
         Mockito.verify(assignmentRepository, times(1))
             .getAllAssignments(null, "1", null)
     }
 }
-
-

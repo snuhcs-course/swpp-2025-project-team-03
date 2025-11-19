@@ -55,4 +55,3 @@ class SimpleLoginScreenTest {
         composeTestRule.onNodeWithText("비밀번호", useUnmergedTree = true).assertExists()
     }
 }
-

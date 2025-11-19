@@ -1,9 +1,7 @@
 package com.example.voicetutor.utils
 
-import org.junit.Test
 import org.junit.Assert.*
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import org.junit.Test
 
 class DateUtilsTest {
 
@@ -406,4 +404,3 @@ class DateUtilsTest {
         assertEquals(partialDate, result)
     }
 }
-

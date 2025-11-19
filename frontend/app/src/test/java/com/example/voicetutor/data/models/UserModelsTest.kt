@@ -1,9 +1,9 @@
 package com.example.voicetutor.data.models
 
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.junit.Assert.*
 
 @RunWith(JUnit4::class)
 class UserModelsTest {
@@ -15,7 +15,7 @@ class UserModelsTest {
             id = 1,
             name = "홍길동",
             email = "test@test.com",
-            role = UserRole.TEACHER
+            role = UserRole.TEACHER,
         )
 
         // Act
@@ -32,7 +32,7 @@ class UserModelsTest {
             id = 1,
             name = "",
             email = "test@test.com",
-            role = UserRole.TEACHER
+            role = UserRole.TEACHER,
         )
 
         // Act
@@ -49,7 +49,7 @@ class UserModelsTest {
             id = 1,
             name = "김선생",
             email = "teacher@test.com",
-            role = UserRole.TEACHER
+            role = UserRole.TEACHER,
         )
 
         // Act
@@ -66,7 +66,7 @@ class UserModelsTest {
             id = 1,
             name = "이학생",
             email = "student@test.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
 
         // Act
@@ -83,7 +83,7 @@ class UserModelsTest {
             id = 1,
             name = "김선생",
             email = "teacher@test.com",
-            role = UserRole.TEACHER
+            role = UserRole.TEACHER,
         )
 
         // Act
@@ -100,7 +100,7 @@ class UserModelsTest {
             id = 1,
             name = "이학생",
             email = "student@test.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
 
         // Act
@@ -137,7 +137,7 @@ class UserModelsTest {
             inProgressAssignments = 3,
             totalStudents = 20,
             totalClasses = 2,
-            assignments = emptyList()
+            assignments = emptyList(),
         )
 
         // Assert
@@ -161,7 +161,7 @@ class UserModelsTest {
             id = 1,
             name = "홍길동",
             email = "test@test.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
 
         // Assert
@@ -180,7 +180,7 @@ class UserModelsTest {
         // Arrange
         val request = LoginRequest(
             email = "test@test.com",
-            password = "password123"
+            password = "password123",
         )
 
         // Assert
@@ -195,14 +195,14 @@ class UserModelsTest {
             id = 1,
             name = "홍길동",
             email = "test@test.com",
-            role = UserRole.TEACHER
+            role = UserRole.TEACHER,
         )
         val response = LoginResponse(
             success = true,
             user = user,
             token = "token123",
             message = "로그인 성공",
-            error = null
+            error = null,
         )
 
         // Assert
@@ -221,7 +221,7 @@ class UserModelsTest {
             user = null,
             token = null,
             message = null,
-            error = "로그인 실패"
+            error = "로그인 실패",
         )
 
         // Assert
@@ -239,7 +239,7 @@ class UserModelsTest {
             name = "홍길동",
             email = "test@test.com",
             password = "password123",
-            role = "STUDENT"
+            role = "STUDENT",
         )
 
         // Assert
@@ -256,7 +256,7 @@ class UserModelsTest {
             name = "김선생",
             email = "teacher@test.com",
             password = "password123",
-            role = "TEACHER"
+            role = "TEACHER",
         )
 
         // Assert
@@ -271,7 +271,7 @@ class UserModelsTest {
             totalStudents = 20,
             totalClasses = 2,
             completedAssignments = 5,
-            inProgressAssignments = 3
+            inProgressAssignments = 3,
         )
 
         // Assert
@@ -288,7 +288,7 @@ class UserModelsTest {
         val stats = DashboardStats(
             totalAssignments = 10,
             totalStudents = 20,
-            totalClasses = 2
+            totalClasses = 2,
         )
 
         // Assert
@@ -314,7 +314,7 @@ class UserModelsTest {
             id = 1,
             name = "A",
             email = "test@test.com",
-            role = UserRole.TEACHER
+            role = UserRole.TEACHER,
         )
 
         // Act
@@ -331,7 +331,7 @@ class UserModelsTest {
             id = 1,
             name = "Alice",
             email = "test@test.com",
-            role = UserRole.TEACHER
+            role = UserRole.TEACHER,
         )
 
         // Act
@@ -341,4 +341,3 @@ class UserModelsTest {
         assertEquals("A", initial)
     }
 }
-

@@ -2,13 +2,9 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
@@ -21,11 +17,11 @@ import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -52,7 +48,7 @@ class TeacherStudentAssignmentDetailScreenTest {
         totalProblem = 10,
         solvedProblem = 5,
         progress = 0.5f,
-        averageScore = 85f
+        averageScore = 85f,
     )
 
     private fun defaultAssignmentCorrectness(): List<AssignmentCorrectnessItem> = listOf(
@@ -63,8 +59,8 @@ class TeacherStudentAssignmentDetailScreenTest {
             isCorrect = true,
             answeredAt = "2024-01-02T10:00:00Z",
             questionNum = "1",
-            explanation = "태양계는 은하수 은하에 속해 있습니다."
-        )
+            explanation = "태양계는 은하수 은하에 속해 있습니다.",
+        ),
     )
 
     @Before
@@ -80,7 +76,7 @@ class TeacherStudentAssignmentDetailScreenTest {
             personalAssignmentsDelayMillis = 0
             shouldFailPersonalAssignmentStatistics = false
             personalAssignmentStatisticsResponses = mutableMapOf(
-                personalAssignmentData.id to defaultPersonalAssignmentStatistics()
+                personalAssignmentData.id to defaultPersonalAssignmentStatistics(),
             )
             shouldFailAssignmentCorrectness = false
             assignmentCorrectnessErrorMessage = "Failed to load assignment correctness"
@@ -107,7 +103,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -139,7 +135,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = "1",
                     assignmentId = 1,
-                    assignmentTitle = "빈 결과"
+                    assignmentTitle = "빈 결과",
                 )
             }
         }
@@ -169,7 +165,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -202,7 +198,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = "1",
                     assignmentId = 1,
-                    assignmentTitle = "에러 과제"
+                    assignmentTitle = "에러 과제",
                 )
             }
         }
@@ -230,7 +226,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -257,7 +253,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -294,7 +290,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -318,7 +314,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = "1",
                     assignmentId = 0,
-                    assignmentTitle = "테스트 과제"
+                    assignmentTitle = "테스트 과제",
                 )
             }
         }
@@ -339,7 +335,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -358,7 +354,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -385,7 +381,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -412,7 +408,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -441,7 +437,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -460,7 +456,7 @@ class TeacherStudentAssignmentDetailScreenTest {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = studentId,
                     assignmentId = assignmentId,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -477,4 +473,3 @@ class TeacherStudentAssignmentDetailScreenTest {
             .assertIsDisplayed()
     }
 }
-

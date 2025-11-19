@@ -5,8 +5,9 @@ import com.google.gson.annotations.SerializedName
 enum class UserRole {
     @SerializedName("TEACHER")
     TEACHER,
-    @SerializedName("STUDENT") 
-    STUDENT
+
+    @SerializedName("STUDENT")
+    STUDENT,
 }
 
 data class User(
@@ -28,7 +29,7 @@ data class User(
     // val classId: Int? = null,
     @SerializedName("lastLoginAt")
     val lastLoginAt: String? = null,
-    
+
     // 로그인 시 받은 추가 데이터
     @SerializedName("totalAssignments")
     val totalAssignments: Int? = null,
@@ -41,19 +42,19 @@ data class User(
     @SerializedName("totalClasses")
     val totalClasses: Int? = null,
     @SerializedName("assignments")
-    val assignments: List<AssignmentData>? = null
+    val assignments: List<AssignmentData>? = null,
 ) {
     // 사용자 이름의 첫 글자를 반환 (프로필 이니셜용)
     val initial: String
         get() = name.firstOrNull()?.toString() ?: "?"
-    
+
     // 환영 메시지 생성
     val welcomeMessage: String
         get() = when (role) {
-            UserRole.TEACHER -> "환영합니다, ${name} 선생님!"
+            UserRole.TEACHER -> "환영합니다, $name 선생님!"
             UserRole.STUDENT -> "안녕하세요, ${name}님!"
         }
-    
+
     // 서브 메시지 생성
     val subMessage: String
         get() = when (role) {
@@ -67,7 +68,7 @@ data class LoginRequest(
     @SerializedName("email")
     val email: String,
     @SerializedName("password")
-    val password: String
+    val password: String,
 )
 
 // 로그인 응답 데이터
@@ -81,7 +82,7 @@ data class LoginResponse(
     @SerializedName("message")
     val message: String?,
     @SerializedName("error")
-    val error: String?
+    val error: String?,
 )
 
 // 회원가입 요청 데이터
@@ -109,7 +110,7 @@ data class DashboardStats(
     @SerializedName("completedAssignments")
     val completedAssignments: Int = 0,
     @SerializedName("inProgressAssignments")
-    val inProgressAssignments: Int = 0
+    val inProgressAssignments: Int = 0,
 )
 
 // 최근 활동 데이터

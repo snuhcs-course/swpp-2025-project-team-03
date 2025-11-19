@@ -22,4 +22,3 @@ sealed class DeleteAccountException(message: String, cause: Throwable? = null) :
     class Network(message: String, cause: Throwable? = null) : DeleteAccountException(message, cause)
     class Unknown(message: String) : DeleteAccountException(message)
 }
-

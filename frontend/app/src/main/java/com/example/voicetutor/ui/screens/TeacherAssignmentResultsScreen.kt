@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,17 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,7 +27,7 @@ fun TeacherAssignmentResultsScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentId: Int = 0,
     assignmentTitle: String? = null, // For backward compatibility
-    onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> }
+    onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> },
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -40,31 +36,31 @@ fun TeacherAssignmentResultsScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val assignmentStats by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
-    
+
     // 모달 상태 관리
     // var selectedStudent by remember { mutableStateOf<StudentResult?>(null) }
     // val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+
     // Find assignment by ID or title from the assignments list
     // "과목 - 제목" 형식도 처리 가능하도록 수정
     val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
         if (assignmentId > 0) {
             assignments.find { it.id == assignmentId }
         } else if (assignmentTitle != null) {
-            assignments.find { 
-                it.title == assignmentTitle || 
-                "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
-                assignmentTitle.contains(it.title)
-                }
+            assignments.find {
+                it.title == assignmentTitle ||
+                    "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
+                    assignmentTitle.contains(it.title)
+            }
         } else {
             null
         }
     }
-    
+
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle ?: "과제")
     val resolvedAssignmentId = targetAssignment?.id ?: currentAssignment?.id ?: assignmentId
-    
+
     // Load assignment data on first composition
     LaunchedEffect(assignmentId, targetAssignment?.id) {
         if (assignmentId > 0) {
@@ -72,14 +68,14 @@ fun TeacherAssignmentResultsScreen(
             viewModel.loadAssignmentById(assignmentId)
             viewModel.loadAssignmentStudentResults(assignmentId)
         } else {
-        targetAssignment?.let { target ->
-            println("TeacherAssignmentResults - Loading assignment: ${target.title} (ID: ${target.id})")
-            viewModel.loadAssignmentById(target.id)
-            viewModel.loadAssignmentStudentResults(target.id)
+            targetAssignment?.let { target ->
+                println("TeacherAssignmentResults - Loading assignment: ${target.title} (ID: ${target.id})")
+                viewModel.loadAssignmentById(target.id)
+                viewModel.loadAssignmentStudentResults(target.id)
             }
         }
     }
-    
+
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
@@ -87,12 +83,12 @@ fun TeacherAssignmentResultsScreen(
             viewModel.clearError()
         }
     }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Header
         Box(
@@ -100,30 +96,30 @@ fun TeacherAssignmentResultsScreen(
                 .fillMaxWidth()
                 .background(
                     color = PrimaryIndigo.copy(alpha = 0.08f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 )
-                .padding(20.dp)
+                .padding(20.dp),
         ) {
             Column {
                 Text(
                     text = dynamicAssignmentTitle,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "학생별 과제 결과를 확인하고 피드백을 제공하세요",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
+                    color = Gray600,
                 )
             }
         }
-        
+
         // Stats cards
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             VTStatsCard(
                 title = "제출 학생",
@@ -131,74 +127,76 @@ fun TeacherAssignmentResultsScreen(
                 icon = Icons.Filled.CheckCircle,
                 iconColor = Success,
                 modifier = Modifier.weight(1f),
-                variant = CardVariant.Gradient
+                variant = CardVariant.Gradient,
             )
-            
+
             VTStatsCard(
                 title = "평균 점수",
                 value = if (students.isNotEmpty() && students.any { it.status == "완료" }) {
                     students.filter { it.status == "완료" }.map { it.score }.average().toInt().toString()
-                } else "-",
+                } else {
+                    "-"
+                },
                 icon = Icons.Filled.Star,
                 iconColor = Warning,
                 modifier = Modifier.weight(1f),
-                variant = CardVariant.Gradient
+                variant = CardVariant.Gradient,
             )
         }
-        
+
         // Students list
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "학생별 결과",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
-                
+
                 Text(
                     text = "총 ${students.size}명",
                     style = MaterialTheme.typography.bodyMedium,
                     color = PrimaryIndigo,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Loading indicator
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                 }
             } else if (students.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Person,
                             contentDescription = null,
                             tint = Gray400,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(48.dp),
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "제출된 과제가 없습니다",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
@@ -212,9 +210,9 @@ fun TeacherAssignmentResultsScreen(
                             if (destinationAssignmentId != 0) {
                                 onNavigateToStudentDetail(student.studentId, destinationAssignmentId, dynamicAssignmentTitle)
                             }
-                        }
+                        },
                     )
-                    
+
                     if (index < students.size - 1) {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
@@ -224,11 +222,11 @@ fun TeacherAssignmentResultsScreen(
     }
 }
 
-//@Composable
-//fun TeacherAssignmentResultCard(
+// @Composable
+// fun TeacherAssignmentResultCard(
 //    student: StudentResult,
 //    onStudentClick: () -> Unit
-//) {
+// ) {
 //    VTCard(
 //        variant = CardVariant.Elevated,
 //        onClick = onStudentClick
@@ -368,7 +366,7 @@ fun TeacherAssignmentResultsScreen(
 //            }
 //        }
 //    }
-//}
+// }
 
 // Helper function to format submitted time - using common utility
 private fun formatSubmittedTime(isoTime: String): String {
@@ -421,12 +419,12 @@ private fun parseIsoToMillis(iso: String): Long? {
     }
 }
 
-//@Composable
-//fun StudentResultDetailModal(
+// @Composable
+// fun StudentResultDetailModal(
 //    student: StudentResult,
 //    assignmentTitle: String,
 //    onDismiss: () -> Unit
-//) {
+// ) {
 //    Column(
 //        modifier = Modifier
 //            .fillMaxWidth()
@@ -619,7 +617,7 @@ private fun parseIsoToMillis(iso: String): Long? {
 //        // Full detail button
 //        // 상세 페이지 삭제로 버튼 제거
 //    }
-//}
+// }
 
 @Preview(showBackground = true)
 @Composable

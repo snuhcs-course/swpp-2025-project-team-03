@@ -1,8 +1,7 @@
 package com.example.voicetutor.ui.theme
 
-import androidx.compose.ui.graphics.Color
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Unit tests for Color constants.
@@ -66,4 +65,3 @@ class ColorTest {
         assertTrue(PrimaryIndigo.blue >= 0f && PrimaryIndigo.blue <= 1f)
     }
 }
-

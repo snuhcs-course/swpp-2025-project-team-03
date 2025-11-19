@@ -1,7 +1,7 @@
 package com.example.voicetutor.notification
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Unit tests for NotificationManager enums and data classes.
@@ -31,7 +31,7 @@ class NotificationManagerTest {
     fun notificationData_creation_withAllFields_createsCorrectInstance() {
         val actions = listOf(
             NotificationAction("Action 1", "action1"),
-            NotificationAction("Action 2", "action2")
+            NotificationAction("Action 2", "action2"),
         )
         val notificationData = NotificationData(
             id = 1,
@@ -40,9 +40,9 @@ class NotificationManagerTest {
             type = NotificationType.ASSIGNMENT_DUE,
             priority = NotificationPriority.HIGH,
             autoCancel = false,
-            actions = actions
+            actions = actions,
         )
-        
+
         assertEquals(1, notificationData.id)
         assertEquals("Test Notification", notificationData.title)
         assertEquals("Test Message", notificationData.message)
@@ -58,9 +58,9 @@ class NotificationManagerTest {
             id = 1,
             title = "Test",
             message = "Message",
-            type = NotificationType.NEW_MESSAGE
+            type = NotificationType.NEW_MESSAGE,
         )
-        
+
         assertEquals(NotificationPriority.NORMAL, notificationData.priority)
         assertTrue(notificationData.autoCancel)
         assertTrue(notificationData.actions.isEmpty())
@@ -71,9 +71,9 @@ class NotificationManagerTest {
         val action = NotificationAction(
             title = "Test Action",
             action = "test_action",
-            icon = android.R.drawable.ic_dialog_info
+            icon = android.R.drawable.ic_dialog_info,
         )
-        
+
         assertEquals("Test Action", action.title)
         assertEquals("test_action", action.action)
         assertEquals(android.R.drawable.ic_dialog_info, action.icon)
@@ -83,75 +83,75 @@ class NotificationManagerTest {
     fun notificationAction_creation_withDefaultIcon_usesDefault() {
         val action = NotificationAction(
             title = "Test Action",
-            action = "test_action"
+            action = "test_action",
         )
-        
+
         assertEquals(android.R.drawable.ic_dialog_info, action.icon)
     }
-    
+
     @Test
     fun notificationData_copy_createsNewInstance() {
         val original = NotificationData(
             id = 1,
             title = "Original",
             message = "Message",
-            type = NotificationType.ASSIGNMENT_DUE
+            type = NotificationType.ASSIGNMENT_DUE,
         )
-        
+
         val copy = original.copy(title = "Modified")
-        
+
         assertEquals("Modified", copy.title)
         assertEquals(original.message, copy.message)
     }
-    
+
     @Test
     fun notificationData_equality_worksCorrectly() {
         val data1 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
         val data2 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
         val data3 = NotificationData(2, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
-        
+
         assertEquals(data1, data2)
         assertNotEquals(data1, data3)
     }
-    
+
     @Test
     fun notificationAction_equality_worksCorrectly() {
         val action1 = NotificationAction("Action", "test")
         val action2 = NotificationAction("Action", "test")
         val action3 = NotificationAction("Action", "other")
-        
+
         assertEquals(action1, action2)
         assertNotEquals(action1, action3)
     }
-    
+
     @Test
     fun notificationType_allTypes_haveUniqueNames() {
         val names = NotificationType.values().map { it.name }
         assertEquals(names.size, names.distinct().size)
     }
-    
+
     @Test
     fun notificationPriority_allPriorities_haveUniqueNames() {
         val names = NotificationPriority.values().map { it.name }
         assertEquals(names.size, names.distinct().size)
     }
-    
+
     @Test
     fun notificationData_withMultipleActions_storesCorrectly() {
         val actions = listOf(
             NotificationAction("Action 1", "action1"),
             NotificationAction("Action 2", "action2"),
-            NotificationAction("Action 3", "action3")
+            NotificationAction("Action 3", "action3"),
         )
-        
+
         val data = NotificationData(
             id = 1,
             title = "Test",
             message = "Message",
             type = NotificationType.ASSIGNMENT_DUE,
-            actions = actions
+            actions = actions,
         )
-        
+
         assertEquals(3, data.actions.size)
         assertEquals("Action 1", data.actions[0].title)
         assertEquals("Action 2", data.actions[1].title)
@@ -162,7 +162,7 @@ class NotificationManagerTest {
     fun notificationData_hashCode_worksCorrectly() {
         val data1 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
         val data2 = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
-        
+
         assertEquals(data1.hashCode(), data2.hashCode())
     }
 
@@ -170,7 +170,7 @@ class NotificationManagerTest {
     fun notificationAction_hashCode_worksCorrectly() {
         val action1 = NotificationAction("Action", "test")
         val action2 = NotificationAction("Action", "test")
-        
+
         assertEquals(action1.hashCode(), action2.hashCode())
     }
 
@@ -178,7 +178,7 @@ class NotificationManagerTest {
     fun notificationData_toString_containsFields() {
         val data = NotificationData(1, "Title", "Message", NotificationType.ASSIGNMENT_DUE)
         val toString = data.toString()
-        
+
         assertTrue(toString.contains("Title"))
         assertTrue(toString.contains("Message"))
         assertTrue(toString.contains("ASSIGNMENT_DUE"))
@@ -188,7 +188,7 @@ class NotificationManagerTest {
     fun notificationAction_toString_containsFields() {
         val action = NotificationAction("Action", "test")
         val toString = action.toString()
-        
+
         assertTrue(toString.contains("Action"))
         assertTrue(toString.contains("test"))
     }
@@ -196,7 +196,7 @@ class NotificationManagerTest {
     @Test
     fun notificationData_withEmptyMessage_handlesEmptyString() {
         val data = NotificationData(1, "Title", "", NotificationType.ASSIGNMENT_DUE)
-        
+
         assertTrue(data.message.isEmpty())
     }
 
@@ -204,7 +204,7 @@ class NotificationManagerTest {
     fun notificationData_withLongMessage_handlesLongString() {
         val longMessage = "A".repeat(1000)
         val data = NotificationData(1, "Title", longMessage, NotificationType.ASSIGNMENT_DUE)
-        
+
         assertEquals(1000, data.message.length)
     }
 
@@ -212,7 +212,7 @@ class NotificationManagerTest {
     fun notificationAction_withCustomIcon_usesCustomIcon() {
         val customIcon = android.R.drawable.ic_menu_edit
         val action = NotificationAction("Action", "test", customIcon)
-        
+
         assertEquals(customIcon, action.icon)
     }
 
@@ -239,11 +239,10 @@ class NotificationManagerTest {
             1,
             "Title & Test < > \" '",
             "Message with\nnewlines\tand\ttabs",
-            NotificationType.ASSIGNMENT_DUE
+            NotificationType.ASSIGNMENT_DUE,
         )
-        
+
         assertTrue(data.title.contains("&"))
         assertTrue(data.message.contains("\n"))
     }
 }
-

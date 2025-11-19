@@ -206,10 +206,10 @@ def calculate_statistics(student_id, class_id):
             stats["accuracy"] = round(stats["correct_questions"] / stats["total_questions"] * 100, 1)
 
         print(f"\n성취기준 {achievement_code}:")
-        print(f"  문제 수: {stats['total_questions']}")
-        print(f"  맞춘 문제 수: {stats['correct_questions']}")
-        print(f"  정답률: {stats['accuracy']}%")
-        print(f"  내용: {stats['content']}")
+        print(f"문제 수: {stats['total_questions']}")
+        print(f"맞춘 문제 수: {stats['correct_questions']}")
+        print(f"정답률: {stats['accuracy']}%")
+        print(f"내용: {stats['content']}")
 
     return {
         "total_questions": total_questions,

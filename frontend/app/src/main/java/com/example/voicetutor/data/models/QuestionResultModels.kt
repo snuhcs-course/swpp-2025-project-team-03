@@ -7,11 +7,11 @@ data class DetailedQuestionResult(
     val myAnswer: String,
     val correctAnswer: String,
     val isCorrect: Boolean,
-    val explanation: String? = null
+    val explanation: String? = null,
 )
 
 // 기본 문항 + 꼬리 문항 그룹 (top-level)
 data class QuestionGroup(
     val baseQuestion: DetailedQuestionResult,
-    val tailQuestions: List<DetailedQuestionResult> = emptyList()
+    val tailQuestions: List<DetailedQuestionResult> = emptyList(),
 )

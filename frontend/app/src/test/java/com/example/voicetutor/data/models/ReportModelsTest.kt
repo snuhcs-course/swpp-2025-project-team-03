@@ -1,10 +1,10 @@
 package com.example.voicetutor.data.models
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 
 @RunWith(JUnit4::class)
 class ReportModelsTest {
@@ -13,14 +13,14 @@ class ReportModelsTest {
     fun progressReportData_withAllFields_containsCorrectValues() {
         // Arrange
         val classBreakdown = listOf(
-            ClassProgress(classId = 1, className = "Class1", studentCount = 10, completedAssignments = 5, totalAssignments = 8)
+            ClassProgress(classId = 1, className = "Class1", studentCount = 10, completedAssignments = 5, totalAssignments = 8),
         )
         val report = ProgressReportData(
             totalStudents = 50,
             totalAssignments = 20,
             completedAssignments = 15,
             averageScore = 85.5,
-            classBreakdown = classBreakdown
+            classBreakdown = classBreakdown,
         )
 
         // Assert
@@ -39,7 +39,7 @@ class ReportModelsTest {
             totalAssignments = 0,
             completedAssignments = 0,
             averageScore = 0.0,
-            classBreakdown = emptyList()
+            classBreakdown = emptyList(),
         )
 
         // Assert
@@ -54,7 +54,7 @@ class ReportModelsTest {
             className = "Class1",
             studentCount = 10,
             completedAssignments = 5,
-            totalAssignments = 8
+            totalAssignments = 8,
         )
 
         // Assert
@@ -74,7 +74,7 @@ class ReportModelsTest {
             myAnswer = "4",
             correctAnswer = "4",
             isCorrect = true,
-            confidence = 0.95f
+            confidence = 0.95f,
         )
 
         // Assert
@@ -95,7 +95,7 @@ class ReportModelsTest {
             myAnswer = "5",
             correctAnswer = "4",
             isCorrect = false,
-            confidence = 0.3f
+            confidence = 0.3f,
         )
 
         // Assert
@@ -103,4 +103,3 @@ class ReportModelsTest {
         assertTrue(result.myAnswer != result.correctAnswer)
     }
 }
-
