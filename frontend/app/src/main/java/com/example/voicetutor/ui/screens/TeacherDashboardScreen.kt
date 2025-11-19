@@ -70,8 +70,9 @@ fun TeacherDashboardScreen(
     var showTutorial by remember { mutableStateOf(false) }
     
     // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
-    LaunchedEffect(currentUser) {
-        if (currentUser != null) {
+    // currentUser와 showTutorial을 모두 key로 사용하여 초기화 후에도 재확인
+    LaunchedEffect(currentUser, showTutorial) {
+        if (currentUser != null && !showTutorial) {
             val isNewUser = tutorialPrefs.isNewUser()
             
             // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시

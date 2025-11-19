@@ -43,7 +43,7 @@ object TeacherOnboardingData {
         
         OnboardingPage(
             title = "수업별 과제 진행 상황을 확인해요",
-            description = "내 수업의 모든 과제의 제출률과 평균 점수를 볼 수 있어요.",
+            description = "내 수업의 모든 과제의 제출률과\n평균 점수를 볼 수 있어요.",
             imageRes = R.drawable.teacherclassassignment,
             icon = null
         ),
@@ -56,14 +56,14 @@ object TeacherOnboardingData {
         ),
         
         OnboardingPage(
-            title = "반별 학생 목록과 진도를 관리해요",
-            description = "반에 속한 학생들의 과제 완료 현황과 평균 점수를 확인하고 학생을 등록하거나 삭제하여 명단을 관리할 수 있어요.",
+            title = "수업 별 학생 목록과 진도를 관리해요",
+            description = "수업에 학생을 등록하거나 삭제하여\n명단을 관리할 수 있어요.",
             imageRes = R.drawable.teacherclassstudent,
             icon = null
         ),
         
         OnboardingPage(
-            title = "성취기준 리포트로 취약 유형을 분석해요",
+            title = "성취기준 리포트를 확인해요",
             description = "반을 선택해 학생별 성취기준 리포트를 확인하고\n취약 유형을 한눈에 분석할 수 있어요.",
             imageRes = R.drawable.teacherreport,
             icon = null
