@@ -273,15 +273,13 @@ fun AssignmentContinuousScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
-                .padding(24.dp),
+                .padding(16.dp),
             contentAlignment = Alignment.Center,
         ) {
             VTCard(
                 variant = CardVariant.Elevated,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .fillMaxWidth(),
             ) {
                 Column(
                     modifier = Modifier.padding(32.dp),
