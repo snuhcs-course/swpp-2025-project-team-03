@@ -283,7 +283,6 @@ class ComprehensiveScreenTests {
                     totalCount = 10,
                     onAssignmentClick = {},
                     onEditClick = {},
-                    onDeleteClick = {},
                     onViewResults = {}
                 )
             }

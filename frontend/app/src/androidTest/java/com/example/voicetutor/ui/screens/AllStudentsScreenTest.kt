@@ -147,9 +147,9 @@ class AllStudentsScreenTest {
             }
         }
 
-        waitForText("반 선택")
-        // "반 선택" might appear as label and placeholder
-        composeRule.onAllNodesWithText("반 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        waitForText("수업 선택")
+        // "수업 선택" might appear as label and placeholder
+        composeRule.onAllNodesWithText("수업 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
         waitForText("수학 A반")
         // "수학 A반" might appear in dropdown and selected value
         composeRule.onAllNodesWithText("수학 A반", useUnmergedTree = true).onFirst().assertIsDisplayed()
@@ -269,8 +269,8 @@ class AllStudentsScreenTest {
             }
         }
 
-        // Screen should still render, showing "반 선택" placeholder
-        waitForText("반 선택", timeoutMillis = 5_000)
+        // Screen should still render, showing "수업 선택" placeholder
+        waitForText("수업 선택", timeoutMillis = 5_000)
     }
 
     @Test
@@ -415,9 +415,9 @@ class AllStudentsScreenTest {
             }
         }
 
-        waitForText("반 선택")
-        // "반 선택" might appear as label and placeholder
-        composeRule.onAllNodesWithText("반 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        waitForText("수업 선택")
+        // "수업 선택" might appear as label and placeholder
+        composeRule.onAllNodesWithText("수업 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
     @Test

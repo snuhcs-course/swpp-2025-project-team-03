@@ -53,10 +53,10 @@ class FakeAuthRepository {
         "teacher@voicetutor.com" to "teacher123"
     )
     
-    // ⚠️ Same method signature as real AuthRepository.login()
+    //  Same method signature as real AuthRepository.login()
     suspend fun login(email: String, password: String): Result<User> {
         return try {
-            // ⚠️ NO NETWORK CALL - All data is in-memory
+            //  NO NETWORK CALL - All data is in-memory
             // Simulate network delay for realistic UI testing
             kotlinx.coroutines.delay(500)
             
@@ -80,7 +80,7 @@ class FakeAuthRepository {
             Result.failure(e)        }
     }
     
-    // ⚠️ Same method signature as real AuthRepository.signup()
+    //  Same method signature as real AuthRepository.signup()
     suspend fun signup(
         name: String, 
         email: String, 
@@ -88,7 +88,7 @@ class FakeAuthRepository {
         role: UserRole
     ): Result<User> {
         return try {
-            // ⚠️ NO NETWORK CALL - All data is in-memory
+            //  NO NETWORK CALL - All data is in-memory
             // Simulate network delay for realistic UI testing
             kotlinx.coroutines.delay(500)
             

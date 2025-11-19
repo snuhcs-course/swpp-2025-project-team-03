@@ -101,7 +101,7 @@ def summarize_pdf(pdf_path: str, output_path: str):
         tmp_img = f"temp_page_{i}.png"
         page.save(tmp_img, "PNG")
 
-        # ✅ encode image as base64 data URI
+        #  encode image as base64 data URI
         image_data_url = encode_image_to_base64(tmp_img)
 
         messages = vision_summary_prompt.format_messages()
