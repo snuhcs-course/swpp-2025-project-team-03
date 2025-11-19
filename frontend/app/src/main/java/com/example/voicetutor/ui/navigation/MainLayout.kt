@@ -1,5 +1,6 @@
 package com.example.voicetutor.ui.navigation
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -24,13 +25,17 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.ui.components.ButtonSize
 import com.example.voicetutor.ui.components.ButtonVariant
 import com.example.voicetutor.ui.components.VTButton
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.viewmodel.MainLayoutViewModel
 import kotlinx.coroutines.delay
+
+private const val MAIN_LAYOUT_TAG = "MainLayout"
 
 data class RecentAssignment(
     val id: String, // personal_assignment_id
@@ -69,21 +74,60 @@ fun MainLayout(
     userRole: UserRole,
     content: @Composable () -> Unit,
 ) {
-    val currentDestination = navController.currentDestination?.route
-    val currentRoute = when {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination?.route
+    val baseDestination = currentDestination?.split("?")?.first()
+
+    val mainLayoutViewModel: MainLayoutViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+    val lastTeacherBaseRoute by mainLayoutViewModel.lastTeacherBaseRoute.collectAsStateWithLifecycle()
+
+    val teacherBaseRoute = when (baseDestination) {
+        VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
+        VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
+        VoiceTutorScreens.AllStudents.route -> "teacher_students"
+        else -> null
+    }
+
+    LaunchedEffect(userRole) {
+        if (userRole != UserRole.TEACHER) {
+            Log.d(MAIN_LAYOUT_TAG, "Resetting lastTeacherBaseRoute because userRole=$userRole")
+            mainLayoutViewModel.resetTeacherBaseRoute()
+        }
+    }
+
+    LaunchedEffect(userRole, teacherBaseRoute) {
+        if (userRole == UserRole.TEACHER && teacherBaseRoute != null) {
+            Log.d(
+                MAIN_LAYOUT_TAG,
+                "Teacher base route detected. baseDestination=$baseDestination -> teacherBaseRoute=$teacherBaseRoute",
+            )
+            mainLayoutViewModel.updateTeacherBaseRoute(teacherBaseRoute)
+        }
+    }
+
+    val studentRoute = when {
         currentDestination == VoiceTutorScreens.StudentDashboard.route -> "student_dashboard"
-        currentDestination == VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
         currentDestination == VoiceTutorScreens.Assignment.route -> "assignment"
-        currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route) == true -> "assignment" // 과제 상세 화면에서 이어하기/과제 탭 선택
-        currentDestination?.startsWith(VoiceTutorScreens.NoRecentAssignment.route.split("{").first()) == true -> "assignment" // NoRecentAssignment 화면에서 이어하기 탭 선택
+        currentDestination?.startsWith(VoiceTutorScreens.AssignmentDetail.route) == true -> "assignment"
+        currentDestination?.startsWith(VoiceTutorScreens.NoRecentAssignment.route.split("{").first()) == true -> "assignment"
         currentDestination == VoiceTutorScreens.Progress.route -> "progress"
-        currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress" // 리포트 탭 유지
-        currentDestination == VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
-        currentDestination?.startsWith(VoiceTutorScreens.TeacherClassDetail.route.split("{").first()) == true -> "teacher_classes" // 수업 탭 선택
-        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudents.route.split("{").first()) == true -> "teacher_classes" // 학생 관리 화면에서 수업 탭 선택
-        currentDestination?.startsWith(VoiceTutorScreens.TeacherStudentReport.route.split("{").first()) == true -> "teacher_students" // 학생 리포트 화면에서 리포트 탭 선택
-        currentDestination == VoiceTutorScreens.AllStudents.route -> "teacher_students" // 전체 학생 페이지에서 학생 탭 선택
-        else -> if (userRole == UserRole.TEACHER) "teacher_dashboard" else "student_dashboard"
+        currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "progress"
+        else -> "student_dashboard"
+    }
+
+    val currentRoute = if (userRole == UserRole.TEACHER) {
+        lastTeacherBaseRoute
+    } else {
+        studentRoute
+    }
+
+    LaunchedEffect(currentDestination, currentRoute, userRole) {
+        Log.d(
+            MAIN_LAYOUT_TAG,
+            "currentDestination=$currentDestination, baseDestination=$baseDestination, " +
+                "teacherBaseRoute=$teacherBaseRoute, lastTeacherBaseRoute=$lastTeacherBaseRoute, " +
+                "studentRoute=$studentRoute, resolvedRoute=$currentRoute, userRole=$userRole",
+        )
     }
 
     // Get recent assignment data from API for students
@@ -137,8 +181,6 @@ fun MainLayout(
     }
 
     // Check if current page is a dashboard (should show logo) or other page (should show back button)
-    // Remove query parameters for comparison (e.g., "teacher_dashboard?refresh=123" -> "teacher_dashboard")
-    val baseDestination = currentDestination?.split("?")?.first()
     val isDashboard = baseDestination == VoiceTutorScreens.StudentDashboard.route ||
         baseDestination == VoiceTutorScreens.Progress.route ||
         baseDestination == VoiceTutorScreens.TeacherDashboard.route ||
