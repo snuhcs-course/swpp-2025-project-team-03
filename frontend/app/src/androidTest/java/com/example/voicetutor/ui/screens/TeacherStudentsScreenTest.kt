@@ -7,11 +7,11 @@ import androidx.compose.ui.test.onFirst
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.ClassData
+import com.example.voicetutor.data.models.ClassStudentsStatistics
 import com.example.voicetutor.data.models.Student
 import com.example.voicetutor.data.models.StudentStatisticsItem
 import com.example.voicetutor.data.models.Subject
 import com.example.voicetutor.data.models.UserRole
-import com.example.voicetutor.data.models.ClassStudentsStatistics
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.di.NetworkModule
@@ -19,11 +19,11 @@ import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -59,13 +59,12 @@ class TeacherStudentsScreenTest {
             studentCount = 2,
             studentCountAlt = 2,
             createdAt = "2024-01-01T00:00:00Z",
-            
-            
+
         )
 
         val defaultStudents = listOf(
             Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT),
-            Student(id = 2, name = "이몽룡", email = "lee@school.com", role = UserRole.STUDENT)
+            Student(id = 2, name = "이몽룡", email = "lee@school.com", role = UserRole.STUDENT),
         )
 
         val defaultStats = ClassStudentsStatistics(
@@ -76,16 +75,16 @@ class TeacherStudentsScreenTest {
                     averageScore = 90f,
                     completionRate = 0.9f,
                     totalAssignments = 10,
-                    completedAssignments = 9
+                    completedAssignments = 9,
                 ),
                 StudentStatisticsItem(
                     studentId = 2,
                     averageScore = 85f,
                     completionRate = 0.75f,
                     totalAssignments = 12,
-                    completedAssignments = 9
-                )
-            )
+                    completedAssignments = 9,
+                ),
+            ),
         )
 
         fakeApi.apply {
@@ -115,7 +114,7 @@ class TeacherStudentsScreenTest {
         fakeApi.allStudentsResponse = emptyList()
         fakeApi.classStudentsStatisticsResponse = ClassStudentsStatistics(
             overallCompletionRate = 0f,
-            students = emptyList()
+            students = emptyList(),
         )
 
         composeRule.setContent {
@@ -251,7 +250,7 @@ class TeacherStudentsScreenTest {
     fun teacherStudentsScreen_showsZeroCompletionRateWhenNoStats() {
         fakeApi.classStudentsStatisticsResponse = ClassStudentsStatistics(
             overallCompletionRate = 0f,
-            students = emptyList()
+            students = emptyList(),
         )
 
         composeRule.setContent {
@@ -379,7 +378,7 @@ class TeacherStudentsScreenTest {
     fun teacherStudentsScreen_displaysZeroCompletionRate() {
         fakeApi.classStudentsStatisticsResponse = ClassStudentsStatistics(
             overallCompletionRate = 0f,
-            students = emptyList()
+            students = emptyList(),
         )
 
         composeRule.setContent {
@@ -401,9 +400,9 @@ class TeacherStudentsScreenTest {
                     averageScore = 100f,
                     completionRate = 1f,
                     totalAssignments = 10,
-                    completedAssignments = 10
-                )
-            )
+                    completedAssignments = 10,
+                ),
+            ),
         )
 
         composeRule.setContent {
@@ -440,4 +439,3 @@ class TeacherStudentsScreenTest {
         composeRule.waitForIdle()
     }
 }
-

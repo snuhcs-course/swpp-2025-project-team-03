@@ -14,23 +14,23 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ReportViewModel @Inject constructor(
-    private val reportRepository: ReportRepository
+    private val reportRepository: ReportRepository,
 ) : ViewModel() {
-    
+
     private val _curriculumReport = MutableStateFlow<CurriculumReportData?>(null)
     val curriculumReport: StateFlow<CurriculumReportData?> = _curriculumReport.asStateFlow()
-    
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-    
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
-    
+
     fun loadCurriculumReport(classId: Int, studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
+
             reportRepository.getCurriculumReport(classId, studentId)
                 .onSuccess { report ->
                     _curriculumReport.value = report
@@ -38,17 +38,16 @@ class ReportViewModel @Inject constructor(
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
-            
+
             _isLoading.value = false
         }
     }
-    
+
     fun clearError() {
         _error.value = null
     }
-    
+
     fun clearReport() {
         _curriculumReport.value = null
     }
 }
-

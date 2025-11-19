@@ -1,16 +1,10 @@
 package com.example.voicetutor.ui.screens
 
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.di.NetworkModule
@@ -24,7 +18,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import androidx.lifecycle.ViewModelProvider
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -57,9 +50,6 @@ class CreateAssignmentScreenTest {
         stateFlow.value = value
     }
 
-
-
-
     @Test
     fun createAssignmentScreen_showsUploadSuccessBanner() {
         composeRule.setContent {
@@ -79,7 +69,6 @@ class CreateAssignmentScreenTest {
         composeRule.onAllNodesWithText("PDF 업로드 완료!", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
-
     @Test
     fun createAssignmentScreen_displaysPdfUploadSection() {
         composeRule.setContent {
@@ -94,10 +83,6 @@ class CreateAssignmentScreenTest {
         }
         composeRule.onAllNodesWithText("PDF 파일", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
-
-
-
-
 
     @Test
     fun createAssignmentScreen_showsCreatingAssignmentIndicator() {
@@ -150,10 +135,6 @@ class CreateAssignmentScreenTest {
         waitForText("반 선택")
         composeRule.onAllNodesWithText("반 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
-
-
-
-
 
     @Test
     fun createAssignmentScreen_handlesUploadProgress() {
@@ -253,13 +234,6 @@ class CreateAssignmentScreenTest {
         composeRule.waitForIdle()
     }
 
-
-
-
-
-
-
-
     @Test
     fun createAssignmentScreen_displaysErrorWhenUploadFails() {
         composeRule.setContent {
@@ -281,7 +255,6 @@ class CreateAssignmentScreenTest {
         composeRule.waitForIdle()
     }
 
-
     @Test
     fun createAssignmentScreen_displaysDueDatePicker() {
         composeRule.setContent {
@@ -294,7 +267,6 @@ class CreateAssignmentScreenTest {
         // Date picker should be available
         composeRule.waitForIdle()
     }
-
 
     @Test
     fun createAssignmentScreen_handlesEmptyClassesList() {
@@ -319,12 +291,6 @@ class CreateAssignmentScreenTest {
         // Should handle empty students list gracefully
         composeRule.waitForIdle()
     }
-
-
-
-
-
-
 
     @Test
     fun createAssignmentScreen_allowsSubjectDropdownSelection() {
@@ -419,6 +385,4 @@ class CreateAssignmentScreenTest {
         }
         composeRule.waitForIdle()
     }
-
 }
-

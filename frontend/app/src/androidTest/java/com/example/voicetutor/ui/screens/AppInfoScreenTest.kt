@@ -148,4 +148,3 @@ class AppInfoScreenTest {
         composeRule.onNodeWithText("앱 정보", substring = true).assertIsDisplayed()
     }
 }
-

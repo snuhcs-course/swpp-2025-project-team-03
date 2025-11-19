@@ -80,9 +80,9 @@ def batch_convert_inplace(input_root="label", save_backup=False):
                     with open(json_path, "w", encoding="utf-8") as f:
                         json.dump(new_data, f, ensure_ascii=False, indent=2)
 
-                    print(f" Formatted and updated: {json_path}")
+                    print(f"Formatted and updated: {json_path}")
                 except Exception as e:
-                    print(f" Failed: {json_path} ({e})")
+                    print(f"Failed: {json_path} ({e})")
 
 
 if __name__ == "__main__":

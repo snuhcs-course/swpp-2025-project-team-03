@@ -1,14 +1,12 @@
 package com.example.voicetutor.data.network
 
-
 import com.example.voicetutor.data.models.CourseClass
-import com.example.voicetutor.data.models.QuestionData
 import com.example.voicetutor.data.models.Subject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 
 @RunWith(JUnit4::class)
 class NetworkModelsTest {
@@ -20,17 +18,16 @@ class NetworkModelsTest {
         description = null,
         subject = buildSubject(),
         teacherName = "Teacher1",
-        
-        
+
         studentCount = 10,
-        createdAt = "2025-01-01"
+        createdAt = "2025-01-01",
     )
 
     @Test
     fun recentAnswerData_containsCorrectValues() {
         // Arrange
         val data = RecentAnswerData(
-            personalAssignmentId = 100
+            personalAssignmentId = 100,
         )
 
         // Assert
@@ -44,7 +41,7 @@ class NetworkModelsTest {
             success = true,
             data = "test data",
             message = "Success",
-            error = null
+            error = null,
         )
 
         // Assert
@@ -61,7 +58,7 @@ class NetworkModelsTest {
             success = false,
             data = null,
             message = null,
-            error = "Error occurred"
+            error = "Error occurred",
         )
 
         // Assert
@@ -114,7 +111,7 @@ class NetworkModelsTest {
             assignment_id = 50,
             material_id = 20,
             s3_key = "key123",
-            upload_url = "https://s3.amazonaws.com/upload"
+            upload_url = "https://s3.amazonaws.com/upload",
         )
 
         // Assert
@@ -135,7 +132,7 @@ class NetworkModelsTest {
             file_size = 1024L,
             content_type = "application/pdf",
             last_modified = "2025-01-01",
-            bucket = "my-bucket"
+            bucket = "my-bucket",
         )
 
         // Assert
@@ -159,7 +156,7 @@ class NetworkModelsTest {
             file_size = null,
             content_type = null,
             last_modified = null,
-            bucket = "my-bucket"
+            bucket = "my-bucket",
         )
 
         // Assert
@@ -175,7 +172,7 @@ class NetworkModelsTest {
         val request = QuestionCreateRequest(
             assignment_id = 1,
             material_id = 10,
-            total_number = 5
+            total_number = 5,
         )
 
         // Assert
@@ -224,7 +221,7 @@ class NetworkModelsTest {
             totalQuestions = 10,
             dueAt = "2025-12-31T00:00:00Z",
             grade = "A",
-            subject = SubjectUpdateRequest(id = 2, name = "Math", code = "MATH")
+            subject = SubjectUpdateRequest(id = 2, name = "Math", code = "MATH"),
         )
 
         // Assert
@@ -245,7 +242,7 @@ class NetworkModelsTest {
             totalQuestions = null,
             dueAt = null,
             grade = null,
-            subject = null
+            subject = null,
         )
 
         // Assert
@@ -262,11 +259,11 @@ class NetworkModelsTest {
         // Arrange
         val answers = listOf(
             AnswerSubmission(questionId = 1, answer = "A1", audioFile = "file1.wav", confidence = 0.9f),
-            AnswerSubmission(questionId = 2, answer = "A2", audioFile = null, confidence = null)
+            AnswerSubmission(questionId = 2, answer = "A2", audioFile = null, confidence = null),
         )
         val request = AssignmentSubmissionRequest(
             studentId = 1,
-            answers = answers
+            answers = answers,
         )
 
         // Assert
@@ -283,7 +280,7 @@ class NetworkModelsTest {
             questionId = 1,
             answer = "Answer",
             audioFile = "audio.wav",
-            confidence = 0.95f
+            confidence = 0.95f,
         )
 
         // Assert
@@ -300,7 +297,7 @@ class NetworkModelsTest {
             questionId = 1,
             answer = "Answer",
             audioFile = null,
-            confidence = null
+            confidence = null,
         )
 
         // Assert
@@ -319,15 +316,15 @@ class NetworkModelsTest {
                 correctAnswer = "A1",
                 explanation = "Correct",
                 confidence = 0.9f,
-                pronunciationScore = 0.8f
-            )
+                pronunciationScore = 0.8f,
+            ),
         )
         val result = AssignmentSubmissionResult(
             submissionId = 1,
             score = 85,
             totalQuestions = 10,
             correctAnswers = 8,
-            feedback = feedback
+            feedback = feedback,
         )
 
         // Assert
@@ -348,7 +345,7 @@ class NetworkModelsTest {
             correctAnswer = "A1",
             explanation = "Correct answer",
             confidence = 0.95f,
-            pronunciationScore = 0.9f
+            pronunciationScore = 0.9f,
         )
 
         // Assert
@@ -369,7 +366,7 @@ class NetworkModelsTest {
             correctAnswer = "Correct",
             explanation = null,
             confidence = 0.3f,
-            pronunciationScore = null
+            pronunciationScore = null,
         )
 
         // Assert
@@ -377,4 +374,3 @@ class NetworkModelsTest {
         assertNull(feedback.pronunciationScore)
     }
 }
-

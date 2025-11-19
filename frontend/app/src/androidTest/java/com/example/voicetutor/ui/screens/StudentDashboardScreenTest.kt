@@ -3,8 +3,8 @@ package com.example.voicetutor.ui.screens
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
@@ -45,7 +45,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -72,7 +72,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -99,7 +99,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -126,7 +126,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -154,7 +154,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -181,7 +181,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -209,7 +209,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -235,7 +235,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -256,7 +256,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -284,7 +284,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -313,7 +313,7 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
+                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -326,4 +326,3 @@ class StudentDashboardScreenTest {
         composeRule.waitForIdle()
     }
 }
-

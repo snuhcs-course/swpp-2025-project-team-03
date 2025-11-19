@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -19,10 +18,10 @@ import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -44,7 +43,7 @@ class NavigationFlowTest {
 
     private fun waitForText(
         text: String,
-        substring: Boolean = false
+        substring: Boolean = false,
     ) {
         composeRule.waitUntil(timeoutMillis = 15_000) {
             composeRule
@@ -56,7 +55,7 @@ class NavigationFlowTest {
 
     private fun waitForRoute(
         routePrefix: String,
-        timeoutMillis: Long = 15_000
+        timeoutMillis: Long = 15_000,
     ) {
         composeRule.waitUntil(timeoutMillis = timeoutMillis) {
             var matches = false
@@ -88,7 +87,7 @@ class NavigationFlowTest {
                 SideEffect { navController = controller }
                 VoiceTutorNavigation(
                     navController = controller,
-                    startDestination = startDestination
+                    startDestination = startDestination,
                 )
             }
         }
@@ -192,4 +191,3 @@ class NavigationFlowTest {
             .assertIsDisplayed()
     }
 }
-

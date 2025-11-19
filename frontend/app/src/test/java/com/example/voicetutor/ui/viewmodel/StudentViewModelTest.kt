@@ -1,14 +1,13 @@
 package com.example.voicetutor.ui.viewmodel
 
 import app.cash.turbine.test
-import com.example.voicetutor.data.models.Student
-import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.models.AssignmentData
-import com.example.voicetutor.data.models.StudentProgress
 import com.example.voicetutor.data.models.ClassInfo
+import com.example.voicetutor.data.models.Student
+import com.example.voicetutor.data.models.StudentProgress
+import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.repository.StudentRepository
 import com.example.voicetutor.testing.MainDispatcherRule
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -53,7 +52,7 @@ class StudentViewModelTest {
         // Given: 저장소가 성공적으로 학생 목록을 반환하도록 스텁
         val students = listOf(
             Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT),
-            Student(id = 2, name = "Bob", email = "bob@test.com", role = UserRole.STUDENT)
+            Student(id = 2, name = "Bob", email = "bob@test.com", role = UserRole.STUDENT),
         )
         Mockito.`when`(studentRepository.getAllStudents(null, null))
             .thenReturn(Result.success(students))
@@ -62,7 +61,7 @@ class StudentViewModelTest {
         viewModel.students.test {
             // 초기 상태 구독
             awaitItem()
-            
+
             viewModel.loadAllStudents()
             runCurrent()
 
@@ -79,7 +78,7 @@ class StudentViewModelTest {
     fun loadAllStudents_withFilters_success_updatesStudents() = runTest {
         // Given: teacherId와 classId 필터 적용
         val students = listOf(
-            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT)
+            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT),
         )
         Mockito.`when`(studentRepository.getAllStudents("1", "10"))
             .thenReturn(Result.success(students))
@@ -87,7 +86,7 @@ class StudentViewModelTest {
         // When
         viewModel.students.test {
             awaitItem()
-            
+
             viewModel.loadAllStudents(teacherId = "1", classId = "10")
             runCurrent()
 
@@ -108,7 +107,7 @@ class StudentViewModelTest {
         // When
         viewModel.error.test {
             awaitItem() // initial null
-            
+
             viewModel.loadAllStudents()
             runCurrent()
 
@@ -129,7 +128,7 @@ class StudentViewModelTest {
         // When
         viewModel.currentStudent.test {
             assert(awaitItem() == null)
-            
+
             viewModel.loadStudentById(1)
             runCurrent()
 
@@ -151,7 +150,7 @@ class StudentViewModelTest {
                 description = "desc",
                 totalQuestions = 5,
                 createdAt = null,
-                
+
                 dueAt = "",
                 courseClass = com.example.voicetutor.data.models.CourseClass(
                     id = 1,
@@ -159,14 +158,13 @@ class StudentViewModelTest {
                     description = null,
                     subject = com.example.voicetutor.data.models.Subject(id = 1, name = "Math"),
                     teacherName = "Teacher",
-                    
-                    
+
                     studentCount = 0,
-                    createdAt = ""
+                    createdAt = "",
                 ),
                 materials = null,
-                grade = null
-            )
+                grade = null,
+            ),
         )
         Mockito.`when`(studentRepository.getStudentAssignments(1))
             .thenReturn(Result.success(assignments))
@@ -174,7 +172,7 @@ class StudentViewModelTest {
         // When
         viewModel.studentAssignments.test {
             assert(awaitItem().isEmpty())
-            
+
             viewModel.loadStudentAssignments(1)
             runCurrent()
 
@@ -195,7 +193,7 @@ class StudentViewModelTest {
             completedAssignments = 7,
             averageScore = 85.5,
             weeklyProgress = emptyList(),
-            subjectBreakdown = emptyList()
+            subjectBreakdown = emptyList(),
         )
         Mockito.`when`(studentRepository.getStudentProgress(1))
             .thenReturn(Result.success(progress))
@@ -203,7 +201,7 @@ class StudentViewModelTest {
         // When
         viewModel.studentProgress.test {
             assert(awaitItem() == null)
-            
+
             viewModel.loadStudentProgress(1)
             runCurrent()
 
@@ -224,7 +222,7 @@ class StudentViewModelTest {
         // When
         viewModel.isLoading.test {
             assert(!awaitItem()) // initial false
-            
+
             viewModel.loadAllStudents()
             runCurrent()
 
@@ -247,10 +245,10 @@ class StudentViewModelTest {
             viewModel.loadAllStudents()
             runCurrent()
             assert(awaitItem() != null) // 에러 설정 확인
-            
+
             // When: clearError 호출
             viewModel.clearError()
-            
+
             // Then: 에러가 null로 변경
             assert(awaitItem() == null)
             cancelAndIgnoreRemainingEvents()
@@ -266,7 +264,7 @@ class StudentViewModelTest {
         // When
         viewModel.error.test {
             awaitItem() // initial null
-            
+
             viewModel.loadStudentById(1)
             runCurrent()
 
@@ -292,7 +290,7 @@ class StudentViewModelTest {
         // When
         viewModel.error.test {
             awaitItem() // initial null
-            
+
             viewModel.loadStudentAssignments(1)
             runCurrent()
 
@@ -318,7 +316,7 @@ class StudentViewModelTest {
         // When
         viewModel.error.test {
             awaitItem() // initial null
-            
+
             viewModel.loadStudentProgress(1)
             runCurrent()
 
@@ -339,7 +337,7 @@ class StudentViewModelTest {
     fun loadAllStudents_withOnlyTeacherId_callsRepoWithTeacherId() = runTest {
         // Given: teacherId만 전달
         val students = listOf(
-            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT)
+            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT),
         )
         Mockito.`when`(studentRepository.getAllStudents("1", null))
             .thenReturn(Result.success(students))
@@ -347,7 +345,7 @@ class StudentViewModelTest {
         // When
         viewModel.students.test {
             awaitItem()
-            
+
             viewModel.loadAllStudents(teacherId = "1")
             runCurrent()
 
@@ -363,7 +361,7 @@ class StudentViewModelTest {
     fun loadAllStudents_withOnlyClassId_callsRepoWithClassId() = runTest {
         // Given: classId만 전달
         val students = listOf(
-            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT)
+            Student(id = 1, name = "Alice", email = "alice@test.com", role = UserRole.STUDENT),
         )
         Mockito.`when`(studentRepository.getAllStudents(null, "10"))
             .thenReturn(Result.success(students))
@@ -371,7 +369,7 @@ class StudentViewModelTest {
         // When
         viewModel.students.test {
             awaitItem()
-            
+
             viewModel.loadAllStudents(classId = "10")
             runCurrent()
 
@@ -388,7 +386,7 @@ class StudentViewModelTest {
         // Given
         val classes = listOf(
             ClassInfo(id = 1, name = "Class A"),
-            ClassInfo(id = 2, name = "Class B")
+            ClassInfo(id = 2, name = "Class B"),
         )
         Mockito.`when`(studentRepository.getStudentClasses(1))
             .thenReturn(Result.success(classes))
@@ -396,7 +394,7 @@ class StudentViewModelTest {
         // When
         viewModel.studentClasses.test {
             assert(awaitItem().isEmpty())
-            
+
             viewModel.loadStudentClasses(1)
             runCurrent()
 
@@ -436,7 +434,7 @@ class StudentViewModelTest {
         // When
         viewModel.error.test {
             awaitItem()
-            
+
             viewModel.loadStudentClasses(1)
             runCurrent()
 
@@ -456,7 +454,7 @@ class StudentViewModelTest {
         // When
         viewModel.loadingStudentClasses.test {
             assert(!awaitItem().contains(1))
-            
+
             viewModel.loadStudentClasses(1)
             runCurrent()
 
@@ -531,4 +529,3 @@ class StudentViewModelTest {
         }
     }
 }
-

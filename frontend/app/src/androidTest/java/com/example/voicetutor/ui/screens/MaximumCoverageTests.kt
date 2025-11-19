@@ -7,10 +7,10 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
@@ -76,12 +76,12 @@ class MaximumCoverageTests {
                     VTButton(text = "Primary Small", onClick = {}, variant = ButtonVariant.Primary, size = ButtonSize.Small)
                     VTButton(text = "Primary Medium", onClick = {}, variant = ButtonVariant.Primary, size = ButtonSize.Medium)
                     VTButton(text = "Primary Large", onClick = {}, variant = ButtonVariant.Primary, size = ButtonSize.Large)
-                    
+
                     // Outline buttons
                     VTButton(text = "Outline Small", onClick = {}, variant = ButtonVariant.Outline, size = ButtonSize.Small)
                     VTButton(text = "Outline Medium", onClick = {}, variant = ButtonVariant.Outline, size = ButtonSize.Medium)
                     VTButton(text = "Outline Large", onClick = {}, variant = ButtonVariant.Outline, size = ButtonSize.Large)
-                    
+
                     // Gradient buttons
                     VTButton(text = "Gradient Small", onClick = {}, variant = ButtonVariant.Gradient, size = ButtonSize.Small)
                     VTButton(text = "Gradient Medium", onClick = {}, variant = ButtonVariant.Gradient, size = ButtonSize.Medium)
@@ -106,14 +106,14 @@ class MaximumCoverageTests {
                         title = "Horizontal",
                         value = "100",
                         icon = Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Horizontal
+                        layout = StatsCardLayout.Horizontal,
                     )
                     // Vertical layout
                     VTStatsCard(
                         title = "Vertical",
                         value = "200",
                         icon = Icons.Filled.People,
-                        layout = StatsCardLayout.Vertical
+                        layout = StatsCardLayout.Vertical,
                     )
                     // With trend up
                     VTStatsCard(
@@ -121,7 +121,7 @@ class MaximumCoverageTests {
                         value = "300",
                         icon = Icons.Filled.TrendingUp,
                         trend = TrendDirection.Up,
-                        trendValue = "+10"
+                        trendValue = "+10",
                     )
                     // With trend down
                     VTStatsCard(
@@ -129,7 +129,7 @@ class MaximumCoverageTests {
                         value = "400",
                         icon = Icons.Filled.TrendingDown,
                         trend = TrendDirection.Down,
-                        trendValue = "-5"
+                        trendValue = "-5",
                     )
                     // With trend neutral
                     VTStatsCard(
@@ -137,7 +137,7 @@ class MaximumCoverageTests {
                         value = "500",
                         icon = Icons.Filled.Remove,
                         trend = TrendDirection.None,
-                        trendValue = "0"
+                        trendValue = "0",
                     )
                 }
             }
@@ -160,25 +160,25 @@ class MaximumCoverageTests {
                         classRoom = ClassRoom(0, "Indigo 반", "과목", "설명", 30, 5, 0.8f, PrimaryIndigo),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                     ClassCard(
                         classRoom = ClassRoom(1, "Success 반", "과목", "설명", 30, 5, 0.8f, Success),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                     ClassCard(
                         classRoom = ClassRoom(2, "Warning 반", "과목", "설명", 30, 5, 0.8f, Warning),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                     ClassCard(
                         classRoom = ClassRoom(3, "Error 반", "과목", "설명", 30, 5, 0.8f, Error),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                 }
             }
@@ -194,23 +194,23 @@ class MaximumCoverageTests {
                 Column {
                     ClassAssignmentCard(
                         assignment = ClassAssignment(1, "과제 0%", "수학", "2024-12-31", 0f, 30, 0, 85),
-                        onNavigateToAssignmentDetail = {}
+                        onNavigateToAssignmentDetail = {},
                     )
                     ClassAssignmentCard(
                         assignment = ClassAssignment(2, "과제 25%", "수학", "2024-12-31", 0.25f, 30, 7, 85),
-                        onNavigateToAssignmentDetail = {}
+                        onNavigateToAssignmentDetail = {},
                     )
                     ClassAssignmentCard(
                         assignment = ClassAssignment(3, "과제 50%", "수학", "2024-12-31", 0.5f, 30, 15, 85),
-                        onNavigateToAssignmentDetail = {}
+                        onNavigateToAssignmentDetail = {},
                     )
                     ClassAssignmentCard(
                         assignment = ClassAssignment(4, "과제 75%", "수학", "2024-12-31", 0.75f, 30, 22, 85),
-                        onNavigateToAssignmentDetail = {}
+                        onNavigateToAssignmentDetail = {},
                     )
                     ClassAssignmentCard(
                         assignment = ClassAssignment(5, "과제 100%", "수학", "2024-12-31", 1f, 30, 30, 85),
-                        onNavigateToAssignmentDetail = {}
+                        onNavigateToAssignmentDetail = {},
                     )
                 }
             }
@@ -230,25 +230,25 @@ class MaximumCoverageTests {
                         value = "",
                         onValueChange = {},
                         label = { Text("텍스트") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     )
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
                         label = { Text("숫자") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
                         label = { Text("이메일") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     )
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
                         label = { Text("전화번호") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     )
                 }
             }
@@ -273,17 +273,17 @@ class MaximumCoverageTests {
                     FilterChip(
                         selected = filter1Selected,
                         onClick = { filter1Selected = !filter1Selected },
-                        label = { Text("필터 1") }
+                        label = { Text("필터 1") },
                     )
                     FilterChip(
                         selected = filter2Selected,
                         onClick = { filter2Selected = !filter2Selected },
-                        label = { Text("필터 2") }
+                        label = { Text("필터 2") },
                     )
                     FilterChip(
                         selected = filter3Selected,
                         onClick = { filter3Selected = !filter3Selected },
-                        label = { Text("필터 3") }
+                        label = { Text("필터 3") },
                     )
                 }
             }
@@ -327,7 +327,7 @@ class MaximumCoverageTests {
                 Column {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
@@ -336,7 +336,7 @@ class MaximumCoverageTests {
                     }
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
@@ -362,19 +362,19 @@ class MaximumCoverageTests {
                     VTCard {
                         Text(
                             text = "오류가 발생했습니다",
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.error,
                         )
                     }
                     VTCard {
                         Text(
                             text = "네트워크 연결을 확인해주세요",
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.error,
                         )
                     }
                     VTCard {
                         Text(
                             text = "서버 오류가 발생했습니다",
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.error,
                         )
                     }
                 }
@@ -394,7 +394,7 @@ class MaximumCoverageTests {
                 Column {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Filled.Assignment, contentDescription = null, tint = Gray400)
@@ -404,7 +404,7 @@ class MaximumCoverageTests {
                     }
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Filled.People, contentDescription = null, tint = Gray400)
@@ -430,33 +430,33 @@ class MaximumCoverageTests {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     // Header
                     Text(
                         text = "대시보드",
-                        style = MaterialTheme.typography.headlineMedium
+                        style = MaterialTheme.typography.headlineMedium,
                     )
-                    
+
                     // Stats row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         VTStatsCard(
                             title = "과제",
                             value = "10",
                             icon = Icons.Filled.Assignment,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         VTStatsCard(
                             title = "학생",
                             value = "30",
                             icon = Icons.Filled.People,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                     }
-                    
+
                     // Cards
                     VTCard {
                         Text("카드 1")
@@ -464,7 +464,7 @@ class MaximumCoverageTests {
                     VTCard {
                         Text("카드 2")
                     }
-                    
+
                     // Buttons
                     VTButton(text = "작업 1", onClick = {}, modifier = Modifier.fillMaxWidth())
                     VTButton(text = "작업 2", onClick = {}, variant = ButtonVariant.Outline, modifier = Modifier.fillMaxWidth())
@@ -527,7 +527,7 @@ class MaximumCoverageTests {
                     VTStatsCard(
                         title = "0 값",
                         value = "0",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.Filled.Assignment,
                     )
                     VTCard {
                         Text("0")
@@ -548,7 +548,7 @@ class MaximumCoverageTests {
                     VTStatsCard(
                         title = "최대 값",
                         value = "999",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.Filled.Assignment,
                     )
                     VTCard {
                         Text("999")
@@ -587,7 +587,7 @@ class MaximumCoverageTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("이어할 과제가 없습니다", substring = true).assertExists()
         composeTestRule.onNodeWithText("홈 화면에서 새로운 과제를 확인해보세요", substring = true).assertExists()
     }
@@ -600,7 +600,7 @@ class MaximumCoverageTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onRoot().assertExists()
     }
 
@@ -612,7 +612,7 @@ class MaximumCoverageTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onRoot().assertExists()
     }
 
@@ -624,47 +624,47 @@ class MaximumCoverageTests {
                     // Test FeatureItem variations
                     FeatureItem(feature = "기능 1")
                     FeatureItem(feature = "기능 2")
-                    
+
                     // Test InfoItem variations
                     InfoItem(label = "라벨 1", value = "값 1")
                     InfoItem(label = "라벨 2", value = "값 2")
-                    
+
                     // Test LegalItem variations
                     LegalItem(title = "법적 항목 1", onClick = {})
                     LegalItem(title = "법적 항목 2", onClick = {})
-                    
+
                     // Test ContactItem variations
                     ContactItem(
                         icon = Icons.Filled.Email,
                         title = "이메일",
                         value = "email@example.com",
-                        onClick = {}
+                        onClick = {},
                     )
                     ContactItem(
                         icon = Icons.Filled.Language,
                         title = "웹사이트",
                         value = "www.example.com",
-                        onClick = {}
+                        onClick = {},
                     )
-                    
+
                     // Test ActionItem variations
                     ActionItem(
                         icon = Icons.Filled.Update,
                         title = "업데이트",
                         description = "설명 1",
-                        onClick = {}
+                        onClick = {},
                     )
                     ActionItem(
                         icon = Icons.Filled.Share,
                         title = "공유",
                         description = "설명 2",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("기능 1", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("기능 2", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("라벨 1", useUnmergedTree = true).assertExists()
@@ -692,4 +692,3 @@ class MaximumCoverageTests {
         composeTestRule.onRoot().assertExists()
     }
 }
-

@@ -5,37 +5,43 @@ import com.google.gson.annotations.SerializedName
 enum class AssignmentStatus {
     @SerializedName("IN_PROGRESS")
     IN_PROGRESS,
+
     @SerializedName("COMPLETED")
     COMPLETED,
+
     @SerializedName("DRAFT")
-    DRAFT
+    DRAFT,
 }
 
 enum class AssignmentFilter {
     @SerializedName("ALL")
     ALL,
+
     @SerializedName("IN_PROGRESS")
     IN_PROGRESS,
+
     @SerializedName("COMPLETED")
-    COMPLETED
+    COMPLETED,
 }
 
 // Personal Assignment 상태
 enum class PersonalAssignmentStatus {
     @SerializedName("NOT_STARTED")
     NOT_STARTED,
+
     @SerializedName("IN_PROGRESS")
     IN_PROGRESS,
+
     @SerializedName("SUBMITTED")
-    SUBMITTED
+    SUBMITTED,
 }
 
 // Personal Assignment용 필터
 enum class PersonalAssignmentFilter {
-    ALL,           // 모든 과제
-    NOT_STARTED,   // 시작 안함
-    IN_PROGRESS,   // 진행 중
-    SUBMITTED      // 제출 완료
+    ALL, // 모든 과제
+    NOT_STARTED, // 시작 안함
+    IN_PROGRESS, // 진행 중
+    SUBMITTED, // 제출 완료
 }
 
 data class AssignmentData(
@@ -60,8 +66,8 @@ data class AssignmentData(
     // Personal Assignment 관련 정보 (변환 시 추가)
     val personalAssignmentStatus: PersonalAssignmentStatus? = null,
     val solvedNum: Int? = null,
-    val personalAssignmentId: Int? = null,  // PersonalAssignment ID 추가
-    val submittedAt: String? = null  // 제출 일시
+    val personalAssignmentId: Int? = null, // PersonalAssignment ID 추가
+    val submittedAt: String? = null, // 제출 일시
 )
 
 data class CourseClass(
@@ -78,7 +84,7 @@ data class CourseClass(
     @SerializedName("student_count")
     val studentCount: Int,
     @SerializedName("created_at")
-    val createdAt: String
+    val createdAt: String,
 )
 
 data class Subject(
@@ -87,7 +93,7 @@ data class Subject(
     @SerializedName("name")
     val name: String,
     @SerializedName("code")
-    val code: String? = null
+    val code: String? = null,
 )
 
 data class Material(
@@ -100,7 +106,7 @@ data class Material(
     @SerializedName("bytes")
     val bytes: Int? = null,
     @SerializedName("created_at")
-    val createdAt: String
+    val createdAt: String,
 )
 
 data class QuestionData(
@@ -117,7 +123,7 @@ data class QuestionData(
     @SerializedName("points")
     val points: Int = 1,
     @SerializedName("explanation")
-    val explanation: String? = null
+    val explanation: String? = null,
 )
 
 // Personal Assignment 데이터 모델
@@ -135,7 +141,7 @@ data class PersonalAssignmentData(
     @SerializedName("started_at")
     val startedAt: String? = null,
     @SerializedName("submitted_at")
-    val submittedAt: String? = null
+    val submittedAt: String? = null,
 )
 
 data class StudentInfo(
@@ -144,7 +150,7 @@ data class StudentInfo(
     @SerializedName("display_name")
     val displayName: String,
     @SerializedName("email")
-    val email: String
+    val email: String,
 )
 
 data class PersonalAssignmentInfo(
@@ -159,7 +165,7 @@ data class PersonalAssignmentInfo(
     @SerializedName("due_at")
     val dueAt: String,
     @SerializedName("grade")
-    val grade: String
+    val grade: String,
 )
 
 data class StudentResult(
@@ -180,7 +186,7 @@ data class StudentResult(
     @SerializedName("answers")
     val answers: List<String>,
     @SerializedName("detailedAnswers")
-    val detailedAnswers: List<DetailedAnswer>
+    val detailedAnswers: List<DetailedAnswer>,
 )
 
 data class DetailedAnswer(
@@ -197,7 +203,7 @@ data class DetailedAnswer(
     @SerializedName("confidenceScore")
     val confidenceScore: Int,
     @SerializedName("responseTime")
-    val responseTime: String
+    val responseTime: String,
 )
 
 data class AssignmentResultData(
@@ -208,7 +214,7 @@ data class AssignmentResultData(
     @SerializedName("average_score")
     val averageScore: Double? = null,
     @SerializedName("completion_rate")
-    val completionRate: Double? = null
+    val completionRate: Double? = null,
 )
 
 // Personal Assignment API용 데이터 모델들
@@ -245,7 +251,7 @@ data class PersonalAssignmentStatistics(
     @SerializedName("progress")
     val progress: Float,
     @SerializedName("average_score")
-    val averageScore: Float
+    val averageScore: Float,
 )
 
 data class TailQuestion(
@@ -260,7 +266,7 @@ data class TailQuestion(
     @SerializedName("explanation")
     val explanation: String,
     @SerializedName("difficulty")
-    val difficulty: String
+    val difficulty: String,
 )
 
 data class AnswerSubmissionResponse(
@@ -269,7 +275,7 @@ data class AnswerSubmissionResponse(
     @SerializedName("number_str")
     val numberStr: String? = null,
     @SerializedName("tail_question")
-    val tailQuestion: TailQuestion?
+    val tailQuestion: TailQuestion?,
 )
 
 // 음성 녹음을 위한 데이터 클래스
@@ -277,9 +283,8 @@ data class AudioRecordingState(
     val isRecording: Boolean = false,
     val recordingDuration: Int = 0,
     val audioFilePath: String? = null,
-    val isProcessing: Boolean = false
+    val isProcessing: Boolean = false,
 )
-
 
 data class AssignmentCorrectnessItem(
     @SerializedName("question_content")
@@ -295,6 +300,5 @@ data class AssignmentCorrectnessItem(
     @SerializedName("question_number")
     val questionNum: String,
     @SerializedName("explanation")
-    val explanation: String
+    val explanation: String,
 )
-

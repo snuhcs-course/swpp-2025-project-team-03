@@ -68,15 +68,15 @@ def add_features_inplace(
                     sem_low_thr=sem_low_thr,
                     shared_model=shared_model,
                 )
-                print(f" Updated: {json_path}  -> {summary}")
+                print(f"Updated: {json_path}  -> {summary}")
                 n_ok += 1
 
             except (ValueError, FileNotFoundError) as ve:
                 # 예: script 없음, total_length 없음/0 이하 등
-                print(f" Skip: {json_path} ({ve})")
+                print(f"Skip: {json_path} ({ve})")
                 n_skip += 1
             except Exception as e:
-                print(f" Failed: {json_path} ({e})")
+                print(f"Failed: {json_path} ({e})")
                 n_err += 1
 
     print(f"\n[SUMMARY] ok={n_ok}, skip={n_skip}, err={n_err}")

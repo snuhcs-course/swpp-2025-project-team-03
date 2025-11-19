@@ -5,8 +5,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
-import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import io.mockk.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Before
@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 /**
  * Espresso/Compose UI tests for LoginScreen.
  * Tests UI interactions and state without modifying the original file.
- * 
+ *
  * NOTE: Disabled due to MockK incompatibility with Android Instrumentation tests.
  */
 @Ignore("MockK incompatible with Android tests - use Hilt-based tests instead")
@@ -48,7 +48,7 @@ class LoginScreenTest {
             VoiceTutorTheme {
                 LoginScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -68,7 +68,7 @@ class LoginScreenTest {
             VoiceTutorTheme {
                 LoginScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -85,7 +85,7 @@ class LoginScreenTest {
             VoiceTutorTheme {
                 LoginScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -102,7 +102,7 @@ class LoginScreenTest {
             VoiceTutorTheme {
                 LoginScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -118,7 +118,7 @@ class LoginScreenTest {
             VoiceTutorTheme {
                 LoginScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -134,7 +134,7 @@ class LoginScreenTest {
             VoiceTutorTheme {
                 LoginScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -155,7 +155,7 @@ class LoginScreenTest {
                 LoginScreen(
                     authViewModel = mockAuthViewModel,
                     assignmentViewModel = mockAssignmentViewModel,
-                    onSignupClick = { signupClicked = true }
+                    onSignupClick = { signupClicked = true },
                 )
             }
         }
@@ -166,4 +166,3 @@ class LoginScreenTest {
         assert(signupClicked)
     }
 }
-

@@ -4,15 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,21 +36,21 @@ class ExtendedCoverageTests {
                         isSelected = true,
                         isCorrect = false,
                         isWrong = false,
-                        onClick = {}
+                        onClick = {},
                     )
                     OptionButton(
                         text = "옵션 2",
                         isSelected = false,
                         isCorrect = true,
                         isWrong = false,
-                        onClick = {}
+                        onClick = {},
                     )
                     OptionButton(
                         text = "옵션 3",
                         isSelected = false,
                         isCorrect = false,
                         isWrong = true,
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
@@ -75,7 +72,7 @@ class ExtendedCoverageTests {
                     isSelected = false,
                     isCorrect = false,
                     isWrong = false,
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 )
             }
         }
@@ -97,14 +94,14 @@ class ExtendedCoverageTests {
             startedAt = "2024-12-29",
             submittedAt = "2024-12-30",
             answers = emptyList(),
-            detailedAnswers = emptyList()
+            detailedAnswers = emptyList(),
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentResultCard(
                     student = student,
-                    onStudentClick = {}
+                    onStudentClick = {},
                 )
             }
         }
@@ -129,14 +126,14 @@ class ExtendedCoverageTests {
             startedAt = "2024-12-29",
             submittedAt = "2024-12-30",
             answers = emptyList(),
-            detailedAnswers = emptyList()
+            detailedAnswers = emptyList(),
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentResultCard(
                     student = student,
-                    onStudentClick = { clicked = true }
+                    onStudentClick = { clicked = true },
                 )
             }
         }
@@ -154,11 +151,11 @@ class ExtendedCoverageTests {
             question = "질문 1",
             myAnswer = "답변 1",
             correctAnswer = "정답 1",
-            isCorrect = true
+            isCorrect = true,
         )
         val group = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = emptyList()
+            tailQuestions = emptyList(),
         )
 
         composeTestRule.setContent {
@@ -166,7 +163,7 @@ class ExtendedCoverageTests {
                 QuestionGroupCard(
                     group = group,
                     isExpanded = false,
-                    onToggle = {}
+                    onToggle = {},
                 )
             }
         }
@@ -182,13 +179,13 @@ class ExtendedCoverageTests {
             question = "질문",
             myAnswer = "답변",
             correctAnswer = "정답",
-            isCorrect = true
+            isCorrect = true,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 DetailedQuestionResultCard(
-                    question = question
+                    question = question,
                 )
             }
         }
@@ -229,7 +226,7 @@ class ExtendedCoverageTests {
                             description = "설명",
                             totalQuestions = 10,
                             dueAt = "2024-12-31T23:59:59Z",
-                            
+
                             createdAt = "2024-01-01T00:00:00Z",
                             courseClass = CourseClass(
                                 id = 1,
@@ -237,19 +234,18 @@ class ExtendedCoverageTests {
                                 description = null,
                                 subject = Subject(1, "수학", "MATH"),
                                 teacherName = "선생님",
-                                
-                                
+
                                 studentCount = 30,
-                                createdAt = "2024-01-01T00:00:00Z"
+                                createdAt = "2024-01-01T00:00:00Z",
                             ),
                             grade = "1",
-                            materials = null
+                            materials = null,
                         ),
                         submittedCount = 5,
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onViewResults = {}
+                        onViewResults = {},
                     )
                 }
             }
@@ -275,7 +271,7 @@ class ExtendedCoverageTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.NOT_STARTED,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "진행중 과제",
@@ -286,7 +282,7 @@ class ExtendedCoverageTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "제출된 과제",
@@ -297,7 +293,7 @@ class ExtendedCoverageTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.SUBMITTED,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                 }
             }
@@ -322,7 +318,7 @@ class ExtendedCoverageTests {
                         status = AssignmentStatus.IN_PROGRESS,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                     TeacherAssignmentCard(
                         title = "완료된 과제",
@@ -333,7 +329,7 @@ class ExtendedCoverageTests {
                         status = AssignmentStatus.COMPLETED,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                     TeacherAssignmentCard(
                         title = "초안 과제",
@@ -344,7 +340,7 @@ class ExtendedCoverageTests {
                         status = AssignmentStatus.DRAFT,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                 }
             }
@@ -362,12 +358,12 @@ class ExtendedCoverageTests {
                     VTStatsCard(
                         title = "전체 과제",
                         value = "10",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.Filled.Assignment,
                     )
                     VTStatsCard(
                         title = "완료 과제",
                         value = "5",
-                        icon = Icons.Filled.CheckCircle
+                        icon = Icons.Filled.CheckCircle,
                     )
                 }
             }
@@ -386,7 +382,7 @@ class ExtendedCoverageTests {
             id = 1,
             name = "홍길동",
             email = "test@example.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
 
         composeTestRule.setContent {
@@ -398,7 +394,7 @@ class ExtendedCoverageTests {
                     totalAssignments = 10,
                     completedAssignments = 8,
                     isLoadingStats = false,
-                    isLastItem = false
+                    isLastItem = false,
                 )
             }
         }
@@ -417,7 +413,7 @@ class ExtendedCoverageTests {
             description = "설명",
             totalQuestions = 10,
             dueAt = "2024-12-31T23:59:59Z",
-            
+
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -425,20 +421,19 @@ class ExtendedCoverageTests {
                 description = null,
                 subject = Subject(1, "수학", "MATH"),
                 teacherName = "선생님",
-                
-                
+
                 studentCount = 30,
-                createdAt = "2024-01-01T00:00:00Z"
+                createdAt = "2024-01-01T00:00:00Z",
             ),
             grade = "1",
-            materials = null
+            materials = null,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AssignmentReportCard(
                     assignment = assignment,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
@@ -456,7 +451,7 @@ class ExtendedCoverageTests {
             description = "설명",
             totalQuestions = 10,
             dueAt = "2024-12-31T23:59:59Z",
-            
+
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -464,20 +459,19 @@ class ExtendedCoverageTests {
                 description = null,
                 subject = Subject(1, "수학", "MATH"),
                 teacherName = "선생님",
-                
-                
+
                 studentCount = 30,
-                createdAt = "2024-01-01T00:00:00Z"
+                createdAt = "2024-01-01T00:00:00Z",
             ),
             grade = "1",
-            materials = null
+            materials = null,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AssignmentReportCard(
                     assignment = assignment,
-                    onReportClick = { clicked = true }
+                    onReportClick = { clicked = true },
                 )
             }
         }
@@ -494,14 +488,14 @@ class ExtendedCoverageTests {
             totalQuestions = 10,
             correctQuestions = 8,
             accuracy = 80.0,
-            content = "수학"
+            content = "수학",
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AchievementStatisticCard(
                     achievementCode = "MATH-001",
-                    statistics = statistics
+                    statistics = statistics,
                 )
             }
         }
@@ -521,11 +515,11 @@ class ExtendedCoverageTests {
                         id = 1,
                         name = "홍길동",
                         email = "test@example.com",
-                        role = UserRole.STUDENT
+                        role = UserRole.STUDENT,
                     ),
                     classNames = listOf("수학 A반", "영어 B반"),
                     isLoadingClasses = false,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
@@ -544,11 +538,11 @@ class ExtendedCoverageTests {
                         id = 1,
                         name = "홍길동",
                         email = "test@example.com",
-                        role = UserRole.STUDENT
+                        role = UserRole.STUDENT,
                     ),
                     classNames = listOf("수학 A반"),
                     isLoadingClasses = false,
-                    onReportClick = { clicked = true }
+                    onReportClick = { clicked = true },
                 )
             }
         }
@@ -574,7 +568,7 @@ class ExtendedCoverageTests {
                     VTStatsCard(
                         title = "통계",
                         value = "100",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.Filled.Assignment,
                     )
                 }
             }
@@ -601,7 +595,7 @@ class ExtendedCoverageTests {
                     VTStatsCard(
                         title = "",
                         value = "",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.Filled.Assignment,
                     )
                 }
             }
@@ -656,20 +650,20 @@ class ExtendedCoverageTests {
                         value = "100",
                         icon = Icons.Filled.Assignment,
                         trend = TrendDirection.Up,
-                        trendValue = "+5"
+                        trendValue = "+5",
                     )
                     VTStatsCard(
                         title = "통계 Down",
                         value = "100",
                         icon = Icons.Filled.Assignment,
                         trend = TrendDirection.Down,
-                        trendValue = "-5"
+                        trendValue = "-5",
                     )
                     VTStatsCard(
                         title = "통계 None",
                         value = "100",
                         icon = Icons.Filled.Assignment,
-                        trend = TrendDirection.None
+                        trend = TrendDirection.None,
                     )
                 }
             }
@@ -707,17 +701,17 @@ class ExtendedCoverageTests {
                     VTButton(
                         text = "Primary 버튼",
                         onClick = {},
-                        variant = ButtonVariant.Primary
+                        variant = ButtonVariant.Primary,
                     )
                     VTButton(
                         text = "Outline 버튼",
                         onClick = {},
-                        variant = ButtonVariant.Outline
+                        variant = ButtonVariant.Outline,
                     )
                     VTButton(
                         text = "Gradient 버튼",
                         onClick = {},
-                        variant = ButtonVariant.Gradient
+                        variant = ButtonVariant.Gradient,
                     )
                 }
             }
@@ -734,17 +728,17 @@ class ExtendedCoverageTests {
                     VTButton(
                         text = "Small 버튼",
                         onClick = {},
-                        size = ButtonSize.Small
+                        size = ButtonSize.Small,
                     )
                     VTButton(
                         text = "Medium 버튼",
                         onClick = {},
-                        size = ButtonSize.Medium
+                        size = ButtonSize.Medium,
                     )
                     VTButton(
                         text = "Large 버튼",
                         onClick = {},
-                        size = ButtonSize.Large
+                        size = ButtonSize.Large,
                     )
                 }
             }
@@ -762,13 +756,13 @@ class ExtendedCoverageTests {
                         title = "Horizontal 통계",
                         value = "100",
                         icon = Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Horizontal
+                        layout = StatsCardLayout.Horizontal,
                     )
                     VTStatsCard(
                         title = "Vertical 통계",
                         value = "100",
                         icon = Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Vertical
+                        layout = StatsCardLayout.Vertical,
                     )
                 }
             }
@@ -787,7 +781,7 @@ class ExtendedCoverageTests {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
-                    label = { Text("입력") }
+                    label = { Text("입력") },
                 )
             }
         }
@@ -804,7 +798,7 @@ class ExtendedCoverageTests {
                 FilterChip(
                     selected = selected,
                     onClick = { selected = !selected },
-                    label = { Text("필터") }
+                    label = { Text("필터") },
                 )
             }
         }
@@ -874,7 +868,7 @@ class ExtendedCoverageTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("테스트 기능", useUnmergedTree = true).assertExists()
     }
 
@@ -886,7 +880,7 @@ class ExtendedCoverageTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("값", useUnmergedTree = true).assertExists()
     }
@@ -900,7 +894,7 @@ class ExtendedCoverageTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("법적 항목").performClick()
         assert(clicked)
@@ -915,12 +909,12 @@ class ExtendedCoverageTests {
                     icon = Icons.Filled.Email,
                     title = "이메일",
                     value = "test@example.com",
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 )
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("test@example.com", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("이메일").performClick()
@@ -936,12 +930,12 @@ class ExtendedCoverageTests {
                     icon = Icons.Filled.Update,
                     title = "업데이트",
                     description = "설명",
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 )
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("설명", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("업데이트").performClick()
@@ -960,19 +954,19 @@ class ExtendedCoverageTests {
                         icon = Icons.Filled.Email,
                         title = "이메일",
                         value = "test@example.com",
-                        onClick = {}
+                        onClick = {},
                     )
                     ActionItem(
                         icon = Icons.Filled.Update,
                         title = "업데이트",
                         description = "설명",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("기능 1", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true).assertExists()
@@ -980,4 +974,3 @@ class ExtendedCoverageTests {
         composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
     }
 }
-

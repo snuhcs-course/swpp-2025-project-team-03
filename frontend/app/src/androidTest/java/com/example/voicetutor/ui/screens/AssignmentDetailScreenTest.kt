@@ -11,10 +11,10 @@ import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(AndroidJUnit4::class)
 class AssignmentDetailScreenTest {
@@ -47,7 +47,7 @@ class AssignmentDetailScreenTest {
                     assignmentId = personalAssignmentId,
                     assignmentTitle = assignmentTitle,
                     onStartAssignment = { startClicked.set(true) },
-                    assignmentViewModelParam = assignmentViewModel
+                    assignmentViewModelParam = assignmentViewModel,
                 )
             }
         }
@@ -80,7 +80,7 @@ class AssignmentDetailScreenTest {
                 AssignmentDetailScreen(
                     assignmentId = 999,
                     assignmentTitle = "에러 과제",
-                    assignmentViewModelParam = assignmentViewModel
+                    assignmentViewModelParam = assignmentViewModel,
                 )
             }
         }
@@ -93,4 +93,3 @@ class AssignmentDetailScreenTest {
         composeRule.onNodeWithText("서버 오류", useUnmergedTree = true).assertIsDisplayed()
     }
 }
-

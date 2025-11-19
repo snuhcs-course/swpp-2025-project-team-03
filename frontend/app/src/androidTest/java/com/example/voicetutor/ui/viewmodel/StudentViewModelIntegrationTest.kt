@@ -114,18 +114,18 @@ class StudentViewModelIntegrationTest {
             StudentRepository(object : ApiService by FakeApiService() {
                 override suspend fun getAllStudents(
                     teacherId: String?,
-                    classId: String?
+                    classId: String?,
                 ): Response<ApiResponse<List<com.example.voicetutor.data.models.Student>>> {
                     return Response.success(
                         ApiResponse(
                             success = false,
                             data = null,
                             message = null,
-                            error = "student error"
-                        )
+                            error = "student error",
+                        ),
                     )
                 }
-            })
+            }),
         )
 
         failingViewModel.loadAllStudents()
@@ -134,4 +134,3 @@ class StudentViewModelIntegrationTest {
         assertEquals("student error", failingViewModel.error.value)
     }
 }
-

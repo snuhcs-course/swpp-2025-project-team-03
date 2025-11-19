@@ -132,7 +132,7 @@ def format_timestamped_result(result):
             word = word_data["word"]
             confidence = word_data["confidence"]
 
-            formatted_results.append(f"  [{start_time:.2f}s - {end_time:.2f}s] '{word}' (신뢰도: {confidence:.2f})")
+            formatted_results.append(f"[{start_time:.2f}s - {end_time:.2f}s] '{word}' (신뢰도: {confidence:.2f})")
 
     return "\n".join(formatted_results)
 
@@ -144,7 +144,7 @@ def main():
 
     # 환경변수 확인
     if not GOOGLE_APPLICATION_CREDENTIALS:
-        print("  경고: GOOGLE_APPLICATION_CREDENTIALS 환경변수가 설정되지 않았습니다.")
+        print("경고: GOOGLE_APPLICATION_CREDENTIALS 환경변수가 설정되지 않았습니다.")
         print("Google Cloud 서비스 계정 키 파일 경로를 설정해주세요.")
         print("예: export GOOGLE_APPLICATION_CREDENTIALS='path/to/service-account-key.json'")
         return
@@ -153,7 +153,7 @@ def main():
     test_file = input("테스트할 오디오 파일 경로를 입력하세요: ").strip()
 
     if not os.path.exists(test_file):
-        print(f" 파일을 찾을 수 없습니다: {test_file}")
+        print(f"파일을 찾을 수 없습니다: {test_file}")
         return
 
     print(f"📁 파일: {test_file}")

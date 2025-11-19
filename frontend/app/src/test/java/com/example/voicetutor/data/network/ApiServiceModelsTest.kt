@@ -1,7 +1,7 @@
 package com.example.voicetutor.data.network
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class ApiServiceModelsTest {
 
@@ -22,7 +22,7 @@ class ApiServiceModelsTest {
             success = true,
             data = data,
             message = "Success",
-            error = null
+            error = null,
         )
 
         // Then
@@ -39,7 +39,7 @@ class ApiServiceModelsTest {
             success = false,
             data = null,
             message = null,
-            error = "Error occurred"
+            error = "Error occurred",
         )
 
         // Then
@@ -95,7 +95,7 @@ class ApiServiceModelsTest {
             assignment_id = 123,
             material_id = 456,
             s3_key = "assignments/123/file.pdf",
-            upload_url = "https://s3.example.com/upload"
+            upload_url = "https://s3.example.com/upload",
         )
 
         // Then
@@ -116,7 +116,7 @@ class ApiServiceModelsTest {
             file_size = 1024L,
             content_type = "application/pdf",
             last_modified = "2025-01-01T00:00:00Z",
-            bucket = "my-bucket"
+            bucket = "my-bucket",
         )
 
         // Then
@@ -141,7 +141,7 @@ class ApiServiceModelsTest {
             file_size = null,
             content_type = null,
             last_modified = null,
-            bucket = "my-bucket"
+            bucket = "my-bucket",
         )
 
         // Then
@@ -157,7 +157,7 @@ class ApiServiceModelsTest {
         val request = QuestionCreateRequest(
             assignment_id = 123,
             material_id = 456,
-            total_number = 10
+            total_number = 10,
         )
 
         // Then
@@ -206,7 +206,7 @@ class ApiServiceModelsTest {
             totalQuestions = 20,
             dueAt = "2025-12-31T23:59:00Z",
             grade = "B",
-            subject = SubjectUpdateRequest(id = 1, name = "Math", code = "MATH101")
+            subject = SubjectUpdateRequest(id = 1, name = "Math", code = "MATH101"),
         )
 
         // Then
@@ -241,7 +241,7 @@ class ApiServiceModelsTest {
         val request = SubjectUpdateRequest(
             id = 1,
             name = "Mathematics",
-            code = "MATH101"
+            code = "MATH101",
         )
 
         // Then
@@ -269,18 +269,18 @@ class ApiServiceModelsTest {
                 questionId = 1,
                 answer = "Answer 1",
                 audioFile = "audio1.wav",
-                confidence = 0.95f
+                confidence = 0.95f,
             ),
             AnswerSubmission(
                 questionId = 2,
                 answer = "Answer 2",
                 audioFile = null,
-                confidence = null
-            )
+                confidence = null,
+            ),
         )
         val request = AssignmentSubmissionRequest(
             studentId = 123,
-            answers = answers
+            answers = answers,
         )
 
         // Then
@@ -302,7 +302,7 @@ class ApiServiceModelsTest {
             questionId = 1,
             answer = "Answer",
             audioFile = "audio.wav",
-            confidence = 0.9f
+            confidence = 0.9f,
         )
 
         // Then
@@ -319,7 +319,7 @@ class ApiServiceModelsTest {
             questionId = 1,
             answer = "Answer",
             audioFile = null,
-            confidence = null
+            confidence = null,
         )
 
         // Then
@@ -338,15 +338,15 @@ class ApiServiceModelsTest {
                 correctAnswer = "Answer",
                 explanation = "Correct",
                 confidence = 0.95f,
-                pronunciationScore = 0.9f
-            )
+                pronunciationScore = 0.9f,
+            ),
         )
         val result = AssignmentSubmissionResult(
             submissionId = 123,
             score = 85,
             totalQuestions = 100,
             correctAnswers = 85,
-            feedback = feedback
+            feedback = feedback,
         )
 
         // Then
@@ -367,7 +367,7 @@ class ApiServiceModelsTest {
             correctAnswer = "Answer",
             explanation = "Correct answer",
             confidence = 0.95f,
-            pronunciationScore = 0.9f
+            pronunciationScore = 0.9f,
         )
 
         // Then
@@ -390,7 +390,7 @@ class ApiServiceModelsTest {
             correctAnswer = "Correct",
             explanation = null,
             confidence = 0.5f,
-            pronunciationScore = null
+            pronunciationScore = null,
         )
 
         // Then
@@ -399,4 +399,3 @@ class ApiServiceModelsTest {
         assertNull(feedback.pronunciationScore)
     }
 }
-

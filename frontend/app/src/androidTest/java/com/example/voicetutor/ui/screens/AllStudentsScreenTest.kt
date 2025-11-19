@@ -1,14 +1,11 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import org.junit.Assert.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.ClassData
@@ -23,11 +20,12 @@ import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -65,8 +63,7 @@ class AllStudentsScreenTest {
                 studentCount = 25,
                 studentCountAlt = 25,
                 createdAt = "2024-01-01T00:00:00Z",
-                
-                
+
             ),
             ClassData(
                 id = 2,
@@ -78,14 +75,13 @@ class AllStudentsScreenTest {
                 studentCount = 20,
                 studentCountAlt = 20,
                 createdAt = "2024-01-01T00:00:00Z",
-                
-                
-            )
+
+            ),
         )
 
         val students = listOf(
             Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT),
-            Student(id = 2, name = "이몽룡", email = "lee@school.com", role = UserRole.STUDENT)
+            Student(id = 2, name = "이몽룡", email = "lee@school.com", role = UserRole.STUDENT),
         )
 
         fakeApi.apply {
@@ -96,7 +92,7 @@ class AllStudentsScreenTest {
             shouldFailStudentClasses = false
             studentClassesResponse = listOf(
                 ClassInfo(id = 1, name = "수학 A반"),
-                ClassInfo(id = 2, name = "과학 B반")
+                ClassInfo(id = 2, name = "과학 B반"),
             )
         }
     }
@@ -185,7 +181,7 @@ class AllStudentsScreenTest {
     @Test
     fun allStudentsScreen_displaysStudentWithNullName() {
         fakeApi.allStudentsResponse = listOf(
-            Student(id = 1, name = null, email = "test@school.com", role = UserRole.STUDENT)
+            Student(id = 1, name = null, email = "test@school.com", role = UserRole.STUDENT),
         )
 
         composeRule.setContent {
@@ -230,7 +226,7 @@ class AllStudentsScreenTest {
         // Set up student classes to return empty list
         fakeApi.shouldFailStudentClasses = false
         fakeApi.studentClassesResponse = emptyList()
-        
+
         composeRule.setContent {
             VoiceTutorTheme {
                 AllStudentsScreen(teacherId = "2")
@@ -305,7 +301,7 @@ class AllStudentsScreenTest {
                         capturedClassId = classId
                         capturedStudentId = studentId
                         capturedStudentName = studentName
-                    }
+                    },
                 )
             }
         }
@@ -323,7 +319,7 @@ class AllStudentsScreenTest {
     fun allStudentsScreen_displaysLoadingIndicator() {
         // Set up a delay to catch loading state
         fakeApi.allStudentsResponse = listOf(
-            Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT)
+            Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT),
         )
 
         composeRule.setContent {
@@ -371,7 +367,7 @@ class AllStudentsScreenTest {
         // Set up to delay student classes loading
         fakeApi.shouldFailStudentClasses = false
         fakeApi.studentClassesResponse = listOf(
-            ClassInfo(id = 1, name = "수학 A반")
+            ClassInfo(id = 1, name = "수학 A반"),
         )
 
         composeRule.setContent {
@@ -390,7 +386,7 @@ class AllStudentsScreenTest {
         fakeApi.studentClassesResponse = listOf(
             ClassInfo(id = 1, name = "수학 A반"),
             ClassInfo(id = 2, name = "과학 B반"),
-            ClassInfo(id = 3, name = "영어 C반")
+            ClassInfo(id = 3, name = "영어 C반"),
         )
 
         composeRule.setContent {
@@ -434,9 +430,8 @@ class AllStudentsScreenTest {
                 studentCount = 25,
                 studentCountAlt = 25,
                 createdAt = "2024-01-01T00:00:00Z",
-                
-                
-            )
+
+            ),
         )
 
         composeRule.setContent {
@@ -468,7 +463,7 @@ class AllStudentsScreenTest {
     @Test
     fun allStudentsScreen_handlesEmptyStudentNameGracefully() {
         fakeApi.allStudentsResponse = listOf(
-            Student(id = 1, name = null, email = "test@school.com", role = UserRole.STUDENT)
+            Student(id = 1, name = null, email = "test@school.com", role = UserRole.STUDENT),
         )
 
         composeRule.setContent {
@@ -512,7 +507,7 @@ class AllStudentsScreenTest {
     @Test
     fun allStudentsScreen_singleStudentShowsNoDividers() {
         fakeApi.allStudentsResponse = listOf(
-            Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT)
+            Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT),
         )
 
         composeRule.setContent {

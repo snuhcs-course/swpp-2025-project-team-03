@@ -26,7 +26,7 @@ class DirectScreenComposableTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("이어할 과제가 없습니다", substring = true).assertExists()
         composeTestRule.onNodeWithText("홈 화면에서 새로운 과제를 확인해보세요", substring = true).assertExists()
     }
@@ -39,7 +39,7 @@ class DirectScreenComposableTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify screen renders - check for any text that exists
         composeTestRule.onAllNodesWithText("앱", substring = true, useUnmergedTree = true)
             .onFirst()
@@ -55,9 +55,8 @@ class DirectScreenComposableTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Back button should exist in header
         composeTestRule.onNodeWithText("앱 정보", substring = true).assertExists()
     }
 }
-

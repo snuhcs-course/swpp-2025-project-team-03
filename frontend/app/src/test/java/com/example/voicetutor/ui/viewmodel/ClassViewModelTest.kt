@@ -33,16 +33,15 @@ class ClassViewModelTest {
         subject = buildSubject(),
         description = "Description",
         teacherId = 1,
-        
-        
+
         studentCount = 10,
-        createdAt = "2025-01-01"
+        createdAt = "2025-01-01",
     )
 
     @Test
     fun initialStates_areCorrect() = runTest {
         val vm = ClassViewModel(classRepository)
-        
+
         vm.classes.test {
             assert(awaitItem().isEmpty())
             cancelAndIgnoreRemainingEvents()
@@ -157,7 +156,7 @@ class ClassViewModelTest {
         val vm = ClassViewModel(classRepository)
         val students = listOf(
             Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT),
-            Student(id = 2, name = "Student2", email = "s2@test.com", role = UserRole.STUDENT)
+            Student(id = 2, name = "Student2", email = "s2@test.com", role = UserRole.STUDENT),
         )
         Mockito.`when`(classRepository.getClassStudents(1)).thenReturn(Result.success(students))
 
@@ -203,9 +202,9 @@ class ClassViewModelTest {
             description = "Description",
             subject_name = "Math",
             teacher_id = 1,
-            
+
         )
-        
+
         Mockito.`when`(classRepository.createClass(request)).thenReturn(Result.success(newClass))
 
         // When
@@ -233,7 +232,7 @@ class ClassViewModelTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            
+
         )
         Mockito.`when`(classRepository.createClass(request)).thenReturn(Result.failure(Exception("Creation failed")))
 
@@ -273,10 +272,10 @@ class ClassViewModelTest {
         val enrollment = EnrollmentData(
             student = Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT),
             courseClass = buildClassData(1),
-            status = "enrolled"
+            status = "enrolled",
         )
         val students = listOf(
-            Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT)
+            Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT),
         )
         Mockito.`when`(classRepository.enrollStudentToClass(1, 1)).thenReturn(Result.success(enrollment))
         Mockito.`when`(classRepository.getClassStudents(1)).thenReturn(Result.success(students))
@@ -383,9 +382,9 @@ class ClassViewModelTest {
                     averageScore = 85.5f,
                     completionRate = 0.9f,
                     totalAssignments = 10,
-                    completedAssignments = 9
-                )
-            )
+                    completedAssignments = 9,
+                ),
+            ),
         )
         Mockito.`when`(classRepository.getClassStudentsStatistics(1)).thenReturn(Result.success(statistics))
 
@@ -402,4 +401,3 @@ class ClassViewModelTest {
         assertEquals(statistics, callbackResult?.getOrNull())
     }
 }
-

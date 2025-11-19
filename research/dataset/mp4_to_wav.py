@@ -14,9 +14,9 @@ def convert_single(mp4_path: str):
         audio.close()
         video.close()
         os.remove(mp4_path)  # MP4 파일 삭제
-        return f" Converted and removed: {mp4_path}"
+        return f"Converted and removed: {mp4_path}"
     except Exception as e:
-        return f" Failed: {mp4_path} ({e})"
+        return f"Failed: {mp4_path} ({e})"
 
 
 def gather_mp4_files(root_dir="."):

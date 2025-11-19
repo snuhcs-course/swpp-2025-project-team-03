@@ -6,14 +6,13 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,12 +40,12 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("과제명") }
+                        label = { Text("과제명") },
                     )
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("설명") }
+                        label = { Text("설명") },
                     )
                     VTButton(text = "생성", onClick = {})
                 }
@@ -109,7 +108,7 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = "과제 1",
                         onValueChange = {},
-                        label = { Text("과제명") }
+                        label = { Text("과제명") },
                     )
                     VTButton(text = "저장", onClick = {})
                 }
@@ -173,12 +172,12 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("수업명") }
+                        label = { Text("수업명") },
                     )
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("과목") }
+                        label = { Text("과목") },
                     )
                     VTButton(text = "생성", onClick = {})
                 }
@@ -198,7 +197,7 @@ class FullScreenRenderingTests {
             questionNumber = 1,
             question = "질문",
             hint = "힌트",
-            modelAnswer = "정답"
+            modelAnswer = "정답",
         )
 
         composeTestRule.setContent {
@@ -289,7 +288,7 @@ class FullScreenRenderingTests {
                     VTStatsCard(
                         title = "과제",
                         value = "10개",
-                        icon = androidx.compose.material.icons.Icons.Filled.Assignment
+                        icon = androidx.compose.material.icons.Icons.Filled.Assignment,
                     )
                 }
             }
@@ -352,12 +351,12 @@ class FullScreenRenderingTests {
                     Text("설정", style = MaterialTheme.typography.headlineMedium)
                     VTCard(
                         variant = CardVariant.Elevated,
-                        onClick = {}
+                        onClick = {},
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text("알림 설정", style = MaterialTheme.typography.bodyLarge)
                             Icon(Icons.Filled.ChevronRight, contentDescription = null)
@@ -420,16 +419,16 @@ class FullScreenRenderingTests {
                 Column {
                     // Loading state
                     CircularProgressIndicator()
-                    
+
                     // Empty state
                     Text("데이터가 없습니다")
-                    
+
                     // Error state
                     Text(
                         text = "오류",
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     )
-                    
+
                     // Success state
                     VTCard {
                         Text("성공")
@@ -451,11 +450,11 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = text,
                         onValueChange = { text = it },
-                        label = { Text("입력") }
+                        label = { Text("입력") },
                     )
                     VTButton(
                         text = "제출",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
@@ -516,13 +515,13 @@ class FullScreenRenderingTests {
                         title = "Horizontal",
                         value = "100",
                         icon = androidx.compose.material.icons.Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Horizontal
+                        layout = StatsCardLayout.Horizontal,
                     )
                     VTStatsCard(
                         title = "Vertical",
                         value = "100",
                         icon = androidx.compose.material.icons.Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Vertical
+                        layout = StatsCardLayout.Vertical,
                     )
                 }
             }
@@ -533,4 +532,3 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("Vertical", substring = true).assertExists()
     }
 }
-

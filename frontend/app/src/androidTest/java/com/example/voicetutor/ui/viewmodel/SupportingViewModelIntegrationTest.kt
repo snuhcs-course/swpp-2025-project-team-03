@@ -110,40 +110,40 @@ class SupportingViewModelIntegrationTest {
                                 success = false,
                                 data = null,
                                 message = null,
-                                error = "class error"
-                            )
+                                error = "class error",
+                            ),
                         )
                     }
 
                     override suspend fun enrollStudentToClass(
                         id: Int,
-                        studentId: Int
+                        studentId: Int,
                     ): Response<ApiResponse<EnrollmentData>> {
                         return Response.success(
                             ApiResponse(
                                 success = false,
                                 data = null,
                                 message = null,
-                                error = "enroll error"
-                            )
+                                error = "enroll error",
+                            ),
                         )
                     }
 
                     override suspend fun removeStudentFromClass(
                         id: Int,
-                        student_id: Int
+                        student_id: Int,
                     ): Response<ApiResponse<Unit>> {
                         return Response.success(
                             ApiResponse(
                                 success = false,
                                 data = null,
                                 message = null,
-                                error = "remove error"
-                            )
+                                error = "remove error",
+                            ),
                         )
                     }
-                }
-            )
+                },
+            ),
         )
 
         failingClassViewModel.loadClasses("2")
@@ -181,4 +181,3 @@ class SupportingViewModelIntegrationTest {
         assertEquals("리포트 실패", reportViewModel.error.value)
     }
 }
-

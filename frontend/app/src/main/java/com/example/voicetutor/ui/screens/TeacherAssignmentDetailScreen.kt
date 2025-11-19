@@ -13,16 +13,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 @Composable
@@ -31,7 +29,7 @@ fun TeacherAssignmentDetailScreen(
     assignmentId: Int = 0,
     assignmentTitle: String? = null,
     onNavigateToEditAssignment: (Int) -> Unit = {},
-    onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> }
+    onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> },
 ) {
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
@@ -45,8 +43,8 @@ fun TeacherAssignmentDetailScreen(
         } else if (assignmentTitle != null) {
             assignments.find {
                 it.title == assignmentTitle ||
-                        "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
-                        assignmentTitle.contains(it.title)
+                    "${it.courseClass.subject.name} - ${it.title}" == assignmentTitle ||
+                    assignmentTitle.contains(it.title)
             }
         } else {
             null
@@ -62,7 +60,7 @@ fun TeacherAssignmentDetailScreen(
     var loadedAssignmentId by remember { mutableStateOf<Int?>(null) }
     val hasBasicAssignmentData = assignment != null || targetAssignment != null
     val isInitialLoading = isLoading && !hasBasicAssignmentData
-    
+
     LaunchedEffect(assignmentId) {
         if (assignmentId > 0 && assignmentId != loadedAssignmentId) {
             println("TeacherAssignmentDetail - Loading assignment ID: $assignmentId")
@@ -112,7 +110,7 @@ fun TeacherAssignmentDetailScreen(
             totalStudents = assignmentStatistics?.totalStudents ?: a.courseClass.studentCount,
             submittedStudents = assignmentStatistics?.submittedStudents ?: 0,
             averageScore = assignmentStatistics?.averageScore ?: 0,
-            completionRate = assignmentStatistics?.completionRate ?: 0
+            completionRate = assignmentStatistics?.completionRate ?: 0,
         )
     }
 
@@ -120,36 +118,36 @@ fun TeacherAssignmentDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (isInitialLoading) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(
-                    color = PrimaryIndigo
+                    color = PrimaryIndigo,
                 )
             }
         } else if (assignmentDetail == null && !hasBasicAssignmentData) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Assignment,
                         contentDescription = null,
                         tint = Gray400,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(48.dp),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "과제 정보를 찾을 수 없습니다",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Gray600
+                        color = Gray600,
                     )
                 }
             }
@@ -160,29 +158,29 @@ fun TeacherAssignmentDetailScreen(
                         .fillMaxWidth()
                         .background(
                             color = PrimaryIndigo.copy(alpha = 0.08f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                         )
-                        .padding(20.dp)
+                        .padding(20.dp),
                 ) {
                     Column {
                         Text(
                             text = detail.title,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = Gray800
+                            color = Gray800,
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "${detail.subject} • ${detail.className}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     VTStatsCard(
                         title = "제출률",
@@ -191,7 +189,7 @@ fun TeacherAssignmentDetailScreen(
                         iconColor = PrimaryIndigo,
                         variant = CardVariant.Elevated,
                         modifier = Modifier.weight(1f),
-                        layout = StatsCardLayout.Vertical
+                        layout = StatsCardLayout.Vertical,
                     )
 
                     VTStatsCard(
@@ -201,7 +199,7 @@ fun TeacherAssignmentDetailScreen(
                         iconColor = Success,
                         variant = CardVariant.Elevated,
                         modifier = Modifier.weight(1f),
-                        layout = StatsCardLayout.Vertical
+                        layout = StatsCardLayout.Vertical,
                     )
 
                     VTStatsCard(
@@ -211,25 +209,25 @@ fun TeacherAssignmentDetailScreen(
                         iconColor = Warning,
                         variant = CardVariant.Elevated,
                         modifier = Modifier.weight(1f),
-                        layout = StatsCardLayout.Vertical
+                        layout = StatsCardLayout.Vertical,
                     )
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
                         text = "과제 내용",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         VTButton(
                             text = "과제 편집",
@@ -245,9 +243,9 @@ fun TeacherAssignmentDetailScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Edit,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(16.dp),
                                 )
-                            }
+                            },
                         )
                     }
                 }
@@ -258,7 +256,7 @@ fun TeacherAssignmentDetailScreen(
                             text = detail.description,
                             style = MaterialTheme.typography.bodyMedium,
                             color = Gray700,
-                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
+                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5,
                         )
                     }
                 }
@@ -268,20 +266,20 @@ fun TeacherAssignmentDetailScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = "학생별 결과",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
 
                     Text(
                         text = "총 ${students.size}명",
                         style = MaterialTheme.typography.bodyMedium,
                         color = PrimaryIndigo,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                 }
 
@@ -290,31 +288,31 @@ fun TeacherAssignmentDetailScreen(
                 if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator(
-                            color = PrimaryIndigo
+                            color = PrimaryIndigo,
                         )
                     }
                 } else if (students.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Person,
                                 contentDescription = null,
                                 tint = Gray400,
-                                modifier = Modifier.size(48.dp)
+                                modifier = Modifier.size(48.dp),
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = "제출된 과제가 없습니다",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = Gray600
+                                color = Gray600,
                             )
                         }
                     }
@@ -327,7 +325,7 @@ fun TeacherAssignmentDetailScreen(
                                 if (destinationAssignmentId != 0) {
                                     onNavigateToStudentDetail(student.studentId, destinationAssignmentId, dynamicAssignmentTitle)
                                 }
-                            }
+                            },
                         )
 
                         if (index < students.size - 1) {
@@ -343,22 +341,22 @@ fun TeacherAssignmentDetailScreen(
 @Composable
 fun TeacherAssignmentResultCard(
     student: StudentResult,
-    onStudentClick: () -> Unit
+    onStudentClick: () -> Unit,
 ) {
     val isCompleted = student.status == "완료"
-    
+
     VTCard(
         variant = CardVariant.Elevated,
         onClick = onStudentClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = student.name,
@@ -367,28 +365,28 @@ fun TeacherAssignmentResultCard(
                     color = Gray800,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
-                
+
                 Spacer(modifier = Modifier.width(8.dp))
-                
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Box(
                         modifier = Modifier
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(
-                                color = if (isCompleted) Success else Warning
-                            )
+                                color = if (isCompleted) Success else Warning,
+                            ),
                     )
                     Text(
                         text = student.status,
                         style = MaterialTheme.typography.bodySmall,
                         color = if (isCompleted) Success else Warning,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
@@ -396,63 +394,63 @@ fun TeacherAssignmentResultCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Schedule,
                         contentDescription = null,
                         tint = Gray500,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(14.dp),
                     )
                     Text(
                         text = "제출: ",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
                     )
                     Text(
                         text = formatSubmittedTime(student.submittedAt),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
                     )
                 }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Grade,
                         contentDescription = null,
                         tint = Gray500,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(14.dp),
                     )
                     Text(
                         text = "점수: ",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
                     )
                     Text(
                         text = "${student.score}점",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Gray800
+                        color = Gray800,
                     )
                 }
             }
 
             if (student.answers.isNotEmpty()) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
                         text = "답변 미리보기",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Gray600
+                        color = Gray600,
                     )
                     Text(
                         text = student.answers.first(),
@@ -460,7 +458,7 @@ fun TeacherAssignmentResultCard(
                         color = Gray600,
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.3
+                        lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.3,
                     )
                 }
             }
@@ -523,7 +521,7 @@ data class AssignmentDetail(
     val totalStudents: Int,
     val submittedStudents: Int,
     val averageScore: Int,
-    val completionRate: Int
+    val completionRate: Int,
 )
 
 data class StudentSubmission(
@@ -531,7 +529,7 @@ data class StudentSubmission(
     val studentId: String,
     val submittedAt: String,
     val score: Int,
-    val status: String
+    val status: String,
 )
 
 @Preview(showBackground = true)

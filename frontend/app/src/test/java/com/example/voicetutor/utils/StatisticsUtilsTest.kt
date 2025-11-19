@@ -9,7 +9,7 @@ import org.junit.runners.Parameterized
 class StatisticsUtilsTest(
     private val input: List<Boolean>,
     private val expectedActive: Float,
-    private val expectedCompleted: Float
+    private val expectedCompleted: Float,
 ) {
 
     companion object {
@@ -21,7 +21,7 @@ class StatisticsUtilsTest(
             arrayOf(listOf(true), 0f, 1f),
             arrayOf(listOf(true, false), 0.5f, 0.5f),
             arrayOf(listOf(true, true, false, false), 0.5f, 0.5f),
-            arrayOf(listOf(true, true, true, false), 0.25f, 0.75f)
+            arrayOf(listOf(true, true, true, false), 0.25f, 0.75f),
         )
     }
 
@@ -128,5 +128,3 @@ class StatisticsUtilsTest(
         assertEquals(1f, activeRatio + completedRatio, 0.001f)
     }
 }
-
-

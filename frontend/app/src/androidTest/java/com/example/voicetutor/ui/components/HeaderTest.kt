@@ -20,7 +20,7 @@ class HeaderTest {
             VoiceTutorTheme {
                 VTHeader(
                     title = "테스트 제목",
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -31,12 +31,12 @@ class HeaderTest {
     @Test
     fun header_callsOnBackClick_whenBackButtonClicked() {
         var backClicked = false
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTHeader(
                     title = "테스트",
-                    onBackClick = { backClicked = true }
+                    onBackClick = { backClicked = true },
                 )
             }
         }
@@ -51,7 +51,7 @@ class HeaderTest {
             VoiceTutorTheme {
                 VTHeader(
                     title = "테스트",
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -62,12 +62,12 @@ class HeaderTest {
     @Test
     fun header_handlesLongTitle() {
         val longTitle = "이것은 매우 긴 헤더 제목입니다. " + "반복 ".repeat(20)
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTHeader(
                     title = longTitle,
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -81,7 +81,7 @@ class HeaderTest {
             VoiceTutorTheme {
                 VTHeader(
                     title = "",
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -93,12 +93,12 @@ class HeaderTest {
     @Test
     fun header_handlesSpecialCharacters() {
         val specialTitle = "특수문자: !@#$%^&*()_+-=[]{}|;:'\",.<>?/~`"
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTHeader(
                     title = specialTitle,
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -112,7 +112,7 @@ class HeaderTest {
             VoiceTutorTheme {
                 VTHeader(
                     title = "기본 콜백",
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -127,7 +127,7 @@ class HeaderTest {
             VoiceTutorTheme {
                 VTHeader(
                     title = "레이아웃 테스트",
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -140,12 +140,12 @@ class HeaderTest {
     @Test
     fun header_handlesMultipleBackClicks() {
         var clickCount = 0
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTHeader(
                     title = "여러 번 클릭",
-                    onBackClick = { clickCount++ }
+                    onBackClick = { clickCount++ },
                 )
             }
         }
@@ -161,12 +161,12 @@ class HeaderTest {
     @Test
     fun header_handlesUnicodeCharacters() {
         val unicodeTitle = "한글 🎉 Emoji 中文 日本語"
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTHeader(
                     title = unicodeTitle,
-                    onBackClick = {}
+                    onBackClick = {},
                 )
             }
         }
@@ -174,4 +174,3 @@ class HeaderTest {
         composeTestRule.onNodeWithText(unicodeTitle).assertExists()
     }
 }
-

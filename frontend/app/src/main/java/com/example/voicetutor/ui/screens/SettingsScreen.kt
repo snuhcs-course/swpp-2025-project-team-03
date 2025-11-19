@@ -20,25 +20,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.data.models.UserRole
-import com.example.voicetutor.utils.TutorialPreferences
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.navigation.VoiceTutorScreens
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.utils.ErrorMessageMapper
+import com.example.voicetutor.utils.TutorialPreferences
 
 @Composable
 fun SettingsScreen(
     userRole: UserRole = UserRole.STUDENT,
     studentId: Int? = null,
-    navController: androidx.navigation.NavHostController? = null
+    navController: androidx.navigation.NavHostController? = null,
 ) {
     // Use graph-scoped ViewModels if navController is available
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = if (navController != null) {
@@ -52,12 +52,12 @@ fun SettingsScreen(
     val errorState = authViewModel.error.collectAsStateWithLifecycle()
     val accountDeletedState = authViewModel.accountDeleted.collectAsStateWithLifecycle()
     val currentUser = currentUserState.value
-    
+
     // 학생 정보를 로드하는 경우
     val studentState = studentViewModel.currentStudent.collectAsStateWithLifecycle()
     val studentLoadingState = studentViewModel.isLoading.collectAsStateWithLifecycle()
     val studentErrorState = studentViewModel.error.collectAsStateWithLifecycle()
-    
+
     // studentId가 있으면 해당 학생 정보 로드
     LaunchedEffect(studentId) {
         studentId?.let { id ->
@@ -65,13 +65,13 @@ fun SettingsScreen(
             studentViewModel.loadStudentById(id)
         }
     }
-    
+
     val displayedStudent = studentState.value
     val isLoading = if (studentId != null) studentLoadingState.value else isLoadingState.value
     val error = if (studentId != null) studentErrorState.value else errorState.value
     val accountDeleted = accountDeletedState.value
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(accountDeleted) {
         if (accountDeleted) {
             navController?.let { controller ->
@@ -85,7 +85,7 @@ fun SettingsScreen(
             authViewModel.clearAccountDeletedFlag()
         }
     }
-    
+
     // 표시할 사용자 정보 결정 (학생 정보가 있으면 학생 정보, 없으면 현재 사용자)
     val displayUser = if (studentId != null && displayedStudent != null) {
         // Student 모델을 User 모델로 변환
@@ -93,18 +93,18 @@ fun SettingsScreen(
             id = displayedStudent.id,
             email = displayedStudent.email,
             name = displayedStudent.name ?: "이름 없음",
-            role = displayedStudent.role
+            role = displayedStudent.role,
         )
     } else {
         currentUser
     }
-    
+
     // 튜토리얼 관리
     val context = LocalContext.current
     val tutorialPrefs = remember { TutorialPreferences(context) }
     var showResetDialog by remember { mutableStateOf(false) }
     var tutorialResetTrigger by remember { mutableStateOf(0) }
-    
+
     // 튜토리얼 초기화 후 대시보드로 돌아가서 튜토리얼이 표시되도록
     LaunchedEffect(tutorialResetTrigger) {
         if (tutorialResetTrigger > 0) {
@@ -112,103 +112,103 @@ fun SettingsScreen(
             navController?.popBackStack()
         }
     }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
             text = "계정",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = Gray800
+            color = Gray800,
         )
-        
+
         VTCard(variant = CardVariant.Elevated) {
             Column {
                 Text(
                     text = "프로필",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 if (isLoading) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(60.dp)
                                 .clip(androidx.compose.foundation.shape.CircleShape)
                                 .background(Gray200),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
                                 color = PrimaryIndigo,
-                                strokeWidth = 2.dp
+                                strokeWidth = 2.dp,
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.width(16.dp))
-                        
+
                         Column {
                             Text(
                                 text = "사용자 정보 로딩 중...",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Gray600
+                                color = Gray600,
                             )
                             Text(
                                 text = "잠시만 기다려주세요",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Gray500
+                                color = Gray500,
                             )
                         }
                     }
                 } else if (error != null) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(60.dp)
                                 .clip(androidx.compose.foundation.shape.CircleShape)
                                 .background(Error.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Error,
                                 contentDescription = null,
                                 tint = Error,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(24.dp),
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.width(16.dp))
-                        
+
                         Column {
                             Text(
                                 text = "사용자 정보 로드 실패",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Error
+                                color = Error,
                             )
                             Text(
                                 text = ErrorMessageMapper.getErrorMessage(error),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Gray600
+                                color = Gray600,
                             )
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
+
                             VTButton(
                                 text = "다시 시도",
-                                onClick = { 
+                                onClick = {
                                     if (studentId != null) {
                                         studentViewModel.clearError()
                                         studentViewModel.loadStudentById(studentId)
@@ -217,42 +217,42 @@ fun SettingsScreen(
                                     }
                                 },
                                 variant = ButtonVariant.Outline,
-                                size = ButtonSize.Small
+                                size = ButtonSize.Small,
                             )
                         }
                     }
                 } else {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(60.dp)
                                 .clip(androidx.compose.foundation.shape.CircleShape)
                                 .background(PrimaryIndigo.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             Text(
                                 text = displayUser?.initial ?: "?",
                                 style = MaterialTheme.typography.titleLarge,
                                 color = PrimaryIndigo,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.width(16.dp))
-                        
+
                         Column {
                             Text(
                                 text = displayUser?.name ?: "사용자",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Gray800
+                                color = Gray800,
                             )
                             Text(
                                 text = displayUser?.email ?: "이메일 없음",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Gray600
+                                color = Gray600,
                             )
                             Text(
                                 text = when (displayUser?.role) {
@@ -263,53 +263,53 @@ fun SettingsScreen(
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = PrimaryIndigo,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
                             )
                         }
                     }
                 }
             }
         }
-        
+
         VTCard(variant = CardVariant.Default) {
-            Column {                
+            Column {
                 SettingsItem(
                     icon = Icons.Filled.Lightbulb,
                     title = "튜토리얼 다시 보기",
                     subtitle = "앱 사용법을 다시 확인하세요",
-                    onClick = { 
+                    onClick = {
                         showResetDialog = true
-                    }
+                    },
                 )
-                
+
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 12.dp),
-                    color = Gray200
+                    color = Gray200,
                 )
-                
+
                 SettingsItem(
                     icon = Icons.Filled.Info,
                     title = "앱 정보",
                     subtitle = "버전 1.0.0",
-                    onClick = { 
+                    onClick = {
                         navController?.navigate("app_info")
                         println("앱 정보 화면으로 이동")
-                    }
+                    },
                 )
             }
         }
-        
+
         if (error != null && studentId == null && !isLoading) {
             Text(
                 text = ErrorMessageMapper.getErrorMessage(error),
                 style = MaterialTheme.typography.bodySmall,
                 color = Error,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
-        
+
         Spacer(modifier = Modifier.weight(1f))
-        
+
         if (studentId == null) {
             VTButton(
                 text = "계정 삭제",
@@ -321,13 +321,13 @@ fun SettingsScreen(
                     Icon(
                         imageVector = Icons.Filled.DeleteForever,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
-                }
+                },
             )
         }
     }
-    
+
     if (showDeleteAccountDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAccountDialog = false },
@@ -341,28 +341,28 @@ fun SettingsScreen(
                         .clip(CircleShape)
                         .background(
                             brush = Brush.linearGradient(
-                                colors = listOf(PrimaryIndigo, PrimaryPurple)
-                            )
+                                colors = listOf(PrimaryIndigo, PrimaryPurple),
+                            ),
                         ),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.DeleteForever,
                         contentDescription = null,
-                        tint = Color.White
+                        tint = Color.White,
                     )
                 }
             },
             title = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = "계정 삭제",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                 }
             },
@@ -372,7 +372,7 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             },
             confirmButton = {
@@ -380,14 +380,14 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     VTButton(
                         text = "취소",
                         onClick = { showDeleteAccountDialog = false },
                         modifier = Modifier.weight(1f),
                         variant = ButtonVariant.Outline,
-                        size = ButtonSize.Medium
+                        size = ButtonSize.Medium,
                     )
                     VTButton(
                         text = "계정 삭제",
@@ -398,13 +398,13 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f),
                         variant = ButtonVariant.Danger,
                         size = ButtonSize.Medium,
-                        enabled = !isLoading
+                        enabled = !isLoading,
                     )
                 }
-            }
+            },
         )
     }
-    
+
     // 튜토리얼 초기화 확인 다이얼로그
     if (showResetDialog) {
         AlertDialog(
@@ -413,20 +413,20 @@ fun SettingsScreen(
                 Icon(
                     imageVector = Icons.Filled.Lightbulb,
                     contentDescription = null,
-                    tint = PrimaryIndigo
+                    tint = PrimaryIndigo,
                 )
             },
             title = {
                 Text(
                     text = "튜토리얼 초기화",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             },
             text = {
                 Text(
                     text = "튜토리얼을 초기화하면 다음 로그인 시 다시 볼 수 있습니다. 계속하시겠습니까?",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
@@ -439,7 +439,7 @@ fun SettingsScreen(
                         tutorialResetTrigger++
                     },
                     variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small
+                    size = ButtonSize.Small,
                 )
             },
             dismissButton = {
@@ -447,9 +447,9 @@ fun SettingsScreen(
                     text = "취소",
                     onClick = { showResetDialog = false },
                     variant = ButtonVariant.Outline,
-                    size = ButtonSize.Small
+                    size = ButtonSize.Small,
                 )
-            }
+            },
         )
     }
 }
@@ -459,45 +459,45 @@ fun SettingsItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
             .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = Gray600,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(24.dp),
         )
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = Gray800
+                color = Gray800,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray600
+                color = Gray600,
             )
         }
-        
+
         Icon(
             imageVector = Icons.Filled.ChevronRight,
             contentDescription = null,
             tint = Gray400,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
         )
     }
 }

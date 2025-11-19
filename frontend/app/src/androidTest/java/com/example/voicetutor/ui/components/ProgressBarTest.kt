@@ -21,7 +21,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 0.5f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -36,7 +36,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 0f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -50,7 +50,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 1f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -64,7 +64,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 0.5f,
-                    showPercentage = false
+                    showPercentage = false,
                 )
             }
         }
@@ -78,7 +78,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = -0.5f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -94,7 +94,7 @@ class ProgressBarTest {
                 VTProgressBar(
                     progress = 0.5f,
                     height = 12,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -110,7 +110,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 0.75f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -124,7 +124,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 0f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -138,7 +138,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 1f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -152,7 +152,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 0.5f,
-                    showPercentage = false
+                    showPercentage = false,
                 )
             }
         }
@@ -167,7 +167,7 @@ class ProgressBarTest {
                 VTCircularProgress(
                     progress = 0.5f,
                     size = 80,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -182,7 +182,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = -0.5f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -197,7 +197,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 2,
-                    totalSteps = 4
+                    totalSteps = 4,
                 )
             }
         }
@@ -216,7 +216,7 @@ class ProgressBarTest {
                 VTStepProgress(
                     currentStep = 2,
                     totalSteps = 4,
-                    stepLabels = listOf("시작", "진행", "검토", "완료")
+                    stepLabels = listOf("시작", "진행", "검토", "완료"),
                 )
             }
         }
@@ -233,7 +233,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 1,
-                    totalSteps = 1
+                    totalSteps = 1,
                 )
             }
         }
@@ -247,7 +247,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 1,
-                    totalSteps = 5
+                    totalSteps = 5,
                 )
             }
         }
@@ -261,7 +261,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 5,
-                    totalSteps = 5
+                    totalSteps = 5,
                 )
             }
         }
@@ -275,7 +275,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 0,
-                    totalSteps = 3
+                    totalSteps = 3,
                 )
             }
         }
@@ -289,7 +289,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 10,
-                    totalSteps = 5
+                    totalSteps = 5,
                 )
             }
         }
@@ -304,7 +304,7 @@ class ProgressBarTest {
                 VTStepProgress(
                     currentStep = 2,
                     totalSteps = 4,
-                    stepLabels = emptyList()
+                    stepLabels = emptyList(),
                 )
             }
         }
@@ -320,7 +320,7 @@ class ProgressBarTest {
                 VTStepProgress(
                     currentStep = 2,
                     totalSteps = 4,
-                    stepLabels = listOf("시작", "진행")
+                    stepLabels = listOf("시작", "진행"),
                 )
             }
         }
@@ -336,7 +336,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 5,
-                    totalSteps = 10
+                    totalSteps = 10,
                 )
             }
         }
@@ -352,7 +352,7 @@ class ProgressBarTest {
                     progress = 0.5f,
                     color = androidx.compose.ui.graphics.Color.Red,
                     backgroundColor = androidx.compose.ui.graphics.Color.Gray,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -368,7 +368,7 @@ class ProgressBarTest {
                     progress = 0.5f,
                     color = androidx.compose.ui.graphics.Color.Green,
                     backgroundColor = androidx.compose.ui.graphics.Color.LightGray,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -384,7 +384,7 @@ class ProgressBarTest {
                     currentStep = 2,
                     totalSteps = 4,
                     color = androidx.compose.ui.graphics.Color.Blue,
-                    backgroundColor = androidx.compose.ui.graphics.Color.LightGray
+                    backgroundColor = androidx.compose.ui.graphics.Color.LightGray,
                 )
             }
         }
@@ -392,4 +392,3 @@ class ProgressBarTest {
         composeTestRule.onNodeWithText("2").assertExists()
     }
 }
-

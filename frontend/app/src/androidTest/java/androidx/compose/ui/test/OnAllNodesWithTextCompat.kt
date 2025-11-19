@@ -11,7 +11,6 @@ fun ComposeContentTestRule.onAllNodesWithText(
     text: String,
     substring: Boolean = false,
     ignoreCase: Boolean = false,
-    useUnmergedTree: Boolean = false
+    useUnmergedTree: Boolean = false,
 ): SemanticsNodeInteractionCollection =
     onAllNodes(hasText(text, substring, ignoreCase), useUnmergedTree)
-

@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 /**
  * Additional tests to maximize coverage by calling ALL Preview functions
  * and testing more Screen composables directly.
- * 
+ *
  * Note: Tests that require ViewModel are @Ignore'd as they need Hilt setup.
  */
 @RunWith(AndroidJUnit4::class)
@@ -317,7 +317,7 @@ class AdditionalScreenTests {
             VoiceTutorTheme {
                 TeacherStudentAssignmentDetailScreen(
                     studentId = "1",
-                    assignmentId = 1
+                    assignmentId = 1,
                 )
             }
         }
@@ -331,7 +331,7 @@ class AdditionalScreenTests {
             VoiceTutorTheme {
                 TeacherStudentReportScreen(
                     classId = 1,
-                    studentId = 1
+                    studentId = 1,
                 )
             }
         }
@@ -344,7 +344,7 @@ class AdditionalScreenTests {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AssignmentDetailedResultsScreen(
-                    personalAssignmentId = 1
+                    personalAssignmentId = 1,
                 )
             }
         }
