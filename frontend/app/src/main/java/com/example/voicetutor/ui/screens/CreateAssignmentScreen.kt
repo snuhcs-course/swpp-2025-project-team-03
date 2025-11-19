@@ -17,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -82,6 +84,10 @@ fun CreateAssignmentScreen(
     // 과제 생성 성공 플래그
     var assignmentCreated by remember { mutableStateOf(false) }
     
+    // 스크롤 상태 및 반 선택 필드 위치 추적
+    val scrollState = rememberScrollState()
+    var classSelectionFieldPosition by remember { mutableStateOf(0) }
+    
     // 파일 선택 상태
     var selectedFiles by remember { mutableStateOf<List<FileInfo>>(emptyList()) }
     var selectedPdfFile by remember { mutableStateOf<File?>(null) }
@@ -128,8 +134,8 @@ fun CreateAssignmentScreen(
         }
     }
     
-    // 학생 선택 상태
-    var selectedStudents by remember { mutableStateOf<Set<String>>(emptySet()) }
+    // 학생 선택 상태 (ID 기반)
+    var selectedStudents by remember { mutableStateOf<Set<Int>>(emptySet()) }
     
     var assignmentTitle by remember { mutableStateOf("") }
     var assignmentDescription by remember { mutableStateOf("") }
@@ -142,6 +148,7 @@ fun CreateAssignmentScreen(
     var dueDateTime by remember { mutableStateOf<LocalDateTime?>(null) }
     var questionCount by remember { mutableStateOf("5") }
     var assignToAll by remember { mutableStateOf(true) }
+    var showClassSelectionWarning by remember { mutableStateOf(false) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
     var gradeSelectionExpanded by remember { mutableStateOf(false) }
     var subjectSelectionExpanded by remember { mutableStateOf(false) }
@@ -152,10 +159,36 @@ fun CreateAssignmentScreen(
     val displayDateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") }
     val zoneId = remember { ZoneId.systemDefault() }
     
+    // 반 학생 목록
+    val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
+    
+    // 표시할 학생 목록 (반 선택 시 해당 반 학생만, 아니면 전체 학생)
+    val displayStudents = remember(selectedClassId, classStudents, students) {
+        if (selectedClassId != null && classStudents.isNotEmpty()) {
+            classStudents
+        } else {
+            emptyList()
+        }
+    }
+    
     // Load data on first composition
     LaunchedEffect(actualTeacherId) {
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
+    }
+    
+    // 반 선택 시 해당 반의 학생들 로드
+    LaunchedEffect(selectedClassId) {
+        val classId = selectedClassId
+        if (classId != null) {
+            classViewModel.loadClassStudents(classId)
+            // 반이 변경되면 선택된 학생 목록 초기화
+            selectedStudents = emptySet()
+            // 반이 선택되면 전체 배정으로 초기화
+            assignToAll = true
+            // 반 선택 시 경고 메시지 숨김
+            showClassSelectionWarning = false
+        }
     }
     
     // Set initial class when classes are loaded and initialClassId is provided
@@ -205,13 +238,11 @@ fun CreateAssignmentScreen(
     // 과목 리스트
     val subjects = listOf("국어", "영어", "수학", "과학", "사회")
     
-    val studentNames = students.map { it.name }
-    
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -267,7 +298,11 @@ fun CreateAssignmentScreen(
                     ExposedDropdownMenuBox(
                         expanded = classSelectionExpanded,
                         onExpandedChange = { classSelectionExpanded = !classSelectionExpanded },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onGloballyPositioned { coordinates ->
+                                classSelectionFieldPosition = coordinates.positionInParent().y.toInt()
+                            }
                     ) {
                         OutlinedTextField(
                             value = selectedClass,
@@ -311,6 +346,8 @@ fun CreateAssignmentScreen(
                                         selectedClass = className
                                         selectedClassId = classData.id
                                         classSelectionExpanded = false
+                                        // 반 선택 시 해당 반의 학생들 로드
+                                        classViewModel.loadClassStudents(classData.id)
                                     },
                                     leadingIcon = {
                                         Icon(
@@ -696,87 +733,105 @@ fun CreateAssignmentScreen(
                     ) {
                         RadioButton(
                             selected = !assignToAll,
-                            onClick = { assignToAll = false }
+                            onClick = {
+                                if (selectedClassId != null) {
+                                    assignToAll = false
+                                    showClassSelectionWarning = false
+                                } else {
+                                    // 반 선택이 안 되어 있으면 스크롤을 반 선택 부분으로 이동
+                                    showClassSelectionWarning = true
+                                    coroutineScope.launch {
+                                        scrollState.animateScrollTo(classSelectionFieldPosition)
+                                    }
+                                }
+                            },
+                            enabled = selectedClassId != null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "선택한 학생에게만 배정",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
-                            color = Gray800
+                            color = if (selectedClassId != null) Gray800 else Gray400
+                        )
+                    }
+                    
+                    // 반 선택 안내 메시지
+                    if (showClassSelectionWarning && selectedClassId == null) {
+                        Text(
+                            text = "⚠️ 반을 먼저 선택해주세요",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Warning,
+                            modifier = Modifier.padding(start = 24.dp)
                         )
                     }
                     
                     // Student selection (when not assigning to all)
-                    if (!assignToAll) {
+                    if (!assignToAll && selectedClassId != null) {
                         Column(
                             modifier = Modifier.padding(start = 24.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // 전체 선택 체크박스
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 8.dp)
-                            ) {
-                                Checkbox(
-                                    checked = selectedStudents.size == studentNames.take(5).size && studentNames.take(5).isNotEmpty(),
-                                    onCheckedChange = { isChecked ->
-                                        selectedStudents = if (isChecked) {
-                                            studentNames.take(5).filterNotNull().toSet()
-                                        } else {
-                                            emptySet()
-                                        }
-                                    }
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                            if (displayStudents.isEmpty()) {
                                 Text(
-                                    text = "전체 선택",
+                                    text = "학생 목록을 불러오는 중...",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = PrimaryIndigo
+                                    color = Gray600
                                 )
-                            }
-                            studentNames.take(5).forEach { student ->
+                            } else {
+                                // 전체 선택 체크박스
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 8.dp)
                                 ) {
                                     Checkbox(
-                                        checked = student in selectedStudents,
+                                        checked = selectedStudents.size == displayStudents.size && displayStudents.isNotEmpty(),
                                         onCheckedChange = { isChecked ->
-                                            if (student != null) {
-                                                selectedStudents = if (isChecked) {
-                                                    selectedStudents + student
-                                                } else {
-                                                    selectedStudents - student
-                                                }
+                                            selectedStudents = if (isChecked) {
+                                                displayStudents.map { it.id }.toSet()
+                                            } else {
+                                                emptySet()
                                             }
                                         }
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .background(
-                                                PrimaryIndigo.copy(alpha = 0.1f),
-                                                androidx.compose.foundation.shape.CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = student?.first()?.toString() ?: "?",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Medium,
-                                            color = PrimaryIndigo
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = student ?: "이름 없음",
+                                        text = "전체 선택",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Gray800
+                                        fontWeight = FontWeight.Medium,
+                                        color = PrimaryIndigo
                                     )
+                                }
+                                displayStudents.forEach { student ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Checkbox(
+                                            checked = student.id in selectedStudents,
+                                            onCheckedChange = { isChecked ->
+                                                selectedStudents = if (isChecked) {
+                                                    selectedStudents + student.id
+                                                } else {
+                                                    selectedStudents - student.id
+                                                }
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = student.name ?: "이름 없음",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Gray800
+                                            )
+                                            Text(
+                                                text = student.email,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Gray600
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
