@@ -210,19 +210,9 @@ fun AssignmentContinuousScreen(
                 currentTailQuestionNumber = response.numberStr
                 savedTailQuestion = response.tailQuestion
             } else {
+                // 다음 기본 질문인 경우 상태 초기화 
                 currentTailQuestionNumber = null
                 savedTailQuestion = null
-
-                // 서버에서 받은 numberStr이 현재 질문과 다르면 해당 질문 로드
-                val currentQuestionNumber = currentQuestion?.number
-                val serverQuestionNumber = response.numberStr
-
-                if (currentQuestionNumber != serverQuestionNumber) {
-                    scope.launch {
-                        delay(300)
-                        viewModel.moveToQuestionByNumber(serverQuestionNumber, assignmentId)
-                    }
-                }
             }
         }
     }
