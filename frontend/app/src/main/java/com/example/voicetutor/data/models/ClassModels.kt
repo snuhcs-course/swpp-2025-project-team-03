@@ -33,7 +33,7 @@ data class EnrollmentData(
     @SerializedName("course_class")
     val courseClass: ClassData?,
     @SerializedName("status")
-    val status: String
+    val status: String,
 )
 
 data class MessageData(
@@ -61,7 +61,7 @@ data class StudentClassStatistics(
     @SerializedName("average_score")
     val averageScore: Float,
     @SerializedName("completion_rate")
-    val completionRate: Float
+    val completionRate: Float,
 )
 
 data class StudentStatisticsItem(
@@ -74,24 +74,24 @@ data class StudentStatisticsItem(
     @SerializedName("total_assignments")
     val totalAssignments: Int,
     @SerializedName("completed_assignments")
-    val completedAssignments: Int
+    val completedAssignments: Int,
 )
 
 data class ClassStudentsStatistics(
     @SerializedName("overall_completion_rate")
     val overallCompletionRate: Float,
     @SerializedName("students")
-    val students: List<StudentStatisticsItem>
+    val students: List<StudentStatisticsItem>,
 )
 
 data class ClassCompletionRate(
     @SerializedName("completion_rate")
-    val completionRate: Float
+    val completionRate: Float,
 )
 
 data class ClassInfo(
     @SerializedName("id")
     val id: Int,
     @SerializedName("name")
-    val name: String
+    val name: String,
 )

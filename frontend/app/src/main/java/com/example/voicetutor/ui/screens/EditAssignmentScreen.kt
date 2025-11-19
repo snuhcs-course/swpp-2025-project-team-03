@@ -1,12 +1,11 @@
 package com.example.voicetutor.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,15 +18,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -45,11 +43,11 @@ fun EditAssignmentScreen(
     teacherId: String? = null, // 실제 선생님 ID 사용
     assignmentId: Int = 0,
     assignmentTitle: String? = null, // For backward compatibility
-    onSaveAssignment: () -> Unit = {}
+    onSaveAssignment: () -> Unit = {},
 ) {
     val classViewModel: ClassViewModel = hiltViewModel()
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
-    
+
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val currentAssignment by viewModel.currentAssignment.collectAsStateWithLifecycle()
@@ -57,23 +55,23 @@ fun EditAssignmentScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     val assignmentStats by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    
+
     // Find assignment by ID or title from the assignments list
     val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
         if (assignmentId > 0) {
             assignments.find { it.id == assignmentId }
         } else if (assignmentTitle != null) {
-        assignments.find { it.title == assignmentTitle }
+            assignments.find { it.title == assignmentTitle }
         } else {
             null
         }
     }
-    
+
     // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: targetAssignment?.title ?: assignmentTitle ?: "과제"
     var title: String by remember { mutableStateOf(dynamicAssignmentTitle) }
     var description by remember { mutableStateOf("") }
-    
+
     // 삭제 확인 다이얼로그 상태
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedClass by remember { mutableStateOf("") }
@@ -87,41 +85,41 @@ fun EditAssignmentScreen(
     var dueShowTimePicker by remember { mutableStateOf(false) }
     var duePendingDate by remember { mutableStateOf<LocalDate?>(null) }
     var validationDialogMessage by remember { mutableStateOf<String?>(null) }
-    
+
     val displayDateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") }
     val zoneId = remember { ZoneId.systemDefault() }
-    
+
     // 학년 리스트
     val grades = listOf(
-        "초등학교 1학년", "초등학교 2학년", "초등학교 3학년", 
+        "초등학교 1학년", "초등학교 2학년", "초등학교 3학년",
         "초등학교 4학년", "초등학교 5학년", "초등학교 6학년",
         "중학교 1학년", "중학교 2학년", "중학교 3학년",
-        "고등학교 1학년", "고등학교 2학년", "고등학교 3학년"
+        "고등학교 1학년", "고등학교 2학년", "고등학교 3학년",
     )
-    
+
     // 과목 리스트
     val subjects = listOf("국어", "영어", "수학", "과학", "사회")
-    
+
     var classSelectionExpanded by remember { mutableStateOf(false) }
     var gradeSelectionExpanded by remember { mutableStateOf(false) }
     var subjectSelectionExpanded by remember { mutableStateOf(false) }
-    
+
     // Load data on first composition
     LaunchedEffect(assignmentId, targetAssignment?.id, teacherId) {
         if (assignmentId > 0) {
             println("EditAssignment - Loading assignment by ID: $assignmentId")
             viewModel.loadAssignmentById(assignmentId)
         } else {
-        targetAssignment?.let { target ->
-            println("EditAssignment - Loading assignment: ${target.title} (ID: ${target.id})")
-            viewModel.loadAssignmentById(target.id)
+            targetAssignment?.let { target ->
+                println("EditAssignment - Loading assignment: ${target.title} (ID: ${target.id})")
+                viewModel.loadAssignmentById(target.id)
             }
         }
         teacherId?.let { id ->
             classViewModel.loadClasses(id)
         }
     }
-    
+
     // Update form data when assignment is loaded
     LaunchedEffect(currentAssignment) {
         currentAssignment?.let { assignment ->
@@ -129,12 +127,12 @@ fun EditAssignmentScreen(
             description = assignment.description ?: ""
             selectedClassId = assignment.courseClass.id
             selectedClass = assignment.courseClass.name
-            
+
             // 학년과 과목 설정
             // assignment.grade가 있으면 사용, 없으면 빈 문자열
             selectedGrade = assignment.grade ?: ""
             selectedSubject = assignment.courseClass.subject.name
-            
+
             // 마감일 파싱
             val normalizedDate = normalizeDateTime(assignment.dueAt)
             if (normalizedDate != null) {
@@ -152,7 +150,7 @@ fun EditAssignmentScreen(
             }
         }
     }
-    
+
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
@@ -165,18 +163,18 @@ fun EditAssignmentScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Header removed - now handled by MainLayout
-        
+
         // Loading indicator
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(
-                    color = PrimaryIndigo
+                    color = PrimaryIndigo,
                 )
             }
         } else {
@@ -187,12 +185,12 @@ fun EditAssignmentScreen(
                         text = "기본 정보",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         // Assignment title
                         OutlinedTextField(
@@ -203,7 +201,7 @@ fun EditAssignmentScreen(
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Sentences,
-                                imeAction = ImeAction.Next
+                                imeAction = ImeAction.Next,
                             ),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
@@ -211,15 +209,15 @@ fun EditAssignmentScreen(
                                 focusedLabelColor = PrimaryIndigo,
                                 focusedTextColor = Color.Black,
                                 unfocusedTextColor = Color.Black,
-                                cursorColor = Color.Black
-                            )
+                                cursorColor = Color.Black,
+                            ),
                         )
-                        
+
                         // Class selection
                         ExposedDropdownMenuBox(
                             expanded = classSelectionExpanded,
                             onExpandedChange = { classSelectionExpanded = !classSelectionExpanded },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             OutlinedTextField(
                                 value = selectedClass,
@@ -234,7 +232,7 @@ fun EditAssignmentScreen(
                                     Icon(
                                         imageVector = Icons.Filled.Class,
                                         contentDescription = null,
-                                        tint = PrimaryIndigo
+                                        tint = PrimaryIndigo,
                                     )
                                 },
                                 modifier = Modifier
@@ -245,21 +243,21 @@ fun EditAssignmentScreen(
                                     focusedLabelColor = PrimaryIndigo,
                                     focusedTextColor = Color.Black,
                                     unfocusedTextColor = Color.Black,
-                                    cursorColor = Color.Black
-                                )
+                                    cursorColor = Color.Black,
+                                ),
                             )
                             ExposedDropdownMenu(
                                 expanded = classSelectionExpanded,
-                                onDismissRequest = { classSelectionExpanded = false }
+                                onDismissRequest = { classSelectionExpanded = false },
                             ) {
                                 classes.forEachIndexed { index, classData ->
                                     val className = classData.name
                                     DropdownMenuItem(
-                                        text = { 
+                                        text = {
                                             Text(
                                                 text = className,
-                                                fontWeight = FontWeight.Medium
-                                            ) 
+                                                fontWeight = FontWeight.Medium,
+                                            )
                                         },
                                         onClick = {
                                             selectedClass = className
@@ -270,19 +268,19 @@ fun EditAssignmentScreen(
                                             Icon(
                                                 imageVector = Icons.Filled.School,
                                                 contentDescription = null,
-                                                tint = PrimaryIndigo
+                                                tint = PrimaryIndigo,
                                             )
-                                        }
+                                        },
                                     )
                                 }
                             }
                         }
-                        
+
                         // Grade selection
                         ExposedDropdownMenuBox(
                             expanded = gradeSelectionExpanded,
                             onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             OutlinedTextField(
                                 value = selectedGrade,
@@ -301,12 +299,12 @@ fun EditAssignmentScreen(
                                     focusedLabelColor = PrimaryIndigo,
                                     focusedTextColor = Color.Black,
                                     unfocusedTextColor = Color.Black,
-                                    cursorColor = Color.Black
-                                )
+                                    cursorColor = Color.Black,
+                                ),
                             )
                             ExposedDropdownMenu(
                                 expanded = gradeSelectionExpanded,
-                                onDismissRequest = { gradeSelectionExpanded = false }
+                                onDismissRequest = { gradeSelectionExpanded = false },
                             ) {
                                 grades.forEach { grade ->
                                     DropdownMenuItem(
@@ -314,17 +312,17 @@ fun EditAssignmentScreen(
                                         onClick = {
                                             selectedGrade = grade
                                             gradeSelectionExpanded = false
-                                        }
+                                        },
                                     )
                                 }
                             }
                         }
-                        
+
                         // Subject selection
                         ExposedDropdownMenuBox(
                             expanded = subjectSelectionExpanded,
                             onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             OutlinedTextField(
                                 value = selectedSubject,
@@ -343,12 +341,12 @@ fun EditAssignmentScreen(
                                     focusedLabelColor = PrimaryIndigo,
                                     focusedTextColor = Color.Black,
                                     unfocusedTextColor = Color.Black,
-                                    cursorColor = Color.Black
-                                )
+                                    cursorColor = Color.Black,
+                                ),
                             )
                             ExposedDropdownMenu(
                                 expanded = subjectSelectionExpanded,
-                                onDismissRequest = { subjectSelectionExpanded = false }
+                                onDismissRequest = { subjectSelectionExpanded = false },
                             ) {
                                 subjects.forEach { subject ->
                                     DropdownMenuItem(
@@ -356,12 +354,12 @@ fun EditAssignmentScreen(
                                         onClick = {
                                             selectedSubject = subject
                                             subjectSelectionExpanded = false
-                                        }
+                                        },
                                     )
                                 }
                             }
                         }
-                        
+
                         // Assignment description
                         OutlinedTextField(
                             value = description,
@@ -374,17 +372,17 @@ fun EditAssignmentScreen(
                             maxLines = 3,
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Sentences,
-                                imeAction = ImeAction.Done
+                                imeAction = ImeAction.Done,
                             ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryIndigo,
                                 focusedLabelColor = PrimaryIndigo,
                                 focusedTextColor = Color.Black,
                                 unfocusedTextColor = Color.Black,
-                                cursorColor = Color.Black
-                            )
+                                cursorColor = Color.Black,
+                            ),
                         )
-                        
+
                         // Due date
                         val dueDateInteractionSource = remember { MutableInteractionSource() }
                         LaunchedEffect(dueDateInteractionSource) {
@@ -406,7 +404,7 @@ fun EditAssignmentScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Event,
                                     contentDescription = null,
-                                    tint = PrimaryIndigo
+                                    tint = PrimaryIndigo,
                                 )
                             },
                             singleLine = true,
@@ -416,15 +414,14 @@ fun EditAssignmentScreen(
                                 focusedLabelColor = PrimaryIndigo,
                                 focusedTextColor = Color.Black,
                                 unfocusedTextColor = Color.Black,
-                                cursorColor = Color.Black
-                            )
+                                cursorColor = Color.Black,
+                            ),
                         )
-
                     }
                 }
             }
         }
-        
+
         // Statistics card
         VTCard(variant = CardVariant.Outlined) {
             Column {
@@ -432,79 +429,79 @@ fun EditAssignmentScreen(
                     text = "과제 진행 현황",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
                             text = "${assignmentStats?.totalStudents ?: 0}명",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = PrimaryIndigo
+                            color = PrimaryIndigo,
                         )
                         Text(
                             text = "총 학생",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
-                    
+
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
                             text = "${assignmentStats?.submittedStudents ?: 0}명",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Success
+                            color = Success,
                         )
                         Text(
                             text = "제출 완료",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
-                    
+
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
                             text = "${assignmentStats?.completionRate ?: 0}%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Warning
+                            color = Warning,
                         )
                         Text(
                             text = "완료율",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
             }
         }
-        
+
         // Action button
         VTButton(
             text = "저장",
             onClick = {
-                if (title.isNotBlank() && description.isNotBlank() && 
+                if (title.isNotBlank() && description.isNotBlank() &&
                     selectedClass.isNotBlank() && dueDateText.isNotBlank() &&
-                    dueDateRequest.isNotBlank()) {
-                    
+                    dueDateRequest.isNotBlank()
+                ) {
                     val assignmentIdToUpdate = if (assignmentId > 0) assignmentId else targetAssignment?.id
                     if (assignmentIdToUpdate == null) {
                         validationDialogMessage = "수정할 과제 ID를 찾을 수 없습니다."
                         return@VTButton
                     }
-                    
+
                     val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
                         title = title,
                         description = description,
@@ -515,11 +512,11 @@ fun EditAssignmentScreen(
                             com.example.voicetutor.data.network.SubjectUpdateRequest(
                                 id = it.id,
                                 name = it.name,
-                                code = it.code
+                                code = it.code,
                             )
-                        }
+                        },
                     )
-                    
+
                     viewModel.updateAssignment(assignmentIdToUpdate, updateRequest)
                     Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
                     onSaveAssignment()
@@ -533,44 +530,44 @@ fun EditAssignmentScreen(
                 Icon(
                     imageVector = Icons.Filled.Save,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
-            }
+            },
         )
-        
+
         // Danger zone
         VTCard(
             variant = CardVariant.Outlined,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Column {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Warning,
                         contentDescription = null,
                         tint = Error,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "경고",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = Error
+                        color = Error,
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Text(
                     text = "과제를 삭제하면 모든 학생의 제출 내용과 점수가 영구적으로 삭제됩니다.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray600
+                    color = Gray600,
                 )
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 VTButton(
                     text = "과제 삭제",
                     onClick = { showDeleteDialog = true },
@@ -580,13 +577,13 @@ fun EditAssignmentScreen(
                         Icon(
                             imageVector = Icons.Filled.Delete,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
-                    }
+                    },
                 )
             }
         }
-        
+
         // 삭제 확인 다이얼로그
         if (showDeleteDialog) {
             AlertDialog(
@@ -595,13 +592,13 @@ fun EditAssignmentScreen(
                     Text(
                         text = "과제 삭제",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 text = {
                     Text(
                         text = "정말로 이 과제를 삭제하시겠습니까?\n삭제된 과제는 복구할 수 없습니다.",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 },
                 confirmButton = {
@@ -616,7 +613,7 @@ fun EditAssignmentScreen(
                             onSaveAssignment() // 삭제 후 뒤로가기
                         },
                         variant = ButtonVariant.Primary,
-                        size = ButtonSize.Small
+                        size = ButtonSize.Small,
                     )
                 },
                 dismissButton = {
@@ -624,12 +621,12 @@ fun EditAssignmentScreen(
                         text = "취소",
                         onClick = { showDeleteDialog = false },
                         variant = ButtonVariant.Outline,
-                        size = ButtonSize.Small
+                        size = ButtonSize.Small,
                     )
-                }
+                },
             )
         }
-        
+
         // DatePicker Dialog
         if (dueShowDatePicker) {
             val initialDateMillis = dueDateTime
@@ -657,7 +654,7 @@ fun EditAssignmentScreen(
                             }
                         },
                         enabled = datePickerState.selectedDateMillis != null,
-                        colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                        colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo),
                     ) {
                         Text("시간 선택")
                     }
@@ -668,11 +665,11 @@ fun EditAssignmentScreen(
                             dueShowDatePicker = false
                             duePendingDate = null
                         },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                        colors = ButtonDefaults.textButtonColors(contentColor = Gray600),
                     ) {
                         Text("취소")
                     }
-                }
+                },
             ) {
                 DatePicker(
                     state = datePickerState,
@@ -684,8 +681,8 @@ fun EditAssignmentScreen(
                         dayContentColor = Gray800,
                         selectedDayContainerColor = PrimaryIndigo,
                         selectedDayContentColor = Color.White,
-                        todayDateBorderColor = PrimaryIndigo
-                    )
+                        todayDateBorderColor = PrimaryIndigo,
+                    ),
                 )
             }
         }
@@ -697,7 +694,7 @@ fun EditAssignmentScreen(
             val timePickerState = rememberTimePickerState(
                 initialHour = initialHour,
                 initialMinute = initialMinute,
-                is24Hour = true
+                is24Hour = true,
             )
 
             AlertDialog(
@@ -720,7 +717,7 @@ fun EditAssignmentScreen(
                             dueShowTimePicker = false
                             duePendingDate = null
                         },
-                        colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo)
+                        colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo),
                     ) {
                         Text("확인")
                     }
@@ -731,7 +728,7 @@ fun EditAssignmentScreen(
                             dueShowTimePicker = false
                             duePendingDate = null
                         },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Gray600)
+                        colors = ButtonDefaults.textButtonColors(contentColor = Gray600),
                     ) {
                         Text("취소")
                     }
@@ -740,12 +737,12 @@ fun EditAssignmentScreen(
                     Text(
                         text = "시간 선택",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Gray800
+                        color = Gray800,
                     )
                 },
                 text = {
                     TimePicker(state = timePickerState)
-                }
+                },
             )
         }
 
@@ -756,13 +753,13 @@ fun EditAssignmentScreen(
                     Text(
                         text = "입력 오류",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 text = {
                     Text(
                         text = message,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 },
                 confirmButton = {
@@ -770,12 +767,12 @@ fun EditAssignmentScreen(
                         text = "확인",
                         onClick = { validationDialogMessage = null },
                         variant = ButtonVariant.Primary,
-                        size = ButtonSize.Small
+                        size = ButtonSize.Small,
                     )
-                }
+                },
             )
         }
-        
+
         LaunchedEffect(error) {
             error?.let {
                 Toast.makeText(context, "과제 수정에 문제가 발생했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
@@ -804,7 +801,7 @@ private fun normalizeDateTime(input: String?): String? {
         "yyyy-MM-dd'T'HH:mm:ss'Z'",
         "yyyy-MM-dd'T'HH:mm:ss.SSS",
         "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-        "yyyy-MM-dd"
+        "yyyy-MM-dd",
     )
     for (pattern in patterns) {
         try {

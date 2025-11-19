@@ -39,7 +39,7 @@ class AssignmentDetailedResultsScreenTest {
                 AssignmentDetailedResultsScreen(
                     personalAssignmentId = personalAssignment.id,
                     assignmentTitle = personalAssignment.assignment.title,
-                    viewModel = viewModel
+                    viewModel = viewModel,
                 )
             }
         }
@@ -63,7 +63,7 @@ class AssignmentDetailedResultsScreenTest {
                 AssignmentDetailedResultsScreen(
                     personalAssignmentId = failingApi.personalAssignmentData.id,
                     assignmentTitle = "에러 리포트",
-                    viewModel = viewModel
+                    viewModel = viewModel,
                 )
             }
         }
@@ -72,4 +72,3 @@ class AssignmentDetailedResultsScreenTest {
         composeRule.onNodeWithText("결과가 없습니다", substring = true).assertIsDisplayed()
     }
 }
-

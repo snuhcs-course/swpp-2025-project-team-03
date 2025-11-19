@@ -1,11 +1,10 @@
 package com.example.voicetutor.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,22 +13,18 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
 private fun formatSubmittedTime(isoTime: String): String {
@@ -79,7 +74,7 @@ private fun parseIsoToMillis(iso: String): Long? {
 fun TeacherStudentAssignmentDetailScreen(
     studentId: String,
     assignmentId: Int = 0,
-    assignmentTitle: String = "과제"
+    assignmentTitle: String = "과제",
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val studentViewModel: com.example.voicetutor.ui.viewmodel.StudentViewModel = hiltViewModel()
@@ -91,60 +86,60 @@ fun TeacherStudentAssignmentDetailScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     val paStats by viewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
     val correctnessData by viewModel.assignmentCorrectness.collectAsStateWithLifecycle()
-    
+
     val targetAssignment = remember(currentAssignment, assignments, assignmentId, assignmentTitle) {
         if (assignmentId > 0) {
-            currentAssignment?.takeIf { it.id == assignmentId } 
+            currentAssignment?.takeIf { it.id == assignmentId }
                 ?: assignments.find { it.id == assignmentId }
         } else {
-            currentAssignment ?: assignments.find { 
-                it.title == assignmentTitle || 
-                it.title.contains(assignmentTitle) ||
-                assignmentTitle.contains(it.title)
+            currentAssignment ?: assignments.find {
+                it.title == assignmentTitle ||
+                    it.title.contains(assignmentTitle) ||
+                    assignmentTitle.contains(it.title)
             }
         }
     }
-    
+
     val studentName = currentStudent?.name ?: "학생"
     val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle)
-    
+
     var loadedDataForKey by remember { mutableStateOf<String?>(null) }
     var loadedStatsForKey by remember { mutableStateOf<String?>(null) }
     var loadedCorrectnessForKey by remember { mutableStateOf<String?>(null) }
     val dataKey = "$studentId-$assignmentId"
-    
+
     val existingStudentResult = assignmentResults.find { it.studentId == studentId }
     val hasExistingData = existingStudentResult != null
-    
+
     LaunchedEffect(assignmentId, studentId) {
         val resolvedAssignmentId = if (assignmentId > 0) {
             assignmentId
         } else {
             targetAssignment?.id
         }
-        
+
         if (resolvedAssignmentId == null) {
             return@LaunchedEffect
         }
-        
+
         val currentDataKey = "$studentId-$resolvedAssignmentId"
-        
+
         if (currentDataKey == loadedDataForKey) {
             return@LaunchedEffect
         }
-        
+
         loadedDataForKey = currentDataKey
-        
+
         val studentIdInt = studentId.toIntOrNull() ?: 1
-        
+
         if (currentAssignment?.id != resolvedAssignmentId) {
             viewModel.loadAssignmentById(resolvedAssignmentId)
         }
-        
+
         if (!hasExistingData) {
             viewModel.loadAssignmentStudentResults(resolvedAssignmentId)
         }
-        
+
         if (currentDataKey != loadedStatsForKey && currentDataKey != loadedCorrectnessForKey && (paStats == null || correctnessData.isEmpty())) {
             loadedStatsForKey = currentDataKey
             loadedCorrectnessForKey = currentDataKey
@@ -163,46 +158,46 @@ fun TeacherStudentAssignmentDetailScreen(
                 }
             }
         }
-        
+
         if (currentStudent?.id.toString() != studentId) {
             studentViewModel.loadStudentById(studentIdInt)
         }
     }
-    
+
     LaunchedEffect(assignments, assignmentTitle, studentId, assignmentId) {
         if (assignmentId > 0) {
             return@LaunchedEffect
         }
-        
+
         if (loadedDataForKey != null) {
             return@LaunchedEffect
         }
-        
+
         if (targetAssignment == null && assignments.isNotEmpty()) {
-            val foundAssignment = assignments.find { 
-                it.title == assignmentTitle || 
-                it.title.contains(assignmentTitle) ||
-                assignmentTitle.contains(it.title)
+            val foundAssignment = assignments.find {
+                it.title == assignmentTitle ||
+                    it.title.contains(assignmentTitle) ||
+                    assignmentTitle.contains(it.title)
             }
             foundAssignment?.let { assignment ->
                 val newDataKey = "$studentId-${assignment.id}"
-                
+
                 if (newDataKey == loadedDataForKey) {
                     return@LaunchedEffect
                 }
-                
+
                 loadedDataForKey = newDataKey
-                
+
                 val studentIdInt = studentId.toIntOrNull() ?: 1
-                
+
                 if (currentAssignment?.id != assignment.id) {
                     viewModel.loadAssignmentById(assignment.id)
                 }
-                
+
                 if (assignmentResults.none { it.studentId == studentId && it.studentId.isNotEmpty() }) {
                     viewModel.loadAssignmentStudentResults(assignment.id)
                 }
-                
+
                 if (newDataKey != loadedStatsForKey && newDataKey != loadedCorrectnessForKey && (paStats == null || correctnessData.isEmpty())) {
                     loadedStatsForKey = newDataKey
                     loadedCorrectnessForKey = newDataKey
@@ -224,34 +219,34 @@ fun TeacherStudentAssignmentDetailScreen(
             }
         }
     }
-    
+
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             viewModel.clearError()
         }
     }
-    
+
     val studentResult = assignmentResults.find { it.studentId == studentId }
-    
+
     val hasAssignmentResults = assignmentResults.isNotEmpty()
     val hasBasicData = studentResult != null || currentAssignment != null || targetAssignment != null || hasAssignmentResults
     val isInitialLoading = isLoading && !hasBasicData && loadedDataForKey == null
     val isWaitingForStudentData = isLoading && hasBasicData && studentResult == null && loadedDataForKey != null
     val isWaitingForInitialData = isLoading && hasBasicData && studentResult == null && loadedDataForKey == null
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (isInitialLoading || isWaitingForInitialData) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(
-                    color = PrimaryIndigo
+                    color = PrimaryIndigo,
                 )
             }
         } else if (isWaitingForStudentData) {
@@ -261,89 +256,89 @@ fun TeacherStudentAssignmentDetailScreen(
                         .fillMaxWidth()
                         .background(
                             color = PrimaryIndigo.copy(alpha = 0.08f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                         )
-                        .padding(20.dp)
+                        .padding(20.dp),
                 ) {
                     Column {
                         Text(
                             text = tempResult.name,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = Gray800
+                            color = Gray800,
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "로딩 중...",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
             } ?: run {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                 }
             }
         } else if (studentResult == null && !hasBasicData && !isLoading && loadedDataForKey != null) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Assignment,
                         contentDescription = null,
                         tint = Gray400,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(48.dp),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "학생 결과를 찾을 수 없습니다",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Gray600
+                        color = Gray600,
                     )
                 }
             }
         } else {
             val displayStudentResult = studentResult ?: assignmentResults.firstOrNull()
-            
+
             if (displayStudentResult != null) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
                             color = PrimaryIndigo.copy(alpha = 0.08f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                         )
-                        .padding(20.dp)
+                        .padding(20.dp),
                 ) {
                     Column {
                         Text(
                             text = displayStudentResult.name,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = Gray800
+                            color = Gray800,
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "평균 점수: ${paStats?.averageScore?.toInt()?.let { "$it 점" } ?: (if (isLoading) "로딩 중..." else "-")}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     VTStatsCard(
                         title = "정답률",
@@ -351,77 +346,77 @@ fun TeacherStudentAssignmentDetailScreen(
                         icon = Icons.Filled.CheckCircle,
                         iconColor = Success,
                         modifier = Modifier.weight(1f),
-                        variant = CardVariant.Gradient
+                        variant = CardVariant.Gradient,
                     )
-                    
+
                     VTStatsCard(
                         title = "평균 점수",
                         value = paStats?.averageScore?.toInt()?.toString() ?: (if (isLoading) "..." else "-"),
                         icon = Icons.Filled.Star,
                         iconColor = Warning,
                         modifier = Modifier.weight(1f),
-                        variant = CardVariant.Gradient
+                        variant = CardVariant.Gradient,
                     )
                 }
-                
+
                 VTCard(variant = CardVariant.Elevated) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = "소요 시간",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
-                                color = Gray600
+                                color = Gray600,
                             )
                             Text(
                                 text = formatDuration(displayStudentResult.startedAt, displayStudentResult.submittedAt),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Gray800
+                                color = Gray800,
                             )
                         }
-                        
+
                         Divider()
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = "제출 시간",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
-                                color = Gray600
+                                color = Gray600,
                             )
                             Text(
                                 text = formatSubmittedTime(displayStudentResult.submittedAt),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Gray800
+                                color = Gray800,
                             )
                         }
                     }
                 }
             }
-            
+
             if (correctnessData.isNotEmpty()) {
                 Column {
                     Text(
                         text = "문제별 상세 결과",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-            
+
                     val detailedResults = remember(correctnessData) {
                         correctnessData.map { item ->
                             DetailedQuestionResult(
@@ -430,7 +425,7 @@ fun TeacherStudentAssignmentDetailScreen(
                                 myAnswer = item.studentAnswer,
                                 correctAnswer = item.questionModelAnswer,
                                 isCorrect = item.isCorrect,
-                                explanation = item.explanation
+                                explanation = item.explanation,
                             )
                         }
                     }
@@ -459,7 +454,7 @@ fun TeacherStudentAssignmentDetailScreen(
                             onToggle = {
                                 val current = expandedStates[group.baseQuestion.questionNumber] ?: false
                                 expandedStates[group.baseQuestion.questionNumber] = !current
-                            }
+                            },
                         )
                         if (index < questionGroups.size - 1) {
                             Spacer(modifier = Modifier.height(12.dp))
@@ -475,51 +470,51 @@ fun TeacherStudentAssignmentDetailScreen(
 private fun QuestionGroupCard2(
     group: QuestionGroup,
     isExpanded: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
 ) {
     val density = LocalDensity.current
     val cardPositions = remember { mutableStateListOf<Float>() }
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-                VTCard(
+        VTCard(
             variant = CardVariant.Outlined,
-            onClick = if (group.tailQuestions.isNotEmpty()) onToggle else null
+            onClick = if (group.tailQuestions.isNotEmpty()) onToggle else null,
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "문제 ${group.baseQuestion.questionNumber}",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = Gray800
+                            color = Gray800,
                         )
 
                         Box(
                             modifier = Modifier
                                 .background(
                                     color = if (group.baseQuestion.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                                 )
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
                         ) {
-                        Text(
+                            Text(
                                 text = if (group.baseQuestion.isCorrect) "정답" else "오답",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (group.baseQuestion.isCorrect) Success else Error,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
                             )
                         }
                     }
@@ -529,24 +524,24 @@ private fun QuestionGroupCard2(
                             modifier = Modifier
                                 .background(
                                     color = PrimaryIndigo.copy(alpha = 0.1f),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                                 )
                                 .padding(horizontal = 12.dp, vertical = 6.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = if (isExpanded) "꼬리질문 접기" else "꼬리질문 펼치기",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = PrimaryIndigo,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
 
                             Icon(
                                 imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                                 contentDescription = if (isExpanded) "접기" else "펼치기",
                                 tint = PrimaryIndigo,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -556,7 +551,7 @@ private fun QuestionGroupCard2(
                     text = group.baseQuestion.question,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = Gray800
+                    color = Gray800,
                 )
 
                 if (group.baseQuestion.myAnswer.isNotEmpty()) {
@@ -565,7 +560,7 @@ private fun QuestionGroupCard2(
                             text = "내 답변",
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
-                            color = Gray600
+                            color = Gray600,
                         )
                         Text(
                             text = group.baseQuestion.myAnswer,
@@ -574,9 +569,9 @@ private fun QuestionGroupCard2(
                             modifier = Modifier
                                 .background(
                                     color = if (group.baseQuestion.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                                 )
-                                .padding(12.dp)
+                                .padding(12.dp),
                         )
                     }
                 }
@@ -586,7 +581,7 @@ private fun QuestionGroupCard2(
                         text = "정답",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Gray600
+                        color = Gray600,
                     )
                     Text(
                         text = group.baseQuestion.correctAnswer,
@@ -595,9 +590,9 @@ private fun QuestionGroupCard2(
                         modifier = Modifier
                             .background(
                                 color = Success.copy(alpha = 0.1f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                             )
-                            .padding(12.dp)
+                            .padding(12.dp),
                     )
                 }
 
@@ -608,7 +603,7 @@ private fun QuestionGroupCard2(
                                 text = "해설",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Medium,
-                                color = Gray600
+                                color = Gray600,
                             )
                             Text(
                                 text = explanation,
@@ -617,9 +612,9 @@ private fun QuestionGroupCard2(
                                 modifier = Modifier
                                     .background(
                                         color = PrimaryIndigo.copy(alpha = 0.1f),
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                                     )
-                                    .padding(12.dp)
+                                    .padding(12.dp),
                             )
                         }
                     }
@@ -629,15 +624,15 @@ private fun QuestionGroupCard2(
 
         if (isExpanded && group.tailQuestions.isNotEmpty()) {
             Row(
-                modifier = Modifier.padding(start = 12.dp)
+                modifier = Modifier.padding(start = 12.dp),
             ) {
                 Box(
-                    modifier = Modifier.width(20.dp)
+                    modifier = Modifier.width(20.dp),
                 ) {
                     Canvas(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .width(20.dp)
+                            .width(20.dp),
                     ) {
                         if (cardPositions.size == group.tailQuestions.size) {
                             val lineColor = PrimaryIndigo.copy(alpha = 0.4f)
@@ -655,8 +650,10 @@ private fun QuestionGroupCard2(
                                         path.moveTo(verticalLineX, 0f)
                                         path.lineTo(verticalLineX, yPosition - curveRadius)
                                         path.quadraticTo(
-                                            verticalLineX, yPosition,
-                                            verticalLineX + curveRadius, yPosition
+                                            verticalLineX,
+                                            yPosition,
+                                            verticalLineX + curveRadius,
+                                            yPosition,
                                         )
                                         path.lineTo(branchLength, yPosition)
                                     }
@@ -665,8 +662,10 @@ private fun QuestionGroupCard2(
                                         path.moveTo(verticalLineX, prevYPosition)
                                         path.lineTo(verticalLineX, yPosition - curveRadius)
                                         path.quadraticTo(
-                                            verticalLineX, yPosition,
-                                            verticalLineX + curveRadius, yPosition
+                                            verticalLineX,
+                                            yPosition,
+                                            verticalLineX + curveRadius,
+                                            yPosition,
                                         )
                                         path.lineTo(branchLength, yPosition)
                                     }
@@ -675,8 +674,10 @@ private fun QuestionGroupCard2(
                                         path.moveTo(verticalLineX, prevYPosition)
                                         path.lineTo(verticalLineX, yPosition - curveRadius)
                                         path.quadraticTo(
-                                            verticalLineX, yPosition,
-                                            verticalLineX + curveRadius, yPosition
+                                            verticalLineX,
+                                            yPosition,
+                                            verticalLineX + curveRadius,
+                                            yPosition,
                                         )
                                         path.lineTo(branchLength, yPosition)
                                     }
@@ -685,7 +686,7 @@ private fun QuestionGroupCard2(
                                 drawPath(
                                     path = path,
                                     color = lineColor,
-                                    style = Stroke(width = strokeWidth)
+                                    style = Stroke(width = strokeWidth),
                                 )
                             }
                         }
@@ -694,7 +695,7 @@ private fun QuestionGroupCard2(
 
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     group.tailQuestions.forEachIndexed { index, tailQuestion ->
                         Box(
@@ -705,7 +706,7 @@ private fun QuestionGroupCard2(
                                 } else {
                                     cardPositions.add(yPos)
                                 }
-                            }
+                            },
                         ) {
                             DetailedQuestionResultCard2(question = tailQuestion)
                         }
@@ -716,27 +717,27 @@ private fun QuestionGroupCard2(
                             .fillMaxWidth()
                             .background(
                                 color = PrimaryIndigo.copy(alpha = 0.1f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                             )
                             .clickable { onToggle() }
                             .padding(horizontal = 12.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = "꼬리질문 접기",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = PrimaryIndigo,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                             Icon(
                                 imageVector = Icons.Filled.ExpandLess,
                                 contentDescription = "접기",
                                 tint = PrimaryIndigo,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -751,68 +752,68 @@ private fun QuestionGroupCard2(
 
 @Composable
 private fun DetailedQuestionResultCard2(
-    question: DetailedQuestionResult
+    question: DetailedQuestionResult,
 ) {
     VTCard(
-        variant = CardVariant.Outlined
+        variant = CardVariant.Outlined,
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "문제 ${question.questionNumber}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = Gray800
+                    color = Gray800,
                 )
-                
-                    Box(
-                        modifier = Modifier
-                            .background(
+
+                Box(
+                    modifier = Modifier
+                        .background(
                             color = if (question.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                        text = if (question.isCorrect) "정답" else "오답",
-                            style = MaterialTheme.typography.bodySmall,
-                        color = if (question.isCorrect) Success else Error,
-                            fontWeight = FontWeight.Medium
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         )
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = if (question.isCorrect) "정답" else "오답",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (question.isCorrect) Success else Error,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
             }
-            
+
             Text(
                 text = question.question,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = Gray800
+                color = Gray800,
             )
-            
+
             if (question.myAnswer.isNotEmpty()) {
                 Column {
-            Text(
-                text = "학생 답변:",
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                color = Gray600
-            )
-            Text(
+                    Text(
+                        text = "학생 답변:",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray600,
+                    )
+                    Text(
                         text = question.myAnswer,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray800,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray800,
                         modifier = Modifier
                             .background(
                                 color = if (question.isCorrect) Success.copy(alpha = 0.1f) else Error.copy(alpha = 0.1f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                             )
-                            .padding(12.dp)
+                            .padding(12.dp),
                     )
                 }
             }
@@ -822,7 +823,7 @@ private fun DetailedQuestionResultCard2(
                     text = "정답:",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
-                    color = Gray600
+                    color = Gray600,
                 )
                 Text(
                     text = question.correctAnswer,
@@ -831,21 +832,21 @@ private fun DetailedQuestionResultCard2(
                     modifier = Modifier
                         .background(
                             color = Success.copy(alpha = 0.1f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                         )
-                        .padding(12.dp)
+                        .padding(12.dp),
                 )
             }
 
             question.explanation?.let { explanation ->
                 if (explanation.isNotEmpty()) {
                     Column {
-                Text(
+                        Text(
                             text = "해설",
-                    style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
-                    color = Gray600
-                )
+                            color = Gray600,
+                        )
                         Text(
                             text = explanation,
                             style = MaterialTheme.typography.bodyMedium,
@@ -853,9 +854,9 @@ private fun DetailedQuestionResultCard2(
                             modifier = Modifier
                                 .background(
                                     color = PrimaryIndigo.copy(alpha = 0.1f),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                                 )
-                                .padding(12.dp)
+                                .padding(12.dp),
                         )
                     }
                 }

@@ -120,4 +120,3 @@ class GetPageTitleTest {
         assertEquals("학생 페이지", title)
     }
 }
-

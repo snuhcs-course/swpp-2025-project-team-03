@@ -1,10 +1,10 @@
 package com.example.voicetutor.data.models
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 
 @RunWith(JUnit4::class)
 class AssignmentModelsTest {
@@ -52,10 +52,9 @@ class AssignmentModelsTest {
             description = "Description",
             subject = subject,
             teacherName = "Teacher1",
-            
-            
+
             studentCount = 10,
-            createdAt = "2025-01-01"
+            createdAt = "2025-01-01",
         )
         val assignment = AssignmentData(
             id = 1,
@@ -63,14 +62,14 @@ class AssignmentModelsTest {
             description = "Description",
             totalQuestions = 5,
             createdAt = "2025-01-01",
-            
+
             dueAt = "2025-12-31",
             courseClass = courseClass,
             materials = null,
             grade = "1",
             personalAssignmentStatus = PersonalAssignmentStatus.IN_PROGRESS,
             solvedNum = 2,
-            personalAssignmentId = 10
+            personalAssignmentId = 10,
         )
 
         // Assert
@@ -92,10 +91,9 @@ class AssignmentModelsTest {
             description = null,
             subject = subject,
             teacherName = "Teacher1",
-            
-            
+
             studentCount = 10,
-            createdAt = "2025-01-01"
+            createdAt = "2025-01-01",
         )
         val assignment = AssignmentData(
             id = 1,
@@ -109,7 +107,7 @@ class AssignmentModelsTest {
             grade = null,
             personalAssignmentStatus = null,
             solvedNum = null,
-            personalAssignmentId = null
+            personalAssignmentId = null,
         )
 
         // Assert
@@ -146,7 +144,7 @@ class AssignmentModelsTest {
             kind = "PDF",
             s3Key = "key123",
             bytes = 1024,
-            createdAt = "2025-01-01"
+            createdAt = "2025-01-01",
         )
 
         // Assert
@@ -164,7 +162,7 @@ class AssignmentModelsTest {
             kind = "PDF",
             s3Key = "key123",
             bytes = null,
-            createdAt = "2025-01-01"
+            createdAt = "2025-01-01",
         )
 
         // Assert
@@ -181,7 +179,7 @@ class AssignmentModelsTest {
             options = listOf("3", "4", "5", "6"),
             correctAnswer = "4",
             points = 10,
-            explanation = "2+2 equals 4"
+            explanation = "2+2 equals 4",
         )
 
         // Assert
@@ -204,7 +202,7 @@ class AssignmentModelsTest {
             options = null,
             correctAnswer = "4",
             points = 5,
-            explanation = null
+            explanation = null,
         )
 
         // Assert
@@ -220,7 +218,7 @@ class AssignmentModelsTest {
             question = "Test",
             type = "SHORT_ANSWER",
             options = null,
-            correctAnswer = "Answer"
+            correctAnswer = "Answer",
         )
 
         // Assert
@@ -236,7 +234,7 @@ class AssignmentModelsTest {
             question = "Question",
             answer = "Answer",
             explanation = "Explanation",
-            difficulty = "medium"
+            difficulty = "medium",
         )
 
         // Assert
@@ -259,7 +257,7 @@ class AssignmentModelsTest {
             totalProblem = 5,
             solvedProblem = 4,
             progress = 0.8f,
-            averageScore = 85.5f
+            averageScore = 85.5f,
         )
 
         // Assert
@@ -284,7 +282,7 @@ class AssignmentModelsTest {
             totalProblem = 0,
             solvedProblem = 0,
             progress = 0f,
-            averageScore = 0f
+            averageScore = 0f,
         )
 
         // Assert
@@ -303,7 +301,7 @@ class AssignmentModelsTest {
             question = "Tail Question",
             answer = "Tail Answer",
             explanation = "Tail Explanation",
-            difficulty = "hard"
+            difficulty = "hard",
         )
 
         // Assert
@@ -322,12 +320,12 @@ class AssignmentModelsTest {
             question = "Next",
             answer = "Next Answer",
             explanation = "Next Explanation",
-            difficulty = "medium"
+            difficulty = "medium",
         )
         val response = AnswerSubmissionResponse(
             isCorrect = true,
             numberStr = "1-1",
-            tailQuestion = tailQuestion
+            tailQuestion = tailQuestion,
         )
 
         // Assert
@@ -342,7 +340,7 @@ class AssignmentModelsTest {
         val response = AnswerSubmissionResponse(
             isCorrect = false,
             numberStr = null,
-            tailQuestion = null
+            tailQuestion = null,
         )
 
         // Assert
@@ -360,9 +358,9 @@ class AssignmentModelsTest {
             title = "Assignment1",
             description = "Description",
             totalQuestions = 5,
-            
+
             dueAt = "2025-12-31",
-            grade = "1"
+            grade = "1",
         )
         val personalAssignment = PersonalAssignmentData(
             id = 1,
@@ -371,7 +369,7 @@ class AssignmentModelsTest {
             status = PersonalAssignmentStatus.IN_PROGRESS,
             solvedNum = 2,
             startedAt = "2025-01-01",
-            submittedAt = null
+            submittedAt = null,
         )
 
         // Assert
@@ -390,7 +388,7 @@ class AssignmentModelsTest {
         val studentInfo = StudentInfo(
             id = 1,
             displayName = "Student1",
-            email = "s1@test.com"
+            email = "s1@test.com",
         )
 
         // Assert
@@ -407,9 +405,9 @@ class AssignmentModelsTest {
             title = "Assignment1",
             description = "Description",
             totalQuestions = 5,
-            
+
             dueAt = "2025-12-31",
-            grade = "1"
+            grade = "1",
         )
 
         // Assert
@@ -430,8 +428,8 @@ class AssignmentModelsTest {
                 correctAnswer = "A1",
                 isCorrect = true,
                 confidenceScore = 95,
-                responseTime = "30s"
-            )
+                responseTime = "30s",
+            ),
         )
         val result = StudentResult(
             studentId = "1",
@@ -441,7 +439,7 @@ class AssignmentModelsTest {
             status = "SUBMITTED",
             submittedAt = "2025-01-01",
             answers = listOf("A1", "A2"),
-            detailedAnswers = detailedAnswers
+            detailedAnswers = detailedAnswers,
         )
 
         // Assert
@@ -463,7 +461,7 @@ class AssignmentModelsTest {
             correctAnswer = "4",
             isCorrect = true,
             confidenceScore = 95,
-            responseTime = "30s"
+            responseTime = "30s",
         )
 
         // Assert
@@ -493,7 +491,7 @@ class AssignmentModelsTest {
             isRecording = true,
             recordingDuration = 10,
             audioFilePath = "/path/to/audio.wav",
-            isProcessing = false
+            isProcessing = false,
         )
 
         // Assert
@@ -502,4 +500,3 @@ class AssignmentModelsTest {
         assertEquals("/path/to/audio.wav", state.audioFilePath)
     }
 }
-

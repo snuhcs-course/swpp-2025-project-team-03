@@ -216,7 +216,7 @@ def main():
         )
         print("\nTop feature importances:")
         for _, row in imp_df.head(10).iterrows():
-            print(f"  {row['feature']:>28s}: {row['importance']:.4f}")
+            print(f"{row['feature']:>28s}: {row['importance']:.4f}")
     except Exception:
         pass
 

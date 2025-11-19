@@ -147,4 +147,3 @@ class NavigationHelperTest {
         assertEquals("계정", title)
     }
 }
-

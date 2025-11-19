@@ -1,7 +1,7 @@
 package com.example.voicetutor.export
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Additional unit tests for ExportManager helper methods and edge cases.
@@ -22,7 +22,7 @@ class ExportManagerHelperTest {
             val data = ExportData(
                 title = "Test",
                 content = "Content",
-                type = type
+                type = type,
             )
             assertEquals(type, data.type)
         }
@@ -35,7 +35,7 @@ class ExportManagerHelperTest {
             title = "Test",
             content = "Content",
             type = ExportType.JSON,
-            metadata = largeMetadata
+            metadata = largeMetadata,
         )
         assertEquals(100, data.metadata.size)
     }
@@ -45,7 +45,7 @@ class ExportManagerHelperTest {
         val data = ExportData(
             title = "",
             content = "Content",
-            type = ExportType.TEXT
+            type = ExportType.TEXT,
         )
         assertTrue(data.title.isEmpty())
     }
@@ -55,7 +55,7 @@ class ExportManagerHelperTest {
         val data = ExportData(
             title = "Title",
             content = "",
-            type = ExportType.TEXT
+            type = ExportType.TEXT,
         )
         assertTrue(data.content.isEmpty())
     }
@@ -65,7 +65,7 @@ class ExportManagerHelperTest {
         val result = ExportResult(
             success = true,
             filePath = "/path/to/file",
-            error = null
+            error = null,
         )
         assertTrue(result.success)
         assertNotNull(result.filePath)
@@ -77,7 +77,7 @@ class ExportManagerHelperTest {
         val result = ExportResult(
             success = false,
             filePath = null,
-            error = "Error message"
+            error = "Error message",
         )
         assertFalse(result.success)
         assertNull(result.filePath)
@@ -92,7 +92,7 @@ class ExportManagerHelperTest {
             score = 100,
             maxScore = 100,
             percentage = 100,
-            submitDate = "2024-01-01"
+            submitDate = "2024-01-01",
         )
         assertEquals(100, gradeData.score)
         assertEquals(100, gradeData.maxScore)
@@ -107,7 +107,7 @@ class ExportManagerHelperTest {
             score = 95,
             maxScore = 100,
             percentage = 95,
-            submitDate = "2024-01-01"
+            submitDate = "2024-01-01",
         )
         assertEquals(95, gradeData.percentage)
     }
@@ -119,7 +119,7 @@ class ExportManagerHelperTest {
             totalAssignments = 0,
             averageScore = 0,
             studyHours = 0,
-            subjects = emptyList()
+            subjects = emptyList(),
         )
         assertEquals(0, progressData.completedAssignments)
         assertEquals(0, progressData.totalAssignments)
@@ -136,7 +136,7 @@ class ExportManagerHelperTest {
             totalAssignments = 20,
             averageScore = 85,
             studyHours = 50,
-            subjects = subjects
+            subjects = subjects,
         )
         assertEquals(50, progressData.subjects.size)
     }
@@ -239,4 +239,3 @@ class ExportManagerHelperTest {
         assertEquals(1, subjects.size)
     }
 }
-

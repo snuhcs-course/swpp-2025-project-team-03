@@ -10,7 +10,7 @@ data class Student(
     @SerializedName("email")
     val email: String,
     @SerializedName("role")
-    val role: UserRole
+    val role: UserRole,
 )
 
 data class AllStudentsStudent(
@@ -21,9 +21,8 @@ data class AllStudentsStudent(
     @SerializedName("email")
     val email: String,
     @SerializedName("role")
-    val role: UserRole
+    val role: UserRole,
 )
-
 
 data class StudentProgress(
     @SerializedName("studentId")
@@ -37,7 +36,7 @@ data class StudentProgress(
     @SerializedName("weeklyProgress")
     val weeklyProgress: List<WeeklyProgress>,
     @SerializedName("subjectBreakdown")
-    val subjectBreakdown: List<SubjectProgress>
+    val subjectBreakdown: List<SubjectProgress>,
 )
 
 data class WeeklyProgress(
@@ -46,7 +45,7 @@ data class WeeklyProgress(
     @SerializedName("assignmentsCompleted")
     val assignmentsCompleted: Int,
     @SerializedName("averageScore")
-    val averageScore: Double
+    val averageScore: Double,
 )
 
 data class SubjectProgress(
@@ -57,7 +56,7 @@ data class SubjectProgress(
     @SerializedName("totalAssignments")
     val totalAssignments: Int,
     @SerializedName("averageScore")
-    val averageScore: Double
+    val averageScore: Double,
 )
 
 data class ClassMessageStudent(
@@ -68,5 +67,5 @@ data class ClassMessageStudent(
     @SerializedName("teacherId")
     val teacherId: Int,
     @SerializedName("content")
-    val content: String
+    val content: String,
 )

@@ -2,10 +2,10 @@ package com.example.voicetutor
 
 import android.app.Application
 import android.util.Log
-import dagger.hilt.android.HiltAndroidApp
-import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,12 +14,12 @@ import kotlinx.coroutines.launch
 
 @HiltAndroidApp
 class VoiceTutorApplication : Application() {
-    
+
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    
+
     override fun onCreate() {
         super.onCreate()
-        
+
         // Hilt 초기화 후 health check 호출
         // EntryPoint를 사용하여 안전하게 의존성 주입 받기
         applicationScope.launch {
@@ -32,7 +32,7 @@ class VoiceTutorApplication : Application() {
             }
         }
     }
-    
+
     private suspend fun performHealthCheck() {
         try {
             val apiService = getApiService()
@@ -47,11 +47,11 @@ class VoiceTutorApplication : Application() {
             Log.e("VoiceTutorApp", "Health check error: ${e.message}", e)
         }
     }
-    
+
     private fun getApiService(): com.example.voicetutor.data.network.ApiService {
         val entryPoint = EntryPointAccessors.fromApplication(
             applicationContext,
-            ApiServiceEntryPoint::class.java
+            ApiServiceEntryPoint::class.java,
         )
         return entryPoint.apiService()
     }

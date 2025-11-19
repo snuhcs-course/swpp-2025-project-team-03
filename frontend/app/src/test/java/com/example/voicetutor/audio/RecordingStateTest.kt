@@ -8,7 +8,7 @@ class RecordingStateTest {
     @Test
     fun recordingState_defaultValues_areCorrect() {
         val state = RecordingState()
-        
+
         assertFalse(state.isRecording)
         assertEquals(0, state.recordingTime)
         assertNull(state.audioFilePath)
@@ -20,9 +20,9 @@ class RecordingStateTest {
     fun recordingState_withRecordingTime_updatesTime() {
         val state = RecordingState(
             isRecording = true,
-            recordingTime = 10
+            recordingTime = 10,
         )
-        
+
         assertTrue(state.isRecording)
         assertEquals(10, state.recordingTime)
     }
@@ -31,9 +31,9 @@ class RecordingStateTest {
     fun recordingState_withAudioFilePath_setsPath() {
         val filePath = "/path/to/audio.wav"
         val state = RecordingState(
-            audioFilePath = filePath
+            audioFilePath = filePath,
         )
-        
+
         assertEquals(filePath, state.audioFilePath)
     }
 
@@ -41,18 +41,18 @@ class RecordingStateTest {
     fun recordingState_withError_setsError() {
         val errorMessage = "Test error"
         val state = RecordingState(
-            error = errorMessage
+            error = errorMessage,
         )
-        
+
         assertEquals(errorMessage, state.error)
     }
 
     @Test
     fun recordingState_isRecordingComplete_setsComplete() {
         val state = RecordingState(
-            isRecordingComplete = true
+            isRecordingComplete = true,
         )
-        
+
         assertTrue(state.isRecordingComplete)
     }
 
@@ -62,13 +62,13 @@ class RecordingStateTest {
         val updated = original.copy(
             isRecording = true,
             recordingTime = 5,
-            audioFilePath = "/test/path.wav"
+            audioFilePath = "/test/path.wav",
         )
-        
+
         assertTrue(updated.isRecording)
         assertEquals(5, updated.recordingTime)
         assertEquals("/test/path.wav", updated.audioFilePath)
-        
+
         // Original remains unchanged
         assertFalse(original.isRecording)
         assertEquals(0, original.recordingTime)
@@ -82,9 +82,9 @@ class RecordingStateTest {
             recordingTime = 30,
             audioFilePath = "/test/recording.wav",
             isRecordingComplete = true,
-            error = null
+            error = null,
         )
-        
+
         assertTrue(state.isRecording)
         assertEquals(30, state.recordingTime)
         assertEquals("/test/recording.wav", state.audioFilePath)
@@ -92,4 +92,3 @@ class RecordingStateTest {
         assertNull(state.error)
     }
 }
-

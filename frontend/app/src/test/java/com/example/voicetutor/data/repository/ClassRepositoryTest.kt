@@ -1,8 +1,8 @@
 package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.*
-import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.ApiResponse
+import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.CreateClassRequest
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
@@ -28,10 +28,9 @@ class ClassRepositoryTest {
         subject = buildSubject(),
         description = "Description",
         teacherId = 1,
-        
-        
+
         studentCount = 10,
-        createdAt = "2025-01-01"
+        createdAt = "2025-01-01",
     )
 
     @Test
@@ -43,7 +42,7 @@ class ClassRepositoryTest {
             success = true,
             data = classes,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClasses("1")).thenReturn(Response.success(apiResponse))
 
@@ -63,7 +62,7 @@ class ClassRepositoryTest {
             success = true,
             data = emptyList<ClassData>(),
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClasses("1")).thenReturn(Response.success(apiResponse))
 
@@ -114,7 +113,7 @@ class ClassRepositoryTest {
             success = true,
             data = classData,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassById(1)).thenReturn(Response.success(apiResponse))
 
@@ -134,7 +133,7 @@ class ClassRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassById(1)).thenReturn(Response.success(apiResponse))
 
@@ -168,13 +167,13 @@ class ClassRepositoryTest {
         val repo = ClassRepository(apiService)
         val students = listOf(
             Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT),
-            Student(id = 2, name = "Student2", email = "s2@test.com", role = UserRole.STUDENT)
+            Student(id = 2, name = "Student2", email = "s2@test.com", role = UserRole.STUDENT),
         )
         val apiResponse = ApiResponse(
             success = true,
             data = students,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassStudents(1)).thenReturn(Response.success(apiResponse))
 
@@ -194,7 +193,7 @@ class ClassRepositoryTest {
             success = true,
             data = emptyList<Student>(),
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassStudents(1)).thenReturn(Response.success(apiResponse))
 
@@ -235,7 +234,7 @@ class ClassRepositoryTest {
             success = true,
             data = classData,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.createClass(request)).thenReturn(Response.success(apiResponse))
 
@@ -256,13 +255,13 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            
+
         )
         val apiResponse = ApiResponse<ClassData>(
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.createClass(request)).thenReturn(Response.success(apiResponse))
 
@@ -283,7 +282,7 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            
+
         )
         val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Creation failed"}""")
         whenever(apiService.createClass(request)).thenReturn(Response.error(400, errorBody))
@@ -306,13 +305,13 @@ class ClassRepositoryTest {
         val enrollment = EnrollmentData(
             student = student,
             courseClass = classData,
-            status = "enrolled"
+            status = "enrolled",
         )
         val apiResponse = ApiResponse(
             success = true,
             data = enrollment,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.success(apiResponse))
@@ -325,7 +324,6 @@ class ClassRepositoryTest {
         assert(result.getOrNull() == enrollment)
     }
 
-
     @Test
     fun enrollStudentToClass_noData_returnsFailure() = runTest {
         // Arrange
@@ -334,7 +332,7 @@ class ClassRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.success(apiResponse))
@@ -379,4 +377,3 @@ class ClassRepositoryTest {
         assert(result.exceptionOrNull()?.message == "Network error")
     }
 }
-

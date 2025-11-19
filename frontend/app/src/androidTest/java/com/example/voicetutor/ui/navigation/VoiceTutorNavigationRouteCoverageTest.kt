@@ -2,8 +2,6 @@ package com.example.voicetutor.ui.navigation
 
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -20,10 +18,9 @@ import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
-import org.junit.Test
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -128,7 +125,7 @@ class VoiceTutorNavigationRouteCoverageTest {
             navController.navigate(route)
         }
         waitForRoutePrefix(prefix.ifEmpty { route }, timeoutMillis = timeoutMillis)
-        
+
         // Wait for screen to load and display expected text
         composeRule.waitUntil(timeoutMillis = timeoutMillis) {
             try {
@@ -136,7 +133,7 @@ class VoiceTutorNavigationRouteCoverageTest {
                     .onAllNodesWithText(
                         expectedText,
                         substring = substring,
-                        useUnmergedTree = true
+                        useUnmergedTree = true,
                     )
                     .fetchSemanticsNodes(atLeastOneRootRequired = false)
                     .isNotEmpty()
@@ -144,17 +141,14 @@ class VoiceTutorNavigationRouteCoverageTest {
                 false
             }
         }
-        
+
         // Verify the text is displayed
         composeRule
             .onAllNodesWithText(expectedText, substring = substring, useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
-        
+
         // Wait a bit for screen to fully render
         composeRule.waitForIdle()
     }
-
 }
-
-

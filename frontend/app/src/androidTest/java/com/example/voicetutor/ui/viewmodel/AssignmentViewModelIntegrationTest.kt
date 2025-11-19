@@ -1,19 +1,18 @@
 package com.example.voicetutor.ui.viewmodel
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.data.network.AnswerSubmission
 import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
-import com.example.voicetutor.data.network.AssignmentSubmissionRequest
+import com.example.voicetutor.data.network.AnswerSubmission
 import com.example.voicetutor.data.network.ApiResponse
 import com.example.voicetutor.data.network.ApiService
+import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -153,7 +152,7 @@ class AssignmentViewModelIntegrationTest {
             totalProblem = 10,
             solvedProblem = 6,
             progress = 0.6f,
-            averageScore = 82f
+            averageScore = 82f,
         )
         apiService.personalAssignmentStatisticsResponses[personalAssignmentId] = resumedStats
         apiService.personalAssignmentsResponse = apiService.personalAssignmentsResponse.map {
@@ -161,7 +160,7 @@ class AssignmentViewModelIntegrationTest {
                 status = PersonalAssignmentStatus.IN_PROGRESS,
                 solvedNum = 6,
                 startedAt = it.startedAt ?: "2024-01-02T09:00:00Z",
-                submittedAt = null
+                submittedAt = null,
             )
         }
 
@@ -257,9 +256,9 @@ class AssignmentViewModelIntegrationTest {
                     questionId = 1,
                     answer = "A",
                     audioFile = null,
-                    confidence = 0.9f
-                )
-            )
+                    confidence = 0.9f,
+                ),
+            ),
         )
 
         viewModel.submitAssignment(id = 1, submission = submission)
@@ -300,19 +299,19 @@ class AssignmentViewModelIntegrationTest {
                     override suspend fun getAllAssignments(
                         teacherId: String?,
                         classId: String?,
-                        status: String?
+                        status: String?,
                     ): Response<ApiResponse<List<com.example.voicetutor.data.models.AssignmentData>>> {
                         return Response.success(
                             ApiResponse(
                                 success = false,
                                 data = null,
                                 message = null,
-                                error = "network error"
-                            )
+                                error = "network error",
+                            ),
                         )
                     }
-                }
-            )
+                },
+            ),
         )
 
         failingViewModel.loadAllAssignments(teacherId = "2")
@@ -321,4 +320,3 @@ class AssignmentViewModelIntegrationTest {
         assertEquals("network error", failingViewModel.error.value)
     }
 }
-

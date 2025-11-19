@@ -72,4 +72,3 @@ class NoRecentAssignmentScreenTest {
         composeRule.onNodeWithText("이어할 과제가 없습니다", substring = true).assertIsDisplayed()
     }
 }
-

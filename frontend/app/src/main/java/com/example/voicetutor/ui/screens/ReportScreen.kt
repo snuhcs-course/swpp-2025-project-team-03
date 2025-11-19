@@ -10,28 +10,27 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.utils.formatDateOnly
 
 @Composable
 fun ReportScreen(
     studentId: Int? = null,
-    onNavigateToAssignmentReport: (Int, String) -> Unit = { _, _ -> }
+    onNavigateToAssignmentReport: (Int, String) -> Unit = { _, _ -> },
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val assignments by viewModel.assignments.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
-    
+
     // Load completed assignments on first composition
     LaunchedEffect(Unit) {
         println("ReportScreen - Loading completed assignments for studentId: $studentId")
@@ -42,7 +41,7 @@ fun ReportScreen(
             println("ReportScreen - studentId is null, cannot load assignments")
         }
     }
-    
+
     // Debug assignments
     LaunchedEffect(assignments) {
         println("ReportScreen - Assignments loaded: ${assignments.size}")
@@ -50,19 +49,19 @@ fun ReportScreen(
             println("  - ${assignment.title} (Status: ${assignment.personalAssignmentStatus})")
         }
     }
-    
+
     // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             viewModel.clearError()
         }
     }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Welcome section (Header)
         Box(
@@ -70,28 +69,28 @@ fun ReportScreen(
                 .fillMaxWidth()
                 .background(
                     color = PrimaryIndigo.copy(alpha = 0.08f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 )
-                .padding(20.dp)
+                .padding(20.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .background(
                             color = PrimaryIndigo.copy(alpha = 0.15f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         ),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Assessment,
                         contentDescription = null,
                         tint = PrimaryIndigo,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(28.dp),
                     )
                 }
 
@@ -100,13 +99,13 @@ fun ReportScreen(
                         text = "학습 리포트",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "완료한 과제 결과를 확인해보세요",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
+                        color = Gray600,
                     )
                 }
             }
@@ -114,71 +113,71 @@ fun ReportScreen(
 
         // My completed assignments
         Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "완료한 과제 목록",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = "완료한 과제의 결과를 확인해보세요",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text(
+                        text = "완료한 과제 목록",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800,
+                    )
+                    Text(
+                        text = "완료한 과제의 결과를 확인해보세요",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600,
+                    )
                 }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Completed assignments from API
             if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        color = PrimaryIndigo,
+                    )
+                }
+            } else if (assignments.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        CircularProgressIndicator(
-                            color = PrimaryIndigo
+                        Icon(
+                            imageVector = Icons.Filled.Description,
+                            contentDescription = null,
+                            tint = Gray400,
+                            modifier = Modifier.size(48.dp),
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "완료한 과제가 없습니다",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Gray600,
                         )
                     }
-                } else if (assignments.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Description,
-                                contentDescription = null,
-                                tint = Gray400,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "완료한 과제가 없습니다",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Gray600
-                            )
-                        }
-                    }
-                } else {
-                    assignments.forEachIndexed { index, assignment ->
-                        AssignmentReportCard(
-                            assignment = assignment,
-                            onReportClick = {
-                                // personalAssignmentId와 과제 제목을 전달
-                                assignment.personalAssignmentId?.let { personalAssignmentId ->
-                                    onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
-                                }
+                }
+            } else {
+                assignments.forEachIndexed { index, assignment ->
+                    AssignmentReportCard(
+                        assignment = assignment,
+                        onReportClick = {
+                            // personalAssignmentId와 과제 제목을 전달
+                            assignment.personalAssignmentId?.let { personalAssignmentId ->
+                                onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
                             }
-                        )
+                        },
+                    )
 
                     if (index < assignments.size - 1) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -192,66 +191,66 @@ fun ReportScreen(
 @Composable
 fun AssignmentReportCard(
     assignment: AssignmentData,
-    onReportClick: () -> Unit = {}
+    onReportClick: () -> Unit = {},
 ) {
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = onReportClick
+        onClick = onReportClick,
     ) {
         Column(
-            //modifier = Modifier.padding(12.dp)
+            // modifier = Modifier.padding(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.Top,
             ) {
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     // Assignment title
                     Text(
                         text = assignment.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
 
                     // 제출일
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.CheckCircle,
                             contentDescription = null,
                             tint = Success,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(14.dp),
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "제출일: ${formatDateOnly(assignment.submittedAt ?: assignment.dueAt)}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray500
+                            color = Gray500,
                         )
                     }
                 }
 
                 Column(
-                    horizontalAlignment = Alignment.End
+                    horizontalAlignment = Alignment.End,
                 ) {
                     // Question count
                     Text(
                         text = "${assignment.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                     Text(
                         text = "문제",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = Gray600,
                     )
                 }
             }
@@ -264,7 +263,7 @@ fun AssignmentReportCard(
                 onClick = onReportClick,
                 variant = ButtonVariant.Primary,
                 size = ButtonSize.Medium,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -289,7 +288,7 @@ fun AssignmentReportCardPreview() {
                 description = "원소주기율표 기초 문제",
                 totalQuestions = 5,
                 createdAt = "2024-01-10T09:00:00Z",
-                
+
                 dueAt = "2024-01-15T10:00:00Z",
                 courseClass = CourseClass(
                     id = 1,
@@ -297,14 +296,13 @@ fun AssignmentReportCardPreview() {
                     description = "화학 기초반",
                     subject = Subject(id = 1, name = "화학"),
                     teacherName = "김선생님",
-                    
-                    
+
                     studentCount = 25,
-                    createdAt = "2024-01-01T00:00:00Z"
+                    createdAt = "2024-01-01T00:00:00Z",
                 ),
                 materials = emptyList(),
-                grade = "1학년"
-            )
+                grade = "1학년",
+            ),
         )
     }
 }

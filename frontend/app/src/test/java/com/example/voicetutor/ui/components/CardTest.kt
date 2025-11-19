@@ -1,7 +1,7 @@
 package com.example.voicetutor.ui.components
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Unit tests for Card component enums.
@@ -29,4 +29,3 @@ class CardTest {
         assertEquals(names.size, names.distinct().size)
     }
 }
-

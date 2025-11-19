@@ -1,9 +1,7 @@
 package com.example.voicetutor.export
 
-import org.junit.Test
 import org.junit.Assert.*
-import java.io.File
-import java.io.FileWriter
+import org.junit.Test
 
 /**
  * Unit tests for ExportManager helper functions and data classes.
@@ -18,9 +16,9 @@ class ExportManagerFunctionsTest {
             title = "Test Export",
             content = "Test Content",
             type = ExportType.PDF,
-            metadata = metadata
+            metadata = metadata,
         )
-        
+
         assertEquals("Test Export", exportData.title)
         assertEquals("Test Content", exportData.content)
         assertEquals(ExportType.PDF, exportData.type)
@@ -32,9 +30,9 @@ class ExportManagerFunctionsTest {
         val exportData = ExportData(
             title = "Test",
             content = "",
-            type = ExportType.TEXT
+            type = ExportType.TEXT,
         )
-        
+
         assertTrue(exportData.content.isEmpty())
     }
 
@@ -44,9 +42,9 @@ class ExportManagerFunctionsTest {
         val exportData = ExportData(
             title = "Test",
             content = longContent,
-            type = ExportType.TEXT
+            type = ExportType.TEXT,
         )
-        
+
         assertEquals(10000, exportData.content.length)
     }
 
@@ -54,9 +52,9 @@ class ExportManagerFunctionsTest {
     fun exportResult_success_containsFilePath() {
         val result = ExportResult(
             success = true,
-            filePath = "/path/to/file.pdf"
+            filePath = "/path/to/file.pdf",
         )
-        
+
         assertTrue(result.success)
         assertEquals("/path/to/file.pdf", result.filePath)
         assertNull(result.error)
@@ -66,9 +64,9 @@ class ExportManagerFunctionsTest {
     fun exportResult_failure_containsError() {
         val result = ExportResult(
             success = false,
-            error = "Export failed"
+            error = "Export failed",
         )
-        
+
         assertFalse(result.success)
         assertNull(result.filePath)
         assertEquals("Export failed", result.error)
@@ -78,9 +76,9 @@ class ExportManagerFunctionsTest {
     fun exportResult_withNullFilePath_handlesNull() {
         val result = ExportResult(
             success = true,
-            filePath = null
+            filePath = null,
         )
-        
+
         assertTrue(result.success)
         assertNull(result.filePath)
     }
@@ -89,7 +87,7 @@ class ExportManagerFunctionsTest {
     fun exportResult_copy_createsNewInstance() {
         val original = ExportResult(true, "/path/to/file.pdf")
         val copy = original.copy(success = false, error = "Error")
-        
+
         assertFalse(copy.success)
         assertEquals("Error", copy.error)
     }
@@ -99,7 +97,7 @@ class ExportManagerFunctionsTest {
         val result1 = ExportResult(true, "/path/to/file.pdf")
         val result2 = ExportResult(true, "/path/to/file.pdf")
         val result3 = ExportResult(false, error = "Error")
-        
+
         assertEquals(result1, result2)
         assertNotEquals(result1, result3)
     }
@@ -108,7 +106,7 @@ class ExportManagerFunctionsTest {
     fun exportResult_hashCode_worksCorrectly() {
         val result1 = ExportResult(true, "/path/to/file.pdf")
         val result2 = ExportResult(true, "/path/to/file.pdf")
-        
+
         assertEquals(result1.hashCode(), result2.hashCode())
     }
 
@@ -120,9 +118,9 @@ class ExportManagerFunctionsTest {
             score = 85,
             maxScore = 100,
             percentage = 85,
-            submitDate = "2024-01-01"
+            submitDate = "2024-01-01",
         )
-        
+
         assertEquals("Assignment 1", gradeData.assignmentName)
         assertEquals("Math", gradeData.subject)
         assertEquals(85, gradeData.score)
@@ -139,9 +137,9 @@ class ExportManagerFunctionsTest {
             score = 0,
             maxScore = 100,
             percentage = 0,
-            submitDate = "2024-01-01"
+            submitDate = "2024-01-01",
         )
-        
+
         assertEquals(0, gradeData.score)
         assertEquals(0, gradeData.percentage)
     }
@@ -154,9 +152,9 @@ class ExportManagerFunctionsTest {
             score = 100,
             maxScore = 100,
             percentage = 100,
-            submitDate = "2024-01-01"
+            submitDate = "2024-01-01",
         )
-        
+
         assertEquals(100, gradeData.score)
         assertEquals(100, gradeData.percentage)
     }
@@ -165,7 +163,7 @@ class ExportManagerFunctionsTest {
     fun gradeData_copy_createsNewInstance() {
         val original = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
         val copy = original.copy(score = 90, percentage = 90)
-        
+
         assertEquals(90, copy.score)
         assertEquals(90, copy.percentage)
         assertEquals(original.assignmentName, copy.assignmentName)
@@ -176,7 +174,7 @@ class ExportManagerFunctionsTest {
         val grade1 = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
         val grade2 = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
         val grade3 = GradeData("Assignment 2", "Math", 85, 100, 85, "2024-01-01")
-        
+
         assertEquals(grade1, grade2)
         assertNotEquals(grade1, grade3)
     }
@@ -185,7 +183,7 @@ class ExportManagerFunctionsTest {
     fun gradeData_hashCode_worksCorrectly() {
         val grade1 = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
         val grade2 = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
-        
+
         assertEquals(grade1.hashCode(), grade2.hashCode())
     }
 
@@ -197,9 +195,9 @@ class ExportManagerFunctionsTest {
             totalAssignments = 20,
             averageScore = 85,
             studyHours = 50,
-            subjects = subjects
+            subjects = subjects,
         )
-        
+
         assertEquals(10, progressData.completedAssignments)
         assertEquals(20, progressData.totalAssignments)
         assertEquals(85, progressData.averageScore)
@@ -214,9 +212,9 @@ class ExportManagerFunctionsTest {
             totalAssignments = 0,
             averageScore = 0,
             studyHours = 0,
-            subjects = emptyList()
+            subjects = emptyList(),
         )
-        
+
         assertTrue(progressData.subjects.isEmpty())
     }
 
@@ -227,9 +225,9 @@ class ExportManagerFunctionsTest {
             totalAssignments = 0,
             averageScore = 0,
             studyHours = 0,
-            subjects = emptyList()
+            subjects = emptyList(),
         )
-        
+
         assertEquals(0, progressData.completedAssignments)
         assertEquals(0, progressData.averageScore)
     }
@@ -238,7 +236,7 @@ class ExportManagerFunctionsTest {
     fun progressData_copy_createsNewInstance() {
         val original = ProgressData(10, 20, 85, 50, listOf("Math"))
         val copy = original.copy(completedAssignments = 15)
-        
+
         assertEquals(15, copy.completedAssignments)
         assertEquals(original.totalAssignments, copy.totalAssignments)
     }
@@ -248,7 +246,7 @@ class ExportManagerFunctionsTest {
         val progress1 = ProgressData(10, 20, 85, 50, listOf("Math", "Science"))
         val progress2 = ProgressData(10, 20, 85, 50, listOf("Math", "Science"))
         val progress3 = ProgressData(15, 20, 85, 50, listOf("Math", "Science"))
-        
+
         assertEquals(progress1, progress2)
         assertNotEquals(progress1, progress3)
     }
@@ -257,7 +255,7 @@ class ExportManagerFunctionsTest {
     fun progressData_hashCode_worksCorrectly() {
         val progress1 = ProgressData(10, 20, 85, 50, listOf("Math"))
         val progress2 = ProgressData(10, 20, 85, 50, listOf("Math"))
-        
+
         assertEquals(progress1.hashCode(), progress2.hashCode())
     }
 
@@ -281,7 +279,7 @@ class ExportManagerFunctionsTest {
     fun exportData_toString_containsFields() {
         val exportData = ExportData("Title", "Content", ExportType.PDF)
         val toString = exportData.toString()
-        
+
         assertTrue(toString.contains("Title"))
         assertTrue(toString.contains("Content"))
         assertTrue(toString.contains("PDF"))
@@ -291,7 +289,7 @@ class ExportManagerFunctionsTest {
     fun exportResult_toString_containsFields() {
         val result = ExportResult(true, "/path/to/file.pdf")
         val toString = result.toString()
-        
+
         assertTrue(toString.contains("success=true"))
         assertTrue(toString.contains("/path/to/file.pdf"))
     }
@@ -300,7 +298,7 @@ class ExportManagerFunctionsTest {
     fun gradeData_toString_containsFields() {
         val grade = GradeData("Assignment 1", "Math", 85, 100, 85, "2024-01-01")
         val toString = grade.toString()
-        
+
         assertTrue(toString.contains("Assignment 1"))
         assertTrue(toString.contains("Math"))
         assertTrue(toString.contains("85"))
@@ -310,7 +308,7 @@ class ExportManagerFunctionsTest {
     fun progressData_toString_containsFields() {
         val progress = ProgressData(10, 20, 85, 50, listOf("Math"))
         val toString = progress.toString()
-        
+
         assertTrue(toString.contains("10"))
         assertTrue(toString.contains("20"))
         assertTrue(toString.contains("85"))
@@ -321,9 +319,9 @@ class ExportManagerFunctionsTest {
         val exportData = ExportData(
             title = "Test & Export < > \" '",
             content = "Content with\nnewlines\tand\ttabs",
-            type = ExportType.TEXT
+            type = ExportType.TEXT,
         )
-        
+
         assertTrue(exportData.title.contains("&"))
         assertTrue(exportData.content.contains("\n"))
     }
@@ -336,11 +334,10 @@ class ExportManagerFunctionsTest {
             score = 85,
             maxScore = 100,
             percentage = 85,
-            submitDate = "2024-01-01"
+            submitDate = "2024-01-01",
         )
-        
+
         assertTrue(gradeData.assignmentName.contains("&"))
         assertTrue(gradeData.subject.contains("&"))
     }
 }
-

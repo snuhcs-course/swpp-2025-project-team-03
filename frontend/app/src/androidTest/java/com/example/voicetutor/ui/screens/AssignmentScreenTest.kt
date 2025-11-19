@@ -2,10 +2,11 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.AnswerSubmissionResponse
@@ -20,15 +21,14 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import java.io.File
-import javax.inject.Inject
-import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -53,7 +53,7 @@ class AssignmentScreenTest {
         question = "지구는 몇 개의 위성을 가지고 있나요?",
         answer = "1개",
         explanation = "지구의 유일한 자연 위성은 달입니다.",
-        difficulty = "EASY"
+        difficulty = "EASY",
     )
 
     private fun baseStatistics() = PersonalAssignmentStatistics(
@@ -64,7 +64,7 @@ class AssignmentScreenTest {
         totalProblem = 10,
         solvedProblem = 5,
         progress = 0.5f,
-        averageScore = 85f
+        averageScore = 85f,
     )
 
     @Before
@@ -110,7 +110,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -135,7 +135,7 @@ class AssignmentScreenTest {
             question = "달에 대한 추가 설명을 말해보세요.",
             answer = "달은 지구의 유일한 위성입니다.",
             explanation = "꼬리 질문 예시",
-            difficulty = "MEDIUM"
+            difficulty = "MEDIUM",
         )
 
         fakeApi.personalAssignmentQuestionsResponses = listOf(baseQuestion)
@@ -144,8 +144,8 @@ class AssignmentScreenTest {
             AnswerSubmissionResponse(
                 isCorrect = true,
                 numberStr = tailQuestion.number,
-                tailQuestion = tailQuestion
-            )
+                tailQuestion = tailQuestion,
+            ),
         )
         fakeApi.personalAssignmentStatisticsResponses = mutableMapOf(
             fakeApi.personalAssignmentData.id to PersonalAssignmentStatistics(
@@ -156,15 +156,15 @@ class AssignmentScreenTest {
                 totalProblem = 2,
                 solvedProblem = 1,
                 progress = 0.5f,
-                averageScore = 80f
-            )
+                averageScore = 80f,
+            ),
         )
 
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -178,7 +178,7 @@ class AssignmentScreenTest {
                 fakeApi.personalAssignmentData.id,
                 fakeApi.personalAssignmentData.student.id,
                 baseQuestion.id,
-                tempFile
+                tempFile,
             )
         }
 
@@ -198,7 +198,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -216,14 +216,13 @@ class AssignmentScreenTest {
         composeRule.onNodeWithText("홈으로 돌아가기", useUnmergedTree = true).assertIsDisplayed()
     }
 
-
     @Test
     fun assignmentScreen_displaysQuestionText() {
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -238,7 +237,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -246,7 +245,6 @@ class AssignmentScreenTest {
         waitForText("5 / 10")
         composeRule.onNodeWithText("5 / 10", useUnmergedTree = true).assertIsDisplayed()
     }
-
 
     @Test
     fun assignmentScreen_handlesNoMoreQuestions() {
@@ -257,7 +255,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -266,7 +264,6 @@ class AssignmentScreenTest {
         // Should handle no more questions gracefully
         composeRule.waitForIdle()
     }
-
 
     @Test
     fun assignmentScreen_handlesErrorState() {
@@ -277,7 +274,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -292,7 +289,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -307,14 +304,14 @@ class AssignmentScreenTest {
         fakeApi.answerSubmissionResponse = AnswerSubmissionResponse(
             isCorrect = true,
             numberStr = "1",
-            tailQuestion = null
+            tailQuestion = null,
         )
 
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -329,14 +326,14 @@ class AssignmentScreenTest {
         fakeApi.answerSubmissionResponse = AnswerSubmissionResponse(
             isCorrect = false,
             numberStr = "1",
-            tailQuestion = null
+            tailQuestion = null,
         )
 
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -352,7 +349,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -371,7 +368,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -390,7 +387,7 @@ class AssignmentScreenTest {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
                     assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
-                    onNavigateToHome = onNavigateToHome
+                    onNavigateToHome = onNavigateToHome,
                 )
             }
         }
@@ -405,7 +402,7 @@ class AssignmentScreenTest {
 
         waitForText("과제 완료!")
         waitForText("홈으로 돌아가기")
-        
+
         composeRule.onAllNodesWithText("홈으로 돌아가기", substring = true, useUnmergedTree = true)
             .onFirst()
             .performClick()
@@ -421,7 +418,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -447,7 +444,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -472,13 +469,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         // Progress bar should be displayed
         composeRule.waitUntil(timeoutMillis = 10_000) {
             try {
@@ -497,7 +494,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = null,
-                    assignmentTitle = "테스트 과제"
+                    assignmentTitle = "테스트 과제",
                 )
             }
         }
@@ -512,7 +509,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -528,7 +525,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -544,13 +541,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         // Recording button should be displayed
         composeRule.waitUntil(timeoutMillis = 30_000) {
             try {
@@ -569,13 +566,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
         composeRule.runOnIdle {
             val recordingStateField = AssignmentViewModel::class.java.getDeclaredField("_audioRecordingState")
@@ -585,7 +582,7 @@ class AssignmentScreenTest {
             recordingStateFlow.value = com.example.voicetutor.audio.RecordingState(
                 isRecording = true,
                 recordingTime = 5,
-                audioFilePath = null
+                audioFilePath = null,
             )
         }
 
@@ -607,13 +604,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
         composeRule.runOnIdle {
             val recordingStateField = AssignmentViewModel::class.java.getDeclaredField("_audioRecordingState")
@@ -623,7 +620,7 @@ class AssignmentScreenTest {
             recordingStateFlow.value = com.example.voicetutor.audio.RecordingState(
                 isRecording = true,
                 recordingTime = 10,
-                audioFilePath = null
+                audioFilePath = null,
             )
         }
 
@@ -644,20 +641,20 @@ class AssignmentScreenTest {
         fakeApi.answerSubmissionResponse = AnswerSubmissionResponse(
             isCorrect = true,
             numberStr = "1",
-            tailQuestion = null
+            tailQuestion = null,
         )
 
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
         composeRule.runOnIdle {
             val responseField = AssignmentViewModel::class.java.getDeclaredField("_answerSubmissionResponse")
@@ -667,7 +664,7 @@ class AssignmentScreenTest {
             responseFlow.value = AnswerSubmissionResponse(
                 isCorrect = true,
                 numberStr = "1",
-                tailQuestion = null
+                tailQuestion = null,
             )
         }
 
@@ -677,8 +674,8 @@ class AssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("정답", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() ||
-                composeRule.onAllNodesWithText("맞았습니다", substring = true, useUnmergedTree = true)
-                    .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+                    composeRule.onAllNodesWithText("맞았습니다", substring = true, useUnmergedTree = true)
+                        .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
             } catch (e: Exception) {
                 false
             }
@@ -691,13 +688,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
         composeRule.runOnIdle {
             val responseField = AssignmentViewModel::class.java.getDeclaredField("_answerSubmissionResponse")
@@ -707,7 +704,7 @@ class AssignmentScreenTest {
             responseFlow.value = AnswerSubmissionResponse(
                 isCorrect = false,
                 numberStr = "1",
-                tailQuestion = null
+                tailQuestion = null,
             )
         }
 
@@ -717,8 +714,8 @@ class AssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("오답", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() ||
-                composeRule.onAllNodesWithText("틀렸습니다", substring = true, useUnmergedTree = true)
-                    .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+                    composeRule.onAllNodesWithText("틀렸습니다", substring = true, useUnmergedTree = true)
+                        .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
             } catch (e: Exception) {
                 false
             }
@@ -731,13 +728,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         // Next question button might be displayed
         composeRule.waitForIdle()
     }
@@ -748,13 +745,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         // Progress percentage should be displayed
         composeRule.waitUntil(timeoutMillis = 30_000) {
             try {
@@ -773,13 +770,13 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
         composeRule.runOnIdle {
             val submittingField = AssignmentViewModel::class.java.getDeclaredField("_isSubmitting")
@@ -793,20 +790,19 @@ class AssignmentScreenTest {
         // Submitting state should be handled
     }
 
-
     @Test
     fun assignmentScreen_handlesErrorDisplay() {
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
         composeRule.runOnIdle {
             val errorField = AssignmentViewModel::class.java.getDeclaredField("_error")
@@ -826,7 +822,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -844,20 +840,20 @@ class AssignmentScreenTest {
             question = "달에 대한 추가 설명을 말해보세요.",
             answer = "달은 지구의 유일한 위성입니다.",
             explanation = "꼬리 질문 예시",
-            difficulty = "MEDIUM"
+            difficulty = "MEDIUM",
         )
 
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
 
         waitForText("지구는 몇 개의 위성을 가지고 있나요?")
-        
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
         composeRule.runOnIdle {
             val responseField = AssignmentViewModel::class.java.getDeclaredField("_answerSubmissionResponse")
@@ -867,7 +863,7 @@ class AssignmentScreenTest {
             responseFlow.value = AnswerSubmissionResponse(
                 isCorrect = true,
                 numberStr = "1-1",
-                tailQuestion = tailQuestion
+                tailQuestion = tailQuestion,
             )
         }
 
@@ -889,7 +885,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -913,7 +909,7 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -931,15 +927,13 @@ class AssignmentScreenTest {
         composeRule.waitForIdle()
     }
 
-
-
     @Test
     fun assignmentScreen_displaysMoveToTailQuestionButton() {
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -958,12 +952,12 @@ class AssignmentScreenTest {
                 question = "달에 대한 추가 설명을 말해보세요.",
                 answer = "달은 지구의 유일한 위성입니다.",
                 explanation = "꼬리 질문 예시",
-                difficulty = "MEDIUM"
+                difficulty = "MEDIUM",
             )
             responseFlow.value = AnswerSubmissionResponse(
                 isCorrect = true,
                 numberStr = "1-1",
-                tailQuestion = tailQuestion
+                tailQuestion = tailQuestion,
             )
         }
 
@@ -978,14 +972,13 @@ class AssignmentScreenTest {
         composeRule.waitForIdle()
     }
 
-
     @Test
     fun assignmentScreen_displaysStopRecordingButtonViaState() {
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -1001,7 +994,7 @@ class AssignmentScreenTest {
             recordingStateFlow.value = com.example.voicetutor.audio.RecordingState(
                 isRecording = true,
                 recordingTime = 0,
-                audioFilePath = null
+                audioFilePath = null,
             )
         }
 
@@ -1016,14 +1009,13 @@ class AssignmentScreenTest {
         composeRule.waitForIdle()
     }
 
-
     @Test
     fun assignmentScreen_displaysCompletionButton() {
         composeRule.setContent {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title
+                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -1039,7 +1031,7 @@ class AssignmentScreenTest {
             responseFlow.value = AnswerSubmissionResponse(
                 isCorrect = true,
                 numberStr = null,
-                tailQuestion = null
+                tailQuestion = null,
             )
         }
 
@@ -1053,5 +1045,4 @@ class AssignmentScreenTest {
         }
         composeRule.waitForIdle()
     }
-
 }

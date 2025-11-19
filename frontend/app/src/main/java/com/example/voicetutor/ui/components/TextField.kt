@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -29,10 +28,10 @@ fun VTTextField(
     maxLines: Int = 1,
     enabled: Boolean = true,
     isError: Boolean = false,
-    errorMessage: String? = null
+    errorMessage: String? = null,
 ) {
     val shape = RoundedCornerShape(12.dp)
-    
+
     Column(modifier = modifier) {
         label?.let { labelText ->
             Text(
@@ -40,10 +39,10 @@ fun VTTextField(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = Gray700,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 8.dp),
             )
         }
-        
+
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -51,7 +50,7 @@ fun VTTextField(
                 .fillMaxWidth()
                 .clip(shape)
                 .background(
-                    if (enabled) Color.White else Gray50
+                    if (enabled) Color.White else Gray50,
                 )
                 .border(
                     width = if (isError) 2.dp else 1.dp,
@@ -60,14 +59,14 @@ fun VTTextField(
                         !enabled -> Gray200
                         else -> Gray200
                     },
-                    shape = shape
+                    shape = shape,
                 )
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             enabled = enabled,
             maxLines = maxLines,
             textStyle = TextStyle(
                 fontSize = 14.sp,
-                color = if (enabled) Color.Black else Gray400
+                color = if (enabled) Color.Black else Gray400,
             ),
             cursorBrush = SolidColor(Color.Black),
             decorationBox = { innerTextField ->
@@ -75,19 +74,19 @@ fun VTTextField(
                     Text(
                         text = placeholder,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Gray400
+                        color = Gray400,
                     )
                 }
                 innerTextField()
-            }
+            },
         )
-        
+
         errorMessage?.let { error ->
             Text(
                 text = error,
                 style = MaterialTheme.typography.bodySmall,
                 color = Error,
-                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp),
             )
         }
     }
@@ -99,37 +98,37 @@ fun TextFieldPreview() {
     VoiceTutorTheme {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             VTTextField(
                 value = "",
                 onValueChange = {},
                 label = "이름",
-                placeholder = "이름을 입력하세요"
+                placeholder = "이름을 입력하세요",
             )
-            
+
             VTTextField(
                 value = "김학생",
                 onValueChange = {},
                 label = "이름",
-                placeholder = "이름을 입력하세요"
+                placeholder = "이름을 입력하세요",
             )
-            
+
             VTTextField(
                 value = "",
                 onValueChange = {},
                 label = "비고",
                 placeholder = "추가 정보를 입력하세요",
-                maxLines = 3
+                maxLines = 3,
             )
-            
+
             VTTextField(
                 value = "",
                 onValueChange = {},
                 label = "에러 상태",
                 placeholder = "에러가 있는 필드",
                 isError = true,
-                errorMessage = "이 필드는 필수입니다"
+                errorMessage = "이 필드는 필수입니다",
             )
         }
     }

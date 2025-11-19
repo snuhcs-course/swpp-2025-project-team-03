@@ -1,28 +1,28 @@
 package com.example.voicetutor.data.repository
 
-import com.example.voicetutor.data.network.ApiService
+import com.example.voicetutor.data.models.AnswerSubmissionResponse
+import com.example.voicetutor.data.models.AssignmentData
+import com.example.voicetutor.data.models.AssignmentResultData
+import com.example.voicetutor.data.models.AssignmentStatus
+import com.example.voicetutor.data.models.CourseClass
+import com.example.voicetutor.data.models.PersonalAssignmentQuestion
+import com.example.voicetutor.data.models.PersonalAssignmentStatistics
+import com.example.voicetutor.data.models.Subject
 import com.example.voicetutor.data.network.ApiResponse
+import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.S3UploadStatus
+import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.whenever
-import org.mockito.kotlin.eq
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.whenever
 import retrofit2.Response
-import kotlinx.coroutines.test.runTest
-import com.example.voicetutor.data.models.AssignmentStatus
 import java.io.File
-import com.example.voicetutor.data.models.AssignmentData
-import com.example.voicetutor.data.models.CourseClass
-import com.example.voicetutor.data.models.Subject
-import com.example.voicetutor.data.models.PersonalAssignmentQuestion
-import com.example.voicetutor.data.models.PersonalAssignmentStatistics
-import com.example.voicetutor.data.models.AnswerSubmissionResponse
-import com.example.voicetutor.data.models.AssignmentResultData
 
 @RunWith(MockitoJUnitRunner::class)
 class AssignmentRepositoryTest {
@@ -66,19 +66,24 @@ class AssignmentRepositoryTest {
     // ===== Success paths =====
     private fun subject() = Subject(id = 1, name = "S")
     private fun course() = CourseClass(
-        id = 1, name = "C", description = null, subject = subject(),
-        teacherName = "T",   studentCount = 0, createdAt = ""
+        id = 1,
+        name = "C",
+        description = null,
+        subject = subject(),
+        teacherName = "T",
+        studentCount = 0,
+        createdAt = "",
     )
 
     @Test
     fun getAllAssignments_success_returnsList() = runTest {
         val repo = AssignmentRepository(apiService)
         val items = listOf(
-            AssignmentData(1, "A1", "d", 0, null, "",  course(), null, null),
-            AssignmentData(2, "A2", "d", 0, null, "",  course(), null, null)
+            AssignmentData(1, "A1", "d", 0, null, "", course(), null, null),
+            AssignmentData(2, "A2", "d", 0, null, "", course(), null, null),
         )
         whenever(apiService.getAllAssignments(null, null, null)).thenReturn(
-            Response.success(ApiResponse(success = true, data = items, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = items, message = null, error = null)),
         )
         val r = repo.getAllAssignments()
         assert(r.isSuccess)
@@ -90,7 +95,7 @@ class AssignmentRepositoryTest {
         val repo = AssignmentRepository(apiService)
         val item = AssignmentData(3, "A3", "d", 0, null, "", course(), null, null)
         whenever(apiService.getAssignmentById(3)).thenReturn(
-            Response.success(ApiResponse(success = true, data = item, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = item, message = null, error = null)),
         )
         val r = repo.getAssignmentById(3)
         assert(r.isSuccess)
@@ -102,7 +107,7 @@ class AssignmentRepositoryTest {
         val repo = AssignmentRepository(apiService)
         val list = listOf(PersonalAssignmentQuestion(1, "1", "Q1", "A", "E", "M"))
         whenever(apiService.getPersonalAssignmentQuestions(9)).thenReturn(
-            Response.success(ApiResponse(success = true, data = list, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = list, message = null, error = null)),
         )
         val r = repo.getPersonalAssignmentQuestions(9)
         assert(r.isSuccess)
@@ -113,11 +118,17 @@ class AssignmentRepositoryTest {
     fun getPersonalAssignmentStatistics_success_returnsStats() = runTest {
         val repo = AssignmentRepository(apiService)
         val stats = PersonalAssignmentStatistics(
-            totalQuestions = 3, answeredQuestions = 1, correctAnswers = 1,
-            accuracy = 0.5f, totalProblem = 3, solvedProblem = 1, progress = 0.5f, averageScore = 0.4f
+            totalQuestions = 3,
+            answeredQuestions = 1,
+            correctAnswers = 1,
+            accuracy = 0.5f,
+            totalProblem = 3,
+            solvedProblem = 1,
+            progress = 0.5f,
+            averageScore = 0.4f,
         )
         whenever(apiService.getPersonalAssignmentStatistics(11)).thenReturn(
-            Response.success(ApiResponse(success = true, data = stats, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = stats, message = null, error = null)),
         )
         val r = repo.getPersonalAssignmentStatistics(11)
         assert(r.isSuccess)
@@ -163,7 +174,7 @@ class AssignmentRepositoryTest {
     fun uploadPdfToS3_networkFailure_returnsFailure() = runTest {
         val repo = AssignmentRepository(apiService)
         // Create an actual small temp file to pass file read, then fail on network
-        val tmp = File.createTempFile("sample", ".pdf").apply { writeBytes(byteArrayOf(1,2,3)) }
+        val tmp = File.createTempFile("sample", ".pdf").apply { writeBytes(byteArrayOf(1, 2, 3)) }
         val r = repo.uploadPdfToS3("http://invalid-host-${System.currentTimeMillis()}.local/upload", tmp)
         assert(r.isFailure)
         tmp.delete()
@@ -182,8 +193,8 @@ class AssignmentRepositoryTest {
                 dueAt = null,
                 grade = null,
                 description = null,
-                totalQuestions = null
-            )
+                totalQuestions = null,
+            ),
         )
         assert(r.isFailure)
     }
@@ -203,7 +214,7 @@ class AssignmentRepositoryTest {
     fun submitAssignment_failure_returnsFailure() = runTest {
         val repo = AssignmentRepository(apiService)
         val errorBody = ResponseBody.create("application/json".toMediaType(), """{"success":false}""")
-        val audio = File.createTempFile("ans", ".wav").apply { writeBytes(byteArrayOf(0,1)) }
+        val audio = File.createTempFile("ans", ".wav").apply { writeBytes(byteArrayOf(0, 1)) }
         whenever(apiService.submitAnswer(any(), any(), any(), any())).thenReturn(Response.error(400, errorBody))
         val r = repo.submitAnswer(26, 7, 21, audio)
         assert(r.isFailure)
@@ -230,11 +241,11 @@ class AssignmentRepositoryTest {
                 student = com.example.voicetutor.data.models.StudentInfo(1, "S1", "s1@test.com"),
                 assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(1, "A1", "d", 5, "", "1"),
                 status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
-                solvedNum = 2
-            )
+                solvedNum = 2,
+            ),
         )
         whenever(apiService.getPersonalAssignments(studentId = 1, assignmentId = null)).thenReturn(
-            Response.success(ApiResponse(success = true, data = personalAssignments, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = personalAssignments, message = null, error = null)),
         )
         val r = repo.getPersonalAssignments(studentId = 1, assignmentId = null)
         assert(r.isSuccess)
@@ -250,11 +261,11 @@ class AssignmentRepositoryTest {
                 student = com.example.voicetutor.data.models.StudentInfo(1, "S1", "s1@test.com"),
                 assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(1, "A1", "d", 5, "", "1"),
                 status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
-                solvedNum = 2
-            )
+                solvedNum = 2,
+            ),
         )
         whenever(apiService.getPersonalAssignments(studentId = null, assignmentId = 10)).thenReturn(
-            Response.success(ApiResponse(success = true, data = personalAssignments, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = personalAssignments, message = null, error = null)),
         )
         val r = repo.getPersonalAssignments(studentId = null, assignmentId = 10)
         assert(r.isSuccess)
@@ -285,10 +296,10 @@ class AssignmentRepositoryTest {
             assignment_id = 50,
             material_id = 20,
             s3_key = "key",
-            upload_url = "url"
+            upload_url = "url",
         )
         whenever(apiService.createAssignment(request)).thenReturn(
-            Response.success(ApiResponse(success = true, data = response, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = response, message = null, error = null)),
         )
         val r = repo.createAssignment(request)
         assert(r.isSuccess)
@@ -321,17 +332,17 @@ class AssignmentRepositoryTest {
             totalQuestions = 5,
             dueAt = "2025-12-31T00:00:00Z",
             grade = "A",
-            subject = com.example.voicetutor.data.network.SubjectUpdateRequest(id = 1, name = "Math")
+            subject = com.example.voicetutor.data.network.SubjectUpdateRequest(id = 1, name = "Math"),
         )
         val updated = AssignmentData(1, "Updated", "New desc", 0, null, "", course(), null, null)
         whenever(apiService.updateAssignment(eq(1), any())).thenReturn(
-            Response.success(ApiResponse(success = true, data = updated, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = updated, message = null, error = null)),
         )
         val r = repo.updateAssignment(1, request)
         assert(r.isSuccess)
         assert(r.getOrNull()?.title == "Updated")
     }
-    
+
     @Test
     fun getAssignmentResult_success_returnsData() = runTest {
         val repo = AssignmentRepository(apiService)
@@ -339,10 +350,10 @@ class AssignmentRepositoryTest {
             submittedStudents = 5,
             totalStudents = 10,
             averageScore = 85.0,
-            completionRate = 50.0
+            completionRate = 50.0,
         )
         whenever(apiService.getAssignmentResult(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = resultData, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = resultData, message = null, error = null)),
         )
         val r = repo.getAssignmentResult(1)
         assert(r.isSuccess)
@@ -353,7 +364,7 @@ class AssignmentRepositoryTest {
     fun deleteAssignment_success_returnsSuccess() = runTest {
         val repo = AssignmentRepository(apiService)
         whenever(apiService.deleteAssignment(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = Unit, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = Unit, message = null, error = null)),
         )
         val r = repo.deleteAssignment(1)
         assert(r.isSuccess)
@@ -372,11 +383,11 @@ class AssignmentRepositoryTest {
                 question = "Q2",
                 answer = "A2",
                 explanation = "E2",
-                difficulty = "M"
-            )
+                difficulty = "M",
+            ),
         )
         whenever(apiService.submitAnswer(any(), any(), any(), any())).thenReturn(
-            Response.success(ApiResponse(success = true, data = response, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = response, message = null, error = null)),
         )
         val r = repo.submitAnswer(1, 1, 1, audio)
         assert(r.isSuccess)
@@ -388,10 +399,10 @@ class AssignmentRepositoryTest {
     fun getRecentPersonalAssignment_success_returnsId() = runTest {
         val repo = AssignmentRepository(apiService)
         val recentData = com.example.voicetutor.data.network.RecentAnswerData(
-            personalAssignmentId = 100
+            personalAssignmentId = 100,
         )
         whenever(apiService.getRecentPersonalAssignment(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = recentData, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = recentData, message = null, error = null)),
         )
         val r = repo.getRecentPersonalAssignment(1)
         assert(r.isSuccess)
@@ -402,7 +413,7 @@ class AssignmentRepositoryTest {
     fun getRecentPersonalAssignment_noData_returnsFailure() = runTest {
         val repo = AssignmentRepository(apiService)
         whenever(apiService.getRecentPersonalAssignment(1)).thenReturn(
-            Response.success(ApiResponse<com.example.voicetutor.data.network.RecentAnswerData>(success = true, data = null, message = null, error = null))
+            Response.success(ApiResponse<com.example.voicetutor.data.network.RecentAnswerData>(success = true, data = null, message = null, error = null)),
         )
         val r = repo.getRecentPersonalAssignment(1)
         assert(r.isFailure)
@@ -431,10 +442,10 @@ class AssignmentRepositoryTest {
             file_size = 1024L,
             content_type = "application/pdf",
             last_modified = "2025-01-01",
-            bucket = "bucket"
+            bucket = "bucket",
         )
         whenever(apiService.checkS3Upload(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = status, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = status, message = null, error = null)),
         )
         val r = repo.checkS3Upload(1)
         assert(r.isSuccess)
@@ -456,10 +467,10 @@ class AssignmentRepositoryTest {
         val request = com.example.voicetutor.data.network.QuestionCreateRequest(
             assignment_id = 1,
             material_id = 10,
-            total_number = 5
+            total_number = 5,
         )
         whenever(apiService.createQuestions(request)).thenReturn(
-            Response.success(ApiResponse(success = true, data = Unit, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = Unit, message = null, error = null)),
         )
         val r = repo.createQuestionsAfterUpload(1, 10, 5)
         assert(r.isSuccess)
@@ -479,7 +490,7 @@ class AssignmentRepositoryTest {
         val repo = AssignmentRepository(apiService)
         val question = PersonalAssignmentQuestion(id = 1, number = "1", question = "Q1", answer = "A1", explanation = "E1", difficulty = "M")
         whenever(apiService.getNextQuestion(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = question, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = question, message = null, error = null)),
         )
         val r = repo.getNextQuestion(1)
         assert(r.isSuccess)
@@ -490,7 +501,7 @@ class AssignmentRepositoryTest {
     fun getPersonalAssignmentQuestions_emptyList_returnsEmptyList() = runTest {
         val repo = AssignmentRepository(apiService)
         whenever(apiService.getPersonalAssignmentQuestions(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = emptyList<PersonalAssignmentQuestion>(), message = null, error = null))
+            Response.success(ApiResponse(success = true, data = emptyList<PersonalAssignmentQuestion>(), message = null, error = null)),
         )
         val r = repo.getPersonalAssignmentQuestions(1)
         assert(r.isSuccess)
@@ -501,7 +512,7 @@ class AssignmentRepositoryTest {
     fun getPersonalAssignmentStatistics_noData_returnsFailure() = runTest {
         val repo = AssignmentRepository(apiService)
         whenever(apiService.getPersonalAssignmentStatistics(1)).thenReturn(
-            Response.success(ApiResponse<PersonalAssignmentStatistics>(success = true, data = null, message = null, error = null))
+            Response.success(ApiResponse<PersonalAssignmentStatistics>(success = true, data = null, message = null, error = null)),
         )
         val r = repo.getPersonalAssignmentStatistics(1)
         assert(r.isFailure)
@@ -513,7 +524,7 @@ class AssignmentRepositoryTest {
         val repo = AssignmentRepository(apiService)
         val items = listOf(AssignmentData(1, "A1", "d", 0, null, "", course(), null, null))
         whenever(apiService.getAllAssignments("1", "10", AssignmentStatus.IN_PROGRESS.name)).thenReturn(
-            Response.success(ApiResponse(success = true, data = items, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = items, message = null, error = null)),
         )
         val r = repo.getAllAssignments(teacherId = "1", classId = "10", status = AssignmentStatus.IN_PROGRESS)
         assert(r.isSuccess)
@@ -524,7 +535,7 @@ class AssignmentRepositoryTest {
     fun getStudentAssignments_emptyList_returnsEmptyList() = runTest {
         val repo = AssignmentRepository(apiService)
         whenever(apiService.getStudentAssignments(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = emptyList<AssignmentData>(), message = null, error = null))
+            Response.success(ApiResponse(success = true, data = emptyList<AssignmentData>(), message = null, error = null)),
         )
         val r = repo.getStudentAssignments(1)
         assert(r.isSuccess)
@@ -544,11 +555,9 @@ class AssignmentRepositoryTest {
     fun completePersonalAssignment_success_returnsSuccess() = runTest {
         val repo = AssignmentRepository(apiService)
         whenever(apiService.completePersonalAssignment(1)).thenReturn(
-            Response.success(ApiResponse(success = true, data = Unit, message = null, error = null))
+            Response.success(ApiResponse(success = true, data = Unit, message = null, error = null)),
         )
         val r = repo.completePersonalAssignment(1)
         assert(r.isSuccess)
     }
 }
-
-

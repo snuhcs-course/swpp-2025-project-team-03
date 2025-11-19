@@ -2,7 +2,7 @@ package com.example.voicetutor.ui.viewmodel
 
 enum class LoginField {
     EMAIL,
-    PASSWORD
+    PASSWORD,
 }
 
 sealed class LoginError {
@@ -17,4 +17,3 @@ sealed class LoginError {
         data class Unknown(override val message: String) : General(message, true)
     }
 }
-

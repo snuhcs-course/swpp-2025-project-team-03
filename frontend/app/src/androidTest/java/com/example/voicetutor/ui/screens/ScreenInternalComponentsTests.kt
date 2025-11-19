@@ -36,12 +36,12 @@ class ScreenInternalComponentsTests {
                     totalQuestions = 10,
                     status = PersonalAssignmentStatus.IN_PROGRESS,
                     onClick = {},
-                    onStartAssignment = {}
+                    onStartAssignment = {},
                 )
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("수학 과제", substring = true).assertExists()
         composeTestRule.onNodeWithText("수학", substring = true).assertExists()
     }
@@ -60,7 +60,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.NOT_STARTED,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "진행중 과제",
@@ -71,7 +71,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "제출된 과제",
@@ -82,7 +82,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.SUBMITTED,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                 }
             }
@@ -105,7 +105,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "과제 25%",
@@ -116,7 +116,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "과제 50%",
@@ -127,7 +127,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "과제 75%",
@@ -138,7 +138,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     StudentAssignmentCard(
                         title = "과제 100%",
@@ -149,7 +149,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                 }
             }
@@ -172,12 +172,12 @@ class ScreenInternalComponentsTests {
                     totalQuestions = 10,
                     status = PersonalAssignmentStatus.IN_PROGRESS,
                     onClick = { clicked = true },
-                    onStartAssignment = {}
+                    onStartAssignment = {},
                 )
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onAllNodesWithText("과제", substring = true)
             .filter(hasClickAction())
             .onFirst()
@@ -200,12 +200,12 @@ class ScreenInternalComponentsTests {
                     status = AssignmentStatus.IN_PROGRESS,
                     onClick = {},
                     onViewResults = {},
-                    onEdit = {}
+                    onEdit = {},
                 )
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("수학 과제", substring = true).assertExists()
         composeTestRule.onNodeWithText("수학 1반", substring = true).assertExists()
     }
@@ -224,7 +224,7 @@ class ScreenInternalComponentsTests {
                         status = AssignmentStatus.IN_PROGRESS,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                     TeacherAssignmentCard(
                         title = "완료된 과제",
@@ -235,7 +235,7 @@ class ScreenInternalComponentsTests {
                         status = AssignmentStatus.COMPLETED,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                     TeacherAssignmentCard(
                         title = "초안 과제",
@@ -246,7 +246,7 @@ class ScreenInternalComponentsTests {
                         status = AssignmentStatus.DRAFT,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                 }
             }
@@ -254,7 +254,6 @@ class ScreenInternalComponentsTests {
         composeTestRule.waitForIdle()
         composeTestRule.onRoot().assertExists()
     }
-
 
     @Test
     fun teacherAssignmentCard_triggersOnViewResults() {
@@ -270,12 +269,12 @@ class ScreenInternalComponentsTests {
                     status = AssignmentStatus.IN_PROGRESS,
                     onClick = {},
                     onViewResults = { viewResultsClicked = true },
-                    onEdit = {}
+                    onEdit = {},
                 )
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Find and click the view results button
         composeTestRule.onRoot().printToLog("TEACHER_ASSIGNMENT_CARD")
     }
@@ -296,7 +295,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     TeacherAssignmentCard(
                         title = "선생님 과제",
@@ -307,13 +306,13 @@ class ScreenInternalComponentsTests {
                         status = AssignmentStatus.IN_PROGRESS,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("학생 과제", substring = true).assertExists()
         composeTestRule.onNodeWithText("선생님 과제", substring = true).assertExists()
     }
@@ -333,7 +332,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 0,
                         status = PersonalAssignmentStatus.NOT_STARTED,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                     // Submitted state
                     StudentAssignmentCard(
@@ -345,7 +344,7 @@ class ScreenInternalComponentsTests {
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.SUBMITTED,
                         onClick = {},
-                        onStartAssignment = {}
+                        onStartAssignment = {},
                     )
                 }
             }
@@ -369,7 +368,7 @@ class ScreenInternalComponentsTests {
                         status = AssignmentStatus.IN_PROGRESS,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                     // All submissions completed
                     TeacherAssignmentCard(
@@ -381,7 +380,7 @@ class ScreenInternalComponentsTests {
                         status = AssignmentStatus.COMPLETED,
                         onClick = {},
                         onViewResults = {},
-                        onEdit = {}
+                        onEdit = {},
                     )
                 }
             }
@@ -390,4 +389,3 @@ class ScreenInternalComponentsTests {
         composeTestRule.onRoot().assertExists()
     }
 }
-

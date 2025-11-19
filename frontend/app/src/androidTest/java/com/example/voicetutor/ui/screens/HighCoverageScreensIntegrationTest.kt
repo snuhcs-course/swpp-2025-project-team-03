@@ -1,10 +1,9 @@
 package com.example.voicetutor.ui.screens
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.assertIsDisplayed
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.di.NetworkModule
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
@@ -127,4 +126,3 @@ class HighCoverageScreensIntegrationTest {
         assertFirstNodeWithText("과제 목록", substring = true)
     }
 }
-

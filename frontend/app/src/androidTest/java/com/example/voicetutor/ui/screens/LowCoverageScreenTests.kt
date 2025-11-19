@@ -4,17 +4,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,7 +28,7 @@ class LowCoverageScreenTests {
     val composeTestRule = createComposeRule()
 
     // ========== TeacherClassesScreen Tests ==========
-    
+
     @Test
     fun classCard_renders_withAllFields() {
         val classRoom = ClassRoom(
@@ -41,7 +39,7 @@ class LowCoverageScreenTests {
             studentCount = 30,
             assignmentCount = 5,
             completionRate = 0.8f,
-            color = PrimaryIndigo
+            color = PrimaryIndigo,
         )
 
         composeTestRule.setContent {
@@ -50,7 +48,7 @@ class LowCoverageScreenTests {
                     classRoom = classRoom,
                     onClassClick = {},
                     onCreateAssignment = {},
-                    onViewStudents = {}
+                    onViewStudents = {},
                 )
             }
         }
@@ -75,7 +73,7 @@ class LowCoverageScreenTests {
                     classRoom = classRoom,
                     onClassClick = { clicked = true },
                     onCreateAssignment = {},
-                    onViewStudents = {}
+                    onViewStudents = {},
                 )
             }
         }
@@ -95,7 +93,7 @@ class LowCoverageScreenTests {
                     classRoom = classRoom,
                     onClassClick = {},
                     onCreateAssignment = { assignmentCreated = true },
-                    onViewStudents = {}
+                    onViewStudents = {},
                 )
             }
         }
@@ -115,7 +113,7 @@ class LowCoverageScreenTests {
                     classRoom = classRoom,
                     onClassClick = {},
                     onCreateAssignment = {},
-                    onViewStudents = { studentsViewed = true }
+                    onViewStudents = { studentsViewed = true },
                 )
             }
         }
@@ -132,7 +130,7 @@ class LowCoverageScreenTests {
                     icon = androidx.compose.material.icons.Icons.Filled.People,
                     value = "30",
                     label = "학생",
-                    color = Gray600
+                    color = Gray600,
                 )
             }
         }
@@ -150,25 +148,25 @@ class LowCoverageScreenTests {
                         classRoom = ClassRoom(1, "Indigo 반", "과목 1", "설명", 30, 5, 0.8f, PrimaryIndigo),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                     ClassCard(
                         classRoom = ClassRoom(2, "Success 반", "과목 2", "설명", 30, 5, 0.8f, Success),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                     ClassCard(
                         classRoom = ClassRoom(3, "Warning 반", "과목 3", "설명", 30, 5, 0.8f, Warning),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                     ClassCard(
                         classRoom = ClassRoom(4, "Error 반", "과목 4", "설명", 30, 5, 0.8f, Error),
                         onClassClick = {},
                         onCreateAssignment = {},
-                        onViewStudents = {}
+                        onViewStudents = {},
                     )
                 }
             }
@@ -187,7 +185,7 @@ class LowCoverageScreenTests {
                     classRoom = classRoom,
                     onClassClick = {},
                     onCreateAssignment = {},
-                    onViewStudents = {}
+                    onViewStudents = {},
                 )
             }
         }
@@ -209,14 +207,14 @@ class LowCoverageScreenTests {
             completionRate = 0.75f,
             totalStudents = 30,
             completedStudents = 22,
-            averageScore = 85
+            averageScore = 85,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 ClassAssignmentCard(
                     assignment = assignment,
-                    onNavigateToAssignmentDetail = {}
+                    onNavigateToAssignmentDetail = {},
                 )
             }
         }
@@ -234,7 +232,7 @@ class LowCoverageScreenTests {
             VoiceTutorTheme {
                 ClassAssignmentCard(
                     assignment = assignment,
-                    onNavigateToAssignmentDetail = { navigated = true }
+                    onNavigateToAssignmentDetail = { navigated = true },
                 )
             }
         }
@@ -259,7 +257,7 @@ class LowCoverageScreenTests {
             totalStudents = 30,
             submittedStudents = 22,
             averageScore = 85,
-            completionRate = 73
+            completionRate = 73,
         )
 
         composeTestRule.setContent {
@@ -267,24 +265,24 @@ class LowCoverageScreenTests {
                 VTCard(variant = CardVariant.Elevated) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
                             detail.title,
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         Text(
                             "과목: ${detail.subject}",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
                             "반: ${detail.className}",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
                             "마감일: ${detail.dueDate}",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 }
@@ -302,7 +300,7 @@ class LowCoverageScreenTests {
             studentId = "2024001",
             submittedAt = "2024-12-30",
             score = 85,
-            status = "제출완료"
+            status = "제출완료",
         )
 
         composeTestRule.setContent {
@@ -328,7 +326,7 @@ class LowCoverageScreenTests {
             questionNumber = 1,
             question = "질문",
             hint = "힌트",
-            modelAnswer = "정답"
+            modelAnswer = "정답",
         )
 
         composeTestRule.setContent {
@@ -469,7 +467,7 @@ class LowCoverageScreenTests {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTCard(
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 ) {
                     Text("알림 설정")
                     Text("알림을 관리합니다")
@@ -508,17 +506,17 @@ class LowCoverageScreenTests {
                     androidx.compose.material3.OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("수업명") }
+                        label = { Text("수업명") },
                     )
                     androidx.compose.material3.OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("과목") }
+                        label = { Text("과목") },
                     )
                     androidx.compose.material3.OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("설명") }
+                        label = { Text("설명") },
                     )
                 }
             }
@@ -540,12 +538,12 @@ class LowCoverageScreenTests {
                     androidx.compose.material3.OutlinedTextField(
                         value = "과제 1",
                         onValueChange = {},
-                        label = { Text("과제명") }
+                        label = { Text("과제명") },
                     )
                     androidx.compose.material3.OutlinedTextField(
                         value = "설명",
                         onValueChange = {},
-                        label = { Text("설명") }
+                        label = { Text("설명") },
                     )
                 }
             }
@@ -630,7 +628,7 @@ class LowCoverageScreenTests {
                 VTCard {
                     Text(
                         text = "오류가 발생했습니다",
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
             }
@@ -648,7 +646,7 @@ class LowCoverageScreenTests {
                 androidx.compose.material3.FilterChip(
                     selected = false,
                     onClick = { clicked = true },
-                    label = { Text("전체") }
+                    label = { Text("전체") },
                 )
             }
         }
@@ -701,23 +699,23 @@ class LowCoverageScreenTests {
                     androidx.compose.material3.OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("텍스트") }
+                        label = { Text("텍스트") },
                     )
                     androidx.compose.material3.OutlinedTextField(
                         value = "",
                         onValueChange = {},
                         label = { Text("숫자") },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                        )
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                        ),
                     )
                     androidx.compose.material3.OutlinedTextField(
                         value = "",
                         onValueChange = {},
                         label = { Text("이메일") },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Email
-                        )
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Email,
+                        ),
                     )
                 }
             }
@@ -729,4 +727,3 @@ class LowCoverageScreenTests {
         composeTestRule.onNodeWithText("이메일", substring = true).assertExists()
     }
 }
-

@@ -86,7 +86,7 @@ data class AchievementStatistics(
     @SerializedName("accuracy")
     val accuracy: Double,
     @SerializedName("content")
-    val content: String
+    val content: String,
 )
 
 // 성취기준 분석 리포트 데이터
@@ -98,5 +98,5 @@ data class CurriculumReportData(
     @SerializedName("overall_accuracy")
     val overallAccuracy: Double,
     @SerializedName("achievement_statistics")
-    val achievementStatistics: Map<String, AchievementStatistics>
+    val achievementStatistics: Map<String, AchievementStatistics>,
 )

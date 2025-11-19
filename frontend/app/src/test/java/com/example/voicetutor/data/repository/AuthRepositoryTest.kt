@@ -1,7 +1,9 @@
 package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.LoginRequest
+import com.example.voicetutor.data.models.LoginResponse
 import com.example.voicetutor.data.models.SignupRequest
+import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.ApiService
 import kotlinx.coroutines.test.runTest
@@ -13,8 +15,6 @@ import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.whenever
 import retrofit2.Response
-import com.example.voicetutor.data.models.LoginResponse
-import com.example.voicetutor.data.models.User
 
 @RunWith(MockitoJUnitRunner::class)
 class AuthRepositoryTest {
@@ -238,11 +238,13 @@ class AuthRepositoryTest {
         // 400 상태 코드와 "비밀번호" 키워드로 InvalidCredentials 예외가 발생해야 함
         // 하지만 Mock 환경에서 errorBody.string()이 제대로 동작하지 않을 수 있으므로
         // Unknown 예외가 발생할 수도 있음
-        assert(exception is LoginException.InvalidCredentials || 
-               exception is LoginException.Unknown ||
-               exception?.message?.contains("이메일 또는 비밀번호") == true ||
-               exception?.message?.contains("비밀번호") == true ||
-               exception?.message?.contains("로그인에 실패했습니다") == true)
+        assert(
+            exception is LoginException.InvalidCredentials ||
+                exception is LoginException.Unknown ||
+                exception?.message?.contains("이메일 또는 비밀번호") == true ||
+                exception?.message?.contains("비밀번호") == true ||
+                exception?.message?.contains("로그인에 실패했습니다") == true,
+        )
     }
 
     @Test
@@ -296,9 +298,11 @@ class AuthRepositoryTest {
         // 빈 에러 바디의 경우 parseErrorMessage가 response.message()를 반환하거나 null을 반환
         // null이면 기본 메시지 "로그인에 실패했습니다"를 사용
         // response.message()가 "Response.error()"를 반환할 수도 있음
-        assert(exceptionMessage.contains("로그인에 실패했습니다") || 
-               exceptionMessage.contains("Response.error") ||
-               exceptionMessage.isNotEmpty())
+        assert(
+            exceptionMessage.contains("로그인에 실패했습니다") ||
+                exceptionMessage.contains("Response.error") ||
+                exceptionMessage.isNotEmpty(),
+        )
     }
 
     @Test
@@ -364,5 +368,3 @@ class AuthRepositoryTest {
         assert(exception is SignupException.Unknown || exception?.message?.contains("알 수 없는") == true)
     }
 }
-
-

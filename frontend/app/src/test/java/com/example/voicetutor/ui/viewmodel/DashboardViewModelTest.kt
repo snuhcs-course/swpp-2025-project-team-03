@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import com.example.voicetutor.data.models.DashboardStats
 import com.example.voicetutor.data.repository.DashboardRepository
 import com.example.voicetutor.testing.MainDispatcherRule
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -50,7 +49,7 @@ class DashboardViewModelTest {
             totalStudents = 10,
             totalClasses = 3,
             totalAssignments = 15,
-            completedAssignments = 5
+            completedAssignments = 5,
         )
         Mockito.`when`(dashboardRepository.getDashboardStats("1"))
             .thenReturn(Result.success(stats))
@@ -58,7 +57,7 @@ class DashboardViewModelTest {
         // When
         viewModel.dashboardStats.test {
             awaitItem() // initial null
-            
+
             viewModel.loadDashboardData("1")
             runCurrent()
 
@@ -79,7 +78,7 @@ class DashboardViewModelTest {
         // When
         viewModel.error.test {
             awaitItem() // initial null
-            
+
             viewModel.loadDashboardData("1")
             runCurrent()
 
@@ -97,7 +96,7 @@ class DashboardViewModelTest {
             totalStudents = 5,
             totalClasses = 2,
             totalAssignments = 10,
-            completedAssignments = 3
+            completedAssignments = 3,
         )
         Mockito.`when`(dashboardRepository.getDashboardStats("1"))
             .thenReturn(Result.success(stats))
@@ -105,7 +104,7 @@ class DashboardViewModelTest {
         // When
         viewModel.isLoading.test {
             assert(!awaitItem()) // initial false
-            
+
             viewModel.loadDashboardData("1")
             runCurrent()
 
@@ -130,14 +129,13 @@ class DashboardViewModelTest {
             viewModel.loadDashboardData("1")
             runCurrent()
             assert(awaitItem() != null) // 에러 설정 확인
-            
+
             // When: clearError 호출
             viewModel.clearError()
-            
+
             // Then: 에러가 null로 변경
             assert(awaitItem() == null)
             cancelAndIgnoreRemainingEvents()
         }
     }
 }
-

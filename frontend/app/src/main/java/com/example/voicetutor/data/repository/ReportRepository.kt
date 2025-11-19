@@ -7,13 +7,13 @@ import javax.inject.Singleton
 
 @Singleton
 class ReportRepository @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
 ) {
-    
+
     suspend fun getCurriculumReport(classId: Int, studentId: Int): Result<CurriculumReportData> {
         return try {
             val response = apiService.getCurriculumReport(classId, studentId)
-            
+
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()?.data ?: throw Exception("No data"))
             } else {
@@ -24,4 +24,3 @@ class ReportRepository @Inject constructor(
         }
     }
 }
-

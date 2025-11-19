@@ -61,11 +61,10 @@ class ExtendedScreenTests {
                     name = "1학년 1반",
                     teacherName = "김선생님",
                     subject = Subject(id = 1, name = "수학"),
-                    
-                    
+
                     studentCount = 20,
-                    createdAt = "2024-01-01"
-                )
+                    createdAt = "2024-01-01",
+                ),
             ),
             AssignmentData(
                 id = 2,
@@ -77,12 +76,11 @@ class ExtendedScreenTests {
                     name = "2학년 1반",
                     teacherName = "이선생님",
                     subject = Subject(id = 2, name = "과학"),
-                    
-                    
+
                     studentCount = 25,
-                    createdAt = "2024-01-01"
-                )
-            )
+                    createdAt = "2024-01-01",
+                ),
+            ),
         )
         // Render all assignments in one composition
         composeTestRule.setContent {
@@ -91,7 +89,7 @@ class ExtendedScreenTests {
                     assignments.forEach { assignment ->
                         AssignmentReportCard(
                             assignment = assignment,
-                            onReportClick = {}
+                            onReportClick = {},
                         )
                     }
                 }
@@ -118,7 +116,7 @@ class ExtendedScreenTests {
                             totalQuestions = 10,
                             status = PersonalAssignmentStatus.IN_PROGRESS,
                             onClick = {},
-                            onStartAssignment = {}
+                            onStartAssignment = {},
                         )
                     }
                 }
@@ -133,7 +131,7 @@ class ExtendedScreenTests {
         val statuses = listOf(
             AssignmentStatus.DRAFT,
             AssignmentStatus.IN_PROGRESS,
-            AssignmentStatus.COMPLETED
+            AssignmentStatus.COMPLETED,
         )
         // Render all statuses in one composition
         composeTestRule.setContent {
@@ -149,7 +147,7 @@ class ExtendedScreenTests {
                             status = status,
                             onClick = {},
                             onViewResults = {},
-                            onEdit = {}
+                            onEdit = {},
                         )
                     }
                 }
@@ -170,7 +168,7 @@ class ExtendedScreenTests {
                 studentCount = 20,
                 assignmentCount = 5,
                 completionRate = 0.8f,
-                color = androidx.compose.ui.graphics.Color(0xFF6200EE)
+                color = androidx.compose.ui.graphics.Color(0xFF6200EE),
             ),
             ClassRoom(
                 id = 2,
@@ -180,8 +178,8 @@ class ExtendedScreenTests {
                 studentCount = 25,
                 assignmentCount = 10,
                 completionRate = 0.9f,
-                color = androidx.compose.ui.graphics.Color(0xFF00BCD4)
-            )
+                color = androidx.compose.ui.graphics.Color(0xFF00BCD4),
+            ),
         )
         // Render all classes in one composition
         composeTestRule.setContent {
@@ -192,7 +190,7 @@ class ExtendedScreenTests {
                             classRoom = classRoom,
                             onClassClick = {},
                             onCreateAssignment = {},
-                            onViewStudents = {}
+                            onViewStudents = {},
                         )
                     }
                 }
@@ -209,14 +207,14 @@ class ExtendedScreenTests {
                 id = 1,
                 name = "홍길동",
                 email = "hong@test.com",
-                role = UserRole.STUDENT
+                role = UserRole.STUDENT,
             ),
             AllStudentsStudent(
                 id = 2,
                 name = "김철수",
                 email = "kim@test.com",
-                role = UserRole.STUDENT
-            )
+                role = UserRole.STUDENT,
+            ),
         )
         // Render all students in one composition
         composeTestRule.setContent {
@@ -227,7 +225,7 @@ class ExtendedScreenTests {
                             student = student,
                             classNames = listOf("${student.name}의 반"),
                             isLoadingClasses = false,
-                            onReportClick = {}
+                            onReportClick = {},
                         )
                     }
                 }
@@ -245,7 +243,7 @@ class ExtendedScreenTests {
             myAnswer = "답1",
             correctAnswer = "답1",
             isCorrect = true,
-            explanation = "설명"
+            explanation = "설명",
         )
         val tailQuestions = listOf(
             DetailedQuestionResult(
@@ -254,7 +252,7 @@ class ExtendedScreenTests {
                 myAnswer = "답2",
                 correctAnswer = "답2",
                 isCorrect = true,
-                explanation = "설명"
+                explanation = "설명",
             ),
             DetailedQuestionResult(
                 questionNumber = "1-2",
@@ -262,19 +260,19 @@ class ExtendedScreenTests {
                 myAnswer = "답3",
                 correctAnswer = "답3",
                 isCorrect = true,
-                explanation = "설명"
-            )
+                explanation = "설명",
+            ),
         )
         val group = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = tailQuestions
+            tailQuestions = tailQuestions,
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
                 QuestionGroupCard(
                     group = group,
                     isExpanded = true,
-                    onToggle = {}
+                    onToggle = {},
                 )
             }
         }
@@ -293,7 +291,7 @@ class ExtendedScreenTests {
                 myAnswer = "정답",
                 correctAnswer = "정답",
                 isCorrect = true,
-                explanation = "맞습니다!"
+                explanation = "맞습니다!",
             ),
             DetailedQuestionResult(
                 questionNumber = "2",
@@ -301,8 +299,8 @@ class ExtendedScreenTests {
                 myAnswer = "오답",
                 correctAnswer = "정답",
                 isCorrect = false,
-                explanation = "틀렸습니다"
-            )
+                explanation = "틀렸습니다",
+            ),
         )
         // Render all questions in one composition
         composeTestRule.setContent {
@@ -329,7 +327,7 @@ class ExtendedScreenTests {
                 status = "SUBMITTED",
                 submittedAt = "2024-01-15T10:00:00Z",
                 answers = emptyList(),
-                detailedAnswers = emptyList()
+                detailedAnswers = emptyList(),
             ),
             StudentResult(
                 studentId = "S002",
@@ -339,8 +337,8 @@ class ExtendedScreenTests {
                 status = "SUBMITTED",
                 submittedAt = "2024-01-15T10:00:00Z",
                 answers = emptyList(),
-                detailedAnswers = emptyList()
-            )
+                detailedAnswers = emptyList(),
+            ),
         )
         // Render all students in one composition
         composeTestRule.setContent {
@@ -349,7 +347,7 @@ class ExtendedScreenTests {
                     students.forEach { student ->
                         TeacherAssignmentResultCard(
                             student = student,
-                            onStudentClick = {}
+                            onStudentClick = {},
                         )
                     }
                 }
@@ -363,9 +361,9 @@ class ExtendedScreenTests {
     fun optionButton_allCombinations() {
         val combinations = listOf(
             Triple(false, false, false), // Normal
-            Triple(true, false, false),  // Selected
-            Triple(false, true, false),  // Correct
-            Triple(false, false, true)   // Wrong
+            Triple(true, false, false), // Selected
+            Triple(false, true, false), // Correct
+            Triple(false, false, true), // Wrong
         )
         // Render all combinations in one composition
         composeTestRule.setContent {
@@ -377,7 +375,7 @@ class ExtendedScreenTests {
                             isSelected = selected,
                             isCorrect = correct,
                             isWrong = wrong,
-                            onClick = {}
+                            onClick = {},
                         )
                     }
                 }
@@ -392,7 +390,7 @@ class ExtendedScreenTests {
         val statuses = listOf(
             AssignmentStatus.IN_PROGRESS,
             AssignmentStatus.COMPLETED,
-            AssignmentStatus.DRAFT
+            AssignmentStatus.DRAFT,
         )
         // Render all statuses in one composition
         composeTestRule.setContent {
@@ -453,14 +451,14 @@ class ExtendedScreenTests {
                         description = "과제를 받고 학습합니다",
                         icon = Icons.Filled.School,
                         isSelected = true,
-                        onClick = {}
+                        onClick = {},
                     )
                     RoleCard(
                         title = "선생님",
                         description = "과제를 생성하고 관리합니다",
                         icon = Icons.Filled.Person,
                         isSelected = false,
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
@@ -474,7 +472,7 @@ class ExtendedScreenTests {
         val messages = listOf(
             "안녕하세요",
             "질문이 있습니다",
-            "답변해주세요"
+            "답변해주세요",
         )
         // Render all messages in one composition
         composeTestRule.setContent {
@@ -495,7 +493,7 @@ class ExtendedScreenTests {
         val stats = listOf(
             Triple("25", "학생", Icons.Filled.Person),
             Triple("10", "과제", Icons.Filled.Assignment),
-            Triple("85", "평균", Icons.Filled.TrendingUp)
+            Triple("85", "평균", Icons.Filled.TrendingUp),
         )
         // Render all stats in one composition
         composeTestRule.setContent {
@@ -506,7 +504,7 @@ class ExtendedScreenTests {
                             icon = icon,
                             value = value,
                             label = label,
-                            color = androidx.compose.ui.graphics.Color(0xFF6200EE)
+                            color = androidx.compose.ui.graphics.Color(0xFF6200EE),
                         )
                     }
                 }
@@ -520,7 +518,7 @@ class ExtendedScreenTests {
     fun settingsItem_variousItems() {
         val items = listOf(
             Triple("앱 설정", "앱 설정을 변경합니다", Icons.Filled.Settings),
-            Triple("알림 설정", "알림을 관리합니다", Icons.Filled.Notifications)
+            Triple("알림 설정", "알림을 관리합니다", Icons.Filled.Notifications),
         )
         // Render all items in one composition
         composeTestRule.setContent {
@@ -531,7 +529,7 @@ class ExtendedScreenTests {
                             icon = icon,
                             title = title,
                             subtitle = subtitle,
-                            onClick = {}
+                            onClick = {},
                         )
                     }
                 }
@@ -546,7 +544,7 @@ class ExtendedScreenTests {
         val features = listOf(
             "음성 인식 기능",
             "AI 기반 피드백",
-            "실시간 진행 상황 추적"
+            "실시간 진행 상황 추적",
         )
         // Render all features in one composition
         composeTestRule.setContent {
@@ -566,7 +564,7 @@ class ExtendedScreenTests {
     fun infoItem_variousInfo() {
         val infoPairs = listOf(
             Pair("버전", "1.0.0"),
-            Pair("빌드 번호", "100")
+            Pair("빌드 번호", "100"),
         )
         // Render all info in one composition
         composeTestRule.setContent {
@@ -603,7 +601,7 @@ class ExtendedScreenTests {
     fun contactItem_variousContacts() {
         val contacts = listOf(
             Triple(Icons.Filled.Email, "이메일", "support@voicetutor.com"),
-            Triple(Icons.Filled.Language, "웹사이트", "www.voicetutor.com")
+            Triple(Icons.Filled.Language, "웹사이트", "www.voicetutor.com"),
         )
         // Render all contacts in one composition
         composeTestRule.setContent {
@@ -614,7 +612,7 @@ class ExtendedScreenTests {
                             icon = icon,
                             title = title,
                             value = value,
-                            onClick = {}
+                            onClick = {},
                         )
                     }
                 }
@@ -628,7 +626,7 @@ class ExtendedScreenTests {
     fun actionItem_variousActions() {
         val actions = listOf(
             Triple(Icons.Filled.Update, "업데이트 확인", "최신 버전으로 업데이트하세요"),
-            Triple(Icons.Filled.Share, "앱 공유하기", "VoiceTutor를 친구들에게 추천하세요")
+            Triple(Icons.Filled.Share, "앱 공유하기", "VoiceTutor를 친구들에게 추천하세요"),
         )
         // Render all actions in one composition
         composeTestRule.setContent {
@@ -639,7 +637,7 @@ class ExtendedScreenTests {
                             icon = icon,
                             title = title,
                             description = description,
-                            onClick = {}
+                            onClick = {},
                         )
                     }
                 }
@@ -662,7 +660,7 @@ class ExtendedScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         features.forEach { feature ->
             composeTestRule.onNodeWithText(feature, useUnmergedTree = true).assertExists()
         }
@@ -673,7 +671,7 @@ class ExtendedScreenTests {
         val infoItems = listOf(
             "라벨 1" to "값 1",
             "라벨 2" to "값 2",
-            "라벨 3" to "값 3"
+            "라벨 3" to "값 3",
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -685,7 +683,7 @@ class ExtendedScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         infoItems.forEach { (label, value) ->
             composeTestRule.onNodeWithText(label, useUnmergedTree = true).assertExists()
             composeTestRule.onNodeWithText(value, useUnmergedTree = true).assertExists()
@@ -705,7 +703,7 @@ class ExtendedScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         legalItems.forEach { title ->
             composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
         }
@@ -716,7 +714,7 @@ class ExtendedScreenTests {
         val contactItems = listOf(
             Triple(Icons.Filled.Email, "이메일", "email@example.com"),
             Triple(Icons.Filled.Language, "웹사이트", "www.example.com"),
-            Triple(Icons.Filled.Star, "앱 평가하기", "Google Play Store")
+            Triple(Icons.Filled.Star, "앱 평가하기", "Google Play Store"),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -726,14 +724,14 @@ class ExtendedScreenTests {
                             icon = icon,
                             title = title,
                             value = value,
-                            onClick = {}
+                            onClick = {},
                         )
                     }
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         contactItems.forEach { (_, title, value) ->
             composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
             composeTestRule.onNodeWithText(value, useUnmergedTree = true).assertExists()
@@ -745,7 +743,7 @@ class ExtendedScreenTests {
         val actionItems = listOf(
             Triple(Icons.Filled.Update, "업데이트 확인", "최신 버전으로 업데이트하세요"),
             Triple(Icons.Filled.Share, "앱 공유하기", "VoiceTutor를 친구들에게 추천하세요"),
-            Triple(Icons.Filled.Delete, "캐시 삭제", "앱 데이터를 정리하여 공간을 확보하세요")
+            Triple(Icons.Filled.Delete, "캐시 삭제", "앱 데이터를 정리하여 공간을 확보하세요"),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -755,14 +753,14 @@ class ExtendedScreenTests {
                             icon = icon,
                             title = title,
                             description = description,
-                            onClick = {}
+                            onClick = {},
                         )
                     }
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         actionItems.forEach { (_, title, description) ->
             composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
             composeTestRule.onNodeWithText(description, useUnmergedTree = true).assertExists()
@@ -778,10 +776,9 @@ class ExtendedScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify all elements exist
         composeTestRule.onNodeWithText("이어할 과제가 없습니다", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("홈 화면에서 새로운 과제를 확인해보세요", useUnmergedTree = true).assertExists()
     }
 }
-

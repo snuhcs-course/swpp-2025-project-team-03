@@ -1,7 +1,6 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.test.*
@@ -10,14 +9,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
-import com.example.voicetutor.data.network.FakeApiService
-import com.example.voicetutor.data.repository.AssignmentRepository
-import com.example.voicetutor.data.repository.AuthRepository
-import com.example.voicetutor.data.repository.StudentRepository
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
-import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import com.example.voicetutor.ui.viewmodel.AuthViewModel
-import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,7 +40,7 @@ class ComprehensiveScreenTests {
                     totalQuestions = 10,
                     status = PersonalAssignmentStatus.NOT_STARTED,
                     onClick = {},
-                    onStartAssignment = {}
+                    onStartAssignment = {},
                 )
             }
         }
@@ -69,7 +61,7 @@ class ComprehensiveScreenTests {
                     totalQuestions = 10,
                     status = PersonalAssignmentStatus.IN_PROGRESS,
                     onClick = {},
-                    onStartAssignment = {}
+                    onStartAssignment = {},
                 )
             }
         }
@@ -90,7 +82,7 @@ class ComprehensiveScreenTests {
                     totalQuestions = 10,
                     status = PersonalAssignmentStatus.SUBMITTED,
                     onClick = {},
-                    onStartAssignment = {}
+                    onStartAssignment = {},
                 )
             }
         }
@@ -112,7 +104,7 @@ class ComprehensiveScreenTests {
                     status = AssignmentStatus.DRAFT,
                     onClick = {},
                     onViewResults = {},
-                    onEdit = {}
+                    onEdit = {},
                 )
             }
         }
@@ -133,7 +125,7 @@ class ComprehensiveScreenTests {
                     status = AssignmentStatus.IN_PROGRESS,
                     onClick = {},
                     onViewResults = {},
-                    onEdit = {}
+                    onEdit = {},
                 )
             }
         }
@@ -154,7 +146,7 @@ class ComprehensiveScreenTests {
                     status = AssignmentStatus.COMPLETED,
                     onClick = {},
                     onViewResults = {},
-                    onEdit = {}
+                    onEdit = {},
                 )
             }
         }
@@ -173,7 +165,7 @@ class ComprehensiveScreenTests {
             studentCount = 25,
             assignmentCount = 5,
             completionRate = 0.8f,
-            color = androidx.compose.ui.graphics.Color(0xFF6200EE)
+            color = androidx.compose.ui.graphics.Color(0xFF6200EE),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -181,7 +173,7 @@ class ComprehensiveScreenTests {
                     classRoom = classRoom,
                     onClassClick = {},
                     onCreateAssignment = {},
-                    onViewStudents = {}
+                    onViewStudents = {},
                 )
             }
         }
@@ -196,7 +188,7 @@ class ComprehensiveScreenTests {
             id = 1,
             name = "홍길동",
             email = "hong@test.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -204,7 +196,7 @@ class ComprehensiveScreenTests {
                     student = student,
                     classNames = listOf("1학년 1반", "1학년 2반"),
                     isLoadingClasses = false,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
@@ -218,7 +210,7 @@ class ComprehensiveScreenTests {
             id = 2,
             name = "김철수",
             email = "kim@test.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -226,7 +218,7 @@ class ComprehensiveScreenTests {
                     student = student,
                     classNames = emptyList(),
                     isLoadingClasses = false,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
@@ -240,7 +232,7 @@ class ComprehensiveScreenTests {
             id = 3,
             name = "이영희",
             email = "lee@test.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -248,7 +240,7 @@ class ComprehensiveScreenTests {
                     student = student,
                     classNames = emptyList(),
                     isLoadingClasses = true,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
@@ -269,11 +261,10 @@ class ComprehensiveScreenTests {
                 name = "테스트 클래스",
                 teacherName = "선생님",
                 subject = Subject(id = 1, name = "수학"),
-                
-                
+
                 studentCount = 10,
-                createdAt = "2024-01-01"
-            )
+                createdAt = "2024-01-01",
+            ),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -283,7 +274,7 @@ class ComprehensiveScreenTests {
                     totalCount = 10,
                     onAssignmentClick = {},
                     onEditClick = {},
-                    onViewResults = {}
+                    onViewResults = {},
                 )
             }
         }
@@ -302,13 +293,13 @@ class ComprehensiveScreenTests {
             completionRate = 0.8f,
             totalStudents = 10,
             completedStudents = 8,
-            averageScore = 85
+            averageScore = 85,
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
                 ClassAssignmentCard(
                     assignment = classAssignment,
-                    onNavigateToAssignmentDetail = {}
+                    onNavigateToAssignmentDetail = {},
                 )
             }
         }
@@ -325,7 +316,7 @@ class ComprehensiveScreenTests {
             myAnswer = "답1",
             correctAnswer = "답1",
             isCorrect = true,
-            explanation = "설명"
+            explanation = "설명",
         )
         val tailQuestion = DetailedQuestionResult(
             questionNumber = "1-1",
@@ -333,18 +324,18 @@ class ComprehensiveScreenTests {
             myAnswer = "답2",
             correctAnswer = "답2",
             isCorrect = true,
-            explanation = "설명"
+            explanation = "설명",
         )
         val group = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = listOf(tailQuestion)
+            tailQuestions = listOf(tailQuestion),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
                 QuestionGroupCard(
                     group = group,
                     isExpanded = true,
-                    onToggle = {}
+                    onToggle = {},
                 )
             }
         }
@@ -361,18 +352,18 @@ class ComprehensiveScreenTests {
             myAnswer = "답1",
             correctAnswer = "답1",
             isCorrect = true,
-            explanation = "설명"
+            explanation = "설명",
         )
         val group = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = emptyList()
+            tailQuestions = emptyList(),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
                 QuestionGroupCard(
                     group = group,
                     isExpanded = false,
-                    onToggle = {}
+                    onToggle = {},
                 )
             }
         }
@@ -389,7 +380,7 @@ class ComprehensiveScreenTests {
             myAnswer = "정답",
             correctAnswer = "정답",
             isCorrect = true,
-            explanation = "맞습니다!"
+            explanation = "맞습니다!",
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -408,7 +399,7 @@ class ComprehensiveScreenTests {
             myAnswer = "오답",
             correctAnswer = "정답",
             isCorrect = false,
-            explanation = "틀렸습니다"
+            explanation = "틀렸습니다",
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -430,13 +421,13 @@ class ComprehensiveScreenTests {
             status = "SUBMITTED",
             submittedAt = "2024-01-15T10:00:00Z",
             answers = emptyList(),
-            detailedAnswers = emptyList()
+            detailedAnswers = emptyList(),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentResultCard(
                     student = student,
-                    onStudentClick = {}
+                    onStudentClick = {},
                 )
             }
         }
@@ -454,13 +445,13 @@ class ComprehensiveScreenTests {
             status = "SUBMITTED",
             submittedAt = "2024-01-15T10:00:00Z",
             answers = emptyList(),
-            detailedAnswers = emptyList()
+            detailedAnswers = emptyList(),
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentResultCard(
                     student = student,
-                    onStudentClick = {}
+                    onStudentClick = {},
                 )
             }
         }
@@ -478,7 +469,7 @@ class ComprehensiveScreenTests {
                     isSelected = true,
                     isCorrect = false,
                     isWrong = false,
-                    onClick = {}
+                    onClick = {},
                 )
             }
         }
@@ -495,7 +486,7 @@ class ComprehensiveScreenTests {
                     isSelected = false,
                     isCorrect = true,
                     isWrong = false,
-                    onClick = {}
+                    onClick = {},
                 )
             }
         }
@@ -512,7 +503,7 @@ class ComprehensiveScreenTests {
                     isSelected = false,
                     isCorrect = false,
                     isWrong = true,
-                    onClick = {}
+                    onClick = {},
                 )
             }
         }
@@ -559,11 +550,10 @@ class ComprehensiveScreenTests {
                     name = "클래스 1",
                     teacherName = "선생님",
                     subject = Subject(id = 1, name = "수학"),
-                    
-                    
+
                     studentCount = 10,
-                    createdAt = "2024-01-01"
-                )
+                    createdAt = "2024-01-01",
+                ),
             ),
             AssignmentData(
                 id = 2,
@@ -575,12 +565,11 @@ class ComprehensiveScreenTests {
                     name = "클래스 2",
                     teacherName = "선생님",
                     subject = Subject(id = 2, name = "과학"),
-                    
-                    
+
                     studentCount = 15,
-                    createdAt = "2024-01-01"
-                )
-            )
+                    createdAt = "2024-01-01",
+                ),
+            ),
         )
         // Render all assignments in one composition
         composeTestRule.setContent {
@@ -589,7 +578,7 @@ class ComprehensiveScreenTests {
                     assignments.forEach { assignment ->
                         AssignmentReportCard(
                             assignment = assignment,
-                            onReportClick = {}
+                            onReportClick = {},
                         )
                     }
                 }
@@ -607,7 +596,7 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify main sections exist
         composeTestRule.onNodeWithText("앱 정보", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("VoiceTutor", useUnmergedTree = true).assertIsDisplayed()
@@ -625,7 +614,7 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify all features are displayed
         composeTestRule.onNodeWithText("음성 인식 기반 교육 플랫폼", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("버전 1.0.0", useUnmergedTree = true).assertIsDisplayed()
@@ -644,7 +633,7 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify legal items are present
         composeTestRule.onNodeWithText("개인정보처리방침", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("서비스 이용약관", useUnmergedTree = true).assertIsDisplayed()
@@ -659,7 +648,7 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify contact items
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("support@voicetutor.com", useUnmergedTree = true).assertIsDisplayed()
@@ -675,25 +664,25 @@ class ComprehensiveScreenTests {
                         icon = Icons.Filled.Refresh,
                         title = "업데이트 확인",
                         description = "최신 버전 확인",
-                        onClick = {}
+                        onClick = {},
                     )
                     ActionItem(
                         icon = Icons.Filled.Share,
                         title = "앱 공유하기",
                         description = "친구에게 VoiceTutor 소개",
-                        onClick = {}
+                        onClick = {},
                     )
                     ActionItem(
                         icon = Icons.Filled.Delete,
                         title = "캐시 삭제",
                         description = "앱 캐시를 정리합니다",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify action items
         composeTestRule.onNodeWithText("업데이트 확인", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("앱 공유하기", useUnmergedTree = true).assertIsDisplayed()
@@ -708,7 +697,7 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify main message
         composeTestRule.onNodeWithText("이어할 과제가 없습니다", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("홈 화면에서 새로운 과제를 확인해보세요", useUnmergedTree = true).assertIsDisplayed()
@@ -722,12 +711,12 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Find and click back button
         composeTestRule.onNodeWithContentDescription("뒤로가기", useUnmergedTree = true)
             .assertIsDisplayed()
             .performClick()
-        
+
         composeTestRule.waitForIdle()
         // Note: We can't directly verify the callback, but we can verify the button exists and is clickable
     }
@@ -743,7 +732,7 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("테스트 기능", useUnmergedTree = true).assertExists()
     }
 
@@ -757,7 +746,7 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("값", useUnmergedTree = true).assertExists()
     }
@@ -772,11 +761,11 @@ class ComprehensiveScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true)
             .assertExists()
             .performClick()
-        
+
         composeTestRule.waitForIdle()
     }
 
@@ -789,13 +778,13 @@ class ComprehensiveScreenTests {
                         icon = Icons.Filled.Email,
                         title = "이메일",
                         value = "test@example.com",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("test@example.com", useUnmergedTree = true).assertExists()
     }
@@ -809,13 +798,13 @@ class ComprehensiveScreenTests {
                         icon = Icons.Filled.Update,
                         title = "업데이트",
                         description = "설명",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("설명", useUnmergedTree = true).assertExists()
     }
@@ -833,19 +822,19 @@ class ComprehensiveScreenTests {
                         icon = Icons.Filled.Email,
                         title = "연락처",
                         value = "값",
-                        onClick = {}
+                        onClick = {},
                     )
                     ActionItem(
                         icon = Icons.Filled.Update,
                         title = "액션",
                         description = "설명",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        
+
         // Verify all components render
         composeTestRule.onNodeWithText("기능 1", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
@@ -854,4 +843,3 @@ class ComprehensiveScreenTests {
         composeTestRule.onNodeWithText("액션", useUnmergedTree = true).assertExists()
     }
 }
-

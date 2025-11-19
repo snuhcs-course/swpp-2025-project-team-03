@@ -1,8 +1,8 @@
 package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.*
-import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.ApiResponse
+import com.example.voicetutor.data.network.ApiService
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody
@@ -23,7 +23,7 @@ class StudentRepositoryTest {
         id = id,
         name = name,
         email = "s$id@test.com",
-        role = UserRole.STUDENT
+        role = UserRole.STUDENT,
     )
 
     private fun buildSubject() = Subject(id = 1, name = "Math")
@@ -34,10 +34,9 @@ class StudentRepositoryTest {
         description = null,
         subject = buildSubject(),
         teacherName = "Teacher1",
-        
-        
+
         studentCount = 10,
-        createdAt = "2025-01-01"
+        createdAt = "2025-01-01",
     )
 
     private fun buildAssignmentData(id: Int = 1) = AssignmentData(
@@ -52,7 +51,7 @@ class StudentRepositoryTest {
         grade = "1",
         personalAssignmentStatus = null,
         solvedNum = null,
-        personalAssignmentId = null
+        personalAssignmentId = null,
     )
 
     @Test
@@ -64,7 +63,7 @@ class StudentRepositoryTest {
             success = true,
             data = students,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getAllStudents("1", null)).thenReturn(Response.success(apiResponse))
 
@@ -85,7 +84,7 @@ class StudentRepositoryTest {
             success = true,
             data = students,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getAllStudents(null, "10")).thenReturn(Response.success(apiResponse))
 
@@ -106,7 +105,7 @@ class StudentRepositoryTest {
             success = true,
             data = students,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getAllStudents("1", "10")).thenReturn(Response.success(apiResponse))
 
@@ -126,7 +125,7 @@ class StudentRepositoryTest {
             success = true,
             data = emptyList<Student>(),
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getAllStudents(null, null)).thenReturn(Response.success(apiResponse))
 
@@ -177,7 +176,7 @@ class StudentRepositoryTest {
             success = true,
             data = student,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getStudentById(1)).thenReturn(Response.success(apiResponse))
 
@@ -197,7 +196,7 @@ class StudentRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getStudentById(1)).thenReturn(Response.success(apiResponse))
 
@@ -234,7 +233,7 @@ class StudentRepositoryTest {
             success = true,
             data = assignments,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getStudentAssignments(1)).thenReturn(Response.success(apiResponse))
 
@@ -254,7 +253,7 @@ class StudentRepositoryTest {
             success = true,
             data = emptyList<AssignmentData>(),
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getStudentAssignments(1)).thenReturn(Response.success(apiResponse))
 
@@ -290,13 +289,13 @@ class StudentRepositoryTest {
             completedAssignments = 7,
             averageScore = 85.5,
             weeklyProgress = emptyList(),
-            subjectBreakdown = emptyList()
+            subjectBreakdown = emptyList(),
         )
         val apiResponse = ApiResponse(
             success = true,
             data = progress,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getStudentProgress(1)).thenReturn(Response.success(apiResponse))
 
@@ -316,7 +315,7 @@ class StudentRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getStudentProgress(1)).thenReturn(Response.success(apiResponse))
 
@@ -356,4 +355,3 @@ class StudentRepositoryTest {
         assert(result.exceptionOrNull()?.message == "Network error")
     }
 }
-

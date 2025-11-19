@@ -15,29 +15,29 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ClassViewModel @Inject constructor(
-    private val classRepository: ClassRepository
+    private val classRepository: ClassRepository,
 ) : ViewModel() {
-    
+
     private val _classes = MutableStateFlow<List<ClassData>>(emptyList())
     val classes: StateFlow<List<ClassData>> = _classes.asStateFlow()
-    
+
     private val _currentClass = MutableStateFlow<ClassData?>(null)
     val currentClass: StateFlow<ClassData?> = _currentClass.asStateFlow()
-    
+
     private val _classStudents = MutableStateFlow<List<Student>>(emptyList())
     val classStudents: StateFlow<List<Student>> = _classStudents.asStateFlow()
-    
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-    
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
-    
+
     fun loadClasses(teacherId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
+
             classRepository.getClasses(teacherId)
                 .onSuccess { classes ->
                     _classes.value = classes
@@ -45,16 +45,16 @@ class ClassViewModel @Inject constructor(
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
-            
+
             _isLoading.value = false
         }
     }
-    
+
     fun loadClassById(id: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
+
             classRepository.getClassById(id)
                 .onSuccess { classData ->
                     _currentClass.value = classData
@@ -62,16 +62,16 @@ class ClassViewModel @Inject constructor(
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
-            
+
             _isLoading.value = false
         }
     }
-    
+
     fun loadClassStudents(id: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
+
             classRepository.getClassStudents(id)
                 .onSuccess { students ->
                     _classStudents.value = students
@@ -79,16 +79,16 @@ class ClassViewModel @Inject constructor(
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
-            
+
             _isLoading.value = false
         }
     }
-    
+
     fun createClass(createClassRequest: CreateClassRequest) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
+
             classRepository.createClass(createClassRequest)
                 .onSuccess { classData ->
                     // 새로 생성된 클래스를 목록에 추가
@@ -97,15 +97,15 @@ class ClassViewModel @Inject constructor(
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
-            
+
             _isLoading.value = false
         }
     }
-    
+
     fun refreshClasses(teacherId: String) {
         loadClasses(teacherId)
     }
-    
+
     fun enrollStudentToClass(classId: Int, studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -121,7 +121,7 @@ class ClassViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
-    
+
     fun removeStudentFromClass(classId: Int, studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -141,7 +141,7 @@ class ClassViewModel @Inject constructor(
     fun clearError() {
         _error.value = null
     }
-    
+
     fun loadClassStudentsStatistics(classId: Int, callback: (Result<ClassStudentsStatistics>) -> Unit) {
         viewModelScope.launch {
             val result = classRepository.getClassStudentsStatistics(classId)

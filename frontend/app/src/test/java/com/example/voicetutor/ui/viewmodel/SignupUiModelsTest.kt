@@ -1,7 +1,7 @@
 package com.example.voicetutor.ui.viewmodel
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class SignupUiModelsTest {
 
@@ -18,7 +18,7 @@ class SignupUiModelsTest {
     fun signupField_values_containsAllFields() {
         // When
         val values = SignupField.values()
-        
+
         // Then
         assertEquals(4, values.size)
         assertTrue(values.contains(SignupField.NAME))
@@ -32,10 +32,10 @@ class SignupUiModelsTest {
         // Given
         val field = SignupField.EMAIL
         val message = "이메일 형식이 올바르지 않습니다"
-        
+
         // When
         val error = SignupError.Input(field, message)
-        
+
         // Then
         assertEquals(field, error.field)
         assertEquals(message, error.message)
@@ -45,10 +45,10 @@ class SignupUiModelsTest {
     fun signupErrorGeneralDuplicateEmail_hasMessage() {
         // Given
         val message = "이미 사용 중인 이메일입니다"
-        
+
         // When
         val error = SignupError.General.DuplicateEmail(message)
-        
+
         // Then
         assertEquals(message, error.message)
         assertFalse(error.canRetry)
@@ -58,10 +58,10 @@ class SignupUiModelsTest {
     fun signupErrorGeneralServer_hasMessage() {
         // Given
         val message = "서버 오류"
-        
+
         // When
         val error = SignupError.General.Server(message)
-        
+
         // Then
         assertEquals(message, error.message)
         assertTrue(error.canRetry)
@@ -71,10 +71,10 @@ class SignupUiModelsTest {
     fun signupErrorGeneralNetwork_hasMessage() {
         // Given
         val message = "네트워크 오류"
-        
+
         // When
         val error = SignupError.General.Network(message)
-        
+
         // Then
         assertEquals(message, error.message)
         assertTrue(error.canRetry)
@@ -84,10 +84,10 @@ class SignupUiModelsTest {
     fun signupErrorGeneralUnknown_hasMessage() {
         // Given
         val message = "알 수 없는 오류"
-        
+
         // When
         val error = SignupError.General.Unknown(message)
-        
+
         // Then
         assertEquals(message, error.message)
         assertTrue(error.canRetry)
@@ -98,10 +98,9 @@ class SignupUiModelsTest {
         // Given
         val inputError = SignupError.Input(SignupField.EMAIL, "Error")
         val generalError = SignupError.General.DuplicateEmail("Error")
-        
+
         // Then
         assertTrue(inputError is SignupError)
         assertTrue(generalError is SignupError)
     }
 }
-

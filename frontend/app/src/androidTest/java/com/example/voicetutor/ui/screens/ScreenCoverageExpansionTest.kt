@@ -69,7 +69,7 @@ class ScreenCoverageExpansionTest {
                     TeacherStudentReportScreen(
                         classId = 1,
                         studentId = 1,
-                        studentName = "홍길동"
+                        studentName = "홍길동",
                     )
                 }
             }
@@ -93,12 +93,12 @@ class ScreenCoverageExpansionTest {
                     StudentDashboardScreen(
                         authViewModel = authViewModel,
                         assignmentViewModel = assignmentViewModel,
-                        dashboardViewModel = dashboardViewModel
+                        dashboardViewModel = dashboardViewModel,
                     )
                     AssignmentDetailedResultsScreen(
                         personalAssignmentId = 1,
                         assignmentTitle = "테스트 과제",
-                        viewModel = assignmentViewModel
+                        viewModel = assignmentViewModel,
                     )
                     AppInfoScreen()
                 }
@@ -115,4 +115,3 @@ class ScreenCoverageExpansionTest {
         waitForText("앱 정보")
     }
 }
-

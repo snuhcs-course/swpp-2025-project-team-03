@@ -22,38 +22,38 @@ fun NoRecentAssignmentScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             // Icon
             Icon(
                 imageVector = Icons.Filled.Assignment,
                 contentDescription = null,
                 tint = Gray400,
-                modifier = Modifier.size(80.dp)
+                modifier = Modifier.size(80.dp),
             )
 
             // Message
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = "이어할 과제가 없습니다",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 Text(
                     text = "홈 화면에서 새로운 과제를 확인해보세요",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray600,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -67,4 +67,3 @@ fun NoRecentAssignmentScreenPreview() {
         NoRecentAssignmentScreen()
     }
 }
-

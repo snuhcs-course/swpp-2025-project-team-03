@@ -1,7 +1,7 @@
 package com.example.voicetutor.notification
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Unit tests for NotificationManager helper methods and utilities.
@@ -38,7 +38,7 @@ class NotificationManagerHelperTest {
                 id = 1,
                 title = "Test",
                 message = "Message",
-                type = type
+                type = type,
             )
             assertEquals(type, data.type)
         }
@@ -53,7 +53,7 @@ class NotificationManagerHelperTest {
                 title = "Test",
                 message = "Message",
                 type = NotificationType.ASSIGNMENT_DUE,
-                priority = priority
+                priority = priority,
             )
             assertEquals(priority, data.priority)
         }
@@ -65,7 +65,7 @@ class NotificationManagerHelperTest {
         val action = NotificationAction(
             title = "Edit",
             action = "edit",
-            icon = customIcon
+            icon = customIcon,
         )
         assertEquals(customIcon, action.icon)
     }
@@ -77,14 +77,14 @@ class NotificationManagerHelperTest {
             title = "Test",
             message = "Message",
             type = NotificationType.ASSIGNMENT_DUE,
-            actions = emptyList()
+            actions = emptyList(),
         )
         assertTrue(data.actions.isEmpty())
     }
 
     @Test
     fun notificationData_withMultipleActions_storesAll() {
-        val actions = (1..10).map { 
+        val actions = (1..10).map {
             NotificationAction("Action $it", "action_$it")
         }
         val data = NotificationData(
@@ -92,7 +92,7 @@ class NotificationManagerHelperTest {
             title = "Test",
             message = "Message",
             type = NotificationType.ASSIGNMENT_DUE,
-            actions = actions
+            actions = actions,
         )
         assertEquals(10, data.actions.size)
     }
@@ -104,7 +104,7 @@ class NotificationManagerHelperTest {
             id = 1,
             title = longTitle,
             message = "Message",
-            type = NotificationType.ASSIGNMENT_DUE
+            type = NotificationType.ASSIGNMENT_DUE,
         )
         assertEquals(longTitle, data.title)
     }
@@ -116,7 +116,7 @@ class NotificationManagerHelperTest {
             id = 1,
             title = "Title",
             message = longMessage,
-            type = NotificationType.ASSIGNMENT_DUE
+            type = NotificationType.ASSIGNMENT_DUE,
         )
         assertEquals(longMessage, data.message)
     }
@@ -127,7 +127,7 @@ class NotificationManagerHelperTest {
             id = -1,
             title = "Test",
             message = "Message",
-            type = NotificationType.ASSIGNMENT_DUE
+            type = NotificationType.ASSIGNMENT_DUE,
         )
         assertEquals(-1, data.id)
     }
@@ -136,7 +136,7 @@ class NotificationManagerHelperTest {
     fun notificationAction_withEmptyTitle_handlesCorrectly() {
         val action = NotificationAction(
             title = "",
-            action = "test"
+            action = "test",
         )
         assertTrue(action.title.isEmpty())
     }
@@ -145,7 +145,7 @@ class NotificationManagerHelperTest {
     fun notificationAction_withEmptyAction_handlesCorrectly() {
         val action = NotificationAction(
             title = "Test",
-            action = ""
+            action = "",
         )
         assertTrue(action.action.isEmpty())
     }
@@ -156,11 +156,11 @@ class NotificationManagerHelperTest {
             id = 1,
             title = "Original",
             message = "Message",
-            type = NotificationType.ASSIGNMENT_DUE
+            type = NotificationType.ASSIGNMENT_DUE,
         )
         val modified = original.copy(
             title = "Modified",
-            priority = NotificationPriority.HIGH
+            priority = NotificationPriority.HIGH,
         )
         assertEquals("Modified", modified.title)
         assertEquals(NotificationPriority.HIGH, modified.priority)
@@ -222,4 +222,3 @@ class NotificationManagerHelperTest {
         assertTrue(string.contains("Title") || string.contains("action"))
     }
 }
-

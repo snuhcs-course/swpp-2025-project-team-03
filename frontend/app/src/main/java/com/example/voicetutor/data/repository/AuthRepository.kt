@@ -1,7 +1,6 @@
 package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.LoginRequest
-import com.example.voicetutor.data.models.LoginResponse
 import com.example.voicetutor.data.models.SignupRequest
 import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
@@ -12,9 +11,9 @@ import javax.inject.Singleton
 
 @Singleton
 open class AuthRepository @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
 ) {
-    
+
     open suspend fun login(email: String, password: String): Result<User> {
         return try {
             val request = LoginRequest(email, password)
@@ -25,13 +24,13 @@ open class AuthRepository @Inject constructor(
             println("AuthRepository - Login response success: ${responseBody?.success}")
 
             if (response.isSuccessful && responseBody?.success == true) {
-                val user = responseBody.user  // 'data' 필드가 'user'로 매핑됨
+                val user = responseBody.user // 'data' 필드가 'user'로 매핑됨
                 println("AuthRepository - User: ${user?.email}")
                 println("AuthRepository - User.assignments: ${user?.assignments?.size}")
-                user?.assignments?.forEach { 
+                user?.assignments?.forEach {
                     println("  - ${it.title}")
                 }
-                
+
                 if (user != null) {
                     Result.success(user)
                 } else {
@@ -76,26 +75,26 @@ open class AuthRepository @Inject constructor(
             Result.failure(exception)
         }
     }
-    
+
     open suspend fun signup(name: String, email: String, password: String, role: UserRole): Result<User> {
         return try {
             val signupRequest = SignupRequest(
                 name = name,
                 email = email,
                 password = password,
-                role = role.name // UserRole enum을 String으로 변환
+                role = role.name, // UserRole enum을 String으로 변환
             )
             val response = apiService.signup(signupRequest)
-            
+
             println("AuthRepository - Signup response code: ${response.code()}")
             println("AuthRepository - Signup response success: ${response.body()?.success}")
             println("AuthRepository - Signup response body: ${response.body()}")
-            
+
             val responseBody = response.body()
             if (response.isSuccessful && responseBody?.success == true) {
                 val user = responseBody.user
                 println("AuthRepository - Signup User parsed: ${user?.email}, id: ${user?.id}, role: ${user?.role}")
-                
+
                 if (user != null) {
                     Result.success(user)
                 } else {
@@ -109,7 +108,7 @@ open class AuthRepository @Inject constructor(
                     ?: parseErrorMessage(response)
                     ?: "회원가입에 실패했습니다"
                 println("AuthRepository - Signup failed: $errorMsg (status: $statusCode)")
-                
+
                 val exception = when {
                     statusCode == 409 -> SignupException.DuplicateEmail(errorMsg)
                     statusCode == 400 && errorMsg.contains("이미 사용 중") -> SignupException.DuplicateEmail(errorMsg)
@@ -191,5 +190,4 @@ open class AuthRepository @Inject constructor(
             null
         }
     }
-    
 }
