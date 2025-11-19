@@ -504,19 +504,7 @@ class AssignmentViewModelFlowTest {
             class_id = 1,
             due_at = "2025-01-01T00:00:00Z",
             grade = "G",
-            type = "QUIZ",
             description = "D",
-            questions = listOf(
-                com.example.voicetutor.data.models.QuestionData(
-                    id = 1,
-                    question = "Q1",
-                    type = "MULTIPLE",
-                    options = listOf("A","B","C","D"),
-                    correctAnswer = "A",
-                    points = 1,
-                    explanation = null
-                )
-            )
         )
         val tmpPdf = File.createTempFile("doc", ".pdf")
         whenever(assignmentRepository.createAssignment(request))
@@ -557,9 +545,7 @@ class AssignmentViewModelFlowTest {
             class_id = 1,
             due_at = "2025-01-01T00:00:00Z",
             grade = "G",
-            type = "QUIZ",
-            description = "D",
-            questions = null
+            description = "D"
         )
         val tmpPdf = File.createTempFile("doc", ".pdf")
         whenever(assignmentRepository.createAssignment(request))
@@ -1013,12 +999,12 @@ class AssignmentViewModelFlowTest {
         val personalAssignments = listOf(
             PersonalAssignmentData(
                 id = personalAssignmentId,
-                student = com.example.voicetutor.data.models.StudentInfo(
+                student = StudentInfo(
                     id = studentId,
                     displayName = "Test Student",
                     email = "test@test.com"
                 ),
-                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                assignment = PersonalAssignmentInfo(
                     id = 1,
                     title = "Test Assignment",
                     description = "desc",
@@ -1572,9 +1558,7 @@ class AssignmentViewModelFlowTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
             description = "New assignment",
-            questions = emptyList()
         )
         val createResponse = com.example.voicetutor.data.network.CreateAssignmentResponse(
             assignment_id = 30,
@@ -1605,9 +1589,7 @@ class AssignmentViewModelFlowTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
-            description = null,
-            questions = emptyList()
+            description = null
         )
         Mockito.`when`(assignmentRepository.createAssignment(request))
             .thenReturn(Result.failure(Exception("Creation failed")))
@@ -1880,9 +1862,7 @@ class AssignmentViewModelFlowTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
-            description = "PDF assignment",
-            questions = listOf()
+            description = "PDF assignment"
         )
         val pdfFile = java.io.File.createTempFile("test", ".pdf")
         pdfFile.deleteOnExit()
@@ -1922,9 +1902,7 @@ class AssignmentViewModelFlowTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
-            description = "PDF assignment",
-            questions = null
+            description = "PDF assignment"
         )
         val pdfFile = java.io.File.createTempFile("test", ".pdf")
         pdfFile.deleteOnExit()
@@ -1951,9 +1929,7 @@ class AssignmentViewModelFlowTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
-            description = "PDF assignment",
-            questions = null
+            description = "PDF assignment"
         )
         val pdfFile = java.io.File.createTempFile("test", ".pdf")
         pdfFile.deleteOnExit()

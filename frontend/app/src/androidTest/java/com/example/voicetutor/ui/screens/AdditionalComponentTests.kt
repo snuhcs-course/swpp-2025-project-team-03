@@ -186,7 +186,6 @@ class AdditionalComponentTests {
                     totalCount = 10,
                     onAssignmentClick = {},
                     onEditClick = {},
-                    onDeleteClick = {},
                     onViewResults = {}
                 )
             }
@@ -217,7 +216,6 @@ class AdditionalComponentTests {
                     totalCount = 10,
                     onAssignmentClick = { assignmentClicked = true },
                     onEditClick = {},
-                    onDeleteClick = {},
                     onViewResults = {}
                 )
             }
@@ -248,7 +246,6 @@ class AdditionalComponentTests {
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                     AssignmentCard(
@@ -264,7 +261,6 @@ class AdditionalComponentTests {
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                     AssignmentCard(
@@ -280,7 +276,6 @@ class AdditionalComponentTests {
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                 }
@@ -364,7 +359,6 @@ class AdditionalComponentTests {
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                     
@@ -428,7 +422,6 @@ class AdditionalComponentTests {
                         totalCount = 0,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                     AssignmentCard(
@@ -444,7 +437,6 @@ class AdditionalComponentTests {
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                 }
@@ -496,7 +488,6 @@ class AdditionalComponentTests {
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                     TeacherAssignmentResultCard(

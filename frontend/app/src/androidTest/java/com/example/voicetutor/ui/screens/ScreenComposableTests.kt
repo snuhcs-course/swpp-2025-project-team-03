@@ -302,7 +302,6 @@ class ScreenComposableTests {
                     totalCount = 20,
                     onAssignmentClick = {},
                     onEditClick = {},
-                    onDeleteClick = {},
                     onViewResults = {}
                 )
             }

@@ -251,11 +251,6 @@ fun TeacherDashboardScreen(
                 fontWeight = FontWeight.SemiBold,
                 color = Gray800
             )
-            Text(
-                text = "자주 사용하는 작업을 빠르게 시작하세요",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600
-            )
             
             Spacer(modifier = Modifier.height(12.dp))
             
@@ -313,11 +308,6 @@ fun TeacherDashboardScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
-                    )
-                    Text(
-                        text = "내가 낸 과제를 확인하세요",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
                     )
                 }
             }

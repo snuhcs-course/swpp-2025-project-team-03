@@ -114,7 +114,7 @@ class AuthViewModel @Inject constructor(
                     _isLoggedIn.value = true
                     _error.value = null
                     _signupError.value = null
-                    println("AuthViewModel - ✅ User set: ${_currentUser.value?.email}, isLoggedIn: ${_isLoggedIn.value}")
+                    println("AuthViewModel -  User set: ${_currentUser.value?.email}, isLoggedIn: ${_isLoggedIn.value}")
                 }
                 .onFailure { exception ->
                     println("AuthViewModel - Signup failed: ${exception.message}")
