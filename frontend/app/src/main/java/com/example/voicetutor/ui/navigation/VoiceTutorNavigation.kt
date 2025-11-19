@@ -146,10 +146,6 @@ fun VoiceTutorNavigation(
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
-                    onNavigateToProgressReport = {
-                        navController.navigate(VoiceTutorScreens.Progress.route)
-                    },
                     onNavigateToAssignment = { assignmentId ->
                         // personalAssignmentId를 사용하여 과제 시작
                         navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
