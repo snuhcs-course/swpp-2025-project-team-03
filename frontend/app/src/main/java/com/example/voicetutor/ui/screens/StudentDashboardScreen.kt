@@ -21,7 +21,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.data.models.*
-import com.example.voicetutor.data.models.StudentOnboardingData
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
@@ -59,8 +58,6 @@ fun StudentDashboardScreen(
     LaunchedEffect(currentUser, showTutorial) {
         if (currentUser != null && !showTutorial) {
             val isNewUser = tutorialPrefs.isNewUser()
-
-            // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
             if (isNewUser) {
                 showTutorial = true
             }
@@ -84,10 +81,8 @@ fun StudentDashboardScreen(
         }
     }
 
-    // 필터 상태 추가
     var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
 
-    // 질문이 생성된 과제만 필터링 + 선택된 필터 적용
     val validAssignments = remember(assignments, selectedFilter) {
         val filtered = assignments.filter {
             it.totalQuestions > 0 &&
@@ -145,15 +140,12 @@ fun StudentDashboardScreen(
         }
     }
 
-    // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
             viewModelAssignment.clearError()
         }
     }
 
-    // 온보딩 튜토리얼 (5단계)
     if (showTutorial) {
         OnboardingPager(
             pages = StudentOnboardingData.studentOnboardingPages,
@@ -416,9 +408,7 @@ fun StudentAssignmentCard(
         variant = CardVariant.Elevated,
         onClick = onClick,
     ) {
-        Column(
-            // modifier = Modifier.padding(8.dp)
-        ) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
