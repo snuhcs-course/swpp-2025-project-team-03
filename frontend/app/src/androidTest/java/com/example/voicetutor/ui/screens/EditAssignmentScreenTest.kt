@@ -137,8 +137,8 @@ class EditAssignmentScreenTest {
 
         waitForText("과제 제목")
         composeRule.onAllNodesWithText("과제 제목", useUnmergedTree = true).onFirst().assertIsDisplayed()
-        waitForText("과제 설명")
-        composeRule.onAllNodesWithText("과제 설명", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        waitForText("설명")
+        composeRule.onAllNodesWithText("설명", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
     @Test
