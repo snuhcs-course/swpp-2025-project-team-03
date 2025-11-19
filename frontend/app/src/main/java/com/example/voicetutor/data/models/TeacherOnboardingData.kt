@@ -36,7 +36,7 @@ object TeacherOnboardingData {
         
         OnboardingPage(
             title = "각 수업에 배당할 과제를 생성해요",
-            description = "과제 제목, 반 선택, 학년, 과목, 설명, 마감일을 설정하여 새로운 과제를 만들고 수업에 배당할 수 있어요.",
+            description = "과제 제목, 수업 선택, 학년, 과목, 설명, 마감일을 설정하여 새로운 과제를 만들고 수업에 배당할 수 있어요.",
             imageRes = R.drawable.assignmentcreate,
             icon = null
         ),

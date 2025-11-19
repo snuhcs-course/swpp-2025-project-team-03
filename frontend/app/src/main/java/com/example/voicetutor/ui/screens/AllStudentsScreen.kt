@@ -146,10 +146,10 @@ fun AllStudentsScreen(
                 onExpandedChange = { expandedClassDropdown = it }
             ) {
                 OutlinedTextField(
-                    value = classes.find { it.id == selectedClassId }?.name ?: "반 선택",
+                    value = classes.find { it.id == selectedClassId }?.name ?: "수업 선택",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("반 선택") },
+                    label = { Text("수업 선택") },
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = Gray800),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
