@@ -197,11 +197,6 @@ fun AssignmentContinuousScreen(
             isAnswerCorrect = response.isCorrect
             showResult = true
 
-            // tailQuestion이 null이면 완료 가능한 상태
-            if (response.tailQuestion == null) {
-                return@let
-            }
-
             // numberStr이 null이면 과제 완료
             if (response.numberStr == null) {
                 viewModel.setAssignmentCompleted(true)
@@ -212,9 +207,11 @@ fun AssignmentContinuousScreen(
             val isTailQuestion = response.numberStr.contains("-")
 
             if (isTailQuestion) {
+                // 꼬리 질문이 있는 경우
                 currentTailQuestionNumber = response.numberStr
                 savedTailQuestion = response.tailQuestion
             } else {
+                // 다음 기본 질문으로 이동 (tailQuestion이 null인 경우 포함)
                 currentTailQuestionNumber = null
                 savedTailQuestion = null
 
