@@ -205,7 +205,6 @@ fun AllAssignmentsScreen(
                         totalCount = stats.second,
                         onAssignmentClick = { onNavigateToAssignmentDetail(assignment.id) },
                         onEditClick = { onNavigateToEditAssignment(assignment.id) },
-                        onDeleteClick = { viewModel.deleteAssignment(assignment.id) },
                         onViewResults = { onNavigateToAssignmentResults(assignment.id) }
                     )
                 }
@@ -221,7 +220,6 @@ fun AssignmentCard(
     totalCount: Int = 0,
     onAssignmentClick: (Int) -> Unit,
     onEditClick: (Int) -> Unit,
-    onDeleteClick: (Int) -> Unit,
     onViewResults: () -> Unit
 ) {
     VTCard(

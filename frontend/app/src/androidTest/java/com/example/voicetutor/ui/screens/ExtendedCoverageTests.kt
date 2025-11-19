@@ -249,7 +249,6 @@ class ExtendedCoverageTests {
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
                         onViewResults = {}
                     )
                 }

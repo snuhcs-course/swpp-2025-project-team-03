@@ -203,10 +203,8 @@ data class CreateAssignmentRequest(
     @SerializedName("class_id") val class_id: Int,
     @SerializedName("due_at") val due_at: String,
     val grade: String?,
-    val type: String,
     val description: String?,
     @SerializedName("total_questions") val total_questions: Int? = null,
-    val questions: List<QuestionData>?
 )
 
 data class CreateAssignmentResponse(

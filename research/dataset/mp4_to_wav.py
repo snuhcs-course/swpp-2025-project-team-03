@@ -14,9 +14,9 @@ def convert_single(mp4_path: str):
         audio.close()
         video.close()
         os.remove(mp4_path)  # MP4 파일 삭제
-        return f"✅ Converted and removed: {mp4_path}"
+        return f" Converted and removed: {mp4_path}"
     except Exception as e:
-        return f"❌ Failed: {mp4_path} ({e})"
+        return f" Failed: {mp4_path} ({e})"
 
 
 def gather_mp4_files(root_dir="."):
@@ -31,7 +31,7 @@ def gather_mp4_files(root_dir="."):
 def convert_all(root_dir=".", max_workers=4):
     mp4_files = gather_mp4_files(root_dir)
     if not mp4_files:
-        print("⚠️ No mp4 files found.")
+        print(" No mp4 files found.")
         return
 
     print(f"Found {len(mp4_files)} mp4 files. Starting conversion with {max_workers} workers...")

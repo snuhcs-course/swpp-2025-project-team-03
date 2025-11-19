@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,7 +19,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import java.text.ParseException
@@ -69,7 +67,6 @@ fun EditAssignmentScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedClass by remember { mutableStateOf("고등학교 1학년 A반") }
     var dueDate by remember { mutableStateOf("2024-01-20 23:59") }
-    var assignmentType by remember { mutableStateOf("연속형") }
     var dueDateError by remember { mutableStateOf<String?>(null) }
     var validationDialogMessage by remember { mutableStateOf<String?>(null) }
     
@@ -96,7 +93,6 @@ fun EditAssignmentScreen(
             description = assignment.description ?: ""
             selectedClass = assignment.courseClass.name
             dueDate = normalizeDateTime(assignment.dueAt) ?: assignment.dueAt
-            assignmentType = "연속형" // type 속성이 없으므로 기본값
             dueDateError = null
         }
     }
@@ -111,8 +107,6 @@ fun EditAssignmentScreen(
     
     // Convert API data to UI format
     val classNames = classes.map { it.name }
-    
-    val assignmentTypes = listOf("연속형", "객관식", "토론형")
     
     Column(
         modifier = Modifier

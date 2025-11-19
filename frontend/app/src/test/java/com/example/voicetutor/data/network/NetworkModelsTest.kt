@@ -1,6 +1,6 @@
 package com.example.voicetutor.data.network
 
-import com.example.voicetutor.data.models.AssignmentData
+
 import com.example.voicetutor.data.models.CourseClass
 import com.example.voicetutor.data.models.QuestionData
 import com.example.voicetutor.data.models.Subject
@@ -9,7 +9,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 
 @RunWith(JUnit4::class)
 class NetworkModelsTest {
@@ -74,18 +73,13 @@ class NetworkModelsTest {
     @Test
     fun createAssignmentRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val questions = listOf(
-            QuestionData(id = 1, question = "Q1", type = "SHORT_ANSWER", options = null, correctAnswer = "A1")
-        )
         val request = CreateAssignmentRequest(
             title = "Assignment1",
             subject = "Math",
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
             description = "Description",
-            questions = questions
         )
 
         // Assert
@@ -94,9 +88,7 @@ class NetworkModelsTest {
         assertEquals(1, request.class_id)
         assertEquals("2025-12-31", request.due_at)
         assertEquals("1", request.grade)
-        assertEquals("QUIZ", request.type)
         assertEquals("Description", request.description)
-        assertEquals(1, request.questions?.size)
     }
 
     @Test
@@ -108,14 +100,11 @@ class NetworkModelsTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
             description = null,
-            questions = null
         )
 
         // Assert
         assertNull(request.description)
-        assertNull(request.questions)
     }
 
     @Test
