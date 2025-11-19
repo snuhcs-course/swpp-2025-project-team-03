@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 
 @Composable
@@ -31,7 +30,7 @@ fun NoRecentAssignmentScreen() {
             // Icon
             Icon(
                 imageVector = Icons.Filled.Assignment,
-                contentDescription = null,
+                contentDescription = "No Recent Assignments",
                 tint = Gray400,
                 modifier = Modifier.size(80.dp),
             )
