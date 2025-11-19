@@ -29,7 +29,7 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 fun TeacherAssignmentDetailScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     assignmentId: Int = 0,
-    assignmentTitle: String? = null, // For backward compatibility
+    assignmentTitle: String? = null,
     onNavigateToEditAssignment: (Int) -> Unit = {},
     onNavigateToStudentDetail: (studentId: String, assignmentId: Int, assignmentTitle: String) -> Unit = { _, _, _ -> }
 ) {
@@ -39,8 +39,6 @@ fun TeacherAssignmentDetailScreen(
     val students by viewModel.assignmentResults.collectAsStateWithLifecycle()
     val assignmentStatistics by viewModel.assignmentStatistics.collectAsStateWithLifecycle()
 
-    // Find assignment by id from the assignments list
-    // "과목 - 제목" 형식도 처리 가능하도록 수정
     val targetAssignment = remember(assignments, assignmentId, assignmentTitle) {
         if (assignmentId > 0) {
             assignments.find { it.id == assignmentId }
@@ -55,49 +53,52 @@ fun TeacherAssignmentDetailScreen(
         }
     }
 
-    // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = assignment?.title ?: (targetAssignment?.title ?: "과제")
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
-    // for student lists
     val resolvedAssignmentId = targetAssignment?.id ?: assignment?.id ?: assignmentId
 
-    // Load assignment data on first composition and when screen is entered
+    var loadedStatsForAssignmentId by remember { mutableStateOf<Int?>(null) }
+    var loadedAssignmentId by remember { mutableStateOf<Int?>(null) }
+    val hasBasicAssignmentData = assignment != null || targetAssignment != null
+    val isInitialLoading = isLoading && !hasBasicAssignmentData
+    
     LaunchedEffect(assignmentId) {
-        if (assignmentId > 0) {
+        if (assignmentId > 0 && assignmentId != loadedAssignmentId) {
             println("TeacherAssignmentDetail - Loading assignment ID: $assignmentId")
+            loadedAssignmentId = assignmentId
             viewModel.loadAssignmentById(assignmentId)
-            viewModel.loadAssignmentStudentResults(assignmentId)
-        } else {
+        } else if (assignmentId == 0) {
             targetAssignment?.let { target ->
-                println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
-                viewModel.loadAssignmentById(target.id)
-                viewModel.loadAssignmentStudentResults(target.id)
-                // 통계도 함께 로드 (assignment가 로드되기 전에도 targetAssignment로 통계 로드 가능)
-                println("TeacherAssignmentDetail - Loading statistics for target assignment: ${target.title} (ID: ${target.id})")
-                viewModel.loadAssignmentStatistics(target.id, target.courseClass.studentCount)
+                if (target.id != loadedAssignmentId) {
+                    println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
+                    loadedAssignmentId = target.id
+                    viewModel.loadAssignmentById(target.id)
+                }
+            }
+        } else {
+            println("TeacherAssignmentDetail - Assignment $assignmentId already loaded, skipping loadAssignmentById")
+        }
+    }
+
+    LaunchedEffect(assignment?.id) {
+        assignment?.let { a ->
+            if (a.id != loadedStatsForAssignmentId) {
+                println("TeacherAssignmentDetail - Assignment loaded, loading statistics and student results: ${a.title} (ID: ${a.id})")
+                loadedStatsForAssignmentId = a.id
+                viewModel.loadAssignmentStatisticsAndResults(a.id, a.courseClass.studentCount)
+            } else {
+                println("TeacherAssignmentDetail - Statistics already loaded for assignment ${a.id}, skipping")
             }
         }
     }
 
-    // assignment가 로드되면 통계와 학생 결과 새로고침 (화면 진입 시, assignment가 업데이트될 때)
-    LaunchedEffect(assignment?.id) {
-        assignment?.let { a ->
-            println("TeacherAssignmentDetail - Assignment loaded, refreshing statistics and student results: ${a.title} (ID: ${a.id})")
-            viewModel.loadAssignmentStatistics(a.id, a.courseClass.studentCount)
-            viewModel.loadAssignmentStudentResults(a.id)
-        }
-    }
-
-    // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
             viewModel.clearError()
         }
     }
 
-    // Convert AssignmentData to AssignmentDetail for UI
     val assignmentDetail = assignment?.let { a ->
         AssignmentDetail(
             title = a.title,
@@ -105,8 +106,8 @@ fun TeacherAssignmentDetailScreen(
             className = a.courseClass.name,
             dueDate = a.dueAt,
             createdAt = a.createdAt ?: "",
-            status = "IN_PROGRESS", // 기본값으로 설정
-            type = "연속형", // type 속성이 없으므로 기본값
+            status = "IN_PROGRESS",
+            type = "연속형",
             description = a.description ?: "",
             totalStudents = assignmentStatistics?.totalStudents ?: a.courseClass.studentCount,
             submittedStudents = assignmentStatistics?.submittedStudents ?: 0,
@@ -121,8 +122,7 @@ fun TeacherAssignmentDetailScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Loading indicator
-        if (isLoading) {
+        if (isInitialLoading) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -131,7 +131,7 @@ fun TeacherAssignmentDetailScreen(
                     color = PrimaryIndigo
                 )
             }
-        } else if (assignmentDetail == null) {
+        } else if (assignmentDetail == null && !hasBasicAssignmentData) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -154,118 +154,116 @@ fun TeacherAssignmentDetailScreen(
                 }
             }
         } else {
-            // Assignment info card - Welcome section style
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = PrimaryIndigo.copy(alpha = 0.08f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            assignmentDetail?.let { detail ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = PrimaryIndigo.copy(alpha = 0.08f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        )
+                        .padding(20.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = detail.title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "${detail.subject} • ${detail.className}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    VTStatsCard(
+                        title = "제출률",
+                        value = "${detail.completionRate}%",
+                        icon = Icons.Filled.Assignment,
+                        iconColor = PrimaryIndigo,
+                        variant = CardVariant.Elevated,
+                        modifier = Modifier.weight(1f),
+                        layout = StatsCardLayout.Vertical
                     )
-                    .padding(20.dp)
-            ) {
-                Column {
+
+                    VTStatsCard(
+                        title = "평균 점수",
+                        value = "${detail.averageScore}점",
+                        icon = Icons.Filled.Grade,
+                        iconColor = Success,
+                        variant = CardVariant.Elevated,
+                        modifier = Modifier.weight(1f),
+                        layout = StatsCardLayout.Vertical
+                    )
+
+                    VTStatsCard(
+                        title = "제출 학생",
+                        value = "${detail.submittedStudents}/${detail.totalStudents}",
+                        icon = Icons.Filled.People,
+                        iconColor = Warning,
+                        variant = CardVariant.Elevated,
+                        modifier = Modifier.weight(1f),
+                        layout = StatsCardLayout.Vertical
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
                     Text(
-                        text = assignmentDetail.title,
-                        style = MaterialTheme.typography.titleLarge,
+                        text = "과제 내용",
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "${assignmentDetail.subject} • ${assignmentDetail.className}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-                }
-            }
 
-            // Stats overview
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                VTStatsCard(
-                    title = "제출률",
-                    value = "${assignmentDetail.completionRate}%",
-                    icon = Icons.Filled.Assignment,
-                    iconColor = PrimaryIndigo,
-                    variant = CardVariant.Elevated,
-                    modifier = Modifier.weight(1f),
-                    layout = StatsCardLayout.Vertical
-                )
-
-                VTStatsCard(
-                    title = "평균 점수",
-                    value = "${assignmentDetail.averageScore}점",
-                    icon = Icons.Filled.Grade,
-                    iconColor = Success,
-                    variant = CardVariant.Elevated,
-                    modifier = Modifier.weight(1f),
-                    layout = StatsCardLayout.Vertical
-                )
-
-                VTStatsCard(
-                    title = "제출 학생",
-                    value = "${assignmentDetail.submittedStudents}/${assignmentDetail.totalStudents}",
-                    icon = Icons.Filled.People,
-                    iconColor = Warning,
-                    variant = CardVariant.Elevated,
-                    modifier = Modifier.weight(1f),
-                    layout = StatsCardLayout.Vertical
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Text(
-                    text = "과제 내용",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    VTButton(
-                        text = "과제 편집",
-                        onClick = {
-                            val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
-                            if (assignmentId > 0) {
-                                onNavigateToEditAssignment(assignmentId)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        VTButton(
+                            text = "과제 편집",
+                            onClick = {
+                                val assignmentId = assignment?.id ?: targetAssignment?.id ?: 0
+                                if (assignmentId > 0) {
+                                    onNavigateToEditAssignment(assignmentId)
+                                }
+                            },
+                            variant = ButtonVariant.Outline,
+                            size = ButtonSize.Small,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
                             }
-                        },
-                        variant = ButtonVariant.Outline,
-                        size = ButtonSize.Small,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    )
+                        )
+                    }
+                }
+
+                VTCard(variant = CardVariant.Elevated) {
+                    Column {
+                        Text(
+                            text = detail.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray700,
+                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
+                        )
+                    }
                 }
             }
 
-            // Assignment content
-            VTCard(variant = CardVariant.Elevated) {
-                Column {
-                    Text(
-                        text = assignmentDetail.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray700,
-                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
-                    )
-                }
-            }
-
-            // Students list
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -289,7 +287,6 @@ fun TeacherAssignmentDetailScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Loading indicator
                 if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -322,7 +319,6 @@ fun TeacherAssignmentDetailScreen(
                         }
                     }
                 } else {
-                    // 학생 결과 표시 (API 데이터가 있을 때만 표시됨)
                     students.forEachIndexed { index, student ->
                         TeacherAssignmentResultCard(
                             student = student,
@@ -344,73 +340,6 @@ fun TeacherAssignmentDetailScreen(
     }
 }
 
-//@Composable
-//fun StudentSubmissionItem(
-//    submission: StudentSubmission,
-//    onClick: () -> Unit
-//) {
-//    Row(
-//        modifier = Modifier.fillMaxWidth(),
-//        horizontalArrangement = Arrangement.SpaceBetween,
-//        verticalAlignment = Alignment.CenterVertically
-//    ) {
-//        Column(
-//            modifier = Modifier.weight(1f)
-//        ) {
-//            Text(
-//                text = submission.name,
-//                style = MaterialTheme.typography.bodyMedium,
-//                fontWeight = FontWeight.Medium,
-//                color = Gray800
-//            )
-//            Text(
-//                text = submission.studentId,
-//                style = MaterialTheme.typography.bodySmall,
-//                color = Gray600
-//            )
-//        }
-//
-//        Column(
-//            horizontalAlignment = Alignment.End
-//        ) {
-//            if (submission.status == "완료") {
-//                Text(
-//                    text = "${submission.score}점",
-//                    style = MaterialTheme.typography.bodyMedium,
-//                    fontWeight = FontWeight.Bold,
-//                    color = when {
-//                        submission.score >= 90 -> Success
-//                        submission.score >= 70 -> Warning
-//                        else -> Error
-//                    }
-//                )
-//                Text(
-//                    text = com.example.voicetutor.utils.formatSubmittedTime(submission.submittedAt),
-//                    style = MaterialTheme.typography.bodySmall,
-//                    color = Gray600
-//                )
-//            } else {
-//                Box(
-//                    modifier = Modifier
-//                        .background(
-//                            Error.copy(alpha = 0.1f),
-//                            androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-//                        )
-//                        .padding(horizontal = 8.dp, vertical = 4.dp)
-//                ) {
-//                    Text(
-//                        text = submission.status,
-//                        style = MaterialTheme.typography.bodySmall,
-//                        color = Error,
-//                        fontWeight = FontWeight.Medium
-//                    )
-//                }
-//            }
-//        }
-//        }
-//    }
-//}
-
 @Composable
 fun TeacherAssignmentResultCard(
     student: StudentResult,
@@ -426,13 +355,11 @@ fun TeacherAssignmentResultCard(
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 첫 번째 Row: 이름과 상태
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 이름
                 Text(
                     text = student.name,
                     style = MaterialTheme.typography.bodyLarge,
@@ -445,7 +372,6 @@ fun TeacherAssignmentResultCard(
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 
-                // 상태 - 간단한 점과 텍스트
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -467,13 +393,11 @@ fun TeacherAssignmentResultCard(
                 }
             }
 
-            // 두 번째 Row: 제출 시간과 평균 점수 - 한 줄에 간결하게
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 제출 시간 - 왼쪽 고정
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -496,7 +420,6 @@ fun TeacherAssignmentResultCard(
                     )
                 }
 
-                // 평균 점수 - 오른쪽 정렬
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -521,7 +444,6 @@ fun TeacherAssignmentResultCard(
                 }
             }
 
-            // Sample answers preview
             if (student.answers.isNotEmpty()) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -546,23 +468,18 @@ fun TeacherAssignmentResultCard(
     }
 }
 
-// Helper function to format submitted time - using common utility
 private fun formatSubmittedTime(isoTime: String): String {
     return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
 }
 
-// Helper function to format duration between startedAt and submittedAt
 private fun formatDuration(startIso: String?, endIso: String?): String {
     return try {
-        println("formatDuration start!")
         if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
-            println("startIso or endIso is null, $startIso || $endIso")
             return "정보 없음"
         }
         val start = parseIsoToMillis(startIso)
         val end = parseIsoToMillis(endIso)
         if (start == null || end == null || end < start) {
-            println("start or end is null $startIso ,$endIso")
             return "정보 없음"
         }
         val diffMs = end - start
@@ -576,15 +493,12 @@ private fun formatDuration(startIso: String?, endIso: String?): String {
             String.format("%02d:%02d", minutes, seconds)
         }
     } catch (e: Exception) {
-        println("FormatDuration: Exception!! $startIso $endIso")
         "정보 없음"
     }
 }
 
-// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
 private fun parseIsoToMillis(iso: String): Long? {
     return try {
-        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
         val cleaned = iso.replace("Z", "").let { raw ->
             val dotIdx = raw.indexOf('.')
             if (dotIdx != -1) raw.substring(0, dotIdx) else raw

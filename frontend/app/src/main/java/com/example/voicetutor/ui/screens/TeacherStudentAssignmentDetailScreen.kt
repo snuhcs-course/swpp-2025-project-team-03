@@ -32,12 +32,10 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 
-// Helper function to format submitted time - using common utility
 private fun formatSubmittedTime(isoTime: String): String {
     return com.example.voicetutor.utils.formatSubmittedTime(isoTime)
 }
 
-// Helper function to format duration between startedAt and submittedAt
 private fun formatDuration(startIso: String?, endIso: String?): String {
     return try {
         if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
@@ -63,10 +61,8 @@ private fun formatDuration(startIso: String?, endIso: String?): String {
     }
 }
 
-// Parses basic ISO8601 like "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'" or without fractional seconds
 private fun parseIsoToMillis(iso: String): Long? {
     return try {
-        // Remove timezone 'Z' and fractional seconds for SimpleDateFormat compatibility
         val cleaned = iso.replace("Z", "").let { raw ->
             val dotIdx = raw.indexOf('.')
             if (dotIdx != -1) raw.substring(0, dotIdx) else raw
@@ -96,7 +92,6 @@ fun TeacherStudentAssignmentDetailScreen(
     val paStats by viewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
     val correctnessData by viewModel.assignmentCorrectness.collectAsStateWithLifecycle()
     
-    // Find assignment: 우선 assignmentId 사용, 없으면 currentAssignment, 그것도 없으면 assignments 리스트에서 찾기
     val targetAssignment = remember(currentAssignment, assignments, assignmentId, assignmentTitle) {
         if (assignmentId > 0) {
             currentAssignment?.takeIf { it.id == assignmentId } 
@@ -110,72 +105,139 @@ fun TeacherStudentAssignmentDetailScreen(
         }
     }
     
-    // 동적 학생 이름 가져오기
     val studentName = currentStudent?.name ?: "학생"
-    
-    // 동적 과제 제목 가져오기
     val dynamicAssignmentTitle = currentAssignment?.title ?: (targetAssignment?.title ?: assignmentTitle)
     
-    // Load assignment data, student data, and student result on first composition
-    LaunchedEffect(assignmentId, targetAssignment?.id, studentId) {
-        // assignmentId가 있으면 직접 로드
-        if (assignmentId > 0) {
-            println("TeacherStudentAssignmentDetail - Loading assignment by ID: $assignmentId for student: $studentId")
-            viewModel.loadAssignmentById(assignmentId)
-            viewModel.loadAssignmentStudentResults(assignmentId)
-            // Load personal assignment statistics and correctness
-            viewModel.loadPersonalAssignmentStatisticsFor(studentId.toIntOrNull() ?: 1, assignmentId)
-            viewModel.loadAssignmentCorrectnessFor(studentId.toIntOrNull() ?: 1, assignmentId)
+    var loadedDataForKey by remember { mutableStateOf<String?>(null) }
+    var loadedStatsForKey by remember { mutableStateOf<String?>(null) }
+    var loadedCorrectnessForKey by remember { mutableStateOf<String?>(null) }
+    val dataKey = "$studentId-$assignmentId"
+    
+    val existingStudentResult = assignmentResults.find { it.studentId == studentId }
+    val hasExistingData = existingStudentResult != null
+    
+    LaunchedEffect(assignmentId, studentId) {
+        val resolvedAssignmentId = if (assignmentId > 0) {
+            assignmentId
         } else {
-            // targetAssignment가 있으면 그것을 사용
-            targetAssignment?.let { assignment ->
-                println("TeacherStudentAssignmentDetail - Loading assignment: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
-                viewModel.loadAssignmentById(assignment.id)
-                // 해당 학생과 과제의 Personal Assignment 결과 로드
-                viewModel.loadAssignmentStudentResults(assignment.id)
-                // Load personal assignment statistics and correctness
-                viewModel.loadPersonalAssignmentStatisticsFor(studentId.toIntOrNull() ?: 1, assignment.id)
-                viewModel.loadAssignmentCorrectnessFor(studentId.toIntOrNull() ?: 1, assignment.id)
-            } ?: run {
-                // targetAssignment가 없으면 assignmentTitle로 직접 찾기 시도
-                // assignments 리스트가 비어있을 수 있으므로, 모든 과제를 먼저 로드
-                println("TeacherStudentAssignmentDetail - targetAssignment not found, loading all assignments to find: $assignmentTitle")
-                viewModel.loadAllAssignments()
+            targetAssignment?.id
+        }
+        
+        if (resolvedAssignmentId == null) {
+            return@LaunchedEffect
+        }
+        
+        val currentDataKey = "$studentId-$resolvedAssignmentId"
+        
+        if (currentDataKey == loadedDataForKey) {
+            return@LaunchedEffect
+        }
+        
+        loadedDataForKey = currentDataKey
+        
+        val studentIdInt = studentId.toIntOrNull() ?: 1
+        
+        if (currentAssignment?.id != resolvedAssignmentId) {
+            viewModel.loadAssignmentById(resolvedAssignmentId)
+        }
+        
+        if (!hasExistingData) {
+            viewModel.loadAssignmentStudentResults(resolvedAssignmentId)
+        }
+        
+        if (currentDataKey != loadedStatsForKey && currentDataKey != loadedCorrectnessForKey && (paStats == null || correctnessData.isEmpty())) {
+            loadedStatsForKey = currentDataKey
+            loadedCorrectnessForKey = currentDataKey
+            viewModel.loadPersonalAssignmentStatsAndCorrectness(studentIdInt, resolvedAssignmentId, silent = true)
+        } else {
+            if (currentDataKey == loadedStatsForKey && currentDataKey == loadedCorrectnessForKey) {
+                // Already loaded
+            } else {
+                if (currentDataKey != loadedStatsForKey && paStats == null) {
+                    loadedStatsForKey = currentDataKey
+                    viewModel.loadPersonalAssignmentStatisticsFor(studentIdInt, resolvedAssignmentId, silent = true)
+                }
+                if (currentDataKey != loadedCorrectnessForKey && correctnessData.isEmpty()) {
+                    loadedCorrectnessForKey = currentDataKey
+                    viewModel.loadAssignmentCorrectnessFor(studentIdInt, resolvedAssignmentId, silent = true)
+                }
             }
         }
         
-        studentViewModel.loadStudentById(studentId.toIntOrNull() ?: 1)
+        if (currentStudent?.id.toString() != studentId) {
+            studentViewModel.loadStudentById(studentIdInt)
+        }
     }
     
-    // assignments가 로드된 후에 다시 찾기 (assignmentId가 없는 경우)
     LaunchedEffect(assignments, assignmentTitle, studentId, assignmentId) {
-        if (assignmentId == 0 && targetAssignment == null && assignments.isNotEmpty()) {
+        if (assignmentId > 0) {
+            return@LaunchedEffect
+        }
+        
+        if (loadedDataForKey != null) {
+            return@LaunchedEffect
+        }
+        
+        if (targetAssignment == null && assignments.isNotEmpty()) {
             val foundAssignment = assignments.find { 
                 it.title == assignmentTitle || 
                 it.title.contains(assignmentTitle) ||
                 assignmentTitle.contains(it.title)
             }
             foundAssignment?.let { assignment ->
-                println("TeacherStudentAssignmentDetail - Found assignment after loading: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
-                viewModel.loadAssignmentById(assignment.id)
-                viewModel.loadAssignmentStudentResults(assignment.id)
-                // Load personal assignment statistics and correctness
-                viewModel.loadPersonalAssignmentStatisticsFor(studentId.toIntOrNull() ?: 1, assignment.id)
-                viewModel.loadAssignmentCorrectnessFor(studentId.toIntOrNull() ?: 1, assignment.id)
+                val newDataKey = "$studentId-${assignment.id}"
+                
+                if (newDataKey == loadedDataForKey) {
+                    return@LaunchedEffect
+                }
+                
+                loadedDataForKey = newDataKey
+                
+                val studentIdInt = studentId.toIntOrNull() ?: 1
+                
+                if (currentAssignment?.id != assignment.id) {
+                    viewModel.loadAssignmentById(assignment.id)
+                }
+                
+                if (assignmentResults.none { it.studentId == studentId && it.studentId.isNotEmpty() }) {
+                    viewModel.loadAssignmentStudentResults(assignment.id)
+                }
+                
+                if (newDataKey != loadedStatsForKey && newDataKey != loadedCorrectnessForKey && (paStats == null || correctnessData.isEmpty())) {
+                    loadedStatsForKey = newDataKey
+                    loadedCorrectnessForKey = newDataKey
+                    viewModel.loadPersonalAssignmentStatsAndCorrectness(studentIdInt, assignment.id, silent = true)
+                } else {
+                    if (newDataKey == loadedStatsForKey && newDataKey == loadedCorrectnessForKey) {
+                        // Already loaded
+                    } else {
+                        if (newDataKey != loadedStatsForKey && paStats == null) {
+                            loadedStatsForKey = newDataKey
+                            viewModel.loadPersonalAssignmentStatisticsFor(studentIdInt, assignment.id, silent = true)
+                        }
+                        if (newDataKey != loadedCorrectnessForKey && correctnessData.isEmpty()) {
+                            loadedCorrectnessForKey = newDataKey
+                            viewModel.loadAssignmentCorrectnessFor(studentIdInt, assignment.id, silent = true)
+                        }
+                    }
+                }
             }
         }
     }
     
-    // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
             viewModel.clearError()
         }
     }
     
-    // Find student's result from loaded results
     val studentResult = assignmentResults.find { it.studentId == studentId }
+    
+    val hasAssignmentResults = assignmentResults.isNotEmpty()
+    val hasBasicData = studentResult != null || currentAssignment != null || targetAssignment != null || hasAssignmentResults
+    val isInitialLoading = isLoading && !hasBasicData && loadedDataForKey == null
+    val isWaitingForStudentData = isLoading && hasBasicData && studentResult == null && loadedDataForKey != null
+    val isWaitingForInitialData = isLoading && hasBasicData && studentResult == null && loadedDataForKey == null
     
     Column(
         modifier = Modifier
@@ -183,10 +245,7 @@ fun TeacherStudentAssignmentDetailScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header removed - now handled by MainLayout
-        
-        // Loading indicator
-        if (isLoading) {
+        if (isInitialLoading || isWaitingForInitialData) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -195,7 +254,43 @@ fun TeacherStudentAssignmentDetailScreen(
                     color = PrimaryIndigo
                 )
             }
-        } else if (studentResult == null) {
+        } else if (isWaitingForStudentData) {
+            assignmentResults.firstOrNull()?.let { tempResult ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = PrimaryIndigo.copy(alpha = 0.08f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        )
+                        .padding(20.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = tempResult.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "로딩 중...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
+                        )
+                    }
+                }
+            } ?: run {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = PrimaryIndigo
+                    )
+                }
+            }
+        } else if (studentResult == null && !hasBasicData && !isLoading && loadedDataForKey != null) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -218,116 +313,115 @@ fun TeacherStudentAssignmentDetailScreen(
                 }
             }
         } else {
-            // Student info card - Welcome section style
-            Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = PrimaryIndigo.copy(alpha = 0.08f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp)
-            ) {
+            val displayStudentResult = studentResult ?: assignmentResults.firstOrNull()
+            
+            if (displayStudentResult != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = PrimaryIndigo.copy(alpha = 0.08f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        )
+                        .padding(20.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = displayStudentResult.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "평균 점수: ${paStats?.averageScore?.toInt()?.let { "$it 점" } ?: (if (isLoading) "로딩 중..." else "-")}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
+                        )
+                    }
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    VTStatsCard(
+                        title = "정답률",
+                        value = paStats?.let { "${it.accuracy.toInt()}%" } ?: (if (isLoading) "..." else "-"),
+                        icon = Icons.Filled.CheckCircle,
+                        iconColor = Success,
+                        modifier = Modifier.weight(1f),
+                        variant = CardVariant.Gradient
+                    )
+                    
+                    VTStatsCard(
+                        title = "평균 점수",
+                        value = paStats?.averageScore?.toInt()?.toString() ?: (if (isLoading) "..." else "-"),
+                        icon = Icons.Filled.Star,
+                        iconColor = Warning,
+                        modifier = Modifier.weight(1f),
+                        variant = CardVariant.Gradient
+                    )
+                }
+                
+                VTCard(variant = CardVariant.Elevated) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "소요 시간",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = Gray600
+                            )
+                            Text(
+                                text = formatDuration(displayStudentResult.startedAt, displayStudentResult.submittedAt),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Gray800
+                            )
+                        }
+                        
+                        Divider()
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "제출 시간",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = Gray600
+                            )
+                            Text(
+                                text = formatSubmittedTime(displayStudentResult.submittedAt),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Gray800
+                            )
+                        }
+                    }
+                }
+            }
+            
+            if (correctnessData.isNotEmpty()) {
                 Column {
                     Text(
-                        text = studentResult.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "평균 점수: ${paStats?.averageScore?.toInt()?.let { "$it 점" } ?: "-"}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-            }
-        }
-        
-        // Overall stats
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            VTStatsCard(
-                title = "정답률",
-                value = paStats?.let { "${it.accuracy.toInt()}%" } ?: "-",
-                icon = Icons.Filled.CheckCircle,
-                iconColor = Success,
-                modifier = Modifier.weight(1f),
-                variant = CardVariant.Gradient
-            )
-            
-            VTStatsCard(
-                title = "평균 점수",
-                value = paStats?.averageScore?.toInt()?.toString() ?: "-",
-                icon = Icons.Filled.Star,
-                iconColor = Warning,
-                modifier = Modifier.weight(1f),
-                variant = CardVariant.Gradient
-            )
-        }
-        
-        // Time info card
-        VTCard(variant = CardVariant.Elevated) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "소요 시간",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray600
-                    )
-                    Text(
-                        text = formatDuration(studentResult.startedAt, studentResult.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-                
-                Divider()
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "제출 시간",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray600
-                    )
-                    Text(
-                        text = formatSubmittedTime(studentResult.submittedAt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800
-                    )
-                }
-            }
-        }
-        
-            // Questions list grouped (기본문항/꼬리문항) with toggle cards
-            if (correctnessData.isNotEmpty()) {
-        Column {
-            Text(
                         text = "문제별 상세 결과",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray800
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
             
-                    // Build groups from correctness
                     val detailedResults = remember(correctnessData) {
                         correctnessData.map { item ->
                             DetailedQuestionResult(
