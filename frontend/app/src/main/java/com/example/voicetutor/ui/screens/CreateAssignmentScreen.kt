@@ -17,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -51,7 +53,7 @@ fun CreateAssignmentScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null,
     initialClassId: Int? = null,
-    onCreateAssignment: (String) -> Unit = {} // Pass assignment title on success
+    onCreateAssignment: (String) -> Unit = {}
 ) {
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
     val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
@@ -63,7 +65,7 @@ fun CreateAssignmentScreen(
     
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
     val students by studentViewModel.students.collectAsStateWithLifecycle()
-    val isCreatingAssignment by actualAssignmentViewModel.isCreatingAssignment.collectAsStateWithLifecycle()  // 변경
+    val isCreatingAssignment by actualAssignmentViewModel.isCreatingAssignment.collectAsStateWithLifecycle()
     val error by actualAssignmentViewModel.error.collectAsStateWithLifecycle()
     val currentAssignment by actualAssignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
     val isUploading by actualAssignmentViewModel.isUploading.collectAsStateWithLifecycle()
@@ -74,14 +76,14 @@ fun CreateAssignmentScreen(
     val fileManager = remember { FileManager(context) }
     val coroutineScope = rememberCoroutineScope()
     
-    // 과제 생성 성공 플래그
     var assignmentCreated by remember { mutableStateOf(false) }
     
-    // 파일 선택 상태
+    val scrollState = rememberScrollState()
+    var classSelectionFieldPosition by remember { mutableStateOf(0) }
+    
     var selectedFiles by remember { mutableStateOf<List<FileInfo>>(emptyList()) }
     var selectedPdfFile by remember { mutableStateOf<File?>(null) }
     
-    // PDF 파일 피커
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -93,7 +95,6 @@ fun CreateAssignmentScreen(
             println("URI 경로: ${uri.path}")
             println("URI 쿼리: ${uri.query}")
             
-            // URI에서 파일명 추출 시도
             try {
                 val fileName = uri.lastPathSegment
                 println("URI에서 추출한 파일명: $fileName")
@@ -123,8 +124,7 @@ fun CreateAssignmentScreen(
         }
     }
     
-    // 학생 선택 상태
-    var selectedStudents by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var selectedStudents by remember { mutableStateOf<Set<Int>>(emptySet()) }
     
     var assignmentTitle by remember { mutableStateOf("") }
     var assignmentDescription by remember { mutableStateOf("") }
@@ -137,6 +137,7 @@ fun CreateAssignmentScreen(
     var dueDateTime by remember { mutableStateOf<LocalDateTime?>(null) }
     var questionCount by remember { mutableStateOf("5") }
     var assignToAll by remember { mutableStateOf(true) }
+    var showClassSelectionWarning by remember { mutableStateOf(false) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
     var gradeSelectionExpanded by remember { mutableStateOf(false) }
     var subjectSelectionExpanded by remember { mutableStateOf(false) }
@@ -147,14 +148,31 @@ fun CreateAssignmentScreen(
     val displayDateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") }
     val zoneId = remember { ZoneId.systemDefault() }
     
-    // Load data on first composition
+    val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
+    
+    val displayStudents = remember(selectedClassId, classStudents, students) {
+        if (selectedClassId != null && classStudents.isNotEmpty()) {
+            classStudents
+        } else {
+            emptyList()
+        }
+    }
+    
     LaunchedEffect(actualTeacherId) {
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
     
-    // Set initial class when classes are loaded and initialClassId is provided
-    // Use a flag to ensure it only happens once to avoid animation issues
+    LaunchedEffect(selectedClassId) {
+        val classId = selectedClassId
+        if (classId != null) {
+            classViewModel.loadClassStudents(classId)
+            selectedStudents = emptySet()
+            assignToAll = true
+            showClassSelectionWarning = false
+        }
+    }
+    
     var hasSetInitialClass by remember { mutableStateOf(false) }
     LaunchedEffect(classes.size, initialClassId) {
         if (initialClassId != null && classes.isNotEmpty() && !hasSetInitialClass) {
@@ -166,22 +184,18 @@ fun CreateAssignmentScreen(
             }
         }
     }
-    // Navigate to assignment detail when creation succeeds (after upload, not waiting for question generation)
+    
     LaunchedEffect(currentAssignment, assignmentCreated, uploadSuccess) {
         if (assignmentCreated && uploadSuccess) {
             currentAssignment?.let { assignment ->
                 println("Assignment and PDF upload completed successfully: ${assignment.title}")
                 onCreateAssignment(assignment.title)
-                // Note: 문제 생성은 백그라운드에서 계속 진행됨
             }
         }
     }
 
-    
-    // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
             actualAssignmentViewModel.clearError()
         }
     }
@@ -194,22 +208,16 @@ fun CreateAssignmentScreen(
         "고등학교 1학년", "고등학교 2학년", "고등학교 3학년"
     )
     
-    // 과목 리스트
     val subjects = listOf("국어", "영어", "수학", "과학", "사회")
-    
-    val studentNames = students.map { it.name }
     
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-        // Header removed - now handled by MainLayout
-        
-        // Loading indicator (과제 생성 중에만 표시, 다른 UI 블로킹 안 함)
         if (isCreatingAssignment) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -220,7 +228,6 @@ fun CreateAssignmentScreen(
                 )
             }
         } else {
-            // Basic info section
             VTCard(variant = CardVariant.Elevated) {
             Column {
                 Text(
@@ -234,7 +241,6 @@ fun CreateAssignmentScreen(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Assignment title
                     OutlinedTextField(
                         value = assignmentTitle,
                         onValueChange = { assignmentTitle = it },
@@ -255,11 +261,14 @@ fun CreateAssignmentScreen(
                         )
                     )
                     
-                    // Class selection
                     ExposedDropdownMenuBox(
                         expanded = classSelectionExpanded,
                         onExpandedChange = { classSelectionExpanded = !classSelectionExpanded },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onGloballyPositioned { coordinates ->
+                                classSelectionFieldPosition = coordinates.positionInParent().y.toInt()
+                            }
                     ) {
                         OutlinedTextField(
                             value = selectedClass,
@@ -303,6 +312,7 @@ fun CreateAssignmentScreen(
                                         selectedClass = className
                                         selectedClassId = classData.id
                                         classSelectionExpanded = false
+                                        classViewModel.loadClassStudents(classData.id)
                                     },
                                     leadingIcon = {
                                         Icon(
@@ -400,7 +410,6 @@ fun CreateAssignmentScreen(
                         }
                     }
                     
-                    // Assignment description
                     OutlinedTextField(
                         value = assignmentDescription,
                         onValueChange = { assignmentDescription = it },
@@ -423,7 +432,6 @@ fun CreateAssignmentScreen(
                         )
                     )
                     
-                    // Due date
                     val dueDateInteractionSource = remember { MutableInteractionSource() }
                     LaunchedEffect(dueDateInteractionSource) {
                         dueDateInteractionSource.interactions.collect { interaction ->
@@ -462,7 +470,6 @@ fun CreateAssignmentScreen(
             }
         }
         
-        // PDF upload section (mandatory)
         VTCard(variant = CardVariant.Elevated) {
             Column {
                 Text(
@@ -476,7 +483,6 @@ fun CreateAssignmentScreen(
                     VTButton(
                         text = if (selectedFiles.isEmpty()) "파일 선택" else "파일 추가",
                         onClick = { 
-                            // PDF 파일만 선택 가능하도록 MIME 타입 지정
                             pdfPickerLauncher.launch("application/pdf")
                         },
                         variant = ButtonVariant.Outline,
@@ -495,7 +501,6 @@ fun CreateAssignmentScreen(
                         color = Gray600
                     )
                     
-                    // PDF 업로드 진행률 표시
                     if (isUploading) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Column {
@@ -521,7 +526,6 @@ fun CreateAssignmentScreen(
                         }
                     }
                     
-                    // 업로드 성공 표시
                     if (uploadSuccess) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(
@@ -550,7 +554,6 @@ fun CreateAssignmentScreen(
                         }
                     }
                     
-                    // 선택된 파일 목록 표시
                     if (selectedFiles.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
@@ -612,7 +615,6 @@ fun CreateAssignmentScreen(
             }
         }
         
-        // Question settings
         VTCard(variant = CardVariant.Elevated) {
             Column {
                 Text(
@@ -645,7 +647,6 @@ fun CreateAssignmentScreen(
             }
         }
         
-        // Student assignment
         VTCard(variant = CardVariant.Elevated) {
             Column {
                 Text(
@@ -680,87 +681,101 @@ fun CreateAssignmentScreen(
                     ) {
                         RadioButton(
                             selected = !assignToAll,
-                            onClick = { assignToAll = false }
+                            onClick = {
+                                if (selectedClassId != null) {
+                                    assignToAll = false
+                                    showClassSelectionWarning = false
+                                } else {
+                                    showClassSelectionWarning = true
+                                    coroutineScope.launch {
+                                        scrollState.animateScrollTo(classSelectionFieldPosition)
+                                    }
+                                }
+                            },
+                            enabled = selectedClassId != null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "선택한 학생에게만 배정",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
-                            color = Gray800
+                            color = if (selectedClassId != null) Gray800 else Gray400
                         )
                     }
                     
-                    // Student selection (when not assigning to all)
-                    if (!assignToAll) {
+                    if (showClassSelectionWarning && selectedClassId == null) {
+                        Text(
+                            text = "⚠️ 반을 먼저 선택해주세요",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Warning,
+                            modifier = Modifier.padding(start = 24.dp)
+                        )
+                    }
+                    
+                    if (!assignToAll && selectedClassId != null) {
                         Column(
                             modifier = Modifier.padding(start = 24.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // 전체 선택 체크박스
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 8.dp)
-                            ) {
-                                Checkbox(
-                                    checked = selectedStudents.size == studentNames.take(5).size && studentNames.take(5).isNotEmpty(),
-                                    onCheckedChange = { isChecked ->
-                                        selectedStudents = if (isChecked) {
-                                            studentNames.take(5).filterNotNull().toSet()
-                                        } else {
-                                            emptySet()
-                                        }
-                                    }
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                            if (displayStudents.isEmpty()) {
                                 Text(
-                                    text = "전체 선택",
+                                    text = "학생 목록을 불러오는 중...",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = PrimaryIndigo
+                                    color = Gray600
                                 )
-                            }
-                            studentNames.take(5).forEach { student ->
+                            } else {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 8.dp)
                                 ) {
                                     Checkbox(
-                                        checked = student in selectedStudents,
+                                        checked = selectedStudents.size == displayStudents.size && displayStudents.isNotEmpty(),
                                         onCheckedChange = { isChecked ->
-                                            if (student != null) {
-                                                selectedStudents = if (isChecked) {
-                                                    selectedStudents + student
-                                                } else {
-                                                    selectedStudents - student
-                                                }
+                                            selectedStudents = if (isChecked) {
+                                                displayStudents.map { it.id }.toSet()
+                                            } else {
+                                                emptySet()
                                             }
                                         }
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .background(
-                                                PrimaryIndigo.copy(alpha = 0.1f),
-                                                androidx.compose.foundation.shape.CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = student?.first()?.toString() ?: "?",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Medium,
-                                            color = PrimaryIndigo
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = student ?: "이름 없음",
+                                        text = "전체 선택",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Gray800
+                                        fontWeight = FontWeight.Medium,
+                                        color = PrimaryIndigo
                                     )
+                                }
+                                displayStudents.forEach { student ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Checkbox(
+                                            checked = student.id in selectedStudents,
+                                            onCheckedChange = { isChecked ->
+                                                selectedStudents = if (isChecked) {
+                                                    selectedStudents + student.id
+                                                } else {
+                                                    selectedStudents - student.id
+                                                }
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = student.name ?: "이름 없음",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Gray800
+                                            )
+                                            Text(
+                                                text = student.email,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Gray600
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -769,7 +784,6 @@ fun CreateAssignmentScreen(
             }
         }
         
-        // Action buttons
         val isFormValid = assignmentTitle.isNotBlank() && assignmentDescription.isNotBlank() && 
             selectedClass.isNotBlank() && selectedClassId != null && 
             selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
@@ -803,7 +817,6 @@ fun CreateAssignmentScreen(
                     println("문제 개수: $questionCountInt (입력값: $questionCount)")
                     println("total_questions: ${createRequest.total_questions}")
                     
-                    // PDF 파일이 선택된 경우 PDF 업로드와 함께 과제 생성
                     val pdfFile = selectedPdfFile
                     if (pdfFile != null) {
                         println("PDF 업로드와 함께 과제 생성")
@@ -816,12 +829,12 @@ fun CreateAssignmentScreen(
                         actualAssignmentViewModel.createAssignment(createRequest)
                     }
                     
-                    assignmentCreated = true  // 플래그 설정
+                    assignmentCreated = true
                 }
             },
             variant = ButtonVariant.Gradient,
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid && !isCreatingAssignment,  // 변경: isCreatingAssignment 사용
+            enabled = isFormValid && !isCreatingAssignment,
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Add,
@@ -950,9 +963,7 @@ fun CreateAssignmentScreen(
         )
     }
 
-
-    // Loading overlay for PDF upload only (not for question generation)
-        if (isUploading) {
+    if (isUploading) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
