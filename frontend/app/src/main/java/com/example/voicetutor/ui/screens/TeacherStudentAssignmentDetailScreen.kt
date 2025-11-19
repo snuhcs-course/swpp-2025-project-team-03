@@ -376,7 +376,6 @@ fun TeacherStudentAssignmentDetailScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
             
-                    // Build groups from correctness
                     val detailedResults = remember(correctnessData) {
                         correctnessData.map { item ->
                             DetailedQuestionResult(

@@ -292,7 +292,6 @@ class AssignmentViewModel @Inject constructor(
             try {
                 println("AssignmentViewModel - loadAssignmentStatistics called: assignmentId=$assignmentId, totalStudents=$totalStudents")
                 
-                // 해당 과제의 모든 personal assignments 가져오기
                 assignmentRepository.getPersonalAssignments(assignmentId = assignmentId)
                     .onSuccess { personalAssignments ->
                         println("AssignmentViewModel - Loaded ${personalAssignments.size} personal assignments for assignment $assignmentId")
@@ -300,13 +299,9 @@ class AssignmentViewModel @Inject constructor(
                             println("  - PersonalAssignment ID: ${pa.id}, Student: ${pa.student.displayName}, Status: ${pa.status}")
                         }
                         
-                        // 실제 총 학생 수는 personal assignments의 개수 (과제를 받은 학생 수)
                         val actualTotalStudents = personalAssignments.size
                         
-                        // 각 personal assignment의 통계를 확인하여 완료 여부 판단
-                        // status가 SUBMITTED이거나, submitted_at이 있거나, 통계에서 모든 문제를 완료한 경우 제출로 간주
                         coroutineScope {
-                            // 모든 personal assignment의 통계를 동시에 로드
                             val assignmentStatsDeferred = personalAssignments.map { personalAssignment ->
                                 async {
                                     val stats = assignmentRepository.getPersonalAssignmentStatistics(personalAssignment.id).getOrNull()
@@ -316,35 +311,28 @@ class AssignmentViewModel @Inject constructor(
                             
                             val assignmentStatsList = assignmentStatsDeferred.awaitAll()
                             
-                            // 제출된 과제 필터링
                             val submittedAssignments = assignmentStatsList.filter { (personalAssignment, stats) ->
                                 val assignmentTotalQuestions = personalAssignment.assignment.totalQuestions
                                 val solvedNum = personalAssignment.solvedNum
                                 val hasStarted = !personalAssignment.startedAt.isNullOrEmpty()
                                 
                                 val isCompleted = when {
-                                    // 상태가 SUBMITTED인 경우
                                     personalAssignment.status == PersonalAssignmentStatus.SUBMITTED -> {
                                         println("AssignmentViewModel - PA ${personalAssignment.id} completed by status: SUBMITTED")
                                         true
                                     }
-                                    // submitted_at이 null이 아닌 경우
                                     !personalAssignment.submittedAt.isNullOrEmpty() -> {
                                         println("AssignmentViewModel - PA ${personalAssignment.id} completed by submitted_at: ${personalAssignment.submittedAt}")
                                         true
                                     }
-                                    // started_at이 있고, solved_num이 과제의 total_questions와 같거나 더 큰 경우
-                                    // (과제를 시작했고 모든 문제를 풀었음)
                                     hasStarted && assignmentTotalQuestions > 0 && solvedNum >= assignmentTotalQuestions -> {
                                         println("AssignmentViewModel - PA ${personalAssignment.id} completed by solved_num: started=${hasStarted}, solved=${solvedNum}, total=${assignmentTotalQuestions}")
                                         true
                                     }
-                                    // started_at이 있고, 통계에서 모든 문제를 완료한 경우
                                     hasStarted && stats != null && stats.totalProblem > 0 && stats.totalProblem == stats.solvedProblem -> {
                                         println("AssignmentViewModel - PA ${personalAssignment.id} completed by statistics: started=${hasStarted}, total=${stats.totalProblem}, solved=${stats.solvedProblem}")
                                         true
                                     }
-                                    // started_at이 있고, 통계에서 answeredQuestions가 totalQuestions와 같은 경우
                                     hasStarted && stats != null && stats.totalQuestions > 0 && stats.answeredQuestions >= stats.totalQuestions -> {
                                         println("AssignmentViewModel - PA ${personalAssignment.id} completed by answeredQuestions: started=${hasStarted}, answered=${stats.answeredQuestions}, total=${stats.totalQuestions}")
                                         true
@@ -360,16 +348,13 @@ class AssignmentViewModel @Inject constructor(
                             val submittedCount = submittedAssignments.size
                             println("AssignmentViewModel - Submitted count: $submittedCount, Total students: $actualTotalStudents")
                             
-                            // 제출된 과제들의 통계를 가져와서 평균 점수 계산
                             if (submittedCount > 0) {
                                 println("AssignmentViewModel - Loading statistics for $submittedCount submitted assignments")
                                 
-                                // 통계 리스트 추출 (null이 아닌 것만)
                                 val statisticsList = submittedAssignments.mapNotNull { (_, stats) -> stats }
                                 
                                 println("AssignmentViewModel - Loaded ${statisticsList.size} statistics")
                                 
-                                // 평균 점수 계산
                                 val averageScore = if (statisticsList.isNotEmpty()) {
                                     val avg = statisticsList.map { it.accuracy }.average().toInt()
                                     println("AssignmentViewModel - Average score: $avg")
@@ -397,7 +382,6 @@ class AssignmentViewModel @Inject constructor(
                                 _assignmentStatistics.value = stats
                             } else {
                                 println("AssignmentViewModel - No submitted assignments found")
-                                // 제출된 과제가 없는 경우
                                 val stats = AssignmentStatistics(
                                     submittedStudents = 0,
                                     totalStudents = actualTotalStudents,
@@ -412,7 +396,6 @@ class AssignmentViewModel @Inject constructor(
                     .onFailure { exception ->
                         println("AssignmentViewModel - Failed to load personal assignments: ${exception.message}")
                         exception.printStackTrace()
-                        // 기본값 설정
                         _assignmentStatistics.value = AssignmentStatistics(
                             submittedStudents = 0,
                             totalStudents = totalStudents,
@@ -875,7 +858,6 @@ class AssignmentViewModel @Inject constructor(
                             }
                             .onFailure { e ->
                                 println("AssignmentViewModel - Failed to load full assignment ${personalAssignment.assignment.id}: ${e.message}")
-                                // courseClass 없이라도 추가
                                 val assignmentData = AssignmentData(
                                     id = personalAssignment.assignment.id,
                                     title = personalAssignment.assignment.title,
@@ -964,7 +946,6 @@ class AssignmentViewModel @Inject constructor(
                             }
                             .onFailure { e ->
                                 println("AssignmentViewModel - Failed to load full assignment ${personalAssignment.assignment.id}: ${e.message}")
-                                // courseClass 없이라도 추가
                                 val assignmentData = AssignmentData(
                                     id = personalAssignment.assignment.id,
                                     title = personalAssignment.assignment.title,
@@ -1258,18 +1239,15 @@ class AssignmentViewModel @Inject constructor(
         _questionGenerationError.value = null
     }
     
-    // 질문 생성 취소 (모달 제거 + totalQuestions를 0으로 업데이트)
     fun cancelQuestionGeneration() {
         println("AssignmentViewModel - Cancelling question generation")
         val assignmentId = generatingAssignmentId
         
-        // 상태 초기화 (모달 제거)
         _isGeneratingQuestions.value = false
         _generatingAssignmentTitle.value = null
         _questionGenerationSuccess.value = false
         _questionGenerationError.value = null
         
-        // assignmentId가 있으면 totalQuestions를 0으로 업데이트
         if (assignmentId != null) {
             println("AssignmentViewModel - Updating assignment $assignmentId: totalQuestions = 0")
             viewModelScope.launch {
@@ -1277,23 +1255,23 @@ class AssignmentViewModel @Inject constructor(
                     val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
                         title = null,
                         description = null,
-                        totalQuestions = 0, // totalQuestions를 0으로 설정
+                        totalQuestions = 0,
                         dueAt = null,
                         grade = null,
                         subject = null
                     )
                     assignmentRepository.updateAssignment(assignmentId, updateRequest)
                         .onSuccess {
-                            println("✅ Assignment $assignmentId: totalQuestions가 0으로 업데이트됨")
-                            generatingAssignmentId = null // 초기화
+                                    println("✅ Assignment $assignmentId: totalQuestions가 0으로 업데이트됨")
+                                    generatingAssignmentId = null
                         }
                         .onFailure { e ->
                             println("❌ Assignment $assignmentId 업데이트 실패: ${e.message}")
-                            generatingAssignmentId = null // 실패해도 초기화
+                            generatingAssignmentId = null
                         }
                 } catch (e: Exception) {
                     println("❌ Assignment $assignmentId 업데이트 예외: ${e.message}")
-                    generatingAssignmentId = null // 예외 발생해도 초기화
+                    generatingAssignmentId = null
                 }
             }
         } else {
@@ -1798,9 +1776,7 @@ class AssignmentViewModel @Inject constructor(
             
             val totalStudents = personalAssignments.size
             
-            // 각 personal assignment의 통계를 확인하여 완료 여부 판단
             coroutineScope {
-                // 모든 personal assignment의 통계를 동시에 로드
                 val assignmentStatsDeferred = personalAssignments.map { personalAssignment ->
                     async {
                         val stats = assignmentRepository.getPersonalAssignmentStatistics(personalAssignment.id).getOrNull()
