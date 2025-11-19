@@ -822,11 +822,11 @@ fun CreateAssignmentScreen(
                         println("PDF 업로드와 함께 과제 생성")
                         println("PDF 파일: ${pdfFile.name}")
                         println("파일 크기: ${pdfFile.length()} bytes")
-                        actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile, totalNumber = questionCountInt)
+                        actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile, totalNumber = questionCountInt, teacherId = actualTeacherId)
                     } else {
                         // PDF 파일이 없는 경우 일반 과제 생성
                         println("PDF 파일이 없음 - 일반 과제 생성")
-                        actualAssignmentViewModel.createAssignment(createRequest)
+                        actualAssignmentViewModel.createAssignment(createRequest, teacherId = actualTeacherId)
                     }
                     
                     assignmentCreated = true
