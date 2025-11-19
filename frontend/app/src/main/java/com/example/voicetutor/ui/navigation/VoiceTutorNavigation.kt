@@ -182,7 +182,6 @@ fun VoiceTutorNavigation(
             ) {
                 AssignmentScreen(
                     assignmentId = assignmentId.toIntOrNull(),
-                    assignmentTitle = assignmentTitle,
                     authViewModel = authViewModel,
                     onNavigateToHome = {
                         // StudentDashboard로 이동하고 모든 백스택 제거 후 재로딩
