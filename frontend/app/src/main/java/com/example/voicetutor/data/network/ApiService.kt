@@ -192,7 +192,46 @@ data class CreateAssignmentRequest(
     val grade: String?,
     val description: String?,
     @SerializedName("total_questions") val total_questions: Int? = null,
-)
+) {
+    class Builder {
+        private var title: String? = null
+        private var subject: String? = null
+        private var class_id: Int? = null
+        private var due_at: String? = null
+        private var grade: String? = null
+        private var description: String? = null
+        private var total_questions: Int? = null
+
+        fun title(value: String) = apply { title = value }
+        fun subject(value: String) = apply { subject = value }
+        fun classId(value: Int) = apply { class_id = value }
+        fun dueAt(value: String) = apply { due_at = value }
+        fun grade(value: String?) = apply { grade = value }
+        fun description(value: String?) = apply { description = value }
+        fun totalQuestions(value: Int?) = apply { total_questions = value }
+
+        fun build(): CreateAssignmentRequest {
+            require(title != null) { "title은 필수입니다." }
+            require(subject != null) { "subject는 필수입니다." }
+            require(class_id != null) { "class_id는 필수입니다." }
+            require(due_at != null) { "due_at은 필수입니다." }
+
+            return CreateAssignmentRequest(
+                title = title!!,
+                subject = subject!!,
+                class_id = class_id!!,
+                due_at = due_at!!,
+                grade = grade,
+                description = description,
+                total_questions = total_questions,
+            )
+        }
+    }
+
+    companion object {
+        fun builder(): Builder = Builder()
+    }
+}
 
 data class CreateAssignmentResponse(
     @SerializedName("assignment_id") val assignment_id: Int,
@@ -224,7 +263,36 @@ data class CreateClassRequest(
     val description: String?,
     val subject_name: String,
     val teacher_id: Int,
-)
+) {
+    class Builder {
+        private var name: String? = null
+        private var description: String? = null
+        private var subject_name: String? = null
+        private var teacher_id: Int? = null
+
+        fun name(value: String) = apply { name = value }
+        fun description(value: String?) = apply { description = value }
+        fun subjectName(value: String) = apply { subject_name = value }
+        fun teacherId(value: Int) = apply { teacher_id = value }
+
+        fun build(): CreateClassRequest {
+            require(name != null) { "name은 필수입니다." }
+            require(subject_name != null) { "subject_name은 필수입니다." }
+            require(teacher_id != null) { "teacher_id는 필수입니다." }
+
+            return CreateClassRequest(
+                name = name!!,
+                description = description,
+                subject_name = subject_name!!,
+                teacher_id = teacher_id!!,
+            )
+        }
+    }
+
+    companion object {
+        fun builder(): Builder = Builder()
+    }
+}
 
 data class UpdateAssignmentRequest(
     val title: String? = null,

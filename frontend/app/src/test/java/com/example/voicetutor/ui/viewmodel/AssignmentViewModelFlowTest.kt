@@ -564,14 +564,14 @@ class AssignmentViewModelFlowTest {
     @Ignore("Verification issue")
     fun createAssignmentWithPdf_success_progressSequence_andVerifyCreateQuestions() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "T",
-            subject = "Subj",
-            class_id = 1,
-            due_at = "2025-01-01T00:00:00Z",
-            grade = "G",
-            description = "D",
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("T")
+            .subject("Subj")
+            .classId(1)
+            .dueAt("2025-01-01T00:00:00Z")
+            .grade("G")
+            .description("D")
+            .build()
         val tmpPdf = File.createTempFile("doc", ".pdf")
         whenever(assignmentRepository.createAssignment(request))
             .thenReturn(Result.success(com.example.voicetutor.data.network.CreateAssignmentResponse(assignment_id = 10, material_id = 20, s3_key = "k", upload_url = "http://u")))
@@ -614,14 +614,14 @@ class AssignmentViewModelFlowTest {
     @Test
     fun createAssignmentWithPdf_uploadFailure_setsError_andStopsUploading() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "T",
-            subject = "Subj",
-            class_id = 1,
-            due_at = "2025-01-01T00:00:00Z",
-            grade = "G",
-            description = "D",
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("T")
+            .subject("Subj")
+            .classId(1)
+            .dueAt("2025-01-01T00:00:00Z")
+            .grade("G")
+            .description("D")
+            .build()
         val tmpPdf = File.createTempFile("doc", ".pdf")
         whenever(assignmentRepository.createAssignment(request))
             .thenReturn(Result.success(com.example.voicetutor.data.network.CreateAssignmentResponse(assignment_id = 10, material_id = 20, s3_key = "k", upload_url = "http://u")))
@@ -1600,14 +1600,14 @@ class AssignmentViewModelFlowTest {
     @Ignore("NPE issue")
     fun createAssignment_success_updatesCurrentAssignment() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "New Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = "New assignment",
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("New Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description("New assignment")
+            .build()
         val createResponse = com.example.voicetutor.data.network.CreateAssignmentResponse(
             assignment_id = 30,
             material_id = 5,
@@ -1631,14 +1631,14 @@ class AssignmentViewModelFlowTest {
     @Test
     fun createAssignment_failure_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "New Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = null,
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("New Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description(null)
+            .build()
         Mockito.`when`(assignmentRepository.createAssignment(request))
             .thenReturn(Result.failure(Exception("Creation failed")))
 
@@ -1910,14 +1910,14 @@ class AssignmentViewModelFlowTest {
     @Ignore("Verification issue")
     fun createAssignmentWithPdf_success_uploadsPdf() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "PDF Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = "PDF assignment",
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("PDF Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description("PDF assignment")
+            .build()
         val pdfFile = java.io.File.createTempFile("test", ".pdf")
         pdfFile.deleteOnExit()
 
@@ -1950,14 +1950,14 @@ class AssignmentViewModelFlowTest {
     @Test
     fun createAssignmentWithPdf_createFailure_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "PDF Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = "PDF assignment",
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("PDF Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description("PDF assignment")
+            .build()
         val pdfFile = java.io.File.createTempFile("test", ".pdf")
         pdfFile.deleteOnExit()
 
@@ -1977,14 +1977,14 @@ class AssignmentViewModelFlowTest {
     @Test
     fun createAssignmentWithPdf_uploadFailure_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "PDF Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = "PDF assignment",
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("PDF Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description("PDF assignment")
+            .build()
         val pdfFile = java.io.File.createTempFile("test", ".pdf")
         pdfFile.deleteOnExit()
 

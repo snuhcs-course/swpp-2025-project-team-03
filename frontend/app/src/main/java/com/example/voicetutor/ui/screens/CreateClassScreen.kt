@@ -145,12 +145,12 @@ fun CreateClassScreen(
                         val teacherIdInt = teacherId.toInt()
 
                         // 클래스 생성 요청
-                        val createClassRequest = CreateClassRequest(
-                            name = className,
-                            description = description,
-                            subject_name = subject,
-                            teacher_id = teacherIdInt,
-                        )
+                        val createClassRequest = CreateClassRequest.builder()
+                            .name(className)
+                            .description(description)
+                            .subjectName(subject)
+                            .teacherId(teacherIdInt)
+                            .build()
 
                         println("CreateClassScreen - createClassRequest: $createClassRequest")
                         println("CreateClassScreen - teacher_id: $teacherIdInt")
