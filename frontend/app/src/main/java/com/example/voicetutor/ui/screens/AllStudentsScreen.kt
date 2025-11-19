@@ -1,11 +1,9 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -43,8 +41,6 @@ fun AllStudentsScreen(
     val error by studentViewModel.error.collectAsStateWithLifecycle()
 
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
-    val studentClasses by studentViewModel.studentClasses.collectAsStateWithLifecycle()
-    val loadingStudentClasses by studentViewModel.loadingStudentClasses.collectAsStateWithLifecycle()
 
     var selectedClassId by rememberSaveable(
         stateSaver = Saver(
@@ -248,18 +244,9 @@ fun AllStudentsScreen(
                 items = allStudents,
                 key = { _, student -> student.id }, // 각 학생의 고유 ID를 키로 사용
             ) { index, student ->
-                val classesForStudent = studentClasses[student.id]
-                val isClassesLoading = loadingStudentClasses.contains(student.id)
-                LaunchedEffect(student.id) {
-                    if (classesForStudent == null && !isClassesLoading) {
-                        studentViewModel.loadStudentClasses(student.id)
-                    }
-                }
 
                 AllStudentsCard(
                     student = student,
-                    classNames = classesForStudent?.map { it.name } ?: emptyList(),
-                    isLoadingClasses = classesForStudent == null || isClassesLoading,
                     onReportClick = {
                         // 리포트 페이지로 이동
                         val classId = selectedClassId ?: 0
@@ -274,8 +261,6 @@ fun AllStudentsScreen(
 @Composable
 fun AllStudentsCard(
     student: AllStudentsStudent,
-    classNames: List<String>,
-    isLoadingClasses: Boolean,
     onReportClick: () -> Unit,
 ) {
     VTCard2(
@@ -323,46 +308,6 @@ fun AllStudentsCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600,
                     )
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "반: ",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = Gray600,
-                )
-                when {
-                    isLoadingClasses -> Text(
-                        text = "불러오는 중...",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500,
-                    )
-                    classNames.isEmpty() -> Text(
-                        text = "배정된 반이 없습니다",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500,
-                    )
-                    else -> classNames.forEachIndexed { index, name ->
-                        if (index > 0) {
-                            Text(
-                                text = ", ",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray500,
-                            )
-                        }
-                        Text(
-                            text = name,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray700,
-                        )
-                    }
                 }
             }
 
