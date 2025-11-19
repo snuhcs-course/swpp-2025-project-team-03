@@ -2,7 +2,9 @@ package com.example.voicetutor.data.network
 
 import com.example.voicetutor.data.models.*
 import kotlinx.coroutines.delay
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 
 /**
@@ -339,7 +341,14 @@ class FakeApiService : ApiService {
             ),
         )
 
-    override suspend fun createQuestions(request: QuestionCreateRequest): Response<ApiResponse<Unit>> = success(Unit)
+    override suspend fun createQuestions(request: QuestionCreateRequest): Response<ResponseBody> {
+        // 백엔드는 ApiResponse 형식이 아닌 직접 JSON 응답을 반환함
+        val responseBody = ResponseBody.create(
+            "application/json".toMediaType(),
+            """{"assignment_id":${request.assignment_id},"material_id":${request.material_id},"summary_preview":"","questions":[]}"""
+        )
+        return Response.success(200, responseBody)
+    }
     // endregion
 
     // region Student APIs

@@ -1078,6 +1078,15 @@ class AssignmentViewModel @Inject constructor(
                                         _generatingAssignmentTitle.value = null
                                         generatingAssignmentId = null
                                     }
+                                    
+                                    // 홈 리스트 새로고침 (질문 생성 완료된 과제가 표시되도록)
+                                    try {
+                                        println("[별도 스레드] 과제 목록 새로고침 (질문 생성 완료 후)")
+                                        loadAllAssignments(silent = true)
+                                        println("[별도 스레드] 과제 목록 새로고침 완료 (질문 생성 완료 후)")
+                                    } catch (e: Exception) {
+                                        println("[별도 스레드] 과제 목록 새로고침 실패 (질문 생성 완료 후): ${e.message}")
+                                    }
                                 }.onFailure { e ->
                                     println("[별도 스레드] 문제 생성 실패: ${e.message}")
                                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {

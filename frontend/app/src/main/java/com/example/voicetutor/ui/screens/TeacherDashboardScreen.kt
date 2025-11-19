@@ -59,6 +59,8 @@ fun TeacherDashboardScreen(
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     val dashboardStats by dashboardViewModel.dashboardStats.collectAsStateWithLifecycle()
     val students by studentViewModel.students.collectAsStateWithLifecycle()
+    // 질문 생성 완료 상태 확인
+    val questionGenerationSuccess by actualAssignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
     // Recent activities are not supported by current backend API
 
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
@@ -136,6 +138,21 @@ fun TeacherDashboardScreen(
                 AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
             }
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
+        }
+    }
+    
+    // 질문 생성 완료 시 홈 리스트 새로고침
+    LaunchedEffect(questionGenerationSuccess) {
+        if (questionGenerationSuccess && actualTeacherId != null) {
+            println("TeacherDashboardScreen - 질문 생성 완료 감지, 리스트 새로고침")
+            val status = when (selectedFilter) {
+                AssignmentFilter.ALL -> null
+                AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
+                AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
+            }
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
+            dashboardViewModel.loadDashboardData(actualTeacherId)
+            // 메시지가 표시된 후 상태 초기화는 MainLayout에서 처리
         }
     }
 

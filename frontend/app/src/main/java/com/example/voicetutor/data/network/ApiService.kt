@@ -3,6 +3,7 @@ package com.example.voicetutor.data.network
 import com.example.voicetutor.data.models.*
 import com.google.gson.annotations.SerializedName
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -172,8 +173,9 @@ interface ApiService {
     suspend fun checkS3Upload(@Path("assignment_id") assignmentId: Int): Response<ApiResponse<S3UploadStatus>>
 
     // Questions - generate base questions after PDF upload
+    // 백엔드는 ApiResponse 형식이 아닌 직접 JSON 응답을 반환함
     @POST("questions/create/")
-    suspend fun createQuestions(@Body request: QuestionCreateRequest): Response<ApiResponse<Unit>>
+    suspend fun createQuestions(@Body request: QuestionCreateRequest): Response<ResponseBody>
 
     // Dashboard APIs (Backend: /api/assignments/teacher-dashboard-stats/)
     @GET("assignments/teacher-dashboard-stats/")
