@@ -1230,14 +1230,9 @@ class AssignmentViewModel @Inject constructor(
             println("AssignmentViewModel - Updating assignment $assignmentId: totalQuestions = 0")
             viewModelScope.launch {
                 try {
-                    val updateRequest = UpdateAssignmentRequest(
-                        title = null,
-                        description = null,
-                        totalQuestions = 0,
-                        dueAt = null,
-                        grade = null,
-                        subject = null,
-                    )
+                    val updateRequest = UpdateAssignmentRequest.builder()
+                        .totalQuestions(0)
+                        .build()
                     assignmentRepository.updateAssignment(assignmentId, updateRequest)
                         .onSuccess {
                             println("Assignment $assignmentId: totalQuestions가 0으로 업데이트됨")

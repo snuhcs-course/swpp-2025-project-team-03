@@ -233,7 +233,47 @@ data class UpdateAssignmentRequest(
     @SerializedName("due_at") val dueAt: String? = null,
     val grade: String? = null,
     val subject: SubjectUpdateRequest? = null,
-)
+) {
+    class Builder {
+        private var title: String? = null
+        private var description: String? = null
+        private var totalQuestions: Int? = null
+        private var dueAt: String? = null
+        private var grade: String? = null
+        private var subject: SubjectUpdateRequest? = null
+
+        fun title(value: String?) = apply { title = value }
+        fun description(value: String?) = apply { description = value }
+        fun totalQuestions(value: Int?) = apply { totalQuestions = value }
+        fun dueAt(value: String?) = apply { dueAt = value }
+        fun grade(value: String?) = apply { grade = value }
+        fun subject(value: SubjectUpdateRequest?) = apply { subject = value }
+
+        fun build(): UpdateAssignmentRequest {
+            require(
+                title != null ||
+                    description != null ||
+                    totalQuestions != null ||
+                    dueAt != null ||
+                    grade != null ||
+                    subject != null,
+            ) { "수정할 필드를 최소 1개 이상 지정해야 합니다." }
+
+            return UpdateAssignmentRequest(
+                title = title,
+                description = description,
+                totalQuestions = totalQuestions,
+                dueAt = dueAt,
+                grade = grade,
+                subject = subject,
+            )
+        }
+    }
+
+    companion object {
+        fun builder(): Builder = Builder()
+    }
+}
 
 data class SubjectUpdateRequest(
     val id: Int? = null,

@@ -200,14 +200,14 @@ class ApiServiceModelsTest {
     @Test
     fun updateAssignmentRequest_createsCorrectly() {
         // Given
-        val request = UpdateAssignmentRequest(
-            title = "Updated Title",
-            description = "Updated Description",
-            totalQuestions = 20,
-            dueAt = "2025-12-31T23:59:00Z",
-            grade = "B",
-            subject = SubjectUpdateRequest(id = 1, name = "Math", code = "MATH101"),
-        )
+        val request = UpdateAssignmentRequest.builder()
+            .title("Updated Title")
+            .description("Updated Description")
+            .totalQuestions(20)
+            .dueAt("2025-12-31T23:59:00Z")
+            .grade("B")
+            .subject(SubjectUpdateRequest(id = 1, name = "Math", code = "MATH101"))
+            .build()
 
         // Then
         assertEquals("Updated Title", request.title)
@@ -223,11 +223,13 @@ class ApiServiceModelsTest {
 
     @Test
     fun updateAssignmentRequest_withNullFields_createsCorrectly() {
-        // Given
-        val request = UpdateAssignmentRequest()
+        // Given - Builder requires at least one field, so we use a minimal field
+        val request = UpdateAssignmentRequest.builder()
+            .title("Minimal")
+            .build()
 
         // Then
-        assertNull(request.title)
+        assertEquals("Minimal", request.title)
         assertNull(request.description)
         assertNull(request.totalQuestions)
         assertNull(request.dueAt)

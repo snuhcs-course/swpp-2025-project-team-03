@@ -1414,14 +1414,10 @@ class AssignmentViewModelFlowTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val assignmentId = 15
         val updatedAssignment = AssignmentData(assignmentId, "Updated", "new desc", 0, null, "", course(), null, null)
-        val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
-            title = "Updated",
-            description = "new desc",
-            totalQuestions = null,
-            dueAt = null,
-            grade = null,
-            subject = null,
-        )
+        val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest.builder()
+            .title("Updated")
+            .description("new desc")
+            .build()
         Mockito.`when`(assignmentRepository.updateAssignment(assignmentId, updateRequest))
             .thenReturn(Result.success(updatedAssignment))
 
@@ -1442,14 +1438,10 @@ class AssignmentViewModelFlowTest {
     fun updateAssignment_failure_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val assignmentId = 15
-        val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
-            title = "Updated",
-            description = "new desc",
-            totalQuestions = null,
-            dueAt = null,
-            grade = null,
-            subject = null,
-        )
+        val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest.builder()
+            .title("Updated")
+            .description("new desc")
+            .build()
         Mockito.`when`(assignmentRepository.updateAssignment(assignmentId, updateRequest))
             .thenReturn(Result.failure(Exception("Update failed")))
 

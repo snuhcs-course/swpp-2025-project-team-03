@@ -215,14 +215,14 @@ class NetworkModelsTest {
     @Test
     fun updateAssignmentRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val request = UpdateAssignmentRequest(
-            title = "Updated",
-            description = "New description",
-            totalQuestions = 10,
-            dueAt = "2025-12-31T00:00:00Z",
-            grade = "A",
-            subject = SubjectUpdateRequest(id = 2, name = "Math", code = "MATH"),
-        )
+        val request = UpdateAssignmentRequest.builder()
+            .title("Updated")
+            .description("New description")
+            .totalQuestions(10)
+            .dueAt("2025-12-31T00:00:00Z")
+            .grade("A")
+            .subject(SubjectUpdateRequest(id = 2, name = "Math", code = "MATH"))
+            .build()
 
         // Assert
         assertEquals("Updated", request.title)
@@ -235,18 +235,13 @@ class NetworkModelsTest {
 
     @Test
     fun updateAssignmentRequest_withNullFields_handlesNulls() {
-        // Arrange
-        val request = UpdateAssignmentRequest(
-            title = null,
-            description = null,
-            totalQuestions = null,
-            dueAt = null,
-            grade = null,
-            subject = null,
-        )
+        // Arrange - Builder requires at least one field, so we use a minimal field
+        val request = UpdateAssignmentRequest.builder()
+            .title("Minimal")
+            .build()
 
         // Assert
-        assertNull(request.title)
+        assertEquals("Minimal", request.title)
         assertNull(request.description)
         assertNull(request.totalQuestions)
         assertNull(request.dueAt)
