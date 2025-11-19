@@ -10,9 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,7 +27,7 @@ fun AssignmentDetailScreen(
     assignmentId: Int? = null, // PersonalAssignment ID 사용
     assignmentTitle: String? = null, // 실제 과제 제목 사용
     onStartAssignment: () -> Unit = {},
-    assignmentViewModelParam: com.example.voicetutor.ui.viewmodel.AssignmentViewModel? = null
+    assignmentViewModelParam: AssignmentViewModel? = null
 ) {
     val assignmentViewModel: AssignmentViewModel = assignmentViewModelParam ?: hiltViewModel()
     val currentAssignment by assignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
@@ -39,8 +36,6 @@ fun AssignmentDetailScreen(
     val error by assignmentViewModel.error.collectAsStateWithLifecycle()
     val selectedAssignmentId by assignmentViewModel.selectedAssignmentId.collectAsStateWithLifecycle()
     val selectedPersonalAssignmentId by assignmentViewModel.selectedPersonalAssignmentId.collectAsStateWithLifecycle()
-    
-    
     
     // Load assignment data and statistics
     LaunchedEffect(assignmentId, selectedAssignmentId, selectedPersonalAssignmentId) {
@@ -164,7 +159,7 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 VTProgressBar(
-                    progress = if (personalAssignmentStatistics?.totalProblem ?: 0 > 0) {
+                    progress = if ((personalAssignmentStatistics?.totalProblem ?: 0) > 0) {
                         (personalAssignmentStatistics?.solvedProblem ?: 0).toFloat() / (personalAssignmentStatistics?.totalProblem ?: 1).toFloat()
                     } else {
                         0f
@@ -192,6 +187,7 @@ fun AssignmentDetailScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800
                 )
+
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 val desc = currentAssignment?.description

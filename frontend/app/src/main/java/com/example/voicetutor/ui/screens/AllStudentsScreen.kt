@@ -1,13 +1,11 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -17,8 +15,6 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +32,7 @@ import com.example.voicetutor.ui.viewmodel.ClassViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllStudentsScreen(
-    teacherId: String = "1", // 임시로 기본값 설정
+    teacherId: String,
     onNavigateToStudentDetail: (Int, Int, String) -> Unit = { _, _, _ -> }  // 리포트용
 ) {
     val studentViewModel: StudentViewModel = hiltViewModel()
@@ -47,7 +43,6 @@ fun AllStudentsScreen(
     val error by studentViewModel.error.collectAsStateWithLifecycle()
     
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
-    val isLoadingClasses by classViewModel.isLoading.collectAsStateWithLifecycle()
     val studentClasses by studentViewModel.studentClasses.collectAsStateWithLifecycle()
     val loadingStudentClasses by studentViewModel.loadingStudentClasses.collectAsStateWithLifecycle()
     
@@ -151,10 +146,10 @@ fun AllStudentsScreen(
                 onExpandedChange = { expandedClassDropdown = it }
             ) {
                 OutlinedTextField(
-                    value = classes.find { it.id == selectedClassId }?.name ?: "반 선택",
+                    value = classes.find { it.id == selectedClassId }?.name ?: "수업 선택",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("반 선택") },
+                    label = { Text("수업 선택") },
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = Gray800),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedClassDropdown)
@@ -276,7 +271,7 @@ fun AllStudentsScreen(
 
 @Composable
 fun AllStudentsCard(
-    student: com.example.voicetutor.data.models.AllStudentsStudent,
+    student: AllStudentsStudent,
     classNames: List<String>,
     isLoadingClasses: Boolean,
     onReportClick: () -> Unit
@@ -361,7 +356,7 @@ fun AllStudentsCard(
                             )
                         }
                         Text(
-                            text = "$name",
+                            text = name,
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray700
                         )
@@ -390,6 +385,6 @@ fun AllStudentsCard(
 @Composable
 fun AllStudentsScreenPreview() {
     VoiceTutorTheme {
-        AllStudentsScreen()
+        AllStudentsScreen("1")
     }
 }

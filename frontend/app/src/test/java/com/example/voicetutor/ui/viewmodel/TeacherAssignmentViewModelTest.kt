@@ -91,19 +91,7 @@ class TeacherAssignmentViewModelTest {
             class_id = 1,
             due_at = "2025-12-31T23:59:00Z",
             grade = "초6",
-            type = "Quiz",
-            description = "d",
-            questions = listOf(
-                QuestionData(
-                    id = 1,
-                    question = "q1",
-                    type = "VOICE_RESPONSE",
-                    options = null,
-                    correctAnswer = "a",
-                    points = 1,
-                    explanation = "e"
-                )
-            )
+            description = "d"
         )
         val createResp = CreateAssignmentResponse(
             assignment_id = 10, material_id = 20, s3_key = "k", upload_url = "http://upload"
@@ -198,9 +186,7 @@ class TeacherAssignmentViewModelTest {
             class_id = 1,
             due_at = "2025-12-31T23:59:00Z",
             grade = "초6",
-            type = "Quiz",
-            description = "d",
-            questions = null
+            description = "d"
         )
         val pdf = File.createTempFile("test", ".pdf")
 
@@ -236,9 +222,7 @@ class TeacherAssignmentViewModelTest {
             class_id = 1,
             due_at = "2025-12-31T23:59:00Z",
             grade = "초6",
-            type = "Quiz",
-            description = "d",
-            questions = null
+            description = "d"
         )
         val createResp = CreateAssignmentResponse(
             assignment_id = 10, material_id = 20, s3_key = "k", upload_url = "http://upload"

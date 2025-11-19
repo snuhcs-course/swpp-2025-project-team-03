@@ -29,14 +29,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import com.example.voicetutor.file.FileManager
 import com.example.voicetutor.file.FileType
 import com.example.voicetutor.file.FileInfo
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
@@ -71,9 +69,6 @@ fun CreateAssignmentScreen(
     val isUploading by actualAssignmentViewModel.isUploading.collectAsStateWithLifecycle()
     val uploadProgress by actualAssignmentViewModel.uploadProgress.collectAsStateWithLifecycle()
     val uploadSuccess by actualAssignmentViewModel.uploadSuccess.collectAsStateWithLifecycle()
-    val isGeneratingQuestions by actualAssignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
-    val questionGenerationSuccess by actualAssignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
-    val questionGenerationError by actualAssignmentViewModel.questionGenerationError.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
     val fileManager = remember { FileManager(context) }
@@ -109,7 +104,7 @@ fun CreateAssignmentScreen(
             coroutineScope.launch {
                 fileManager.saveFile(uri, fileType = FileType.DOCUMENT)
                     .onSuccess { fileInfo ->
-                        println("✅ 파일 저장 성공")
+                        println("파일 저장 성공")
                         println("원본 파일명: ${fileInfo.name}")
                         println("파일 경로: ${fileInfo.path}")
                         println("파일 크기: ${fileInfo.size} bytes")
@@ -122,7 +117,7 @@ fun CreateAssignmentScreen(
                         println("selectedPdfFile 절대 경로: ${selectedPdfFile?.absolutePath}")
                     }
                     .onFailure { exception ->
-                        println("❌ 파일 저장 실패: ${exception.message}")
+                        println("파일 저장 실패: ${exception.message}")
                     }
             }
         }
@@ -166,7 +161,7 @@ fun CreateAssignmentScreen(
             val targetClass = classes.find { it.id == initialClassId }
             targetClass?.let { classData ->
                 selectedClassId = classData.id
-                selectedClass = "${classData.name} - ${classData.subject.name}"
+                selectedClass = classData.name
                 hasSetInitialClass = true
             }
         }
@@ -190,9 +185,6 @@ fun CreateAssignmentScreen(
             actualAssignmentViewModel.clearError()
         }
     }
-    
-    // Convert API data to UI format
-    val classNames = classes.map { "${it.name} - ${it.subject}" }
     
     // 학년 리스트
     val grades = listOf(
@@ -273,8 +265,8 @@ fun CreateAssignmentScreen(
                             value = selectedClass,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("반 선택") },
-                            placeholder = { Text("과제를 배정할 반을 선택하세요") },
+                            label = { Text("수업 선택") },
+                            placeholder = { Text("과제를 배정할 수업을 선택하세요") },
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = classSelectionExpanded)
                             },
@@ -299,7 +291,7 @@ fun CreateAssignmentScreen(
                             onDismissRequest = { classSelectionExpanded = false }
                         ) {
                             classes.forEachIndexed { index, classData ->
-                                val className = "${classData.name} - ${classData.subject.name}"
+                                val className = classData.name
                                 DropdownMenuItem(
                                     text = { 
                                         Text(
@@ -325,93 +317,85 @@ fun CreateAssignmentScreen(
                     }
                     
                     // Grade selection
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "학년",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ExposedDropdownMenuBox(
-                            expanded = gradeSelectionExpanded,
-                            onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = selectedGrade,
-                                onValueChange = {},
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = gradeSelectionExpanded)
-                                },
-                                modifier = Modifier.menuAnchor()
+                    ExposedDropdownMenuBox(
+                        expanded = gradeSelectionExpanded,
+                        onExpandedChange = { gradeSelectionExpanded = !gradeSelectionExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = selectedGrade,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("학년") },
+                            placeholder = { Text("학년을 선택하세요") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = gradeSelectionExpanded)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                focusedLabelColor = PrimaryIndigo,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
                             )
-                            
-                            ExposedDropdownMenu(
-                                expanded = gradeSelectionExpanded,
-                                onDismissRequest = { gradeSelectionExpanded = false }
-                            ) {
-                                grades.forEach { grade ->
-                                    DropdownMenuItem(
-                                        text = { Text(grade) },
-                                        onClick = {
-                                            selectedGrade = grade
-                                            gradeSelectionExpanded = false
-                                        }
-                                    )
-                                }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = gradeSelectionExpanded,
+                            onDismissRequest = { gradeSelectionExpanded = false }
+                        ) {
+                            grades.forEach { grade ->
+                                DropdownMenuItem(
+                                    text = { Text(grade) },
+                                    onClick = {
+                                        selectedGrade = grade
+                                        gradeSelectionExpanded = false
+                                    }
+                                )
                             }
                         }
                     }
                     
                     // Subject selection
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "과목",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ExposedDropdownMenuBox(
-                            expanded = subjectSelectionExpanded,
-                            onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = selectedSubject,
-                                onValueChange = {},
-                                readOnly = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
-                                    focusedBorderColor = PrimaryIndigo,
-                                    unfocusedBorderColor = Gray400
-                                ),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectSelectionExpanded)
-                                },
-                                modifier = Modifier.menuAnchor()
+                    ExposedDropdownMenuBox(
+                        expanded = subjectSelectionExpanded,
+                        onExpandedChange = { subjectSelectionExpanded = !subjectSelectionExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = selectedSubject,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("과목") },
+                            placeholder = { Text("과목을 선택하세요") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = subjectSelectionExpanded)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryIndigo,
+                                focusedLabelColor = PrimaryIndigo,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
                             )
-                            
-                            ExposedDropdownMenu(
-                                expanded = subjectSelectionExpanded,
-                                onDismissRequest = { subjectSelectionExpanded = false }
-                            ) {
-                                subjects.forEach { subject ->
-                                    DropdownMenuItem(
-                                        text = { Text(subject) },
-                                        onClick = {
-                                            selectedSubject = subject
-                                            subjectSelectionExpanded = false
-                                        }
-                                    )
-                                }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = subjectSelectionExpanded,
+                            onDismissRequest = { subjectSelectionExpanded = false }
+                        ) {
+                            subjects.forEach { subject ->
+                                DropdownMenuItem(
+                                    text = { Text(subject) },
+                                    onClick = {
+                                        selectedSubject = subject
+                                        subjectSelectionExpanded = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -796,166 +780,6 @@ fun CreateAssignmentScreen(
             text = "과제 생성",
             onClick = {
                 if (isFormValid && selectedClassId != null) {
-                    // 데모용 샘플 서술형 질문 생성 (음성 답변 + AI 꼬리 질문 형태)
-                    val sampleQuestions = when (selectedSubject) {
-                        "과학" -> listOf(
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 1,
-                                question = "광합성이 무엇인지 설명해주세요.",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "광합성은 식물이 빛 에너지를 이용해 이산화탄소와 물로 포도당을 만드는 과정입니다.",
-                                explanation = "광합성은 식물이 빛 에너지를 이용해 이산화탄소와 물로 포도당을 만드는 과정입니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 2,
-                                question = "그렇다면 광합성이 일어나기 위해 필요한 조건은 무엇인가요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "빛, 이산화탄소, 물, 엽록체가 필요합니다.",
-                                explanation = "빛, 이산화탄소, 물, 엽록체가 필요합니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 3,
-                                question = "광합성의 결과로 만들어지는 산소는 어디에서 나오나요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "물이 분해되면서 산소가 발생합니다.",
-                                explanation = "물이 분해되면서 산소가 발생합니다."
-                            )
-                        )
-                        "수학" -> listOf(
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 1,
-                                question = "이차방정식이 무엇인지 설명해주세요.",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "이차방정식은 미지수의 최고차항이 2인 방정식입니다.",
-                                explanation = "이차방정식은 미지수의 최고차항이 2인 방정식입니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 2,
-                                question = "그렇다면 이차방정식을 푸는 방법에는 어떤 것들이 있나요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "인수분해, 완전제곱식, 근의 공식 등이 있습니다.",
-                                explanation = "인수분해, 완전제곱식, 근의 공식 등이 있습니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 3,
-                                question = "근의 공식은 언제 사용하는 것이 좋을까요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "인수분해가 어려울 때 근의 공식을 사용하면 편리합니다.",
-                                explanation = "인수분해가 어려울 때 근의 공식을 사용하면 편리합니다."
-                            )
-                        )
-                        "국어" -> listOf(
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 1,
-                                question = "비유적 표현이란 무엇인지 설명해주세요.",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "다른 대상에 빗대어 표현하는 방법입니다.",
-                                explanation = "다른 대상에 빗대어 표현하는 방법입니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 2,
-                                question = "은유와 직유의 차이점은 무엇인가요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "직유는 '~처럼'을 사용하고, 은유는 직접 다른 것이라고 표현합니다.",
-                                explanation = "직유는 '~처럼'을 사용하고, 은유는 직접 다른 것이라고 표현합니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 3,
-                                question = "의인법의 예를 하나 들어보세요.",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "'꽃이 웃는다', '바람이 노래한다' 등이 있습니다.",
-                                explanation = "'꽃이 웃는다', '바람이 노래한다' 등이 있습니다."
-                            )
-                        )
-                        "영어" -> listOf(
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 1,
-                                question = "현재완료 시제가 무엇인지 설명해주세요.",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "과거에 시작된 일이 현재까지 영향을 미치는 것을 나타냅니다.",
-                                explanation = "과거에 시작된 일이 현재까지 영향을 미치는 것을 나타냅니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 2,
-                                question = "현재완료는 어떻게 만드나요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "have/has + 과거분사 형태로 만듭니다.",
-                                explanation = "have/has + 과거분사 형태로 만듭니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 3,
-                                question = "현재완료와 과거시제의 차이는 무엇인가요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "과거시제는 과거의 특정 시점을, 현재완료는 과거부터 현재까지를 나타냅니다.",
-                                explanation = "과거시제는 과거의 특정 시점을, 현재완료는 과거부터 현재까지를 나타냅니다."
-                            )
-                        )
-                        "사회" -> listOf(
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 1,
-                                question = "민주주의가 무엇인지 설명해주세요.",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "국민이 주권을 가지고 정치에 참여하는 제도입니다.",
-                                explanation = "국민이 주권을 가지고 정치에 참여하는 제도입니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 2,
-                                question = "민주주의의 기본 원리에는 어떤 것들이 있나요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "국민주권, 권력분립, 기본권 보장 등이 있습니다.",
-                                explanation = "국민주권, 권력분립, 기본권 보장 등이 있습니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 3,
-                                question = "권력분립이 왜 중요한가요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "권력의 집중을 막고 상호 견제를 통해 국민의 자유를 보장하기 위함입니다.",
-                                explanation = "권력의 집중을 막고 상호 견제를 통해 국민의 자유를 보장하기 위함입니다."
-                            )
-                        )
-                        else -> listOf(
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 1,
-                                question = "이 주제에 대해 설명해주세요.",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "자세히 설명해주시면 더 깊이 있게 이야기 나눠볼 수 있습니다.",
-                                explanation = "자세히 설명해주시면 더 깊이 있게 이야기 나눠볼 수 있습니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 2,
-                                question = "조금 더 구체적으로 설명해주실 수 있나요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "예시를 들어 설명해주시면 좋습니다.",
-                                explanation = "예시를 들어 설명해주시면 좋습니다."
-                            ),
-                            com.example.voicetutor.data.models.QuestionData(
-                                id = 3,
-                                question = "그렇다면 이것이 왜 중요한가요?",
-                                type = "VOICE_RESPONSE",
-                                options = null,
-                                correctAnswer = "실생활에서의 적용 사례를 생각해보세요.",
-                                explanation = "실생활에서의 적용 사례를 생각해보세요."
-                            )
-                        )
-                    }
-                    
                     // 문제 개수를 정수로 파싱 (기본값 0)
                     val questionCountInt = questionCount.toIntOrNull() ?: 0
                     
@@ -965,17 +789,14 @@ fun CreateAssignmentScreen(
                         class_id = selectedClassId!!,
                         due_at = dueDateRequest,
                         grade = selectedGrade,
-                        type = "Quiz",  // PDF 과제는 항상 Quiz 타입
                         description = assignmentDescription,
                         total_questions = questionCountInt,
-                        questions = sampleQuestions
                     )
                     
                     println("=== 과제 생성 디버그 ===")
                     println("Creating assignment: $createRequest")
                     println("Grade: $selectedGrade, Subject: $selectedSubject")
                     println("PDF files: ${selectedFiles.map { it.name }}")
-                    println("Sample questions: ${sampleQuestions.size}개 생성")
                     println("selectedPdfFile: ${selectedPdfFile?.name}")
                     println("selectedPdfFile != null: ${selectedPdfFile != null}")
                     println("selectedFiles.size: ${selectedFiles.size}")
@@ -985,13 +806,13 @@ fun CreateAssignmentScreen(
                     // PDF 파일이 선택된 경우 PDF 업로드와 함께 과제 생성
                     val pdfFile = selectedPdfFile
                     if (pdfFile != null) {
-                        println("✅ PDF 업로드와 함께 과제 생성")
+                        println("PDF 업로드와 함께 과제 생성")
                         println("PDF 파일: ${pdfFile.name}")
                         println("파일 크기: ${pdfFile.length()} bytes")
                         actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile, totalNumber = questionCountInt)
                     } else {
                         // PDF 파일이 없는 경우 일반 과제 생성
-                        println("❌ PDF 파일이 없음 - 일반 과제 생성")
+                        println("PDF 파일이 없음 - 일반 과제 생성")
                         actualAssignmentViewModel.createAssignment(createRequest)
                     }
                     

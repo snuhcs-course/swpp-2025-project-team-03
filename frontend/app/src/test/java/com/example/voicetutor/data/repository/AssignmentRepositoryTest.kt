@@ -279,9 +279,7 @@ class AssignmentRepositoryTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
             description = "Description",
-            questions = emptyList()
         )
         val response = com.example.voicetutor.data.network.CreateAssignmentResponse(
             assignment_id = 50,
@@ -306,9 +304,7 @@ class AssignmentRepositoryTest {
             class_id = 1,
             due_at = "2025-12-31",
             grade = "1",
-            type = "QUIZ",
             description = null,
-            questions = null
         )
         val errorBody = ResponseBody.create("application/json".toMediaType(), """{"success":false,"error":"Failed"}""")
         whenever(apiService.createAssignment(request)).thenReturn(Response.error(400, errorBody))

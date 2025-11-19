@@ -6,7 +6,6 @@ import com.example.voicetutor.data.models.AssignmentData
 import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.data.models.AssignmentFilter
 import com.example.voicetutor.data.models.PersonalAssignmentFilter
-import com.example.voicetutor.data.models.QuestionData
 import com.example.voicetutor.data.models.StudentResult
 import com.example.voicetutor.data.models.PersonalAssignmentData
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
@@ -19,9 +18,7 @@ import com.example.voicetutor.audio.RecordingState
 import com.example.voicetutor.ui.navigation.RecentAssignment
 import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.ui.utils.ErrorMessageMapper
-import com.example.voicetutor.data.network.AssignmentSubmissionResult
 import com.example.voicetutor.data.network.CreateAssignmentRequest
-import com.example.voicetutor.data.network.CreateAssignmentResponse
 import com.example.voicetutor.data.network.S3UploadStatus
 import com.example.voicetutor.data.network.UpdateAssignmentRequest
 import com.example.voicetutor.data.repository.AssignmentRepository
@@ -59,9 +56,6 @@ class AssignmentViewModel @Inject constructor(
     
     private val _assignmentResults = MutableStateFlow<List<StudentResult>>(emptyList())
     val assignmentResults: StateFlow<List<StudentResult>> = _assignmentResults.asStateFlow()
-    
-    private val _assignmentQuestions = MutableStateFlow<List<QuestionData>>(emptyList())
-    val assignmentQuestions: StateFlow<List<QuestionData>> = _assignmentQuestions.asStateFlow()
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -163,11 +157,11 @@ class AssignmentViewModel @Inject constructor(
             
             assignmentRepository.getAllAssignments(teacherId, classId, status)
                 .onSuccess { assignments ->
-                    println("AssignmentViewModel - ✅ Successfully loaded ${assignments.size} assignments")
+                    println("AssignmentViewModel - Successfully loaded ${assignments.size} assignments")
                     _assignments.value = assignments
                 }
                 .onFailure { exception ->
-                    println("AssignmentViewModel - ❌ Failed to load assignments: ${exception.message}")
+                    println("AssignmentViewModel - Failed to load assignments: ${exception.message}")
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
             
@@ -627,8 +621,8 @@ class AssignmentViewModel @Inject constructor(
                         id = createResponse.assignment_id,
                         title = assignment.title,
                         description = assignment.description,
-                        totalQuestions = assignment.questions?.size ?: 0,
-                        createdAt = "",
+                        totalQuestions = assignment.total_questions ?: 0,
+                        createdAt = "", // 서버에서 받아올 수 있음
                         dueAt = assignment.due_at,
                         courseClass = CourseClass(
                             id = assignment.class_id,
@@ -673,7 +667,6 @@ class AssignmentViewModel @Inject constructor(
                         AssignmentFilter.COMPLETED -> personalAssignments.filter { 
                             it.status == PersonalAssignmentStatus.SUBMITTED 
                         }
-                        else -> personalAssignments
                     }
                     
                     val convertedAssignments: List<AssignmentData> = filteredAssignments.map { personalAssignment: PersonalAssignmentData ->
@@ -929,7 +922,7 @@ class AssignmentViewModel @Inject constructor(
                                     totalQuestions = personalAssignment.assignment.totalQuestions,
                                     createdAt = fullAssignment.createdAt,
                                     dueAt = personalAssignment.assignment.dueAt,
-                                    courseClass = fullAssignment.courseClass,
+                                    courseClass = fullAssignment.courseClass,  // 실제 courseClass 정보 사용
                                     materials = fullAssignment.materials,
                                     grade = personalAssignment.assignment.grade,
                                     personalAssignmentStatus = personalAssignment.status,
@@ -1007,7 +1000,7 @@ class AssignmentViewModel @Inject constructor(
                 val createResult = assignmentRepository.createAssignment(assignment)
                 
                 createResult.onSuccess { createResponse ->
-                    println("✅ 과제 생성 성공: ${createResponse.assignment_id}")
+                    println("과제 생성 성공: ${createResponse.assignment_id}")
                     
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         _uploadProgress.value = 0.3f
@@ -1037,23 +1030,23 @@ class AssignmentViewModel @Inject constructor(
                     val uploadResult = assignmentRepository.uploadPdfToS3(createResponse.upload_url, pdfFile)
                     
                     uploadResult.onSuccess {
-                        println("✅ PDF 업로드 완료")
+                        println("PDF 업로드 완료")
                         
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                             _uploadProgress.value = 1f
                             _uploadSuccess.value = true
                             _isUploading.value = false
                             _isCreatingAssignment.value = false
-                            println("✅ 모든 로딩 상태 해제 완료")
+                            println("모든 로딩 상태 해제 완료")
                         }
                         
                         kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                             try {
-                                println("🔄 [별도 스레드] 과제 목록 새로고침")
+                                println("[별도 스레드] 과제 목록 새로고침")
                                 loadAllAssignments(silent = true)
-                                println("✅ [별도 스레드] 과제 목록 새로고침 완료")
+                                println("[별도 스레드] 과제 목록 새로고침 완료")
                             } catch (e: Exception) {
-                                println("❌ [별도 스레드] 과제 목록 새로고침 실패: ${e.message}")
+                                println("[별도 스레드] 과제 목록 새로고침 실패: ${e.message}")
                             }
                         }
                         
@@ -1065,7 +1058,7 @@ class AssignmentViewModel @Inject constructor(
                             }
                             
                             try {
-                                println("🔄 [별도 스레드] 문제 생성 시작")
+                                println("[별도 스레드] 문제 생성 시작")
                                 val result = assignmentRepository.createQuestionsAfterUpload(
                                     assignmentId = createResponse.assignment_id,
                                     materialId = createResponse.material_id,
@@ -1073,7 +1066,7 @@ class AssignmentViewModel @Inject constructor(
                                 )
                                 
                                 result.onSuccess {
-                                    println("✅ [별도 스레드] 문제 생성 완료")
+                                    println("[별도 스레드] 문제 생성 완료")
                                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                         _questionGenerationSuccess.value = true
                                         _isGeneratingQuestions.value = false
@@ -1081,7 +1074,7 @@ class AssignmentViewModel @Inject constructor(
                                         generatingAssignmentId = null
                                     }
                                 }.onFailure { e ->
-                                    println("❌ [별도 스레드] 문제 생성 실패: ${e.message}")
+                                    println("[별도 스레드] 문제 생성 실패: ${e.message}")
                                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                         _questionGenerationError.value = e.message
                                         _isGeneratingQuestions.value = false
@@ -1090,7 +1083,7 @@ class AssignmentViewModel @Inject constructor(
                                     }
                                 }
                             } catch (e: Exception) {
-                                println("❌ [별도 스레드] 문제 생성 예외: ${e.message}")
+                                println("[별도 스레드] 문제 생성 예외: ${e.message}")
                                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                     _questionGenerationError.value = e.message
                                     _isGeneratingQuestions.value = false
@@ -1100,7 +1093,7 @@ class AssignmentViewModel @Inject constructor(
                             }
                         }
                     }.onFailure { e ->
-                        println("❌ PDF 업로드 실패: ${e.message}")
+                        println("PDF 업로드 실패: ${e.message}")
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                             _error.value = "PDF 업로드 실패: ${ErrorMessageMapper.getErrorMessage(e)}"
                             _isUploading.value = false
@@ -1108,7 +1101,7 @@ class AssignmentViewModel @Inject constructor(
                         }
                     }
                 }.onFailure { e ->
-                    println("❌ 과제 생성 실패: ${e.message}")
+                    println("과제 생성 실패: ${e.message}")
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         _error.value = "과제 생성 실패: ${ErrorMessageMapper.getErrorMessage(e)}"
                         _isUploading.value = false
@@ -1116,7 +1109,7 @@ class AssignmentViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                println("❌ 예외 발생: ${e.message}")
+                println("예외 발생: ${e.message}")
                 e.printStackTrace()
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                     _error.value = ErrorMessageMapper.getErrorMessage(e)
@@ -1252,7 +1245,7 @@ class AssignmentViewModel @Inject constructor(
             println("AssignmentViewModel - Updating assignment $assignmentId: totalQuestions = 0")
             viewModelScope.launch {
                 try {
-                    val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
+                    val updateRequest = UpdateAssignmentRequest(
                         title = null,
                         description = null,
                         totalQuestions = 0,
@@ -1262,16 +1255,16 @@ class AssignmentViewModel @Inject constructor(
                     )
                     assignmentRepository.updateAssignment(assignmentId, updateRequest)
                         .onSuccess {
-                                    println("✅ Assignment $assignmentId: totalQuestions가 0으로 업데이트됨")
-                                    generatingAssignmentId = null
+                            println("Assignment $assignmentId: totalQuestions가 0으로 업데이트됨")
+                            generatingAssignmentId = null // 초기화
                         }
                         .onFailure { e ->
-                            println("❌ Assignment $assignmentId 업데이트 실패: ${e.message}")
-                            generatingAssignmentId = null
+                            println("Assignment $assignmentId 업데이트 실패: ${e.message}")
+                            generatingAssignmentId = null // 실패해도 초기화
                         }
                 } catch (e: Exception) {
-                    println("❌ Assignment $assignmentId 업데이트 예외: ${e.message}")
-                    generatingAssignmentId = null
+                    println("Assignment $assignmentId 업데이트 예외: ${e.message}")
+                    generatingAssignmentId = null // 예외 발생해도 초기화
                 }
             }
         } else {

@@ -336,136 +336,128 @@ fun TeacherAssignmentResultCard(
     student: StudentResult,
     onStudentClick: () -> Unit
 ) {
+    val isCompleted = student.status == "완료"
+    
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = onStudentClick
+        onClick = onStudentClick,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = if (student.status == "완료") Success.copy(alpha = 0.1f) else Warning.copy(alpha = 0.1f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = student.status,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (student.status == "완료") Success else Warning,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
+            // 첫 번째 Row: 이름과 상태
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // 이름
+                Text(
+                    text = student.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // 상태 - 간단한 점과 텍스트
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(6.dp)
                             .clip(CircleShape)
-                            .background(PrimaryIndigo.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = student.name.first().toString(),
-                            color = PrimaryIndigo,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = student.name,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Gray800
-                        )
-                        Text(
-                            text = student.studentId,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column(
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
+                            .background(
+                                color = if (isCompleted) Success else Warning
+                            )
+                    )
                     Text(
-                        text = "소요 시간",
+                        text = student.status,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isCompleted) Success else Warning,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // 두 번째 Row: 제출 시간과 평균 점수 - 한 줄에 간결하게
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 제출 시간 - 왼쪽 고정
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Schedule,
+                        contentDescription = null,
+                        tint = Gray500,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "제출: ",
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600
                     )
                     Text(
-                        text = formatDuration(student.startedAt, student.submittedAt),
+                        text = formatSubmittedTime(student.submittedAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
+                    )
+                }
+
+                // 평균 점수 - 오른쪽 정렬
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Grade,
+                        contentDescription = null,
+                        tint = Gray500,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "점수: ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600
+                    )
+                    Text(
+                        text = "${student.score}점",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = Gray800
                     )
                 }
-
-                Spacer(modifier = Modifier.width(18.dp))
-
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Text(
-                        text = "제출 시간",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                    Text(
-                        text = formatSubmittedTime(student.submittedAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = Gray800,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
-
             }
 
             if (student.answers.isNotEmpty()) {
-                Column {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
                         text = "답변 미리보기",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Gray700
+                        color = Gray600
                     )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
                     Text(
                         text = student.answers.first(),
                         style = MaterialTheme.typography.bodySmall,
                         color = Gray600,
                         maxLines = 2,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.3
                     )
                 }
             }
