@@ -59,18 +59,25 @@ fun TeacherAssignmentDetailScreen(
     val resolvedAssignmentId = targetAssignment?.id ?: assignment?.id ?: assignmentId
 
     var loadedStatsForAssignmentId by remember { mutableStateOf<Int?>(null) }
+    var loadedAssignmentId by remember { mutableStateOf<Int?>(null) }
     val hasBasicAssignmentData = assignment != null || targetAssignment != null
     val isInitialLoading = isLoading && !hasBasicAssignmentData
     
     LaunchedEffect(assignmentId) {
-        if (assignmentId > 0) {
+        if (assignmentId > 0 && assignmentId != loadedAssignmentId) {
             println("TeacherAssignmentDetail - Loading assignment ID: $assignmentId")
+            loadedAssignmentId = assignmentId
             viewModel.loadAssignmentById(assignmentId)
-        } else {
+        } else if (assignmentId == 0) {
             targetAssignment?.let { target ->
-                println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
-                viewModel.loadAssignmentById(target.id)
+                if (target.id != loadedAssignmentId) {
+                    println("TeacherAssignmentDetail - Loading assignment: ${target.title} (ID: ${target.id})")
+                    loadedAssignmentId = target.id
+                    viewModel.loadAssignmentById(target.id)
+                }
             }
+        } else {
+            println("TeacherAssignmentDetail - Assignment $assignmentId already loaded, skipping loadAssignmentById")
         }
     }
 
@@ -80,6 +87,8 @@ fun TeacherAssignmentDetailScreen(
                 println("TeacherAssignmentDetail - Assignment loaded, loading statistics and student results: ${a.title} (ID: ${a.id})")
                 loadedStatsForAssignmentId = a.id
                 viewModel.loadAssignmentStatisticsAndResults(a.id, a.courseClass.studentCount)
+            } else {
+                println("TeacherAssignmentDetail - Statistics already loaded for assignment ${a.id}, skipping")
             }
         }
     }
@@ -346,13 +355,11 @@ fun TeacherAssignmentResultCard(
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 첫 번째 Row: 이름과 상태
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 이름
                 Text(
                     text = student.name,
                     style = MaterialTheme.typography.bodyLarge,
@@ -365,7 +372,6 @@ fun TeacherAssignmentResultCard(
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 
-                // 상태 - 간단한 점과 텍스트
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -387,13 +393,11 @@ fun TeacherAssignmentResultCard(
                 }
             }
 
-            // 두 번째 Row: 제출 시간과 평균 점수 - 한 줄에 간결하게
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 제출 시간 - 왼쪽 고정
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -416,7 +420,6 @@ fun TeacherAssignmentResultCard(
                     )
                 }
 
-                // 평균 점수 - 오른쪽 정렬
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -471,15 +474,12 @@ private fun formatSubmittedTime(isoTime: String): String {
 
 private fun formatDuration(startIso: String?, endIso: String?): String {
     return try {
-        println("formatDuration start!")
         if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
-            println("startIso or endIso is null, $startIso || $endIso")
             return "정보 없음"
         }
         val start = parseIsoToMillis(startIso)
         val end = parseIsoToMillis(endIso)
         if (start == null || end == null || end < start) {
-            println("start or end is null $startIso ,$endIso")
             return "정보 없음"
         }
         val diffMs = end - start
@@ -493,7 +493,6 @@ private fun formatDuration(startIso: String?, endIso: String?): String {
             String.format("%02d:%02d", minutes, seconds)
         }
     } catch (e: Exception) {
-        println("FormatDuration: Exception!! $startIso $endIso")
         "정보 없음"
     }
 }

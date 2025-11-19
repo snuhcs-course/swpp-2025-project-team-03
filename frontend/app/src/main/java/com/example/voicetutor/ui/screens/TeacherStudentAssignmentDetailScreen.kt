@@ -123,58 +123,104 @@ fun TeacherStudentAssignmentDetailScreen(
             targetAssignment?.id
         }
         
-        if (resolvedAssignmentId != null && dataKey != loadedDataForKey) {
-            println("TeacherStudentAssignmentDetail - Loading data for student: $studentId, assignment: $resolvedAssignmentId")
-            loadedDataForKey = dataKey
-            
-            val studentIdInt = studentId.toIntOrNull() ?: 1
-            
-            if (currentAssignment?.id != resolvedAssignmentId) {
-                viewModel.loadAssignmentById(resolvedAssignmentId)
-            }
-            
-            if (!hasExistingData) {
-                viewModel.loadAssignmentStudentResults(resolvedAssignmentId)
-            }
+        if (resolvedAssignmentId == null) {
+            return@LaunchedEffect
         }
         
-        if (resolvedAssignmentId != null && dataKey != loadedStatsForKey && paStats == null) {
-            loadedStatsForKey = dataKey
-            val studentIdInt = studentId.toIntOrNull() ?: 1
-            viewModel.loadPersonalAssignmentStatisticsFor(studentIdInt, resolvedAssignmentId, silent = true)
+        val currentDataKey = "$studentId-$resolvedAssignmentId"
+        
+        if (currentDataKey == loadedDataForKey) {
+            return@LaunchedEffect
         }
         
-        if (resolvedAssignmentId != null && dataKey != loadedCorrectnessForKey && correctnessData.isEmpty()) {
-            loadedCorrectnessForKey = dataKey
-            val studentIdInt = studentId.toIntOrNull() ?: 1
-            viewModel.loadAssignmentCorrectnessFor(studentIdInt, resolvedAssignmentId, silent = true)
+        loadedDataForKey = currentDataKey
+        
+        val studentIdInt = studentId.toIntOrNull() ?: 1
+        
+        if (currentAssignment?.id != resolvedAssignmentId) {
+            viewModel.loadAssignmentById(resolvedAssignmentId)
+        }
+        
+        if (!hasExistingData) {
+            viewModel.loadAssignmentStudentResults(resolvedAssignmentId)
+        }
+        
+        if (currentDataKey != loadedStatsForKey && currentDataKey != loadedCorrectnessForKey && (paStats == null || correctnessData.isEmpty())) {
+            loadedStatsForKey = currentDataKey
+            loadedCorrectnessForKey = currentDataKey
+            viewModel.loadPersonalAssignmentStatsAndCorrectness(studentIdInt, resolvedAssignmentId, silent = true)
+        } else {
+            if (currentDataKey == loadedStatsForKey && currentDataKey == loadedCorrectnessForKey) {
+                // Already loaded
+            } else {
+                if (currentDataKey != loadedStatsForKey && paStats == null) {
+                    loadedStatsForKey = currentDataKey
+                    viewModel.loadPersonalAssignmentStatisticsFor(studentIdInt, resolvedAssignmentId, silent = true)
+                }
+                if (currentDataKey != loadedCorrectnessForKey && correctnessData.isEmpty()) {
+                    loadedCorrectnessForKey = currentDataKey
+                    viewModel.loadAssignmentCorrectnessFor(studentIdInt, resolvedAssignmentId, silent = true)
+                }
+            }
         }
         
         if (currentStudent?.id.toString() != studentId) {
-            studentViewModel.loadStudentById(studentId.toIntOrNull() ?: 1)
+            studentViewModel.loadStudentById(studentIdInt)
         }
     }
     
     LaunchedEffect(assignments, assignmentTitle, studentId, assignmentId) {
-        if (assignmentId == 0 && targetAssignment == null && assignments.isNotEmpty() && dataKey != loadedDataForKey) {
+        if (assignmentId > 0) {
+            return@LaunchedEffect
+        }
+        
+        if (loadedDataForKey != null) {
+            return@LaunchedEffect
+        }
+        
+        if (targetAssignment == null && assignments.isNotEmpty()) {
             val foundAssignment = assignments.find { 
                 it.title == assignmentTitle || 
                 it.title.contains(assignmentTitle) ||
                 assignmentTitle.contains(it.title)
             }
             foundAssignment?.let { assignment ->
-                println("TeacherStudentAssignmentDetail - Found assignment after loading: ${assignment.title} (ID: ${assignment.id}) for student: $studentId")
-                loadedDataForKey = "$studentId-${assignment.id}"
+                val newDataKey = "$studentId-${assignment.id}"
+                
+                if (newDataKey == loadedDataForKey) {
+                    return@LaunchedEffect
+                }
+                
+                loadedDataForKey = newDataKey
                 
                 val studentIdInt = studentId.toIntOrNull() ?: 1
-                viewModel.loadAssignmentById(assignment.id)
+                
+                if (currentAssignment?.id != assignment.id) {
+                    viewModel.loadAssignmentById(assignment.id)
+                }
                 
                 if (assignmentResults.none { it.studentId == studentId && it.studentId.isNotEmpty() }) {
                     viewModel.loadAssignmentStudentResults(assignment.id)
                 }
                 
-                viewModel.loadPersonalAssignmentStatisticsFor(studentIdInt, assignment.id, silent = true)
-                viewModel.loadAssignmentCorrectnessFor(studentIdInt, assignment.id, silent = true)
+                if (newDataKey != loadedStatsForKey && newDataKey != loadedCorrectnessForKey && (paStats == null || correctnessData.isEmpty())) {
+                    loadedStatsForKey = newDataKey
+                    loadedCorrectnessForKey = newDataKey
+                    viewModel.loadPersonalAssignmentStatsAndCorrectness(studentIdInt, assignment.id, silent = true)
+                } else {
+                    if (newDataKey == loadedStatsForKey && newDataKey == loadedCorrectnessForKey) {
+                        // Already loaded
+                    } else {
+                        if (newDataKey != loadedStatsForKey && paStats == null) {
+                            loadedStatsForKey = newDataKey
+                            viewModel.loadPersonalAssignmentStatisticsFor(studentIdInt, assignment.id, silent = true)
+                        }
+                        if (newDataKey != loadedCorrectnessForKey && correctnessData.isEmpty()) {
+                            loadedCorrectnessForKey = newDataKey
+                            viewModel.loadAssignmentCorrectnessFor(studentIdInt, assignment.id, silent = true)
+                        }
+                    }
+                }
             }
         }
     }

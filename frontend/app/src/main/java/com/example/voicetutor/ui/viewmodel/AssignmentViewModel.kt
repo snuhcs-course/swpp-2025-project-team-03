@@ -1881,4 +1881,62 @@ class AssignmentViewModel @Inject constructor(
             }
         }
     }
+    
+    fun loadPersonalAssignmentStatsAndCorrectness(studentId: Int, assignmentId: Int, silent: Boolean = false) {
+        viewModelScope.launch {
+            if (!silent) {
+                _isLoading.value = true
+            }
+            _error.value = null
+            try {
+                assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId)
+                    .onSuccess { list ->
+                        val pa = list.firstOrNull()
+                        if (pa == null) {
+                            if (!silent) {
+                                _error.value = "Personal assignment not found for student $studentId and assignment $assignmentId"
+                            }
+                        } else {
+                            coroutineScope {
+                                val statsDeferred = async {
+                                    assignmentRepository.getPersonalAssignmentStatistics(pa.id)
+                                }
+                                val correctnessDeferred = async {
+                                    assignmentRepository.getAssignmentCorrectness(pa.id)
+                                }
+                                
+                                statsDeferred.await()
+                                    .onSuccess { statistics ->
+                                        _personalAssignmentStatistics.value = statistics
+                                    }
+                                    .onFailure { e -> 
+                                        if (!silent) {
+                                            _error.value = e.message
+                                        }
+                                    }
+                                
+                                correctnessDeferred.await()
+                                    .onSuccess { correctnessData ->
+                                        _assignmentCorrectness.value = correctnessData
+                                    }
+                                    .onFailure { e -> 
+                                        if (!silent) {
+                                            _error.value = e.message
+                                        }
+                                    }
+                            }
+                        }
+                    }
+                    .onFailure { e -> 
+                        if (!silent) {
+                            _error.value = e.message
+                        }
+                    }
+            } finally {
+                if (!silent) {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
 }
