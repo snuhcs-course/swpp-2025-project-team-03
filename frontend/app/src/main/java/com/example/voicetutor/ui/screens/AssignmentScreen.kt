@@ -38,7 +38,6 @@ import java.io.File
 @Composable
 fun AssignmentScreen(
     assignmentId: Int? = null, // PersonalAssignment ID 사용
-    assignmentTitle: String? = null, // 실제 과제 제목 사용
     authViewModel: AuthViewModel? = null, // 전달받은 AuthViewModel 사용
     onNavigateToHome: () -> Unit = {}, // 홈으로 돌아가기 콜백
 ) {
@@ -46,7 +45,6 @@ fun AssignmentScreen(
     val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
 
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
 
     // 모든 과제는 음성 답변 + AI 대화형 꼬리 질문 형태로 진행
     if (isLoading) {
@@ -59,14 +57,13 @@ fun AssignmentScreen(
             )
         }
     } else {
-        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, assignmentTitle = assignmentTitle ?: "과제", authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
+        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
     }
 }
 
 @Composable
 fun AssignmentContinuousScreen(
     assignmentId: Int = 1, // PersonalAssignment ID
-    assignmentTitle: String,
     authViewModel: AuthViewModel? = null,
     onNavigateToHome: () -> Unit = {},
 ) {
@@ -77,13 +74,11 @@ fun AssignmentContinuousScreen(
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val personalAssignmentQuestions by viewModel.personalAssignmentQuestions.collectAsStateWithLifecycle()
     val personalAssignmentStatistics by viewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
-    val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsStateWithLifecycle()
     val audioRecordingState by viewModel.audioRecordingState.collectAsStateWithLifecycle()
     val answerSubmissionResponse by viewModel.answerSubmissionResponse.collectAsStateWithLifecycle()
     val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isSubmitting by viewModel.isSubmitting.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val audioRecorder = remember { AudioRecorder(context) }
@@ -214,7 +209,7 @@ fun AssignmentContinuousScreen(
             }
 
             // numberStr에 하이픈이 포함되면 꼬리 질문, 아니면 다음 기본 질문
-            val isTailQuestion = response.numberStr?.contains("-") == true
+            val isTailQuestion = response.numberStr.contains("-")
 
             if (isTailQuestion) {
                 currentTailQuestionNumber = response.numberStr
@@ -227,12 +222,10 @@ fun AssignmentContinuousScreen(
                 val currentQuestionNumber = currentQuestion?.number
                 val serverQuestionNumber = response.numberStr
 
-                if (currentQuestionNumber != serverQuestionNumber && serverQuestionNumber != null) {
-                    assignmentId?.let { id ->
-                        scope.launch {
-                            delay(300)
-                            viewModel.moveToQuestionByNumber(serverQuestionNumber, id)
-                        }
+                if (currentQuestionNumber != serverQuestionNumber) {
+                    scope.launch {
+                        delay(300)
+                        viewModel.moveToQuestionByNumber(serverQuestionNumber, assignmentId)
                     }
                 }
             }
@@ -643,16 +636,13 @@ fun AssignmentContinuousScreen(
                                                         currentQuestion.id
                                                     }
 
-                                                    val personalAssignmentId = assignmentId
-                                                    if (personalAssignmentId != null) {
-                                                        viewModel.submitAnswer(
-                                                            personalAssignmentId = personalAssignmentId,
-                                                            studentId = currentUser!!.id,
-                                                            questionId = questionIdToSubmit,
-                                                            audioFile = emptyFile,
-                                                        )
-                                                        viewModel.resetAudioRecording()
-                                                    }
+                                                    viewModel.submitAnswer(
+                                                        personalAssignmentId = assignmentId,
+                                                        studentId = currentUser!!.id,
+                                                        questionId = questionIdToSubmit,
+                                                        audioFile = emptyFile,
+                                                    )
+                                                    viewModel.resetAudioRecording()
                                                 }
                                             } catch (e: Exception) {
                                                 // 건너뛰기 실패 시 무시
@@ -721,7 +711,8 @@ fun AssignmentContinuousScreen(
                         // 응답 결과가 있을 때
                         // numberStr이 하이픈을 포함하는지 확인
                         val response = answerSubmissionResponse
-                        val isTailQuestionNum = response?.numberStr?.contains("-") == true
+                        if (response == null) return@Column
+                        val isTailQuestionNum = response.numberStr?.contains("-") == true
 
                         if (isTailQuestionNum) {
                             // 꼬리 질문이 있는 경우 - 무조건 꼬리질문으로 넘어가기 버튼 표시
@@ -741,7 +732,7 @@ fun AssignmentContinuousScreen(
                                 fullWidth = true,
                             )
                         } else {
-                            if (response?.tailQuestion == null) {
+                            if (response.tailQuestion == null) {
                                 VTButton(
                                     text = "완료",
                                     onClick = {
@@ -750,7 +741,7 @@ fun AssignmentContinuousScreen(
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true,
                                 )
-                            } else if (response?.numberStr == null) {
+                            } else if (response.numberStr == null) {
                                 VTButton(
                                     text = "홈으로 돌아가기",
                                     onClick = {
@@ -759,7 +750,7 @@ fun AssignmentContinuousScreen(
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true,
                                 )
-                            } else if (response?.numberStr?.contains("-") == true) {
+                            } else if (response.numberStr.contains("-")) {
                                 VTButton(
                                     text = "꼬리질문으로 넘어가기",
                                     onClick = {
@@ -768,7 +759,7 @@ fun AssignmentContinuousScreen(
                                         savedTailQuestion = response.tailQuestion
 
                                         println("AssignmentScreen - Moving to tail question: ${response.numberStr}")
-                                        println("AssignmentScreen - Saved tail question: ${response.tailQuestion?.question}")
+                                        println("AssignmentScreen - Saved tail question: ${response.tailQuestion.question}")
                                     },
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true,
@@ -786,13 +777,13 @@ fun AssignmentContinuousScreen(
                                         savedTailQuestion = null
 
                                         // 서버에서 받은 number_str을 기반으로 올바른 질문으로 이동
-                                        val numberStr = response?.numberStr
+                                        val numberStr = response.numberStr
                                         if (numberStr != null) {
                                             println("AssignmentScreen - Moving to question number: $numberStr")
                                             viewModel.moveToQuestionByNumber(numberStr, assignmentId)
                                         } else {
                                             // numberStr이 없는 경우 기존 로직 사용
-                                            val tailQuestion = response?.tailQuestion
+                                            val tailQuestion = response.tailQuestion
                                             if (tailQuestion != null) {
                                                 println("AssignmentScreen - Using tailQuestion as next question: ${tailQuestion.question}")
                                                 // tailQuestion을 PersonalAssignmentQuestion으로 변환하여 리스트에 추가
@@ -845,15 +836,12 @@ fun AssignmentContinuousScreen(
                                             currentQuestion.id
                                         }
 
-                                        val personalAssignmentId = assignmentId
-                                        if (personalAssignmentId != null) {
-                                            viewModel.submitAnswer(
-                                                personalAssignmentId = personalAssignmentId,
-                                                studentId = user.id,
-                                                questionId = questionIdToSubmit,
-                                                audioFile = audioFile,
-                                            )
-                                        }
+                                        viewModel.submitAnswer(
+                                            personalAssignmentId = assignmentId,
+                                            studentId = user.id,
+                                            questionId = questionIdToSubmit,
+                                            audioFile = audioFile,
+                                        )
                                         viewModel.resetAudioRecording()
                                     } catch (e: Exception) {
                                         // 전송 실패 시 무시
