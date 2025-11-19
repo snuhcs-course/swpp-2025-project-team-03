@@ -31,26 +31,13 @@ fun ReportScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
 
-    // Load completed assignments on first composition
     LaunchedEffect(Unit) {
-        println("ReportScreen - Loading completed assignments for studentId: $studentId")
         if (studentId != null) {
-            // 학생의 완료한 과제만 로드 (SUBMITTED 상태)
             viewModel.loadCompletedStudentAssignments(studentId)
-        } else {
-            println("ReportScreen - studentId is null, cannot load assignments")
         }
     }
 
-    // Debug assignments
-    LaunchedEffect(assignments) {
-        println("ReportScreen - Assignments loaded: ${assignments.size}")
-        assignments.forEach { assignment ->
-            println("  - ${assignment.title} (Status: ${assignment.personalAssignmentStatus})")
-        }
-    }
-
-    // Handle error
+    // 에러 처리
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             viewModel.clearError()
@@ -172,7 +159,6 @@ fun ReportScreen(
                     AssignmentReportCard(
                         assignment = assignment,
                         onReportClick = {
-                            // personalAssignmentId와 과제 제목을 전달
                             assignment.personalAssignmentId?.let { personalAssignmentId ->
                                 onNavigateToAssignmentReport(personalAssignmentId, assignment.title)
                             }
