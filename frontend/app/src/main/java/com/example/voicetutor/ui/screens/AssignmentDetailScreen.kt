@@ -137,6 +137,7 @@ fun AssignmentDetailScreen(
                     
                     // Subject and Class chips
                     Row(
+                        modifier = Modifier.padding(top = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -147,6 +148,7 @@ fun AssignmentDetailScreen(
                             Surface(
                                 color = PrimaryIndigo.copy(alpha = 0.12f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                                modifier = Modifier.widthIn(max = 100.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -164,6 +166,7 @@ fun AssignmentDetailScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = PrimaryIndigo,
                                         fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
                                     )
                                 }
                             }
@@ -173,6 +176,7 @@ fun AssignmentDetailScreen(
                             Surface(
                                 color = PrimaryEmerald.copy(alpha = 0.12f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                                modifier = Modifier.widthIn(max = 100.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -190,6 +194,7 @@ fun AssignmentDetailScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = PrimaryEmerald,
                                         fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
                                     )
                                 }
                             }
