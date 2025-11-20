@@ -114,6 +114,9 @@ interface ApiService {
     @GET("courses/classes/{id}/")
     suspend fun getClassById(@Path("id") id: Int): Response<ApiResponse<ClassData>>
 
+    @DELETE("courses/classes/{id}/")
+    suspend fun removeClassById(@Path("id") id: Int): Response<ApiResponse<Unit>>
+
     @GET("courses/classes/{id}/students/")
     suspend fun getClassStudents(@Path("id") id: Int): Response<ApiResponse<List<Student>>>
 

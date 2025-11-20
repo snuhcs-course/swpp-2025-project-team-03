@@ -1,5 +1,6 @@
 package com.example.voicetutor.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,6 +55,7 @@ fun TeacherClassesScreen(
     val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
     val error by classViewModel.error.collectAsStateWithLifecycle()
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     // Load classes and assignments on first composition
     LaunchedEffect(currentUser?.id) {
@@ -219,6 +222,17 @@ fun TeacherClassesScreen(
                         onClassClick = { onNavigateToClassDetail(classRoom.name, classRoom.id) },
                         onCreateAssignment = { classId -> onNavigateToCreateAssignment(classId) },
                         onViewStudents = { onNavigateToStudents(classRoom.id) },
+                        onDeleteClass = { room, resultCallback ->
+                            classViewModel.deleteClass(room.id) { success ->
+                                resultCallback(success)
+                                val message = if (success) {
+                                    "${room.name} 수업이 삭제되었어요"
+                                } else {
+                                    "수업 삭제에 실패했어요"
+                                }
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            }
+                        },
                     )
                 }
             }
@@ -232,7 +246,11 @@ fun ClassCard(
     onClassClick: (Int) -> Unit,
     onCreateAssignment: (Int) -> Unit,
     onViewStudents: (Int) -> Unit,
+    onDeleteClass: (ClassRoom, (Boolean) -> Unit) -> Unit,
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var isDeleting by remember { mutableStateOf(false) }
+
     VTCard(
         variant = CardVariant.Elevated,
         onClick = { onClassClick(classRoom.id) },
@@ -277,6 +295,19 @@ fun ClassCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = classRoom.color,
                         fontWeight = FontWeight.Medium,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.offset(y = (-12).dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "수업 삭제",
+                        tint = Error,
                     )
                 }
             }
@@ -331,6 +362,57 @@ fun ClassCard(
                 )
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isDeleting) {
+                    showDeleteDialog = false
+                }
+            },
+            title = {
+                Text(
+                    text = "수업 삭제",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            },
+            text = {
+                Text(
+                    text = "\"${classRoom.name}\" 수업을 삭제하시겠습니까?\n삭제하면 되돌릴 수 없어요!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray700,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isDeleting = true
+                        onDeleteClass(classRoom) { success ->
+                            isDeleting = false
+                            if (success) {
+                                showDeleteDialog = false
+                            }
+                        }
+                    },
+                    enabled = !isDeleting,
+                ) {
+                    Text(if (isDeleting) "삭제 중..." else "삭제하기", color = Error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        if (!isDeleting) {
+                            showDeleteDialog = false
+                        }
+                    },
+                ) {
+                    Text("취소")
+                }
+            },
+        )
     }
 }
 
