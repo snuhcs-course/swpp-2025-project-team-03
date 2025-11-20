@@ -225,7 +225,7 @@ fun StudentDashboardScreen(
                                 modifier = Modifier
                                     .size(20.dp)
                                     .background(
-                                        color = PrimaryIndigo,
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
                                         shape = androidx.compose.foundation.shape.CircleShape,
                                     ),
                                 contentAlignment = Alignment.Center,
@@ -234,7 +234,7 @@ fun StudentDashboardScreen(
                                     text = "$allAssignmentsCount",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -261,7 +261,7 @@ fun StudentDashboardScreen(
                                 modifier = Modifier
                                     .size(20.dp)
                                     .background(
-                                        color = PrimaryIndigo,
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
                                         shape = androidx.compose.foundation.shape.CircleShape,
                                     ),
                                 contentAlignment = Alignment.Center,
@@ -270,7 +270,7 @@ fun StudentDashboardScreen(
                                     text = "$notStartedCount",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -290,7 +290,7 @@ fun StudentDashboardScreen(
                                 modifier = Modifier
                                     .size(20.dp)
                                     .background(
-                                        color = PrimaryIndigo,
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
                                         shape = androidx.compose.foundation.shape.CircleShape,
                                     ),
                                 contentAlignment = Alignment.Center,
@@ -299,7 +299,7 @@ fun StudentDashboardScreen(
                                     text = "$inProgressCount",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
