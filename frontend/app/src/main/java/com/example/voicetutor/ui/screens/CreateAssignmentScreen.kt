@@ -161,6 +161,8 @@ fun CreateAssignmentScreen(
     LaunchedEffect(actualTeacherId) {
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
+        // 화면이 열릴 때 업로드 상태 초기화
+        actualAssignmentViewModel.resetUploadState()
     }
 
     LaunchedEffect(selectedClassId) {
@@ -525,7 +527,7 @@ fun CreateAssignmentScreen(
                             }
                         }
 
-                        if (uploadSuccess) {
+                        if (uploadSuccess && selectedFiles.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
