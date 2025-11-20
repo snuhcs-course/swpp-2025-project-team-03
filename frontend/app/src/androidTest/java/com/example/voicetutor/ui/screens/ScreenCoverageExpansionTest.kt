@@ -93,7 +93,6 @@ class ScreenCoverageExpansionTest {
                     StudentDashboardScreen(
                         authViewModel = authViewModel,
                         assignmentViewModel = assignmentViewModel,
-                        dashboardViewModel = dashboardViewModel,
                     )
                     AssignmentDetailedResultsScreen(
                         personalAssignmentId = 1,

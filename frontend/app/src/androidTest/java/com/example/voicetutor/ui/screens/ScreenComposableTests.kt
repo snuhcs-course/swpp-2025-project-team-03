@@ -323,8 +323,6 @@ class ScreenComposableTests {
             VoiceTutorTheme {
                 AllStudentsCard(
                     student = student,
-                    classNames = listOf("1반", "2반"),
-                    isLoadingClasses = false,
                     onReportClick = {},
                 )
             }
@@ -386,62 +384,6 @@ class ScreenComposableTests {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("수학 과제", substring = true).assertExists()
-    }
-
-    @Test
-    fun optionButton_renders_withDifferentStates() {
-        // Render all states in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                androidx.compose.foundation.layout.Column {
-                    OptionButton(
-                        text = "선택지 1",
-                        isSelected = false,
-                        isCorrect = false,
-                        isWrong = false,
-                        onClick = {},
-                    )
-                    OptionButton(
-                        text = "선택지 2",
-                        isSelected = true,
-                        isCorrect = false,
-                        isWrong = false,
-                        onClick = {},
-                    )
-                    OptionButton(
-                        text = "선택지 3",
-                        isSelected = false,
-                        isCorrect = true,
-                        isWrong = false,
-                        onClick = {},
-                    )
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("선택지 1").assertExists()
-        composeTestRule.onNodeWithText("선택지 2").assertExists()
-        composeTestRule.onNodeWithText("선택지 3").assertExists()
-    }
-
-    @Test
-    fun optionButton_isClickable() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                OptionButton(
-                    text = "클릭 가능한 선택지",
-                    isSelected = false,
-                    isCorrect = false,
-                    isWrong = false,
-                    onClick = { clicked = true },
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("클릭 가능한 선택지").performClick()
-        assert(clicked)
     }
 
     @Test
@@ -789,18 +731,6 @@ class ScreenComposableTests {
         }
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("선생님", substring = true).assertExists()
-    }
-
-    // Test ConversationBubble
-    @Test
-    fun conversationBubble_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                ConversationBubble(message = "안녕하세요")
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("안녕하세요", substring = true).assertExists()
     }
 
     // Test ClassStatItem

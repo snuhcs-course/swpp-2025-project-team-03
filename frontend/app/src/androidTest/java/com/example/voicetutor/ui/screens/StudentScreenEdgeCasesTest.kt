@@ -38,7 +38,6 @@ class StudentScreenEdgeCasesTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -71,7 +70,6 @@ class StudentScreenEdgeCasesTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }

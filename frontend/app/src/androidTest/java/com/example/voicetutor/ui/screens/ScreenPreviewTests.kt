@@ -209,16 +209,6 @@ class ScreenPreviewTests {
         composeTestRule.waitForIdle()
     }
 
-    @Test
-    @Ignore("Requires ViewModel setup")
-    fun assignmentQuizScreen_preview_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                AssignmentQuizScreenPreview()
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
 
     @Test
     @Ignore("Requires ViewModel setup")

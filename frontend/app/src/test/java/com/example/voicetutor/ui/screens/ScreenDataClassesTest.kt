@@ -144,51 +144,6 @@ class ScreenDataClassesTest {
     }
 
     @Test
-    fun quizQuestionData_creation_withAllFields_createsCorrectInstance() {
-        val question = QuizQuestionData(
-            questionNumber = 1,
-            question = "질문",
-            hint = "힌트",
-            modelAnswer = "정답",
-        )
-
-        assertEquals(1, question.questionNumber)
-        assertEquals("질문", question.question)
-        assertEquals("힌트", question.hint)
-        assertEquals("정답", question.modelAnswer)
-    }
-
-    @Test
-    fun quizQuestionData_copy_createsNewInstance() {
-        val original = QuizQuestionData(1, "질문", "힌트", "정답")
-        val copy = original.copy(question = "새 질문")
-
-        assertEquals("새 질문", copy.question)
-        assertEquals("질문", original.question)
-    }
-
-    @Test
-    fun quizQuestionData_equality_worksCorrectly() {
-        val question1 = QuizQuestionData(1, "질문", "힌트", "정답")
-        val question2 = QuizQuestionData(1, "질문", "힌트", "정답")
-        val question3 = QuizQuestionData(2, "질문", "힌트", "정답")
-
-        assertEquals(question1, question2)
-        assertNotEquals(question1, question3)
-    }
-
-    @Test
-    fun quizQuestionData_componentAccess_worksCorrectly() {
-        val question = QuizQuestionData(1, "질문", "힌트", "정답")
-        val (number, q, hint, answer) = question
-
-        assertEquals(1, number)
-        assertEquals("질문", q)
-        assertEquals("힌트", hint)
-        assertEquals("정답", answer)
-    }
-
-    @Test
     fun assignmentDetail_creation_withAllFields_createsCorrectInstance() {
         val detail = AssignmentDetail(
             title = "과제 1",
@@ -336,12 +291,6 @@ class ScreenDataClassesTest {
     }
 
     @Test
-    fun quizQuestionData_withLargeQuestionNumber_handlesCorrectly() {
-        val question = QuizQuestionData(Int.MAX_VALUE, "질문", "힌트", "정답")
-        assertEquals(Int.MAX_VALUE, question.questionNumber)
-    }
-
-    @Test
     fun assignmentDetail_withZeroCompletionRate_handlesCorrectly() {
         val detail = AssignmentDetail(
             "과제", "과목", "반", "2024-12-31", "2024-01-01",
@@ -374,13 +323,6 @@ class ScreenDataClassesTest {
     }
 
     @Test
-    fun quizQuestionData_toString_containsFields() {
-        val question = QuizQuestionData(1, "질문", "힌트", "정답")
-        val string = question.toString()
-        assertTrue(string.contains("질문") || string.contains("1"))
-    }
-
-    @Test
     fun assignmentDetail_toString_containsFields() {
         val detail = AssignmentDetail(
             "과제 1", "수학", "수학 A반", "2024-12-31", "2024-01-01",
@@ -403,14 +345,6 @@ class ScreenDataClassesTest {
         val assignment2 = ClassAssignment(1, "과제 1", "수학", "2024-12-31", 0.75f, 30, 22, 85)
 
         assertEquals(assignment1.hashCode(), assignment2.hashCode())
-    }
-
-    @Test
-    fun quizQuestionData_hashCode_isConsistent() {
-        val question1 = QuizQuestionData(1, "질문", "힌트", "정답")
-        val question2 = QuizQuestionData(1, "질문", "힌트", "정답")
-
-        assertEquals(question1.hashCode(), question2.hashCode())
     }
 
     @Test

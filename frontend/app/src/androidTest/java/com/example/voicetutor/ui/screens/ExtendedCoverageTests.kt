@@ -24,63 +24,6 @@ class ExtendedCoverageTests {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // ========== AssignmentScreen Components ==========
-
-    @Test
-    fun optionButton_renders_withAllVariants() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    OptionButton(
-                        text = "옵션 1",
-                        isSelected = true,
-                        isCorrect = false,
-                        isWrong = false,
-                        onClick = {},
-                    )
-                    OptionButton(
-                        text = "옵션 2",
-                        isSelected = false,
-                        isCorrect = true,
-                        isWrong = false,
-                        onClick = {},
-                    )
-                    OptionButton(
-                        text = "옵션 3",
-                        isSelected = false,
-                        isCorrect = false,
-                        isWrong = true,
-                        onClick = {},
-                    )
-                }
-            }
-        }
-
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("옵션 1", substring = true).assertExists()
-        composeTestRule.onNodeWithText("옵션 2", substring = true).assertExists()
-        composeTestRule.onNodeWithText("옵션 3", substring = true).assertExists()
-    }
-
-    @Test
-    fun optionButton_onClick_triggersCallback() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                OptionButton(
-                    text = "옵션",
-                    isSelected = false,
-                    isCorrect = false,
-                    isWrong = false,
-                    onClick = { clicked = true },
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText("옵션", substring = true).performClick()
-        assert(clicked)
-    }
-
     // ========== TeacherAssignmentResultsScreen Components ==========
 
     @Test
@@ -517,8 +460,6 @@ class ExtendedCoverageTests {
                         email = "test@example.com",
                         role = UserRole.STUDENT,
                     ),
-                    classNames = listOf("수학 A반", "영어 B반"),
-                    isLoadingClasses = false,
                     onReportClick = {},
                 )
             }
@@ -540,8 +481,6 @@ class ExtendedCoverageTests {
                         email = "test@example.com",
                         role = UserRole.STUDENT,
                     ),
-                    classNames = listOf("수학 A반"),
-                    isLoadingClasses = false,
                     onReportClick = { clicked = true },
                 )
             }

@@ -194,8 +194,6 @@ class ComprehensiveScreenTests {
             VoiceTutorTheme {
                 AllStudentsCard(
                     student = student,
-                    classNames = listOf("1학년 1반", "1학년 2반"),
-                    isLoadingClasses = false,
                     onReportClick = {},
                 )
             }
@@ -216,8 +214,6 @@ class ComprehensiveScreenTests {
             VoiceTutorTheme {
                 AllStudentsCard(
                     student = student,
-                    classNames = emptyList(),
-                    isLoadingClasses = false,
                     onReportClick = {},
                 )
             }
@@ -238,8 +234,6 @@ class ComprehensiveScreenTests {
             VoiceTutorTheme {
                 AllStudentsCard(
                     student = student,
-                    classNames = emptyList(),
-                    isLoadingClasses = true,
                     onReportClick = {},
                 )
             }
@@ -457,58 +451,6 @@ class ComprehensiveScreenTests {
         }
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("김철수", substring = true).assertExists()
-    }
-
-    // Test OptionButton with all states
-    @Test
-    fun optionButton_selected_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                OptionButton(
-                    text = "선택된 선택지",
-                    isSelected = true,
-                    isCorrect = false,
-                    isWrong = false,
-                    onClick = {},
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("선택된 선택지", substring = true).assertExists()
-    }
-
-    @Test
-    fun optionButton_correct_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                OptionButton(
-                    text = "정답 선택지",
-                    isSelected = false,
-                    isCorrect = true,
-                    isWrong = false,
-                    onClick = {},
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("정답 선택지", substring = true).assertExists()
-    }
-
-    @Test
-    fun optionButton_wrong_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                OptionButton(
-                    text = "오답 선택지",
-                    isSelected = false,
-                    isCorrect = false,
-                    isWrong = true,
-                    onClick = {},
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("오답 선택지", substring = true).assertExists()
     }
 
     // Test more AppInfoScreen components

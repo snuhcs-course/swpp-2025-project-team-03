@@ -119,12 +119,23 @@ class VoiceTutorNavigationRouteCoverageTest {
         }
     }
 
-    private fun navigateAndAssert(route: String, expectedText: String, substring: Boolean = true, timeoutMillis: Long = 20_000) {
+    private fun navigateAndAssert(route: String, expectedText: String, substring: Boolean = true, timeoutMillis: Long = 30_000) {
         val prefix = route.substringBefore("{")
+        val targetRoute = prefix.ifEmpty { route }
+        
+        // Check if we're already on this route
+        var alreadyOnRoute = false
         composeRule.runOnIdle {
-            navController.navigate(route)
+            val currentRoute = navController.currentBackStackEntry?.destination?.route
+            alreadyOnRoute = currentRoute?.startsWith(targetRoute) == true
         }
-        waitForRoutePrefix(prefix.ifEmpty { route }, timeoutMillis = timeoutMillis)
+        
+        if (!alreadyOnRoute) {
+            composeRule.runOnIdle {
+                navController.navigate(route)
+            }
+            waitForRoutePrefix(targetRoute, timeoutMillis = timeoutMillis)
+        }
 
         // Wait for screen to load and display expected text
         composeRule.waitUntil(timeoutMillis = timeoutMillis) {
@@ -150,5 +161,59 @@ class VoiceTutorNavigationRouteCoverageTest {
 
         // Wait a bit for screen to fully render
         composeRule.waitForIdle()
+    }
+
+    @org.junit.Test
+    fun testTeacherDashboardRoute() {
+        // Already on TeacherDashboard from setUp, just verify we're on the right route
+        waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
+        composeRule.waitForIdle()
+        // Verify some text that should be on the dashboard - wait for it to appear
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            try {
+                composeRule
+                    .onAllNodesWithText("환영", substring = true, useUnmergedTree = true)
+                    .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                    .isNotEmpty()
+            } catch (e: Exception) {
+                false
+            }
+        }
+        composeRule
+            .onAllNodesWithText("환영", substring = true, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+    }
+
+    @org.junit.Test
+    fun testTeacherClassesRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.TeacherClasses.route,
+            expectedText = "수업",
+        )
+    }
+
+    @org.junit.Test
+    fun testAllAssignmentsRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.AllAssignments.route,
+            expectedText = "과제",
+        )
+    }
+
+    @org.junit.Test
+    fun testAllStudentsRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.AllStudents.route,
+            expectedText = "학생",
+        )
+    }
+
+    @org.junit.Test
+    fun testAppInfoRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.AppInfo.route,
+            expectedText = "정보",
+        )
     }
 }

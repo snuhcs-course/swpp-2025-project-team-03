@@ -223,8 +223,6 @@ class ExtendedScreenTests {
                     students.forEach { student ->
                         AllStudentsCard(
                             student = student,
-                            classNames = listOf("${student.name}의 반"),
-                            isLoadingClasses = false,
                             onReportClick = {},
                         )
                     }
@@ -356,34 +354,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test OptionButton with all combinations
-    @Test
-    fun optionButton_allCombinations() {
-        val combinations = listOf(
-            Triple(false, false, false), // Normal
-            Triple(true, false, false), // Selected
-            Triple(false, true, false), // Correct
-            Triple(false, false, true), // Wrong
-        )
-        // Render all combinations in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    combinations.forEachIndexed { index, (selected, correct, wrong) ->
-                        OptionButton(
-                            text = "선택지 ${index + 1}",
-                            isSelected = selected,
-                            isCorrect = correct,
-                            isWrong = wrong,
-                            onClick = {},
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
     // Test StatusBadge all statuses multiple times
     @Test
     fun statusBadge_allStatuses_multipleTimes() {
@@ -460,27 +430,6 @@ class ExtendedScreenTests {
                         isSelected = false,
                         onClick = {},
                     )
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test ConversationBubble with various messages
-    @Test
-    fun conversationBubble_variousMessages() {
-        val messages = listOf(
-            "안녕하세요",
-            "질문이 있습니다",
-            "답변해주세요",
-        )
-        // Render all messages in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    messages.forEach { message ->
-                        ConversationBubble(message = message)
-                    }
                 }
             }
         }

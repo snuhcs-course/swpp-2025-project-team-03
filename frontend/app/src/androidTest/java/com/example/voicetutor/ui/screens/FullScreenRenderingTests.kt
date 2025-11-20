@@ -189,32 +189,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("수업명", substring = true).assertExists()
     }
 
-    // ========== AssignmentScreen Tests ==========
-
-    @Test
-    fun assignmentScreen_questionCard_renders() {
-        val question = QuizQuestionData(
-            questionNumber = 1,
-            question = "질문",
-            hint = "힌트",
-            modelAnswer = "정답",
-        )
-
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VTCard {
-                    Text("문제 ${question.questionNumber}")
-                    Text(question.question)
-                    Text("힌트: ${question.hint}")
-                }
-            }
-        }
-
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("문제 1", substring = true).assertExists()
-        composeTestRule.onNodeWithText("질문", substring = true).assertExists()
-    }
-
     // ========== TeacherStudentsScreen Tests ==========
 
     @Test
