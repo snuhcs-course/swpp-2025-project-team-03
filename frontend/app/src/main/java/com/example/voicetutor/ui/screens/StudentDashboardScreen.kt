@@ -411,6 +411,7 @@ fun StudentAssignmentCard(
                 ) {
                     // Subject and Status Row
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
@@ -418,6 +419,7 @@ fun StudentAssignmentCard(
                         if (subject.isNotEmpty()) {
                             Box(
                                 modifier = Modifier
+                                    .widthIn(max = 85.dp)
                                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
                                     .background(PrimaryIndigo.copy(alpha = 0.1f))
                                     .padding(horizontal = 8.dp, vertical = 4.dp),
@@ -427,6 +429,7 @@ fun StudentAssignmentCard(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = PrimaryIndigo,
                                     fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
                                 )
                             }
                         }
@@ -435,6 +438,7 @@ fun StudentAssignmentCard(
                         if (className.isNotEmpty()) {
                             Box(
                                 modifier = Modifier
+                                    .widthIn(max = 85.dp)
                                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
                                     .background(PrimaryEmerald.copy(alpha = 0.15f))
                                     .padding(horizontal = 8.dp, vertical = 4.dp),
@@ -444,6 +448,7 @@ fun StudentAssignmentCard(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = PrimaryEmerald,
                                     fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
                                 )
                             }
                         }
@@ -452,6 +457,7 @@ fun StudentAssignmentCard(
                         if (status != null) {
                             Box(
                                 modifier = Modifier
+                                    .widthIn(max = 75.dp)
                                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
                                     .background(
                                         when (status) {
@@ -475,9 +481,12 @@ fun StudentAssignmentCard(
                                         else -> Gray400
                                     },
                                     fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
                                 )
                             }
                         }
+
+                        Spacer(modifier = Modifier.width(0.dp))  // ← 우측 "문제수" 텍스트 보호
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
