@@ -231,35 +231,42 @@ fun TeacherDashboardScreen(
         }
 
         // Quick stats
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PrimaryIndigo.copy(alpha = 0.08f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                )
+                .padding(horizontal = 32.dp, vertical = 16.dp),
         ) {
-            DashboardSummaryCard(
-                label = "수업",
-                value = dashboardStats?.totalClasses?.toString()
-                    ?: assignments.map { it.courseClass.id }.distinct().size.toString(),
-                icon = Icons.Filled.List,
-                tint = PrimaryIndigo,
-                modifier = Modifier.weight(1f),
-                onClick = onNavigateToClasses,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DashboardSummaryItem(
+                    label = "수업",
+                    value = dashboardStats?.totalClasses?.toString()
+                        ?: assignments.map { it.courseClass.id }.distinct().size.toString(),
+                    icon = Icons.Filled.List,
+                    tint = PrimaryIndigo,
+                )
 
-            DashboardSummaryCard(
-                label = "학생",
-                value = dashboardStats?.totalStudents?.toString()
-                    ?: (
-                        if (students.isNotEmpty()) {
-                            students.size.toString()
-                        } else {
-                            currentUser?.totalStudents?.toString() ?: "0"
-                        }
-                        ),
-                icon = Icons.Filled.People,
-                tint = Success,
-                modifier = Modifier.weight(1f),
-                onClick = onNavigateToAllStudents,
-            )
+                DashboardSummaryItem(
+                    label = "학생",
+                    value = dashboardStats?.totalStudents?.toString()
+                        ?: (
+                            if (students.isNotEmpty()) {
+                                students.size.toString()
+                            } else {
+                                currentUser?.totalStudents?.toString() ?: "0"
+                            }
+                            ),
+                    icon = Icons.Filled.People,
+                    tint = Success,
+                )
+            }
         }
 
         // Quick actions
@@ -441,58 +448,47 @@ fun TeacherDashboardScreenPreview() {
 }
 
 @Composable
-private fun DashboardSummaryCard(
+private fun DashboardSummaryItem(
     label: String,
     value: String,
     icon: ImageVector,
     tint: Color,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
 ) {
-    VTCard2(
-        modifier = modifier.height(60.dp),
-        variant = CardVariant.Elevated,
-        onClick = onClick,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 25.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.7f)),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(tint.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(22.dp),
+            )
+        }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800,
-                )
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = tint,
-                )
-            }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                color = Gray700,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Gray900,
+            )
         }
     }
 }
