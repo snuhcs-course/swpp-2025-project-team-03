@@ -541,7 +541,9 @@ class ClassStudentsStatisticsView(APIView):  # GET /classes/{classId}/students-s
                 )
 
             # 해당 반의 모든 과제
-            assignments = Assignment.objects.filter(course_class=course_class, is_question_created=True)
+            assignments = Assignment.objects.filter(course_class=course_class, is_question_created=True).exclude(
+                total_questions=0
+            )
             total_assignments = assignments.count()
 
             if total_assignments == 0:
