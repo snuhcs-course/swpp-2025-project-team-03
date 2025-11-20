@@ -300,7 +300,10 @@ fun ClassCard(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                IconButton(onClick = { showDeleteDialog = true }) {
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.offset(y = (-12).dp),
+                ) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = "수업 삭제",
@@ -377,7 +380,7 @@ fun ClassCard(
             },
             text = {
                 Text(
-                    text = "\"${classRoom.name}\" 수업을 삭제하시겠습니까?\n삭제하면 되돌릴 수 없어요.",
+                    text = "\"${classRoom.name}\" 수업을 삭제하시겠습니까?\n삭제하면 되돌릴 수 없어요!",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray700,
                 )
