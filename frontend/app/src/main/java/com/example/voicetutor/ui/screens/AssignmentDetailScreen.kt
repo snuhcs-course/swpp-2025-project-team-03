@@ -118,31 +118,65 @@ fun AssignmentDetailScreen(
                 )
                 .padding(20.dp),
         ) {
-            Column {
-                Text(
-                    text = actualTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray800,
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                val subtitle = buildString {
-                    val subject = currentAssignment?.courseClass?.subject?.name
-                    val className = currentAssignment?.courseClass?.name
-                    val due = currentAssignment?.dueAt?.let { formatDueDate(it) } ?: ""
-
-                    if (!subject.isNullOrBlank()) append(subject)
-                    if (!subject.isNullOrBlank() && !className.isNullOrBlank()) append(" · ")
-                    if (!className.isNullOrBlank()) append(className)
-                    if ((!subject.isNullOrBlank() || !className.isNullOrBlank()) && due.isNotBlank()) append(" · ")
-                    if (due.isNotBlank()) append("마감: ").append(due)
-                }
-                if (subtitle.isNotBlank()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                // Left side: Title and subject/class info
+                Column(
+                    modifier = Modifier.weight(1f).padding(end = 12.dp),
+                ) {
                     Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600,
+                        text = actualTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray800,
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    
+                    val subtitle = buildString {
+                        val subject = currentAssignment?.courseClass?.subject?.name
+                        val className = currentAssignment?.courseClass?.name
+
+                        if (!subject.isNullOrBlank()) append(subject)
+                        if (!subject.isNullOrBlank() && !className.isNullOrBlank()) append(" · ")
+                        if (!className.isNullOrBlank()) append(className)
+                    }
+                    if (subtitle.isNotBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600,
+                        )
+                    }
+                }
+                
+                // Right side: Due date badge
+                currentAssignment?.dueAt?.let { dueDate ->
+                    Surface(
+                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.AccessTime,
+                                contentDescription = null,
+                                tint = androidx.compose.ui.graphics.Color.White,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = formatDueDate(dueDate),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = androidx.compose.ui.graphics.Color.White,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
                 }
             }
         }
