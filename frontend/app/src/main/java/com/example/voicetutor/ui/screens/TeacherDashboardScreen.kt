@@ -64,7 +64,7 @@ fun TeacherDashboardScreen(
     // Recent activities are not supported by current backend API
 
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
-
+    
     // 클라이언트 사이드 필터링을 위해 전체 과제 목록 사용
     // dueAt 기준으로 진행중/마감 판단
     val filteredAssignments = remember(assignments, selectedFilter) {
@@ -385,7 +385,32 @@ fun TeacherDashboardScreen(
                 FilterChip(
                     selected = selectedFilter == AssignmentFilter.ALL,
                     onClick = { selectedFilter = AssignmentFilter.ALL },
-                    label = { Text("전체") },
+                    label = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text("전체")
+                            Box(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
+                                    .background(
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "$allCount",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = androidx.compose.ui.graphics.Color.White,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.List,
@@ -398,13 +423,63 @@ fun TeacherDashboardScreen(
                 FilterChip(
                     selected = selectedFilter == AssignmentFilter.IN_PROGRESS,
                     onClick = { selectedFilter = AssignmentFilter.IN_PROGRESS },
-                    label = { Text("진행중") },
+                    label = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text("진행중")
+                            Box(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
+                                    .background(
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "$inProgressCount",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = androidx.compose.ui.graphics.Color.White,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+                    },
                 )
 
                 FilterChip(
                     selected = selectedFilter == AssignmentFilter.COMPLETED,
                     onClick = { selectedFilter = AssignmentFilter.COMPLETED },
-                    label = { Text("마감") },
+                    label = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text("마감")
+                            Box(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
+                                    .background(
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "$completedCount",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = androidx.compose.ui.graphics.Color.White,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+                    },
                 )
             }
 
@@ -468,7 +543,7 @@ fun TeacherDashboardScreen(
                         onEdit = { onNavigateToEditAssignment(assignment.id) },
                     )
 
-                    if (index < assignments.size - 1) {
+                    if (index < filteredAssignments.size - 1) {
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
