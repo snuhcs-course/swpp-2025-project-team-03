@@ -326,7 +326,6 @@ val testClassGroup2 = listOf(
     "com.example.voicetutor.ui.screens.AuthIntegrationTest",
     "com.example.voicetutor.ui.screens.CreateAssignmentScreenTest",
     "com.example.voicetutor.ui.screens.EditAssignmentScreenTest",
-    "com.example.voicetutor.ui.screens.HighCoverageScreensIntegrationTest",
     "com.example.voicetutor.ui.screens.LoginScreenTest",
     "com.example.voicetutor.ui.screens.NoRecentAssignmentScreenTest",
     "com.example.voicetutor.ui.screens.ReportAndSettingsScreenTest",
@@ -334,6 +333,7 @@ val testClassGroup2 = listOf(
 )
 
 val testClassGroup3 = listOf(
+    "com.example.voicetutor.ui.screens.HighCoverageScreensIntegrationTest",
     "com.example.voicetutor.ui.screens.ScreensRenderingTest",
     "com.example.voicetutor.ui.screens.SimpleLoginScreenTest",
     "com.example.voicetutor.ui.screens.SignupScreenTest",
