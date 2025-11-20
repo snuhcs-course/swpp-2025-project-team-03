@@ -1053,8 +1053,14 @@ class PersonalAssignmentRecentView(APIView):
 
             # 가장 최근에 풀이된 문제중 personal_assignment.status가 SUBMITTED가 아닌 것을 찾음
             for answer in recent_answers:
-                if answer.question.personal_assignment.status != PersonalAssignment.Status.SUBMITTED:
-                    personal_assignment = answer.question.personal_assignment
+                pa = answer.question.personal_assignment
+                # assignment의 total_questions=0 또는 is_question_created=False인 경우 제외
+                if (
+                    pa.status != PersonalAssignment.Status.SUBMITTED
+                    and pa.assignment.total_questions > 0
+                    and pa.assignment.is_question_created
+                ):
+                    personal_assignment = pa
                     break
 
             if not personal_assignment:
@@ -1065,6 +1071,8 @@ class PersonalAssignmentRecentView(APIView):
                         student_id=student_id,
                         status__in=[PersonalAssignment.Status.IN_PROGRESS],
                     )
+                    .exclude(assignment__total_questions=0)
+                    .exclude(assignment__is_question_created=False)
                     .order_by("-id")
                     .first()
                 )
