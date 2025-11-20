@@ -21,7 +21,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.data.models.*
-import com.example.voicetutor.data.models.StudentOnboardingData
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
@@ -32,42 +31,35 @@ import com.example.voicetutor.utils.formatDueDate
 fun StudentDashboardScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
-    dashboardViewModel: com.example.voicetutor.ui.viewmodel.DashboardViewModel? = null,
-    onNavigateToProgressReport: () -> Unit = {},
     onNavigateToAssignment: (String) -> Unit = {},
     onNavigateToAssignmentDetail: (String) -> Unit = {},
 ) {
     val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
     val viewModelAuth = authViewModel ?: hiltViewModel()
-    val viewModelDashboard = dashboardViewModel ?: hiltViewModel()
 
     val assignments by viewModelAssignment.assignments.collectAsStateWithLifecycle()
     val isLoading by viewModelAssignment.isLoading.collectAsStateWithLifecycle()
     val error by viewModelAssignment.error.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
-    val studentStats by viewModelAssignment.studentStats.collectAsStateWithLifecycle()
 
     val studentName = currentUser?.name ?: "학생"
 
-    // 튜토리얼 상태 관리
     val context = LocalContext.current
     val tutorialPrefs = remember { TutorialPreferences(context) }
     var showTutorial by remember { mutableStateOf(false) }
 
-    // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
+    // 튜토리얼은 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
     // currentUser와 showTutorial을 모두 key로 사용하여 초기화 후에도 재확인
     LaunchedEffect(currentUser, showTutorial) {
         if (currentUser != null && !showTutorial) {
             val isNewUser = tutorialPrefs.isNewUser()
-
-            // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
             if (isNewUser) {
                 showTutorial = true
             }
         }
     }
 
-    // 화면이 다시 포커스될 때 튜토리얼 상태 재확인 (설정에서 초기화 후 돌아올 때)
+    // 화면 재포커스 시 튜토리얼 상태 재확인
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, currentUser) {
         val observer = LifecycleEventObserver { _, event ->
@@ -84,10 +76,8 @@ fun StudentDashboardScreen(
         }
     }
 
-    // 필터 상태 추가
     var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
 
-    // 질문이 생성된 과제만 필터링 + 선택된 필터 적용
     val validAssignments = remember(assignments, selectedFilter) {
         val filtered = assignments.filter {
             it.totalQuestions > 0 &&
@@ -145,15 +135,12 @@ fun StudentDashboardScreen(
         }
     }
 
-    // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
             viewModelAssignment.clearError()
         }
     }
 
-    // 온보딩 튜토리얼 (5단계)
     if (showTutorial) {
         OnboardingPager(
             pages = StudentOnboardingData.studentOnboardingPages,
@@ -173,8 +160,7 @@ fun StudentDashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Welcome section
@@ -357,15 +343,13 @@ fun StudentDashboardScreen(
                 }
             } else {
                 validAssignments.forEachIndexed { index, assignment ->
-                    // Personal assignment의 진행률 계산: solvedNum / totalQuestions
-                    // solvedNum은 기본 질문에 답변한 개수 (꼬리 질문 제외)
+                    // 진행률 계산: solvedNum은 기본 질문에 답변한 개수 (꼬리 질문 제외)
                     val progress = if (assignment.totalQuestions > 0 && assignment.solvedNum != null) {
                         (assignment.solvedNum.toFloat() / assignment.totalQuestions.toFloat()).coerceIn(0f, 1f)
                     } else {
                         0f
                     }
 
-                    // 진행률이 0이어도 표시되도록 함
                     StudentAssignmentCard(
                         title = assignment.title,
                         subject = assignment.courseClass.subject.name,
@@ -376,7 +360,7 @@ fun StudentDashboardScreen(
                         totalQuestions = assignment.totalQuestions,
                         status = assignment.personalAssignmentStatus,
                         onClick = {
-                            // 두 ID를 모두 저장: assignment.id (6) 와 personalAssignmentId (16)
+                            // assignment.id와 personalAssignmentId 모두 저장
                             viewModelAssignment.setSelectedAssignmentIds(
                                 assignmentId = assignment.id,
                                 personalAssignmentId = assignment.personalAssignmentId,
@@ -385,7 +369,6 @@ fun StudentDashboardScreen(
                             onNavigateToAssignmentDetail(detailId.toString())
                         },
                         onStartAssignment = {
-                            // personalAssignmentId를 사용하여 과제 시작
                             val personalId = assignment.personalAssignmentId ?: assignment.id
                             onNavigateToAssignment(personalId.toString())
                         },
@@ -417,9 +400,7 @@ fun StudentAssignmentCard(
         variant = CardVariant.Elevated,
         onClick = onClick,
     ) {
-        Column(
-            // modifier = Modifier.padding(8.dp)
-        ) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

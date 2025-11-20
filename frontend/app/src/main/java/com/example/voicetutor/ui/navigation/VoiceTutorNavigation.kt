@@ -146,10 +146,6 @@ fun VoiceTutorNavigation(
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
-                    onNavigateToProgressReport = {
-                        navController.navigate(VoiceTutorScreens.Progress.route)
-                    },
                     onNavigateToAssignment = { assignmentId ->
                         // personalAssignmentId를 사용하여 과제 시작
                         navController.navigate(VoiceTutorScreens.Assignment.createRoute(assignmentId, "과제"))
@@ -186,7 +182,6 @@ fun VoiceTutorNavigation(
             ) {
                 AssignmentScreen(
                     assignmentId = assignmentId.toIntOrNull(),
-                    assignmentTitle = assignmentTitle,
                     authViewModel = authViewModel,
                     onNavigateToHome = {
                         // StudentDashboard로 이동하고 모든 백스택 제거 후 재로딩

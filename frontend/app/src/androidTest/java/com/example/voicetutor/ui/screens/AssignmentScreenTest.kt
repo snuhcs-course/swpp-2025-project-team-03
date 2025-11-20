@@ -110,7 +110,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -164,7 +163,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -198,7 +196,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -222,7 +219,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -237,7 +233,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -255,7 +250,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -274,7 +268,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -289,7 +282,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -311,7 +303,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -333,7 +324,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -349,7 +339,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -368,7 +357,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -386,7 +374,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                     onNavigateToHome = onNavigateToHome,
                 )
             }
@@ -418,7 +405,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -444,7 +430,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -469,7 +454,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -494,7 +478,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = null,
-                    assignmentTitle = "테스트 과제",
                 )
             }
         }
@@ -509,7 +492,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -525,7 +507,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -541,7 +522,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -566,7 +546,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -604,7 +583,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -648,7 +626,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -688,7 +665,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -728,7 +704,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -745,7 +720,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -770,7 +744,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -796,7 +769,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -822,7 +794,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -847,7 +818,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -885,7 +855,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -909,7 +878,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -933,7 +901,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -978,7 +945,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
@@ -1015,7 +981,6 @@ class AssignmentScreenTest {
             VoiceTutorTheme {
                 AssignmentScreen(
                     assignmentId = fakeApi.personalAssignmentData.id,
-                    assignmentTitle = fakeApi.personalAssignmentData.assignment.title,
                 )
             }
         }
