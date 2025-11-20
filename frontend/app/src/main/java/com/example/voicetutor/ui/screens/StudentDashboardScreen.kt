@@ -223,11 +223,13 @@ fun StudentDashboardScreen(
                             Text("전체")
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
                                     .background(
                                         color = PrimaryIndigo.copy(alpha = 0.7f),
-                                        shape = androidx.compose.foundation.shape.CircleShape,
-                                    ),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
@@ -259,11 +261,13 @@ fun StudentDashboardScreen(
                             Text("시작 안함")
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
                                     .background(
                                         color = PrimaryIndigo.copy(alpha = 0.7f),
-                                        shape = androidx.compose.foundation.shape.CircleShape,
-                                    ),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
@@ -288,11 +292,13 @@ fun StudentDashboardScreen(
                             Text("진행 중")
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
                                     .background(
                                         color = PrimaryIndigo.copy(alpha = 0.7f),
-                                        shape = androidx.compose.foundation.shape.CircleShape,
-                                    ),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
