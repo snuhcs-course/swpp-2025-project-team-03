@@ -238,7 +238,7 @@ fun TeacherDashboardScreen(
                     color = PrimaryIndigo.copy(alpha = 0.08f),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 )
-                .padding(horizontal = 32.dp, vertical = 16.dp),
+                .padding(horizontal = 48.dp, vertical = 16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
