@@ -238,7 +238,7 @@ fun TeacherDashboardScreen(
                     color = PrimaryIndigo.copy(alpha = 0.08f),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 )
-                .padding(horizontal = 48.dp, vertical = 16.dp),
+                .padding(horizontal = 38.dp, vertical = 16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -249,7 +249,7 @@ fun TeacherDashboardScreen(
                     label = "수업",
                     value = dashboardStats?.totalClasses?.toString()
                         ?: assignments.map { it.courseClass.id }.distinct().size.toString(),
-                    icon = Icons.Filled.List,
+                    icon = Icons.Filled.School,
                     tint = PrimaryIndigo,
                 )
 
