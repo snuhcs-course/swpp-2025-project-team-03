@@ -90,6 +90,10 @@ class PersonalAssignmentListView(APIView):
             if student_id:
                 queryset = queryset.filter(student_id=student_id)
 
+            # assignment의 total_questions=0 또는 is_question_created=False인 경우 제외
+            queryset = queryset.exclude(assignment__total_questions=0)
+            queryset = queryset.exclude(assignment__is_question_created=False)
+
             # 직렬화
             serializer = PersonalAssignmentSerializer(queryset, many=True)
 
