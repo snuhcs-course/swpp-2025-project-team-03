@@ -116,119 +116,116 @@ fun AssignmentDetailScreen(
                     color = PrimaryIndigo.copy(alpha = 0.08f),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 )
-                .padding(20.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 14.dp),
         ) {
-            Row(
+            // Left side: Title and subject/class info
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
             ) {
-                // Left side: Title and subject/class info
-                Column(
-                    modifier = Modifier.weight(1f).padding(end = 12.dp),
+                Text(
+                    text = actualTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray800,
+                    maxLines = 1,
+                    modifier = Modifier.widthIn(max = 180.dp),
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                
+                // Subject and Class chips
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = actualTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Gray800,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    val subject = currentAssignment?.courseClass?.subject?.name
+                    val className = currentAssignment?.courseClass?.name
                     
-                    // Subject and Class chips
-                    Row(
-                        modifier = Modifier.padding(top = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val subject = currentAssignment?.courseClass?.subject?.name
-                        val className = currentAssignment?.courseClass?.name
-                        
-                        if (!subject.isNullOrBlank()) {
-                            Surface(
-                                color = PrimaryIndigo.copy(alpha = 0.12f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
-                                modifier = Modifier.widthIn(max = 100.dp)
+                    if (!subject.isNullOrBlank()) {
+                        Surface(
+                            color = PrimaryIndigo.copy(alpha = 0.12f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            modifier = Modifier.widthIn(max = 120.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Book,
-                                        contentDescription = null,
-                                        tint = PrimaryIndigo,
-                                        modifier = Modifier.size(14.dp),
-                                    )
-                                    Text(
-                                        text = subject,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = PrimaryIndigo,
-                                        fontWeight = FontWeight.Medium,
-                                        maxLines = 1,
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Filled.Book,
+                                    contentDescription = null,
+                                    tint = PrimaryIndigo,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                                Text(
+                                    text = subject,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryIndigo,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                )
                             }
                         }
-                        
-                        if (!className.isNullOrBlank()) {
-                            Surface(
-                                color = PrimaryEmerald.copy(alpha = 0.12f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
-                                modifier = Modifier.widthIn(max = 100.dp)
+                    }
+                    
+                    if (!className.isNullOrBlank()) {
+                        Surface(
+                            color = PrimaryEmerald.copy(alpha = 0.12f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            modifier = Modifier.widthIn(max = 120.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Group,
-                                        contentDescription = null,
-                                        tint = PrimaryEmerald,
-                                        modifier = Modifier.size(14.dp),
-                                    )
-                                    Text(
-                                        text = className,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = PrimaryEmerald,
-                                        fontWeight = FontWeight.Medium,
-                                        maxLines = 1,
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Filled.Group,
+                                    contentDescription = null,
+                                    tint = PrimaryEmerald,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                                Text(
+                                    text = className,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryEmerald,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                )
                             }
                         }
                     }
                 }
-                
-                // Right side: Due date badge
-                currentAssignment?.dueAt?.let { dueDate ->
-                    Box(
-                        modifier = Modifier.offset(x = 5.dp, y = (-3).dp)
+            }
+            
+            // Right side: Due date badge (absolute positioned)
+            currentAssignment?.dueAt?.let { dueDate ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 5.dp, y = (-3).dp)
+                ) {
+                    Surface(
+                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                     ) {
-                        Surface(
-                            color = PrimaryIndigo.copy(alpha = 0.7f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.AccessTime,
-                                    contentDescription = null,
-                                    tint = androidx.compose.ui.graphics.Color.White,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Text(
-                                    text = formatDueDate(dueDate),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Filled.AccessTime,
+                                contentDescription = null,
+                                tint = androidx.compose.ui.graphics.Color.White,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = formatDueDate(dueDate),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = androidx.compose.ui.graphics.Color.White,
+                                fontWeight = FontWeight.Medium,
+                            )
                         }
                     }
                 }
