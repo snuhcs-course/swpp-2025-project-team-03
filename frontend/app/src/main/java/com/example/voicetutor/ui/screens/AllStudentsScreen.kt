@@ -126,15 +126,46 @@ fun AllStudentsScreen(
         }
 
         item {
-            // Stats card
-            VTStatsCard(
-                title = "전체 학생",
-                value = "${totalStudents}명",
-                icon = Icons.Filled.People,
-                iconColor = PrimaryIndigo,
-                modifier = Modifier.fillMaxWidth(),
-                variant = CardVariant.Gradient,
-            )
+            // Compact stats without card background
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryIndigo.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.People,
+                            contentDescription = null,
+                            tint = PrimaryIndigo,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    Text(
+                        text = "전체 학생",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray800,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Text(
+                    text = "${totalStudents}명",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Gray800,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
 
         item {
