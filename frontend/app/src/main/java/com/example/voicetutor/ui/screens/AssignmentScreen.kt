@@ -43,33 +43,9 @@ fun AssignmentScreen(
 ) {
     val viewModel: AssignmentViewModel = hiltViewModel()
     val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
-
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-
-    // 모든 과제는 음성 답변 + AI 대화형 꼬리 질문 형태로 진행
-    if (isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(
-                color = PrimaryIndigo,
-            )
-        }
-    } else {
-        AssignmentContinuousScreen(assignmentId = assignmentId ?: 1, authViewModel = viewModelAuth, onNavigateToHome = onNavigateToHome)
-    }
-}
-
-@Composable
-fun AssignmentContinuousScreen(
-    assignmentId: Int = 1, // PersonalAssignment ID
-    authViewModel: AuthViewModel? = null,
-    onNavigateToHome: () -> Unit = {},
-) {
-    val viewModel: AssignmentViewModel = hiltViewModel()
-    val viewModelAuth = authViewModel ?: hiltViewModel<AuthViewModel>()
+    
     val context = LocalContext.current
+    val assignmentIdValue = assignmentId ?: 1
 
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val personalAssignmentQuestions by viewModel.personalAssignmentQuestions.collectAsStateWithLifecycle()
@@ -95,7 +71,7 @@ fun AssignmentContinuousScreen(
     var pollingJob by remember { mutableStateOf<Job?>(null) }
 
     LaunchedEffect(Unit) {
-        viewModel.refreshProcessingStatus(assignmentId)
+        viewModel.refreshProcessingStatus(assignmentIdValue)
     }
 
     LaunchedEffect(isProcessing) {
@@ -104,7 +80,7 @@ fun AssignmentContinuousScreen(
             pollingJob = scope.launch {
                 while (true) {
                     delay(1000)
-                    viewModel.refreshProcessingStatus(assignmentId)
+                    viewModel.refreshProcessingStatus(assignmentIdValue)
                     if (!viewModel.isProcessing.value) {
                         break
                     }
@@ -172,15 +148,10 @@ fun AssignmentContinuousScreen(
 
     val currentQuestion = viewModel.getCurrentQuestion()
 
-    // 과제 질문 로드 (무한 루프 방지)
-    var hasAttemptedLoad by remember { mutableStateOf(false) }
-
-    if (!isAssignmentCompleted && personalAssignmentQuestions.isEmpty() && !hasAttemptedLoad && !isLoading) {
-        LaunchedEffect(Unit) {
-            hasAttemptedLoad = true
-            viewModel.loadAllQuestions(assignmentId)
-            viewModel.loadPersonalAssignmentStatistics(assignmentId)
-        }
+    // 과제 질문 로드 (최초 1회만 실행)
+    LaunchedEffect(assignmentIdValue) {
+        viewModel.loadAllQuestions(assignmentIdValue)
+        viewModel.loadPersonalAssignmentStatistics(assignmentIdValue)
     }
 
     // 응답 결과 처리
@@ -238,6 +209,7 @@ fun AssignmentContinuousScreen(
         }
     }
 
+    // 로딩 중이면 로딩 화면 표시
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -247,7 +219,7 @@ fun AssignmentContinuousScreen(
                 color = PrimaryIndigo,
             )
         }
-    } else if (isAssignmentCompleted || currentQuestion == null || personalAssignmentQuestions.isEmpty()) {
+    } else if (isAssignmentCompleted || personalAssignmentQuestions.isEmpty() || currentQuestion == null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -622,7 +594,7 @@ fun AssignmentContinuousScreen(
                                                     }
 
                                                     viewModel.submitAnswer(
-                                                        personalAssignmentId = assignmentId,
+                                                        personalAssignmentId = assignmentIdValue,
                                                         studentId = currentUser!!.id,
                                                         questionId = questionIdToSubmit,
                                                         audioFile = emptyFile,
@@ -734,7 +706,7 @@ fun AssignmentContinuousScreen(
                                         savedTailQuestion = null
 
                                         // 서버에서 받은 numberStr로 질문 이동
-                                        viewModel.moveToQuestionByNumber(response.numberStr, assignmentId)
+                                        viewModel.moveToQuestionByNumber(response.numberStr, assignmentIdValue)
                                     },
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true,
@@ -759,7 +731,7 @@ fun AssignmentContinuousScreen(
                                         }
 
                                         viewModel.submitAnswer(
-                                            personalAssignmentId = assignmentId,
+                                            personalAssignmentId = assignmentIdValue,
                                             studentId = user.id,
                                             questionId = questionIdToSubmit,
                                             audioFile = audioFile,
