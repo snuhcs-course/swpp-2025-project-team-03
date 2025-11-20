@@ -154,27 +154,31 @@ fun AssignmentDetailScreen(
                 
                 // Right side: Due date badge
                 currentAssignment?.dueAt?.let { dueDate ->
-                    Surface(
-                        color = PrimaryIndigo.copy(alpha = 0.7f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    Box(
+                        modifier = Modifier.offset(x = 5.dp, y = (-3).dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        Surface(
+                            color = PrimaryIndigo.copy(alpha = 0.7f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.AccessTime,
-                                contentDescription = null,
-                                tint = androidx.compose.ui.graphics.Color.White,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Text(
-                                text = formatDueDate(dueDate),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = androidx.compose.ui.graphics.Color.White,
-                                fontWeight = FontWeight.Medium,
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.AccessTime,
+                                    contentDescription = null,
+                                    tint = androidx.compose.ui.graphics.Color.White,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Text(
+                                    text = formatDueDate(dueDate),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = androidx.compose.ui.graphics.Color.White,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
                         }
                     }
                 }
