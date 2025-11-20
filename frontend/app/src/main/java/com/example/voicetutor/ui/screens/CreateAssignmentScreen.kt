@@ -37,6 +37,7 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
 import com.example.voicetutor.ui.viewmodel.StudentViewModel
+import com.example.voicetutor.data.network.CreateAssignmentRequest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
@@ -796,7 +797,7 @@ fun CreateAssignmentScreen(
                             // 문제 개수를 정수로 파싱 (기본값 0)
                             val questionCountInt = questionCount.toIntOrNull() ?: 0
 
-                            val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+                            val createRequest = CreateAssignmentRequest.builder()
                                 .title(assignmentTitle)
                                 .subject(selectedSubject)
                                 .classId(selectedClassId!!)
