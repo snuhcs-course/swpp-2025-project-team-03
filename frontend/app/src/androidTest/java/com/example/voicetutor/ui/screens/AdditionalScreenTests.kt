@@ -78,16 +78,6 @@ class AdditionalScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    @Ignore("Requires ViewModel setup")
-    @Test
-    fun assignmentQuizScreenPreview_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                AssignmentQuizScreenPreview()
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
 
     @Ignore("Requires ViewModel setup")
     @Test

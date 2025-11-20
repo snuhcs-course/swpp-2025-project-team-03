@@ -318,33 +318,6 @@ class LowCoverageScreenTests {
         composeTestRule.onRoot().assertExists()
     }
 
-    // ========== AssignmentScreen Tests ==========
-
-    @Test
-    fun quizQuestionDataCard_renders_withData() {
-        val question = QuizQuestionData(
-            questionNumber = 1,
-            question = "질문",
-            hint = "힌트",
-            modelAnswer = "정답",
-        )
-
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VTCard {
-                    Text("문제 ${question.questionNumber}")
-                    Text(question.question)
-                    Text(question.hint)
-                }
-            }
-        }
-
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("문제 1", substring = true).assertExists()
-        composeTestRule.onNodeWithText("질문", substring = true).assertExists()
-        composeTestRule.onNodeWithText("힌트", substring = true).assertExists()
-    }
-
     // ========== TeacherAssignmentResultsScreen Tests ==========
 
     @Test

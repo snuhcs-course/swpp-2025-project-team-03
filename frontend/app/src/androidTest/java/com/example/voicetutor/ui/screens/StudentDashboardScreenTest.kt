@@ -45,7 +45,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -72,7 +71,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -99,7 +97,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -126,7 +123,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -154,7 +150,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -181,7 +176,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -209,7 +203,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -235,7 +228,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -256,7 +248,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -284,7 +275,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
@@ -313,7 +303,6 @@ class StudentDashboardScreenTest {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel,
                 )
             }
         }
