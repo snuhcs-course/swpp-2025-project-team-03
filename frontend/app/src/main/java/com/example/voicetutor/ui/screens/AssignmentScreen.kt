@@ -197,14 +197,9 @@ fun AssignmentContinuousScreen(
             isAnswerCorrect = response.isCorrect
             showResult = true
 
-            // tailQuestion이 null이면 완료 가능한 상태
-            if (response.tailQuestion == null) {
-                return@let
-            }
-
-            // numberStr이 null이면 과제 완료
+            // numberStr이 null이면 마지막 문제 (결과 화면 표시 후 사용자가 "완료" 버튼 클릭 시 처리)
             if (response.numberStr == null) {
-                viewModel.setAssignmentCompleted(true)
+                // 결과 화면을 보여주고, "완료" 버튼을 통해 과제 완료 처리
                 return@let
             }
 
@@ -215,19 +210,9 @@ fun AssignmentContinuousScreen(
                 currentTailQuestionNumber = response.numberStr
                 savedTailQuestion = response.tailQuestion
             } else {
+                // 다음 기본 질문인 경우 상태 초기화 
                 currentTailQuestionNumber = null
                 savedTailQuestion = null
-
-                // 서버에서 받은 numberStr이 현재 질문과 다르면 해당 질문 로드
-                val currentQuestionNumber = currentQuestion?.number
-                val serverQuestionNumber = response.numberStr
-
-                if (currentQuestionNumber != serverQuestionNumber) {
-                    scope.launch {
-                        delay(300)
-                        viewModel.moveToQuestionByNumber(serverQuestionNumber, assignmentId)
-                    }
-                }
             }
         }
     }
@@ -709,30 +694,12 @@ fun AssignmentContinuousScreen(
                     // 응답 결과에 따른 버튼 표시
                     if (showResult) {
                         // 응답 결과가 있을 때
-                        // numberStr이 하이픈을 포함하는지 확인
                         val response = answerSubmissionResponse
                         if (response == null) return@Column
-                        val isTailQuestionNum = response.numberStr?.contains("-") == true
 
-                        if (isTailQuestionNum) {
-                            // 꼬리 질문이 있는 경우 - 무조건 꼬리질문으로 넘어가기 버튼 표시
-                            VTButton(
-                                text = "꼬리질문으로 넘어가기",
-                                onClick = {
-                                    // 꼬리 질문 상태로 전환
-                                    // clearAnswerSubmissionResponse는 호출하지 않음 (tailQuestion 정보 유지)
-                                    showResult = false
-                                    isSkipped = false // 건너뛰기 상태 초기화
-                                    // currentTailQuestionNumber와 savedTailQuestion은 유지 (이미 설정됨)
-
-                                    println("AssignmentScreen - Moving to tail question: $currentTailQuestionNumber")
-                                    println("AssignmentScreen - Saved tail question: ${savedTailQuestion?.question}")
-                                },
-                                variant = ButtonVariant.Gradient,
-                                fullWidth = true,
-                            )
-                        } else {
-                            if (response.tailQuestion == null) {
+                        when {
+                            // Case 1: numberStr이 null이면 마지막 문제 완료
+                            response.numberStr == null -> {
                                 VTButton(
                                     text = "완료",
                                     onClick = {
@@ -741,78 +708,33 @@ fun AssignmentContinuousScreen(
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true,
                                 )
-                            } else if (response.numberStr == null) {
-                                VTButton(
-                                    text = "홈으로 돌아가기",
-                                    onClick = {
-                                        onNavigateToHome()
-                                    },
-                                    variant = ButtonVariant.Gradient,
-                                    fullWidth = true,
-                                )
-                            } else if (response.numberStr.contains("-")) {
+                            }
+                            // Case 2: numberStr에 하이픈이 있으면 꼬리 질문으로 이동
+                            response.numberStr.contains("-") -> {
                                 VTButton(
                                     text = "꼬리질문으로 넘어가기",
                                     onClick = {
                                         showResult = false
-                                        currentTailQuestionNumber = response.numberStr
-                                        savedTailQuestion = response.tailQuestion
-
-                                        println("AssignmentScreen - Moving to tail question: ${response.numberStr}")
-                                        println("AssignmentScreen - Saved tail question: ${response.tailQuestion.question}")
+                                        isSkipped = false
+                                        // currentTailQuestionNumber와 savedTailQuestion은 이미 설정됨
                                     },
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true,
                                 )
-                            } else {
-                                // 다음 기본 질문인 경우 - 다음 문제로 넘어가기 버튼 표시
+                            }
+                            // Case 3: 다음 기본 질문으로 이동
+                            else -> {
                                 VTButton(
                                     text = "다음 문제",
                                     onClick = {
-                                        println("AssignmentScreen - Moving to next question")
                                         viewModel.clearAnswerSubmissionResponse()
                                         showResult = false
                                         isSkipped = false
                                         currentTailQuestionNumber = null
                                         savedTailQuestion = null
 
-                                        // 서버에서 받은 number_str을 기반으로 올바른 질문으로 이동
-                                        val numberStr = response.numberStr
-                                        if (numberStr != null) {
-                                            println("AssignmentScreen - Moving to question number: $numberStr")
-                                            viewModel.moveToQuestionByNumber(numberStr, assignmentId)
-                                        } else {
-                                            // numberStr이 없는 경우 기존 로직 사용
-                                            val tailQuestion = response.tailQuestion
-                                            if (tailQuestion != null) {
-                                                println("AssignmentScreen - Using tailQuestion as next question: ${tailQuestion.question}")
-                                                // tailQuestion을 PersonalAssignmentQuestion으로 변환하여 리스트에 추가
-                                                val nextQuestion = PersonalAssignmentQuestion(
-                                                    id = tailQuestion.id,
-                                                    number = tailQuestion.number.toString(),
-                                                    question = tailQuestion.question,
-                                                    answer = tailQuestion.answer,
-                                                    explanation = tailQuestion.explanation,
-                                                    difficulty = tailQuestion.difficulty,
-                                                )
-
-                                                val currentQuestions = viewModel.personalAssignmentQuestions.value.toMutableList()
-                                                currentQuestions.add(nextQuestion)
-                                                viewModel.updatePersonalAssignmentQuestions(currentQuestions)
-
-                                                // 다음 질문으로 이동
-                                                scope.launch {
-                                                    delay(100)
-                                                    viewModel.nextQuestion()
-                                                }
-                                            } else {
-                                                // 로컬 리스트에서 다음 문제로 이동
-                                                scope.launch {
-                                                    delay(100)
-                                                    viewModel.nextQuestion()
-                                                }
-                                            }
-                                        }
+                                        // 서버에서 받은 numberStr로 질문 이동
+                                        viewModel.moveToQuestionByNumber(response.numberStr, assignmentId)
                                     },
                                     variant = ButtonVariant.Gradient,
                                     fullWidth = true,
