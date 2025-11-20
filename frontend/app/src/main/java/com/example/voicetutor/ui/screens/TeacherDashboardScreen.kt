@@ -65,6 +65,60 @@ fun TeacherDashboardScreen(
 
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
 
+    // 클라이언트 사이드 필터링을 위해 전체 과제 목록 사용
+    // dueAt 기준으로 진행중/마감 판단
+    val filteredAssignments = remember(assignments, selectedFilter) {
+        val now = System.currentTimeMillis()
+        when (selectedFilter) {
+            AssignmentFilter.ALL -> assignments
+            AssignmentFilter.IN_PROGRESS -> assignments.filter { 
+                val dueTime = try {
+                    java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).parse(it.dueAt)?.time ?: Long.MAX_VALUE
+                } catch (e: Exception) {
+                    Long.MAX_VALUE
+                }
+                dueTime > now
+            }
+            AssignmentFilter.COMPLETED -> assignments.filter { 
+                val dueTime = try {
+                    java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).parse(it.dueAt)?.time ?: 0L
+                } catch (e: Exception) {
+                    0L
+                }
+                dueTime <= now
+            }
+        }
+    }
+    
+    // 각 필터별 개수 계산
+    val allCount = remember(assignments) {
+        assignments.size
+    }
+    
+    val inProgressCount = remember(assignments) {
+        val now = System.currentTimeMillis()
+        assignments.count { 
+            val dueTime = try {
+                java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).parse(it.dueAt)?.time ?: Long.MAX_VALUE
+            } catch (e: Exception) {
+                Long.MAX_VALUE
+            }
+            dueTime > now
+        }
+    }
+    
+    val completedCount = remember(assignments) {
+        val now = System.currentTimeMillis()
+        assignments.count { 
+            val dueTime = try {
+                java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).parse(it.dueAt)?.time ?: 0L
+            } catch (e: Exception) {
+                0L
+            }
+            dueTime <= now
+        }
+    }
+
     // 튜토리얼 상태 관리
     val context = LocalContext.current
     val tutorialPrefs = remember { TutorialPreferences(context) }
@@ -130,27 +184,14 @@ fun TeacherDashboardScreen(
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
 
-    LaunchedEffect(selectedFilter, actualTeacherId) {
-        if (actualTeacherId != null) {
-            val status = when (selectedFilter) {
-                AssignmentFilter.ALL -> null
-                AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
-                AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
-            }
-            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
-        }
-    }
+    // 필터 변경 시 API 호출하지 않고 클라이언트에서 필터링
+    // (개수 계산을 위해 항상 전체 목록 유지)
     
     // 질문 생성 완료 시 홈 리스트 새로고침
     LaunchedEffect(questionGenerationSuccess) {
         if (questionGenerationSuccess && actualTeacherId != null) {
             println("TeacherDashboardScreen - 질문 생성 완료 감지, 리스트 새로고침")
-            val status = when (selectedFilter) {
-                AssignmentFilter.ALL -> null
-                AssignmentFilter.IN_PROGRESS -> AssignmentStatus.IN_PROGRESS
-                AssignmentFilter.COMPLETED -> AssignmentStatus.COMPLETED
-            }
-            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = status)
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = null)
             dashboardViewModel.loadDashboardData(actualTeacherId)
             // 메시지가 표시된 후 상태 초기화는 MainLayout에서 처리
         }
@@ -194,9 +235,6 @@ fun TeacherDashboardScreen(
             due.isNotBlank() && due.length >= 10 && due.substring(0, 10) == todayStr
         }
     }
-
-    // 필터링된 과제 목록 (API에서 이미 필터링된 결과 사용)
-    val filteredAssignments = assignments
 
     Column(
         modifier = Modifier
@@ -381,7 +419,7 @@ fun TeacherDashboardScreen(
                         color = PrimaryIndigo,
                     )
                 }
-            } else if (assignments.isEmpty()) {
+            } else if (filteredAssignments.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,
@@ -406,7 +444,7 @@ fun TeacherDashboardScreen(
             } else {
                 val assignmentStatsMap = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
 
-                assignments.forEach { assignment ->
+                filteredAssignments.forEach { assignment ->
                     LaunchedEffect(assignment.id) {
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                             val stats = actualAssignmentViewModel.getAssignmentSubmissionStats(assignment.id)
@@ -415,7 +453,7 @@ fun TeacherDashboardScreen(
                     }
                 }
 
-                assignments.forEachIndexed { index, assignment ->
+                filteredAssignments.forEachIndexed { index, assignment ->
                     val stats = assignmentStatsMap[assignment.id] ?: (0 to assignment.courseClass.studentCount)
 
                     TeacherAssignmentCard(
