@@ -4,10 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
-import com.example.voicetutor.data.network.AnswerSubmission
 import com.example.voicetutor.data.network.ApiResponse
 import com.example.voicetutor.data.network.ApiService
-import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import kotlinx.coroutines.Dispatchers
@@ -245,26 +243,6 @@ class AssignmentViewModelIntegrationTest {
 
         assertTrue(viewModel.assignmentCorrectness.value.isEmpty())
         assertEquals(apiService.assignmentCorrectnessErrorMessage, viewModel.error.value)
-    }
-
-    @Test
-    fun submitAssignment_successKeepsErrorNull() = runTest(dispatcher) {
-        val submission = AssignmentSubmissionRequest(
-            studentId = 1,
-            answers = listOf(
-                AnswerSubmission(
-                    questionId = 1,
-                    answer = "A",
-                    audioFile = null,
-                    confidence = 0.9f,
-                ),
-            ),
-        )
-
-        viewModel.submitAssignment(id = 1, submission = submission)
-        advanceUntilIdle()
-
-        assertEquals(null, viewModel.error.value)
     }
 
     @Test

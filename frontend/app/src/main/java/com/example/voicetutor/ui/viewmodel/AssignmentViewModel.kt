@@ -15,7 +15,6 @@ import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
 import com.example.voicetutor.data.models.StudentResult
 import com.example.voicetutor.data.models.Subject
-import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.CreateAssignmentRequest
 import com.example.voicetutor.data.network.S3UploadStatus
 import com.example.voicetutor.data.network.UpdateAssignmentRequest
@@ -1151,22 +1150,6 @@ class AssignmentViewModel @Inject constructor(
             assignmentRepository.deleteAssignment(id)
                 .onSuccess {
                     _assignments.value = _assignments.value.filter { it.id != id }
-                }
-                .onFailure { exception ->
-                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
-                }
-
-            _isLoading.value = false
-        }
-    }
-
-    fun submitAssignment(id: Int, submission: AssignmentSubmissionRequest) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            assignmentRepository.submitAssignment(id, submission)
-                .onSuccess { result ->
                 }
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)

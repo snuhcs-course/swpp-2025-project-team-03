@@ -187,14 +187,6 @@ class FakeApiService : ApiService {
         ),
     )
 
-    private val assignmentSubmissionResult = AssignmentSubmissionResult(
-        submissionId = 100,
-        score = 85,
-        totalQuestions = 10,
-        correctAnswers = 8,
-        feedback = emptyList(),
-    )
-
     var studentClassesResponse: List<ClassInfo> = listOf(
         ClassInfo(id = 1, name = "수학 A반"),
         ClassInfo(id = 2, name = "과학 B반"),
@@ -319,11 +311,6 @@ class FakeApiService : ApiService {
         } else {
             success(assignmentResultResponse)
         }
-
-    override suspend fun submitAssignment(
-        id: Int,
-        submission: AssignmentSubmissionRequest,
-    ): Response<ApiResponse<AssignmentSubmissionResult>> = success(assignmentSubmissionResult)
 
     override suspend fun checkS3Upload(assignmentId: Int): Response<ApiResponse<S3UploadStatus>> =
         success(

@@ -1587,61 +1587,6 @@ class AssignmentViewModelFlowTest {
     }
 
     @Test
-    fun submitAssignment_success_updatesResult() = runTest {
-        val vm = AssignmentViewModel(assignmentRepository)
-        val assignmentId = 25
-        val submission = com.example.voicetutor.data.network.AssignmentSubmissionRequest(
-            studentId = 1,
-            answers = listOf(
-                com.example.voicetutor.data.network.AnswerSubmission(questionId = 1, answer = "answer1", audioFile = null, confidence = null),
-                com.example.voicetutor.data.network.AnswerSubmission(questionId = 2, answer = "answer2", audioFile = null, confidence = null),
-            ),
-        )
-        val result = com.example.voicetutor.data.network.AssignmentSubmissionResult(
-            submissionId = 1,
-            score = 85,
-            totalQuestions = 2,
-            correctAnswers = 2,
-            feedback = emptyList(),
-        )
-        Mockito.`when`(assignmentRepository.submitAssignment(assignmentId, submission))
-            .thenReturn(Result.success(result))
-
-        vm.isLoading.test {
-            assert(!awaitItem()) // initial false
-            vm.submitAssignment(assignmentId, submission)
-            advanceUntilIdle()
-            // 로딩이 완료되었는지 확인
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        Mockito.verify(assignmentRepository, times(1)).submitAssignment(assignmentId, submission)
-    }
-
-    @Test
-    fun submitAssignment_failure_setsError() = runTest {
-        val vm = AssignmentViewModel(assignmentRepository)
-        val assignmentId = 25
-        val submission = com.example.voicetutor.data.network.AssignmentSubmissionRequest(
-            studentId = 1,
-            answers = listOf(
-                com.example.voicetutor.data.network.AnswerSubmission(questionId = 1, answer = "answer1", audioFile = null, confidence = null),
-            ),
-        )
-        Mockito.`when`(assignmentRepository.submitAssignment(assignmentId, submission))
-            .thenReturn(Result.failure(Exception("Submission failed")))
-
-        vm.error.test {
-            awaitItem() // initial null
-            vm.submitAssignment(assignmentId, submission)
-            advanceUntilIdle()
-            val error = awaitItem()
-            assert(error?.contains("Submission failed") == true)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
     fun clearError_clearsErrorState() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         Mockito.`when`(assignmentRepository.getAllAssignments(null, null, null))
