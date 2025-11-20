@@ -186,27 +186,6 @@ class AssignmentRepository @Inject constructor(
         }
     }
 
-    // removed: getAssignmentResults, getAssignmentQuestions
-
-    suspend fun submitAssignment(
-        id: Int,
-        submission: com.example.voicetutor.data.network.AssignmentSubmissionRequest,
-    ): Result<com.example.voicetutor.data.network.AssignmentSubmissionResult> {
-        return try {
-            val response = apiService.submitAssignment(id, submission)
-
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()?.data ?: throw Exception("No data"))
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // removed: saveAssignmentDraft
-
     suspend fun uploadPdfToS3(uploadUrl: String, pdfFile: File): Result<Boolean> {
         return try {
             println("=== AssignmentRepository.uploadPdfToS3 시작 ===")

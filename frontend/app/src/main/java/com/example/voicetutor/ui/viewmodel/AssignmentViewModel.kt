@@ -15,7 +15,6 @@ import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
 import com.example.voicetutor.data.models.StudentResult
 import com.example.voicetutor.data.models.Subject
-import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.CreateAssignmentRequest
 import com.example.voicetutor.data.network.S3UploadStatus
 import com.example.voicetutor.data.network.UpdateAssignmentRequest
@@ -612,8 +611,8 @@ class AssignmentViewModel @Inject constructor(
             }
         }
     }
-    
-    fun createAssignment(assignment: CreateAssignmentRequest) {
+
+    fun createAssignment(assignment: CreateAssignmentRequest, teacherId: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -639,8 +638,9 @@ class AssignmentViewModel @Inject constructor(
                         ),
                         grade = assignment.grade,
                     )
-                    
-                    loadAllAssignments()
+
+                    // Refresh assignments list with teacherId to filter correctly
+                    loadAllAssignments(teacherId = teacherId)
                 }
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
@@ -988,8 +988,8 @@ class AssignmentViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
-    
-    fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File, totalNumber: Int = 5) {
+
+    fun createAssignmentWithPdf(assignment: CreateAssignmentRequest, pdfFile: File, totalNumber: Int = 5, teacherId: String? = null) {
         println("=== AssignmentViewModel.createAssignmentWithPdf 시작 ===")
         println("PDF 파일: ${pdfFile.name}")
         
@@ -1047,8 +1047,8 @@ class AssignmentViewModel @Inject constructor(
                         
                         kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                             try {
-                                println("[별도 스레드] 과제 목록 새로고침")
-                                loadAllAssignments(silent = true)
+                                println("[별도 스레드] 과제 목록 새로고침 (teacherId: $teacherId)")
+                                loadAllAssignments(teacherId = teacherId, silent = true)
                                 println("[별도 스레드] 과제 목록 새로고침 완료")
                             } catch (e: Exception) {
                                 println("[별도 스레드] 과제 목록 새로고침 실패: ${e.message}")
@@ -1171,23 +1171,7 @@ class AssignmentViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
-    
-    fun submitAssignment(id: Int, submission: AssignmentSubmissionRequest) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            
-            assignmentRepository.submitAssignment(id, submission)
-                .onSuccess { result ->
-                }
-                .onFailure { exception ->
-                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
-                }
-            
-            _isLoading.value = false
-        }
-    }
-    
+
     fun loadRecentAssignment(studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true

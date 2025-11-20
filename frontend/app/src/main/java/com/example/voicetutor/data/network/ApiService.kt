@@ -15,10 +15,10 @@ interface ApiService {
 
     // Auth APIs
     @POST("auth/login/")
-    suspend fun login(@Body request: com.example.voicetutor.data.models.LoginRequest): Response<com.example.voicetutor.data.models.LoginResponse>
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @POST("auth/signup/")
-    suspend fun signup(@Body request: com.example.voicetutor.data.models.SignupRequest): Response<com.example.voicetutor.data.models.LoginResponse>
+    suspend fun signup(@Body request: SignupRequest): Response<LoginResponse>
 
     @POST("auth/logout/")
     suspend fun logout(): Response<ApiResponse<Unit>>
@@ -48,8 +48,6 @@ interface ApiService {
 
     @GET("assignments/{id}/results/")
     suspend fun getAssignmentResult(@Path("id") id: Int): Response<ApiResponse<AssignmentResultData>>
-
-    // removed: saveAssignmentDraft
 
     // Student APIs (Backend: /api/courses/students/)
     @GET("courses/students/")
@@ -160,15 +158,6 @@ interface ApiService {
         @Path("student_id") studentId: Int,
     ): Response<ApiResponse<com.example.voicetutor.data.models.CurriculumReportData>>
 
-    // Quiz/Assignment Submission APIs
-    @POST("assignments/{id}/submit/")
-    suspend fun submitAssignment(
-        @Path("id") id: Int,
-        @Body submission: AssignmentSubmissionRequest,
-    ): Response<ApiResponse<AssignmentSubmissionResult>>
-
-    // removed: getAssignmentQuestions
-
     @GET("assignments/{assignment_id}/s3-check/")
     suspend fun checkS3Upload(@Path("assignment_id") assignmentId: Int): Response<ApiResponse<S3UploadStatus>>
 
@@ -183,7 +172,6 @@ interface ApiService {
         @Query("teacherId") teacherId: String,
     ): Response<ApiResponse<com.example.voicetutor.data.models.DashboardStats>>
 
-    // AI/Quiz APIs removed
 }
 
 // Minimal response model for recent personal assignment lookup
@@ -253,34 +241,4 @@ data class SubjectUpdateRequest(
     val id: Int? = null,
     val name: String? = null,
     val code: String? = null,
-)
-
-data class AssignmentSubmissionRequest(
-    val studentId: Int,
-    val answers: List<AnswerSubmission>,
-)
-
-data class AnswerSubmission(
-    val questionId: Int,
-    val answer: String,
-    val audioFile: String?,
-    val confidence: Float?,
-)
-
-data class AssignmentSubmissionResult(
-    val submissionId: Int,
-    val score: Int,
-    val totalQuestions: Int,
-    val correctAnswers: Int,
-    val feedback: List<QuestionFeedback>,
-)
-
-data class QuestionFeedback(
-    val questionId: Int,
-    val isCorrect: Boolean,
-    val studentAnswer: String,
-    val correctAnswer: String,
-    val explanation: String?,
-    val confidence: Float,
-    val pronunciationScore: Float?,
 )

@@ -186,8 +186,6 @@ class AssignmentViewModelTest {
         val assignment = buildAssignment(1)
         Mockito.`when`(assignmentRepository.getAssignmentById(1))
             .thenReturn(Result.success(assignment))
-        Mockito.`when`(assignmentRepository.getAssignmentResult(1))
-            .thenReturn(Result.success(AssignmentResultData(submittedStudents = 5, totalStudents = 10, averageScore = 80.0, completionRate = 50.0)))
 
         val viewModel = AssignmentViewModel(assignmentRepository)
 
@@ -203,7 +201,6 @@ class AssignmentViewModelTest {
         }
 
         Mockito.verify(assignmentRepository, times(1)).getAssignmentById(1)
-        Mockito.verify(assignmentRepository, times(1)).getAssignmentResult(1)
     }
 
     @Test

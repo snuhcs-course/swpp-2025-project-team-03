@@ -3,12 +3,8 @@ package com.example.voicetutor.data.models
 import com.google.gson.annotations.SerializedName
 
 data class ProgressReportData(
-    // @SerializedName("period")
-    // val period: String,
     @SerializedName("totalStudents")
     val totalStudents: Int,
-    // @SerializedName("activeStudents")
-    // val activeStudents: Int,
     @SerializedName("totalAssignments")
     val totalAssignments: Int,
     @SerializedName("completedAssignments")
@@ -17,10 +13,6 @@ data class ProgressReportData(
     val averageScore: Double,
     @SerializedName("classBreakdown")
     val classBreakdown: List<ClassProgress>,
-    // @SerializedName("subjectBreakdown")
-    // val subjectBreakdown: List<SubjectBreakdown>,
-    // @SerializedName("weeklyActivity")
-    // val weeklyActivity: List<WeeklyActivity>
 )
 
 data class ClassProgress(
@@ -34,31 +26,7 @@ data class ClassProgress(
     val completedAssignments: Int,
     @SerializedName("totalAssignments")
     val totalAssignments: Int,
-    // @SerializedName("averageScore")
-    // val averageScore: Double
 )
-
-// data class SubjectBreakdown(
-//     @SerializedName("subject")
-//     val subject: String,
-//     @SerializedName("assignments")
-//     val assignments: Int,
-//     @SerializedName("averageScore")
-//     val averageScore: Double,
-//     @SerializedName("completionRate")
-//     val completionRate: Double
-// )
-
-// data class WeeklyActivity(
-//     @SerializedName("week")
-//     val week: String,
-//     @SerializedName("assignmentsCompleted")
-//     val assignmentsCompleted: Int,
-//     @SerializedName("newStudents")
-//     val newStudents: Int,
-//     @SerializedName("averageScore")
-//     val averageScore: Double
-// )
 
 data class QuestionResult(
     @SerializedName("questionNumber")
@@ -73,8 +41,6 @@ data class QuestionResult(
     val isCorrect: Boolean,
     @SerializedName("confidence")
     val confidence: Float,
-    // @SerializedName("questionType")
-    // val questionType: QuestionType
 )
 
 // 성취기준별 통계 데이터

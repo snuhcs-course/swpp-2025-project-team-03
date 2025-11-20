@@ -132,8 +132,8 @@ class CreateAssignmentScreenTest {
             }
         }
 
-        waitForText("반 선택")
-        composeRule.onAllNodesWithText("반 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        waitForText("수업 선택")
+        composeRule.onAllNodesWithText("수업 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
     @Test
@@ -348,7 +348,7 @@ class CreateAssignmentScreenTest {
 
         composeRule.waitUntil(timeoutMillis = 30_000) {
             try {
-                composeRule.onAllNodesWithText("반 선택", substring = true, useUnmergedTree = true)
+                composeRule.onAllNodesWithText("수업 선택", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
             } catch (e: Exception) {
                 false
@@ -356,7 +356,7 @@ class CreateAssignmentScreenTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onAllNodesWithText("반 선택", substring = true, useUnmergedTree = true)
+        composeRule.onAllNodesWithText("수업 선택", substring = true, useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
     }

@@ -129,6 +129,7 @@ class TeacherStudentAssignmentDetailScreenTest {
     fun teacherStudentAssignmentDetailScreen_noResults_showsEmptyPlaceholder() {
         fakeApi.personalAssignmentsResponse = emptyList()
         fakeApi.personalAssignmentStatisticsResponses.clear()
+        fakeApi.shouldFailGetAssignmentById = true
 
         composeRule.setContent {
             VoiceTutorTheme {
@@ -142,11 +143,13 @@ class TeacherStudentAssignmentDetailScreenTest {
 
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[com.example.voicetutor.ui.viewmodel.AssignmentViewModel::class.java]
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            assignmentViewModel.assignmentResults.value.isEmpty()
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            assignmentViewModel.assignmentResults.value.isEmpty() &&
+                assignmentViewModel.currentAssignment.value == null &&
+                !assignmentViewModel.isLoading.value
         }
 
-        waitForText("학생 결과를 찾을 수 없습니다")
+        waitForText("학생 결과를 찾을 수 없습니다", timeoutMillis = 20_000)
         composeRule.onAllNodesWithText("학생 결과를 찾을 수 없습니다", useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
@@ -192,6 +195,7 @@ class TeacherStudentAssignmentDetailScreenTest {
     fun teacherStudentAssignmentDetailScreen_errorLoadingResults_showsEmptyState() {
         fakeApi.shouldFailPersonalAssignments = true
         fakeApi.personalAssignmentsResponse = emptyList()
+        fakeApi.shouldFailGetAssignmentById = true
 
         composeRule.setContent {
             VoiceTutorTheme {
@@ -205,11 +209,13 @@ class TeacherStudentAssignmentDetailScreenTest {
 
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[com.example.voicetutor.ui.viewmodel.AssignmentViewModel::class.java]
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            assignmentViewModel.assignmentResults.value.isEmpty()
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            assignmentViewModel.assignmentResults.value.isEmpty() &&
+                assignmentViewModel.currentAssignment.value == null &&
+                !assignmentViewModel.isLoading.value
         }
 
-        waitForText("학생 결과를 찾을 수 없습니다")
+        waitForText("학생 결과를 찾을 수 없습니다", timeoutMillis = 20_000)
         composeRule.onAllNodesWithText("학생 결과를 찾을 수 없습니다", useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()

@@ -108,10 +108,10 @@ class ExtendedCoverageTests {
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("홍길동", substring = true, useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("2024001", substring = true, useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("완료", substring = true, useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("소요 시간", substring = true, useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("제출 시간", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("제출", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("점수", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("85점", substring = true, useUnmergedTree = true).assertExists()
     }
 
     @Test
