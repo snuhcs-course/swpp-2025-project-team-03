@@ -154,14 +154,14 @@ fun AllStudentsScreen(
                     }
                     Text(
                         text = "전체 학생",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = Gray800,
                         fontWeight = FontWeight.Medium,
                     )
                 }
                 Text(
                     text = "${totalStudents}명",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = Gray800,
                     fontWeight = FontWeight.Bold,
                 )
