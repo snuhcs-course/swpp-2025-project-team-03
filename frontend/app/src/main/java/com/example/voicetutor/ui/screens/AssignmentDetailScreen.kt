@@ -133,22 +133,67 @@ fun AssignmentDetailScreen(
                         fontWeight = FontWeight.SemiBold,
                         color = Gray800,
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     
-                    val subtitle = buildString {
+                    // Subject and Class chips
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         val subject = currentAssignment?.courseClass?.subject?.name
                         val className = currentAssignment?.courseClass?.name
-
-                        if (!subject.isNullOrBlank()) append(subject)
-                        if (!subject.isNullOrBlank() && !className.isNullOrBlank()) append(" · ")
-                        if (!className.isNullOrBlank()) append(className)
-                    }
-                    if (subtitle.isNotBlank()) {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Gray600,
-                        )
+                        
+                        if (!subject.isNullOrBlank()) {
+                            Surface(
+                                color = PrimaryIndigo.copy(alpha = 0.12f),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Book,
+                                        contentDescription = null,
+                                        tint = PrimaryIndigo,
+                                        modifier = Modifier.size(14.dp),
+                                    )
+                                    Text(
+                                        text = subject,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = PrimaryIndigo,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                            }
+                        }
+                        
+                        if (!className.isNullOrBlank()) {
+                            Surface(
+                                color = PrimaryEmerald.copy(alpha = 0.12f),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Group,
+                                        contentDescription = null,
+                                        tint = PrimaryEmerald,
+                                        modifier = Modifier.size(14.dp),
+                                    )
+                                    Text(
+                                        text = className,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = PrimaryEmerald,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 
