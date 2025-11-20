@@ -138,6 +138,23 @@ class ClassViewModel @Inject constructor(
         }
     }
 
+    fun deleteClass(classId: Int, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            classRepository.removeClassById(classId)
+                .onSuccess {
+                    _classes.value = _classes.value.filterNot { it.id == classId }
+                    onResult(true)
+                }
+                .onFailure { e ->
+                    _error.value = ErrorMessageMapper.getErrorMessage(e)
+                    onResult(false)
+                }
+            _isLoading.value = false
+        }
+    }
+
     fun clearError() {
         _error.value = null
     }

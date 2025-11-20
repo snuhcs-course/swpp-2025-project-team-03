@@ -120,4 +120,17 @@ class ClassRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun removeClassById(classId: Int): Result<Unit> {
+        return try {
+            val response = apiService.removeClassById(classId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.error ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
