@@ -796,15 +796,15 @@ fun CreateAssignmentScreen(
                             // 문제 개수를 정수로 파싱 (기본값 0)
                             val questionCountInt = questionCount.toIntOrNull() ?: 0
 
-                            val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest(
-                                title = assignmentTitle,
-                                subject = selectedSubject,
-                                class_id = selectedClassId!!,
-                                due_at = dueDateRequest,
-                                grade = selectedGrade,
-                                description = assignmentDescription,
-                                total_questions = questionCountInt,
-                            )
+                            val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+                                .title(assignmentTitle)
+                                .subject(selectedSubject)
+                                .classId(selectedClassId!!)
+                                .dueAt(dueDateRequest)
+                                .grade(selectedGrade)
+                                .description(assignmentDescription)
+                                .totalQuestions(questionCountInt)
+                                .build()
 
                             println("=== 과제 생성 디버그 ===")
                             println("Creating assignment: $createRequest")

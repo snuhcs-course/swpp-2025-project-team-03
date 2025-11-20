@@ -284,14 +284,14 @@ class AssignmentRepositoryTest {
     @Test
     fun createAssignment_success_returnsResponse() = runTest {
         val repo = AssignmentRepository(apiService)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "New Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = "Description",
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("New Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description("Description")
+            .build()
         val response = com.example.voicetutor.data.network.CreateAssignmentResponse(
             assignment_id = 50,
             material_id = 20,
@@ -309,14 +309,14 @@ class AssignmentRepositoryTest {
     @Test
     fun createAssignment_failure_returnsFailure() = runTest {
         val repo = AssignmentRepository(apiService)
-        val request = com.example.voicetutor.data.network.CreateAssignmentRequest(
-            title = "New Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = null,
-        )
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("New Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description(null)
+            .build()
         val errorBody = ResponseBody.create("application/json".toMediaType(), """{"success":false,"error":"Failed"}""")
         whenever(apiService.createAssignment(request)).thenReturn(Response.error(400, errorBody))
         val r = repo.createAssignment(request)

@@ -52,14 +52,14 @@ class ApiServiceModelsTest {
     @Test
     fun createAssignmentRequest_createsCorrectly() {
         // Given
-        val request = CreateAssignmentRequest(
-            title = "Math Assignment",
-            subject = "Mathematics",
-            class_id = 1,
-            due_at = "2025-12-31T23:59:00Z",
-            grade = "A",
-            description = "Test assignment",
-        )
+        val request = CreateAssignmentRequest.builder()
+            .title("Math Assignment")
+            .subject("Mathematics")
+            .classId(1)
+            .dueAt("2025-12-31T23:59:00Z")
+            .grade("A")
+            .description("Test assignment")
+            .build()
 
         // Then
         assertEquals("Math Assignment", request.title)
@@ -73,14 +73,14 @@ class ApiServiceModelsTest {
     @Test
     fun createAssignmentRequest_withNullOptionalFields_createsCorrectly() {
         // Given
-        val request = CreateAssignmentRequest(
-            title = "Simple Assignment",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31T23:59:00Z",
-            grade = null,
-            description = null,
-        )
+        val request = CreateAssignmentRequest.builder()
+            .title("Simple Assignment")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31T23:59:00Z")
+            .grade(null)
+            .description(null)
+            .build()
 
         // Then
         assertEquals("Simple Assignment", request.title)
@@ -169,12 +169,12 @@ class ApiServiceModelsTest {
     @Test
     fun createClassRequest_createsCorrectly() {
         // Given
-        val request = CreateClassRequest(
-            name = "Math Class",
-            description = "Advanced Mathematics",
-            subject_name = "Mathematics",
-            teacher_id = 1,
-        )
+        val request = CreateClassRequest.builder()
+            .name("Math Class")
+            .description("Advanced Mathematics")
+            .subjectName("Mathematics")
+            .teacherId(1)
+            .build()
 
         // Then
         assertEquals("Math Class", request.name)
@@ -186,12 +186,12 @@ class ApiServiceModelsTest {
     @Test
     fun createClassRequest_withNullDescription_createsCorrectly() {
         // Given
-        val request = CreateClassRequest(
-            name = "Math Class",
-            description = null,
-            subject_name = "Mathematics",
-            teacher_id = 1,
-        )
+        val request = CreateClassRequest.builder()
+            .name("Math Class")
+            .description(null)
+            .subjectName("Mathematics")
+            .teacherId(1)
+            .build()
 
         // Then
         assertNull(request.description)
@@ -200,14 +200,14 @@ class ApiServiceModelsTest {
     @Test
     fun updateAssignmentRequest_createsCorrectly() {
         // Given
-        val request = UpdateAssignmentRequest(
-            title = "Updated Title",
-            description = "Updated Description",
-            totalQuestions = 20,
-            dueAt = "2025-12-31T23:59:00Z",
-            grade = "B",
-            subject = SubjectUpdateRequest(id = 1, name = "Math", code = "MATH101"),
-        )
+        val request = UpdateAssignmentRequest.builder()
+            .title("Updated Title")
+            .description("Updated Description")
+            .totalQuestions(20)
+            .dueAt("2025-12-31T23:59:00Z")
+            .grade("B")
+            .subject(SubjectUpdateRequest(id = 1, name = "Math", code = "MATH101"))
+            .build()
 
         // Then
         assertEquals("Updated Title", request.title)
@@ -223,11 +223,13 @@ class ApiServiceModelsTest {
 
     @Test
     fun updateAssignmentRequest_withNullFields_createsCorrectly() {
-        // Given
-        val request = UpdateAssignmentRequest()
+        // Given - Builder requires at least one field, so we use a minimal field
+        val request = UpdateAssignmentRequest.builder()
+            .title("Minimal")
+            .build()
 
         // Then
-        assertNull(request.title)
+        assertEquals("Minimal", request.title)
         assertNull(request.description)
         assertNull(request.totalQuestions)
         assertNull(request.dueAt)

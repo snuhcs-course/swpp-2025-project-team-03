@@ -85,14 +85,14 @@ class TeacherAssignmentViewModelTest {
     fun createAssignmentWithPdf_success_triggersUploadAndQuestionGeneration() {
         runTest(mainRule.testDispatcher) {
             // given: 생성/업로드/질문생성이 모두 성공하도록 저장소 스텁
-            val request = CreateAssignmentRequest(
-                title = "t",
-                subject = "s",
-                class_id = 1,
-                due_at = "2025-12-31T23:59:00Z",
-                grade = "초6",
-                description = "d",
-            )
+            val request = CreateAssignmentRequest.builder()
+                .title("t")
+                .subject("s")
+                .classId(1)
+                .dueAt("2025-12-31T23:59:00Z")
+                .grade("초6")
+                .description("d")
+                .build()
             val createResp = CreateAssignmentResponse(
                 assignment_id = 10,
                 material_id = 20,
@@ -183,14 +183,14 @@ class TeacherAssignmentViewModelTest {
     fun createAssignmentWithPdf_failureAtCreate_setsError() {
         runTest(mainRule.testDispatcher) {
             // given: 과제 생성이 실패하도록 스텁
-            val request = CreateAssignmentRequest(
-                title = "t",
-                subject = "s",
-                class_id = 1,
-                due_at = "2025-12-31T23:59:00Z",
-                grade = "초6",
-                description = "d",
-            )
+            val request = CreateAssignmentRequest.builder()
+                .title("t")
+                .subject("s")
+                .classId(1)
+                .dueAt("2025-12-31T23:59:00Z")
+                .grade("초6")
+                .description("d")
+                .build()
             val pdf = File.createTempFile("test", ".pdf")
 
             whenever(repository.createAssignment(request))
@@ -219,14 +219,14 @@ class TeacherAssignmentViewModelTest {
     fun createAssignmentWithPdf_failureAtUpload_setsError() {
         runTest(mainRule.testDispatcher) {
             // given: 과제 생성은 성공하지만 S3 업로드가 실패
-            val request = CreateAssignmentRequest(
-                title = "t",
-                subject = "s",
-                class_id = 1,
-                due_at = "2025-12-31T23:59:00Z",
-                grade = "초6",
-                description = "d",
-            )
+            val request = CreateAssignmentRequest.builder()
+                .title("t")
+                .subject("s")
+                .classId(1)
+                .dueAt("2025-12-31T23:59:00Z")
+                .grade("초6")
+                .description("d")
+                .build()
             val createResp = CreateAssignmentResponse(
                 assignment_id = 10,
                 material_id = 20,

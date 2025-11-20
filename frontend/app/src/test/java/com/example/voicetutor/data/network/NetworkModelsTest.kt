@@ -70,14 +70,14 @@ class NetworkModelsTest {
     @Test
     fun createAssignmentRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val request = CreateAssignmentRequest(
-            title = "Assignment1",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = "Description",
-        )
+        val request = CreateAssignmentRequest.builder()
+            .title("Assignment1")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description("Description")
+            .build()
 
         // Assert
         assertEquals("Assignment1", request.title)
@@ -91,14 +91,14 @@ class NetworkModelsTest {
     @Test
     fun createAssignmentRequest_withNullOptionalFields_handlesNulls() {
         // Arrange
-        val request = CreateAssignmentRequest(
-            title = "Assignment1",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            description = null,
-        )
+        val request = CreateAssignmentRequest.builder()
+            .title("Assignment1")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description(null)
+            .build()
 
         // Assert
         assertNull(request.description)
@@ -184,12 +184,12 @@ class NetworkModelsTest {
     @Test
     fun createClassRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val request = CreateClassRequest(
-            name = "Class1",
-            description = "Description",
-            subject_name = "Math",
-            teacher_id = 1,
-        )
+        val request = CreateClassRequest.builder()
+            .name("Class1")
+            .description("Description")
+            .subjectName("Math")
+            .teacherId(1)
+            .build()
 
         // Assert
         assertEquals("Class1", request.name)
@@ -201,12 +201,12 @@ class NetworkModelsTest {
     @Test
     fun createClassRequest_withNullDescription_handlesNull() {
         // Arrange
-        val request = CreateClassRequest(
-            name = "Class1",
-            description = null,
-            subject_name = "Math",
-            teacher_id = 1,
-        )
+        val request = CreateClassRequest.builder()
+            .name("Class1")
+            .description(null)
+            .subjectName("Math")
+            .teacherId(1)
+            .build()
 
         // Assert
         assertNull(request.description)
@@ -215,14 +215,14 @@ class NetworkModelsTest {
     @Test
     fun updateAssignmentRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val request = UpdateAssignmentRequest(
-            title = "Updated",
-            description = "New description",
-            totalQuestions = 10,
-            dueAt = "2025-12-31T00:00:00Z",
-            grade = "A",
-            subject = SubjectUpdateRequest(id = 2, name = "Math", code = "MATH"),
-        )
+        val request = UpdateAssignmentRequest.builder()
+            .title("Updated")
+            .description("New description")
+            .totalQuestions(10)
+            .dueAt("2025-12-31T00:00:00Z")
+            .grade("A")
+            .subject(SubjectUpdateRequest(id = 2, name = "Math", code = "MATH"))
+            .build()
 
         // Assert
         assertEquals("Updated", request.title)
@@ -235,18 +235,13 @@ class NetworkModelsTest {
 
     @Test
     fun updateAssignmentRequest_withNullFields_handlesNulls() {
-        // Arrange
-        val request = UpdateAssignmentRequest(
-            title = null,
-            description = null,
-            totalQuestions = null,
-            dueAt = null,
-            grade = null,
-            subject = null,
-        )
+        // Arrange - Builder requires at least one field, so we use a minimal field
+        val request = UpdateAssignmentRequest.builder()
+            .title("Minimal")
+            .build()
 
         // Assert
-        assertNull(request.title)
+        assertEquals("Minimal", request.title)
         assertNull(request.description)
         assertNull(request.totalQuestions)
         assertNull(request.dueAt)

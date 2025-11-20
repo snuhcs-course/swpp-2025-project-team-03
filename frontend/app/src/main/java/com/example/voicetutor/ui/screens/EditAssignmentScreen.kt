@@ -502,20 +502,22 @@ fun EditAssignmentScreen(
                         return@VTButton
                     }
 
-                    val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest(
-                        title = title,
-                        description = description,
-                        totalQuestions = currentAssignment?.totalQuestions,
-                        dueAt = dueDateRequest,
-                        grade = currentAssignment?.grade,
-                        subject = currentAssignment?.courseClass?.subject?.let {
-                            com.example.voicetutor.data.network.SubjectUpdateRequest(
-                                id = it.id,
-                                name = it.name,
-                                code = it.code,
-                            )
-                        },
-                    )
+                    val updateRequest = com.example.voicetutor.data.network.UpdateAssignmentRequest.builder()
+                        .title(title)
+                        .description(description)
+                        .totalQuestions(currentAssignment?.totalQuestions)
+                        .dueAt(dueDateRequest)
+                        .grade(currentAssignment?.grade)
+                        .subject(
+                            currentAssignment?.courseClass?.subject?.let {
+                                com.example.voicetutor.data.network.SubjectUpdateRequest(
+                                    id = it.id,
+                                    name = it.name,
+                                    code = it.code,
+                                )
+                            },
+                        )
+                        .build()
 
                     viewModel.updateAssignment(assignmentIdToUpdate, updateRequest)
                     Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
