@@ -133,6 +133,7 @@ class TeacherStudentsScreenTest {
         fakeApi.classStudentsErrorMessage = "학생 목록 로드 실패"
         fakeApi.shouldFailAllStudents = true
         fakeApi.allStudentsErrorMessage = "전체 학생 로드 실패"
+        fakeApi.allStudentsResponse = emptyList() // Ensure empty list on error
         fakeApi.shouldFailClassStudentsStatistics = true
         fakeApi.classStudentsStatisticsErrorMessage = "통계 로드 실패"
 
@@ -142,7 +143,18 @@ class TeacherStudentsScreenTest {
             }
         }
 
-        waitForText("학생이 없습니다")
+        // Wait for loading to complete and error state to be displayed
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule
+                .onAllNodesWithText("학생이 없습니다", useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty() &&
+                composeRule
+                    .onAllNodesWithText("0%", useUnmergedTree = true)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+        }
+
         composeRule.onAllNodesWithText("학생이 없습니다", useUnmergedTree = true).onFirst().assertIsDisplayed()
         composeRule.onAllNodesWithText("0%", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }

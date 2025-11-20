@@ -194,7 +194,7 @@ class AdditionalScreenTests {
     fun allStudentsScreen_renders() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                AllStudentsScreen()
+                AllStudentsScreen("1")
             }
         }
         composeTestRule.waitForIdle()
