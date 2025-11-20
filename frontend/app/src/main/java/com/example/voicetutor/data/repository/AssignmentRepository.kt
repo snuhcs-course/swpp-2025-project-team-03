@@ -284,16 +284,20 @@ class AssignmentRepository @Inject constructor(
                     total_number = totalNumber,
                 ),
             )
-            if (response.isSuccessful && response.body()?.success == true) {
-                println("AssignmentRepository - Question generation request accepted")
+            // 백엔드는 ApiResponse 형식이 아닌 직접 JSON 응답을 반환함
+            // 200 OK이면 성공으로 간주
+            if (response.isSuccessful) {
+                println("AssignmentRepository - Question generation completed successfully")
                 Result.success(Unit)
             } else {
-                val err = response.body()?.error ?: "Unknown error"
-                println("AssignmentRepository - Question generation failed: $err")
-                Result.failure(Exception(err))
+                // 에러 응답 처리
+                val errorMessage = response.message() ?: "HTTP ${response.code()}"
+                println("AssignmentRepository - Question generation failed: $errorMessage")
+                Result.failure(Exception(errorMessage))
             }
         } catch (e: Exception) {
             println("AssignmentRepository - Question generation exception: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }

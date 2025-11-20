@@ -469,8 +469,10 @@ class AssignmentRepositoryTest {
             material_id = 10,
             total_number = 5,
         )
+        // 백엔드는 ApiResponse 형식이 아닌 직접 JSON 응답을 반환함
+        val responseBody = ResponseBody.create("application/json".toMediaType(), """{"assignment_id":1,"material_id":10}""")
         whenever(apiService.createQuestions(request)).thenReturn(
-            Response.success(ApiResponse(success = true, data = Unit, message = null, error = null)),
+            Response.success(200, responseBody),
         )
         val r = repo.createQuestionsAfterUpload(1, 10, 5)
         assert(r.isSuccess)

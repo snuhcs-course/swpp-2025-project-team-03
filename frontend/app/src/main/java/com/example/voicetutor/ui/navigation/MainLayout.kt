@@ -23,6 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -34,6 +37,7 @@ import com.example.voicetutor.ui.components.VTButton
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.MainLayoutViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val MAIN_LAYOUT_TAG = "MainLayout"
 
@@ -142,31 +146,104 @@ fun MainLayout(
     val isGeneratingQuestions by assignmentViewModel.isGeneratingQuestions.collectAsStateWithLifecycle()
     val generatingAssignmentTitle by assignmentViewModel.generatingAssignmentTitle.collectAsStateWithLifecycle()
     val questionGenerationSuccess by assignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
+    val questionGenerationCancelled by assignmentViewModel.questionGenerationCancelled.collectAsStateWithLifecycle()
 
     var lastGeneratingAssignmentTitle by remember { mutableStateOf<String?>(null) }
-    var showGenerationCompletedToast by remember { mutableStateOf(false) }
-    var generationCompletedMessage by remember { mutableStateOf<String?>(null) }
+    
+    var showAssignmentCreatedToast by remember { mutableStateOf(false) }
+    var showCancelledToast by remember { mutableStateOf(false) }
+    
+    // 메시지 표시 여부를 추적 (한 번만 표시하도록)
+    var hasShownSuccessMessage by remember { mutableStateOf(false) }
+    var hasShownCancelledMessage by remember { mutableStateOf(false) }
+    
+    // 이전 isGeneratingQuestions 상태 추적
+    var previousIsGeneratingQuestions by remember { mutableStateOf(false) }
 
     LaunchedEffect(generatingAssignmentTitle) {
         if (generatingAssignmentTitle != null) {
             lastGeneratingAssignmentTitle = generatingAssignmentTitle
         }
     }
-
-    LaunchedEffect(questionGenerationSuccess) {
-        if (questionGenerationSuccess) {
-            val title = lastGeneratingAssignmentTitle
-            generationCompletedMessage = if (title != null) {
-                "$title: 질문 생성이 완료되었어요!"
-            } else {
-                "질문 생성이 완료되었어요!"
+    
+    // 질문 생성 중 모달이 사라졌을 때 완료 여부 확인
+    LaunchedEffect(isGeneratingQuestions) {
+        // true에서 false로 변경되었고, 이전에 생성 중이었던 경우
+        if (!isGeneratingQuestions && previousIsGeneratingQuestions) {
+            println("MainLayout - 질문 생성 중 모달이 사라짐, 완료 상태 확인")
+            // 질문 생성이 완료되었는지 확인
+            if (questionGenerationSuccess && !hasShownSuccessMessage) {
+                println("MainLayout - 질문 생성 완료 감지, 알림 표시")
+                hasShownSuccessMessage = true
+                showAssignmentCreatedToast = true
+                delay(3000)
+                showAssignmentCreatedToast = false
+                assignmentViewModel.clearQuestionGenerationStatus()
+                lastGeneratingAssignmentTitle = null
+                delay(1000)
+                hasShownSuccessMessage = false
+            } else if (!questionGenerationCancelled && !hasShownSuccessMessage) {
+                // 완료도 취소도 아닌 경우 (에러 또는 기타 상황)
+                println("MainLayout - 질문 생성 중 모달이 사라졌지만 완료/취소 상태가 아님")
             }
-            showGenerationCompletedToast = true
+        }
+        previousIsGeneratingQuestions = isGeneratingQuestions
+    }
+    
+    // 과제 생성 성공 메시지 (질문 생성 완료 시)
+    LaunchedEffect(questionGenerationSuccess) {
+        // true가 되고 아직 메시지를 표시하지 않았을 때만 실행
+        if (questionGenerationSuccess && !hasShownSuccessMessage) {
+            println("MainLayout - questionGenerationSuccess가 true로 변경됨, 알림 표시")
+            hasShownSuccessMessage = true
+            showAssignmentCreatedToast = true
             delay(3000)
-            showGenerationCompletedToast = false
-            generationCompletedMessage = null
-            lastGeneratingAssignmentTitle = null
+            showAssignmentCreatedToast = false
             assignmentViewModel.clearQuestionGenerationStatus()
+            lastGeneratingAssignmentTitle = null
+            // 메시지 표시 후 잠시 후 상태 리셋 (다음 생성 시 다시 표시되도록)
+            delay(1000)
+            hasShownSuccessMessage = false
+        }
+    }
+    
+    // 취소 메시지
+    LaunchedEffect(questionGenerationCancelled) {
+        // true가 되고 아직 메시지를 표시하지 않았을 때만 실행
+        if (questionGenerationCancelled && !hasShownCancelledMessage) {
+            hasShownCancelledMessage = true
+            showCancelledToast = true
+            delay(3000)
+            showCancelledToast = false
+            assignmentViewModel.clearQuestionGenerationStatus()
+            // 메시지 표시 후 잠시 후 상태 리셋 (다음 취소 시 다시 표시되도록)
+            delay(1000)
+            hasShownCancelledMessage = false
+        }
+    }
+    
+    // 화면이 다시 포커스될 때 이미 완료된 상태인지 확인
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+    DisposableEffect(lifecycleOwner, questionGenerationSuccess) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && questionGenerationSuccess && !hasShownSuccessMessage) {
+                // 화면이 다시 포커스될 때 이미 완료된 상태면 메시지 표시
+                hasShownSuccessMessage = true
+                showAssignmentCreatedToast = true
+                scope.launch {
+                    delay(3000)
+                    showAssignmentCreatedToast = false
+                    assignmentViewModel.clearQuestionGenerationStatus()
+                    lastGeneratingAssignmentTitle = null
+                    delay(1000)
+                    hasShownSuccessMessage = false
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -486,12 +563,13 @@ fun MainLayout(
             }
         }
 
-        if (showGenerationCompletedToast && generationCompletedMessage != null) {
+        // 과제 생성 성공 메시지 (질문 생성 완료 시)
+        if (showAssignmentCreatedToast) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.CenterEnd,
+                contentAlignment = Alignment.CenterEnd
             ) {
                 Surface(
                     modifier = Modifier
@@ -500,26 +578,67 @@ fun MainLayout(
                         .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     color = Color.White,
-                    tonalElevation = 8.dp,
+                    tonalElevation = 8.dp
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.CheckCircle,
-                            contentDescription = "질문 생성 완료",
-                            tint = PrimaryIndigo,
+                            contentDescription = "과제 생성 완료",
+                            tint = PrimaryIndigo
                         )
                         Text(
-                            text = generationCompletedMessage ?: "",
+                            text = "과제가 성공적으로 생성되었습니다!",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Gray800,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(max = 220.dp),
+                            modifier = Modifier.widthIn(max = 220.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        // 취소 메시지
+        if (showCancelledToast) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .shadow(8.dp, RoundedCornerShape(12.dp))
+                        .wrapContentWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White,
+                    tonalElevation = 8.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Cancel,
+                            contentDescription = "과제 생성 취소",
+                            tint = Gray600
+                        )
+                        Text(
+                            text = "과제 생성이 취소되었습니다!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray800,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 220.dp)
                         )
                     }
                 }
