@@ -223,18 +223,20 @@ fun StudentDashboardScreen(
                             Text("전체")
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
                                     .background(
-                                        color = PrimaryIndigo,
-                                        shape = androidx.compose.foundation.shape.CircleShape,
-                                    ),
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text = "$allAssignmentsCount",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -259,18 +261,20 @@ fun StudentDashboardScreen(
                             Text("시작 안함")
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
                                     .background(
-                                        color = PrimaryIndigo,
-                                        shape = androidx.compose.foundation.shape.CircleShape,
-                                    ),
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text = "$notStartedCount",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -288,18 +292,20 @@ fun StudentDashboardScreen(
                             Text("진행 중")
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .height(20.dp)
+                                    .widthIn(min = 20.dp)
                                     .background(
-                                        color = PrimaryIndigo,
-                                        shape = androidx.compose.foundation.shape.CircleShape,
-                                    ),
+                                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    )
+                                    .padding(horizontal = 6.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text = "$inProgressCount",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
