@@ -170,8 +170,7 @@ tasks.withType<Test> {
     configure<JacocoTaskExtension> {
         isIncludeNoLocationClasses = true
         excludes = listOf("jdk.internal.*")
-        // Ensure execution data is generated in a predictable location
-        destinationFile = file("${layout.buildDirectory.get().asFile}/jacoco/$name.exec")
+        // JaCoCo automatically generates execution data files in build/jacoco/${taskName}.exec
     }
 }
 
