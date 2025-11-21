@@ -235,6 +235,7 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             "**/*_Provide*Factory.*",
             "**/dagger/hilt/internal/aggregatedroot/codegen/**",
             "**/hilt_aggregated_deps/**",
+            "**/voicetutor/di/**",
         )
 
     // Android projects use multiple class output directories
