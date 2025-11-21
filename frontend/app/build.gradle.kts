@@ -142,6 +142,7 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("app.cash.turbine:turbine:1.0.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -157,6 +158,7 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    testImplementation(kotlin("test"))
 }
 
 // JaCoCo configuration
@@ -169,8 +171,7 @@ tasks.withType<Test> {
     configure<JacocoTaskExtension> {
         isIncludeNoLocationClasses = true
         excludes = listOf("jdk.internal.*")
-        // Ensure execution data is generated in a predictable location
-        destinationFile = file("${layout.buildDirectory.get().asFile}/jacoco/$name.exec")
+        // JaCoCo automatically generates execution data files in build/jacoco/${taskName}.exec
     }
 }
 
@@ -233,6 +234,9 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             "**/*_Factory.*",
             "**/*_MembersInjector.*",
             "**/*_Provide*Factory.*",
+            "**/dagger/hilt/internal/aggregatedroot/codegen/**",
+            "**/hilt_aggregated_deps/**",
+            "**/voicetutor/di/**",
         )
 
     // Android projects use multiple class output directories

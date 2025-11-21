@@ -376,4 +376,193 @@ class ClassRepositoryTest {
         assert(result.isFailure)
         assert(result.exceptionOrNull()?.message == "Network error")
     }
+
+    @Test
+    fun removeStudentFromClass_success_returnsUnit() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val apiResponse = ApiResponse(
+            success = true,
+            data = Unit,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.removeStudentFromClass(1, 1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.removeStudentFromClass(1, 1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == Unit)
+    }
+
+    @Test
+    fun removeStudentFromClass_apiFailure_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Failed to remove"}""")
+        whenever(apiService.removeStudentFromClass(1, 1))
+            .thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.removeStudentFromClass(1, 1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun removeStudentFromClass_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        whenever(apiService.removeStudentFromClass(1, 1))
+            .thenThrow(RuntimeException("Network error"))
+
+        // Act
+        val result = repo.removeStudentFromClass(1, 1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun removeClassById_success_returnsUnit() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val apiResponse = ApiResponse(
+            success = true,
+            data = Unit,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.removeClassById(1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.removeClassById(1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == Unit)
+    }
+
+    @Test
+    fun removeClassById_apiFailure_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Failed to remove class"}""")
+        whenever(apiService.removeClassById(1))
+            .thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.removeClassById(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun removeClassById_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        whenever(apiService.removeClassById(1))
+            .thenThrow(RuntimeException("Network error"))
+
+        // Act
+        val result = repo.removeClassById(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getClassStudentsStatistics_success_returnsStatistics() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val statistics = ClassStudentsStatistics(
+            overallCompletionRate = 0.75f,
+            students = listOf(
+                StudentStatisticsItem(
+                    studentId = 1,
+                    averageScore = 88.0f,
+                    completionRate = 0.9f,
+                    totalAssignments = 10,
+                    completedAssignments = 9,
+                ),
+            ),
+        )
+        val apiResponse = ApiResponse(
+            success = true,
+            data = statistics,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == statistics)
+    }
+
+    @Test
+    fun getClassStudentsStatistics_noData_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val apiResponse = ApiResponse<ClassStudentsStatistics>(
+            success = true,
+            data = null,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "No data")
+    }
+
+    @Test
+    fun getClassStudentsStatistics_apiFailure_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Failed"}""")
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun getClassStudentsStatistics_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenThrow(RuntimeException("Network error"))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "Network error")
+    }
 }

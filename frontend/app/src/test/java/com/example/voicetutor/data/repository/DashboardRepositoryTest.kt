@@ -142,4 +142,44 @@ class DashboardRepositoryTest {
         assert(result.getOrNull()?.totalAssignments == 0)
         assert(result.getOrNull()?.totalStudents == 0)
     }
+
+    @Test
+    fun getDashboardStats_successFalse_returnsFailure() = runTest {
+        // Arrange
+        val repo = DashboardRepository(apiService)
+        val apiResponse = ApiResponse<DashboardStats>(
+            success = false,
+            data = null,
+            message = null,
+            error = "Failed to load stats",
+        )
+        whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getDashboardStats("1")
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Failed to load stats") == true)
+    }
+
+    @Test
+    fun getDashboardStats_successFalse_noError_returnsDefaultMessage() = runTest {
+        // Arrange
+        val repo = DashboardRepository(apiService)
+        val apiResponse = ApiResponse<DashboardStats>(
+            success = false,
+            data = null,
+            message = null,
+            error = null,
+        )
+        whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getDashboardStats("1")
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("통계 데이터를 가져오는데 실패했습니다") == true)
+    }
 }

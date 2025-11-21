@@ -172,4 +172,76 @@ class AuthExceptionsTest {
         // Then
         assertTrue(exception is Exception)
     }
+
+    @Test
+    fun deleteAccountExceptionUnauthorized_hasMessage() {
+        // Given
+        val message = "인증이 필요합니다"
+
+        // When
+        val exception = DeleteAccountException.Unauthorized(message)
+
+        // Then
+        assertEquals(message, exception.message)
+    }
+
+    @Test
+    fun deleteAccountExceptionServer_hasMessage() {
+        // Given
+        val message = "서버 오류가 발생했습니다"
+
+        // When
+        val exception = DeleteAccountException.Server(message)
+
+        // Then
+        assertEquals(message, exception.message)
+    }
+
+    @Test
+    fun deleteAccountExceptionNetwork_hasMessageAndCause() {
+        // Given
+        val message = "네트워크 오류"
+        val cause = java.io.IOException("Connection failed")
+
+        // When
+        val exception = DeleteAccountException.Network(message, cause)
+
+        // Then
+        assertEquals(message, exception.message)
+        assertEquals(cause, exception.cause)
+    }
+
+    @Test
+    fun deleteAccountExceptionNetwork_withoutCause_hasMessage() {
+        // Given
+        val message = "네트워크 오류"
+
+        // When
+        val exception = DeleteAccountException.Network(message)
+
+        // Then
+        assertEquals(message, exception.message)
+        assertNull(exception.cause)
+    }
+
+    @Test
+    fun deleteAccountExceptionUnknown_hasMessage() {
+        // Given
+        val message = "알 수 없는 오류"
+
+        // When
+        val exception = DeleteAccountException.Unknown(message)
+
+        // Then
+        assertEquals(message, exception.message)
+    }
+
+    @Test
+    fun deleteAccountException_isException() {
+        // Given
+        val exception = DeleteAccountException.Unauthorized("Test")
+
+        // Then
+        assertTrue(exception is Exception)
+    }
 }

@@ -3,9 +3,12 @@ package com.example.voicetutor.utils
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
+import org.mockito.MockedStatic
+import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
 
 @RunWith(MockitoJUnitRunner::class)
@@ -25,10 +28,6 @@ class PermissionUtilsTest {
         assert(permissions.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE))
         assert(permissions.contains(Manifest.permission.READ_EXTERNAL_STORAGE))
     }
-
-    // Note: Android framework-dependent tests are skipped because ContextCompat.checkSelfPermission
-    // requires Robolectric or Android instrumentation tests. Pure unit tests cannot mock static Android methods.
-    // These tests should be moved to androidTest if needed.
 
     @Test
     fun isPermissionGranted_allGranted_returnsTrue() {
@@ -94,5 +93,128 @@ class PermissionUtilsTest {
     fun RECORD_AUDIO_PERMISSION_REQUEST_CODE_hasCorrectValue() {
         // Assert
         assert(PermissionUtils.RECORD_AUDIO_PERMISSION_REQUEST_CODE == 1001)
+    }
+
+    @Test
+    fun hasAudioPermission_whenGranted_returnsTrue() {
+        // Arrange
+        Mockito.mockStatic(ContextCompat::class.java).use { mockedStatic ->
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO,
+                )
+            }.thenReturn(PackageManager.PERMISSION_GRANTED)
+
+            // Act
+            val result = PermissionUtils.hasAudioPermission(context)
+
+            // Assert
+            assert(result == true)
+        }
+    }
+
+    @Test
+    fun hasAudioPermission_whenDenied_returnsFalse() {
+        // Arrange
+        Mockito.mockStatic(ContextCompat::class.java).use { mockedStatic ->
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO,
+                )
+            }.thenReturn(PackageManager.PERMISSION_DENIED)
+
+            // Act
+            val result = PermissionUtils.hasAudioPermission(context)
+
+            // Assert
+            assert(result == false)
+        }
+    }
+
+    @Test
+    fun hasAllPermissions_whenAllGranted_returnsTrue() {
+        // Arrange
+        Mockito.mockStatic(ContextCompat::class.java).use { mockedStatic ->
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO,
+                )
+            }.thenReturn(PackageManager.PERMISSION_GRANTED)
+
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                )
+            }.thenReturn(PackageManager.PERMISSION_GRANTED)
+
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                )
+            }.thenReturn(PackageManager.PERMISSION_GRANTED)
+
+            // Act
+            val result = PermissionUtils.hasAllPermissions(context)
+
+            // Assert
+            assert(result == true)
+        }
+    }
+
+    @Test
+    fun hasAllPermissions_whenOneDenied_returnsFalse() {
+        // Arrange
+        Mockito.mockStatic(ContextCompat::class.java).use { mockedStatic ->
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO,
+                )
+            }.thenReturn(PackageManager.PERMISSION_GRANTED)
+
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                )
+            }.thenReturn(PackageManager.PERMISSION_DENIED)
+
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                )
+            }.thenReturn(PackageManager.PERMISSION_GRANTED)
+
+            // Act
+            val result = PermissionUtils.hasAllPermissions(context)
+
+            // Assert
+            assert(result == false)
+        }
+    }
+
+    @Test
+    fun hasAllPermissions_whenAllDenied_returnsFalse() {
+        // Arrange
+        Mockito.mockStatic(ContextCompat::class.java).use { mockedStatic ->
+            mockedStatic.`when`<Int> {
+                ContextCompat.checkSelfPermission(
+                    Mockito.any(Context::class.java),
+                    Mockito.anyString(),
+                )
+            }.thenReturn(PackageManager.PERMISSION_DENIED)
+
+            // Act
+            val result = PermissionUtils.hasAllPermissions(context)
+
+            // Assert
+            assert(result == false)
+        }
     }
 }

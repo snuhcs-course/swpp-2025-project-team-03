@@ -367,4 +367,162 @@ class AuthRepositoryTest {
         val exception = r.exceptionOrNull()
         assert(exception is SignupException.Unknown || exception?.message?.contains("알 수 없는") == true)
     }
+
+    @Test
+    fun deleteAccount_success_returnsUnit() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val apiResponse = com.example.voicetutor.data.network.ApiResponse<Unit>(
+            success = true,
+            data = Unit,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.deleteAccount()).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == Unit)
+    }
+
+    @Test
+    fun deleteAccount_successFalse_returnsFailure() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val apiResponse = com.example.voicetutor.data.network.ApiResponse<Unit>(
+            success = false,
+            data = null,
+            message = null,
+            error = "Failed to delete",
+        )
+        whenever(apiService.deleteAccount()).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Failed to delete") == true)
+    }
+
+    @Test
+    fun deleteAccount_unauthorized_returnsUnauthorizedException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val json = """{"success":false,"error":"Unauthorized"}"""
+        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        whenever(apiService.deleteAccount()).thenReturn(Response.error(401, errorBody))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Unauthorized ||
+                exception?.message?.contains("다시 로그인") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_forbidden_returnsUnauthorizedException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val json = """{"success":false,"error":"Forbidden"}"""
+        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        whenever(apiService.deleteAccount()).thenReturn(Response.error(403, errorBody))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Unauthorized ||
+                exception?.message?.contains("다시 로그인") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_serverError_returnsServerException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val json = """{"success":false,"error":"Server error"}"""
+        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        whenever(apiService.deleteAccount()).thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Server ||
+                exception?.message?.contains("서버에서 오류가 발생했습니다") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_networkException_returnsNetworkException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        org.mockito.kotlin.doAnswer { throw java.net.UnknownHostException("Network error") }
+            .whenever(apiService).deleteAccount()
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Network ||
+                exception?.message?.contains("네트워크") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_genericException_returnsUnknownException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        org.mockito.kotlin.doAnswer { throw RuntimeException("Generic error") }
+            .whenever(apiService).deleteAccount()
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Unknown ||
+                exception?.message?.contains("알 수 없는") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_successFalse_noError_returnsDefaultMessage() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val apiResponse = com.example.voicetutor.data.network.ApiResponse<Unit>(
+            success = false,
+            data = null,
+            message = null,
+            error = null,
+        )
+        whenever(apiService.deleteAccount()).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("계정 삭제에 실패했습니다") == true)
+    }
 }
