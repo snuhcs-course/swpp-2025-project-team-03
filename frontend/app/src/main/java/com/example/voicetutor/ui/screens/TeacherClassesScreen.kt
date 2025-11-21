@@ -40,8 +40,8 @@ data class ClassRoom(
 fun TeacherClassesScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
-    teacherId: String? = null, // 파라미터로 받거나 현재 로그인한 사용자 ID 사용
-    showCreatedToast: Boolean = false, // 수업 생성 후 Toast 표시 플래그
+    teacherId: String? = null,
+    showCreatedToast: Boolean = false,
     onNavigateToClassDetail: (String, Int) -> Unit = { _, _ -> },
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
@@ -58,7 +58,6 @@ fun TeacherClassesScreen(
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Load classes and assignments on first composition
     LaunchedEffect(currentUser?.id) {
         val actualTeacherId = teacherId ?: currentUser?.id?.toString()
 
@@ -67,7 +66,6 @@ fun TeacherClassesScreen(
             return@LaunchedEffect
         }
 
-        // 이미 assignments가 있으면 재호출하지 않음
         if (assignments.isEmpty()) {
             println("TeacherClassesScreen - Loading assignments for teacher ID: $actualTeacherId")
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
@@ -75,7 +73,6 @@ fun TeacherClassesScreen(
             println("TeacherClassesScreen - Already have ${assignments.size} assignments from login")
         }
 
-        // 이미 classes가 있으면 재호출하지 않음
         if (classes.isEmpty()) {
             println("TeacherClassesScreen - Loading classes for teacher ID: $actualTeacherId")
             classViewModel.loadClasses(actualTeacherId)
@@ -84,30 +81,23 @@ fun TeacherClassesScreen(
         }
     }
 
-    // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
             classViewModel.clearError()
         }
     }
 
-    // 수업 생성 후 Toast 표시 및 목록 새로고침
     LaunchedEffect(showCreatedToast, currentUser?.id) {
         if (showCreatedToast && currentUser?.id != null) {
             val actualTeacherId = teacherId ?: currentUser?.id?.toString()
             if (actualTeacherId != null) {
-                // Toast 메시지 표시
                 Toast.makeText(context, "수업이 생성되었습니다.", Toast.LENGTH_SHORT).show()
-                // 수업 목록 새로고침
                 classViewModel.loadClasses(actualTeacherId)
             }
         }
     }
 
-    // Convert ClassData to ClassRoom for UI
     val classRooms = classes.map { classData ->
-        // Calculate assignment count from actual data
         val classAssignments = assignments.filter { it.courseClass.id == classData.id }
         val assignmentCount = classAssignments.size
 
@@ -118,7 +108,7 @@ fun TeacherClassesScreen(
             description = classData.description,
             studentCount = classData.actualStudentCount,
             assignmentCount = assignmentCount,
-            completionRate = 0f, // Not used in UI, kept for data model compatibility
+            completionRate = 0f,
             color = when (classData.id % 4) {
                 0 -> PrimaryIndigo
                 1 -> Success
@@ -134,7 +124,6 @@ fun TeacherClassesScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Header Banner
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,7 +149,6 @@ fun TeacherClassesScreen(
             }
         }
 
-        // Action section with button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -193,11 +181,9 @@ fun TeacherClassesScreen(
             }
         }
 
-        // Classes list
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Loading indicator
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -326,7 +312,6 @@ fun ClassCard(
                 }
             }
 
-            // Stats row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -346,7 +331,6 @@ fun ClassCard(
                 )
             }
 
-            // Action buttons
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
