@@ -310,7 +310,6 @@ class AssignmentViewModel @Inject constructor(
                             val submittedAssignments = assignmentStatsList.filter { (personalAssignment, stats) ->
                                 val assignmentTotalQuestions = personalAssignment.assignment.totalQuestions
                                 val solvedNum = personalAssignment.solvedNum
-                                val hasStarted = !personalAssignment.startedAt.isNullOrEmpty()
                                 
                                 val isCompleted = when {
                                     personalAssignment.status == PersonalAssignmentStatus.SUBMITTED -> {
@@ -321,16 +320,16 @@ class AssignmentViewModel @Inject constructor(
                                         println("AssignmentViewModel - PA ${personalAssignment.id} completed by submitted_at: ${personalAssignment.submittedAt}")
                                         true
                                     }
-                                    hasStarted && assignmentTotalQuestions > 0 && solvedNum >= assignmentTotalQuestions -> {
-                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by solved_num: started=$hasStarted, solved=$solvedNum, total=$assignmentTotalQuestions")
+                                    !personalAssignment.startedAt.isNullOrEmpty() && assignmentTotalQuestions > 0 && solvedNum >= assignmentTotalQuestions -> {
+                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by solved_num: started=true, solved=$solvedNum, total=$assignmentTotalQuestions")
                                         true
                                     }
-                                    hasStarted && stats != null && stats.totalProblem > 0 && stats.totalProblem == stats.solvedProblem -> {
-                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by statistics: started=$hasStarted, total=${stats.totalProblem}, solved=${stats.solvedProblem}")
+                                    !personalAssignment.startedAt.isNullOrEmpty() && stats != null && stats.totalProblem > 0 && stats.totalProblem == stats.solvedProblem -> {
+                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by statistics: started=true, total=${stats.totalProblem}, solved=${stats.solvedProblem}")
                                         true
                                     }
-                                    hasStarted && stats != null && stats.totalQuestions > 0 && stats.answeredQuestions >= stats.totalQuestions -> {
-                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by answeredQuestions: started=$hasStarted, answered=${stats.answeredQuestions}, total=${stats.totalQuestions}")
+                                    !personalAssignment.startedAt.isNullOrEmpty() && stats != null && stats.totalQuestions > 0 && stats.answeredQuestions >= stats.totalQuestions -> {
+                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by answeredQuestions: started=true, answered=${stats.answeredQuestions}, total=${stats.totalQuestions}")
                                         true
                                     }
                                     else -> {
@@ -462,7 +461,6 @@ class AssignmentViewModel @Inject constructor(
                             val submittedAssignments = assignmentStatsList.filter { (personalAssignment, stats) ->
                                 val assignmentTotalQuestions = personalAssignment.assignment.totalQuestions
                                 val solvedNum = personalAssignment.solvedNum
-                                val hasStarted = !personalAssignment.startedAt.isNullOrEmpty()
 
                                 val isCompleted = when {
                                     personalAssignment.status == PersonalAssignmentStatus.SUBMITTED -> {
@@ -473,16 +471,16 @@ class AssignmentViewModel @Inject constructor(
                                         println("AssignmentViewModel - PA ${personalAssignment.id} completed by submitted_at: ${personalAssignment.submittedAt}")
                                         true
                                     }
-                                    hasStarted && assignmentTotalQuestions > 0 && solvedNum >= assignmentTotalQuestions -> {
-                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by solved_num: started=$hasStarted, solved=$solvedNum, total=$assignmentTotalQuestions")
+                                    !personalAssignment.startedAt.isNullOrEmpty() && assignmentTotalQuestions > 0 && solvedNum >= assignmentTotalQuestions -> {
+                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by solved_num: started=true, solved=$solvedNum, total=$assignmentTotalQuestions")
                                         true
                                     }
-                                    hasStarted && stats != null && stats.totalProblem > 0 && stats.totalProblem == stats.solvedProblem -> {
-                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by statistics: started=$hasStarted, total=${stats.totalProblem}, solved=${stats.solvedProblem}")
+                                    !personalAssignment.startedAt.isNullOrEmpty() && stats != null && stats.totalProblem > 0 && stats.totalProblem == stats.solvedProblem -> {
+                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by statistics: started=true, total=${stats.totalProblem}, solved=${stats.solvedProblem}")
                                         true
                                     }
-                                    hasStarted && stats != null && stats.totalQuestions > 0 && stats.answeredQuestions >= stats.totalQuestions -> {
-                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by answeredQuestions: started=$hasStarted, answered=${stats.answeredQuestions}, total=${stats.totalQuestions}")
+                                    !personalAssignment.startedAt.isNullOrEmpty() && stats != null && stats.totalQuestions > 0 && stats.answeredQuestions >= stats.totalQuestions -> {
+                                        println("AssignmentViewModel - PA ${personalAssignment.id} completed by answeredQuestions: started=true, answered=${stats.answeredQuestions}, total=${stats.totalQuestions}")
                                         true
                                     }
                                     else -> {
@@ -1780,25 +1778,20 @@ class AssignmentViewModel @Inject constructor(
                 val submittedAssignments = assignmentStatsList.filter { (personalAssignment, stats) ->
                     val assignmentTotalQuestions = personalAssignment.assignment.totalQuestions
                     val solvedNum = personalAssignment.solvedNum
-                    val hasStarted = !personalAssignment.startedAt.isNullOrEmpty()
                     
                     val isCompleted = when {
                         personalAssignment.status == PersonalAssignmentStatus.SUBMITTED -> true
                         !personalAssignment.submittedAt.isNullOrEmpty() -> true
-                        hasStarted && assignmentTotalQuestions > 0 && solvedNum >= assignmentTotalQuestions -> true
-                        hasStarted && stats != null && stats.totalProblem > 0 && stats.totalProblem == stats.solvedProblem -> true
-                        hasStarted && stats != null && stats.totalQuestions > 0 && stats.answeredQuestions >= stats.totalQuestions -> true
+                        !personalAssignment.startedAt.isNullOrEmpty() && assignmentTotalQuestions > 0 && solvedNum >= assignmentTotalQuestions -> true
+                        !personalAssignment.startedAt.isNullOrEmpty() && stats != null && stats.totalProblem > 0 && stats.totalProblem == stats.solvedProblem -> true
+                        !personalAssignment.startedAt.isNullOrEmpty() && stats != null && stats.totalQuestions > 0 && stats.answeredQuestions >= stats.totalQuestions -> true
                         else -> false
                     }
                     isCompleted
                 }
                 
                 val submittedCount = submittedAssignments.size
-                val completionRate = if (totalStudents > 0) {
-                    (submittedCount * 100) / totalStudents
-                } else {
-                    0
-                }
+                val completionRate = (submittedCount * 100) / totalStudents
                 
                 val statisticsList = submittedAssignments.mapNotNull { (_, stats) -> stats }
                 val averageScore = if (statisticsList.isNotEmpty()) {

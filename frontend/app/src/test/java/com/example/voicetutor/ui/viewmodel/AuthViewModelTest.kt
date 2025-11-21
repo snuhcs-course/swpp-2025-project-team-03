@@ -751,11 +751,11 @@ class AuthViewModelTest {
         Mockito.`when`(authRepository.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT))
             .thenReturn(Result.success(user))
 
-        // When: className 파라미터를 포함하여 signup 호출
-        vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT, "Class A")
+        // When: signup 호출
+        vm.signup("Alice", "a@ex.com", "pw", UserRole.STUDENT)
         advanceUntilIdle()
 
-        // Then: 정상적으로 처리됨 (className은 현재 사용되지 않지만 파라미터는 받음)
+        // Then: 정상적으로 처리됨
         vm.currentUser.test {
             assert(awaitItem() == user)
             cancelAndIgnoreRemainingEvents()

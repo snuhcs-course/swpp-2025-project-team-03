@@ -98,7 +98,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun signup(name: String, email: String, password: String, role: UserRole, className: String? = null) {
+    fun signup(name: String, email: String, password: String, role: UserRole) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -229,14 +229,6 @@ class AuthViewModel @Inject constructor(
     // 자동 입력 정보 사용 후 초기화
     fun clearAutoFillCredentials() {
         _autoFillCredentials.value = null
-    }
-
-    private fun determineRoleFromEmail(email: String): UserRole {
-        return when {
-            email.contains("teacher") -> UserRole.TEACHER
-            email.contains("student") -> UserRole.STUDENT
-            else -> UserRole.STUDENT // 기본값
-        }
     }
 
     // 현재 사용자 정보 가져오기
