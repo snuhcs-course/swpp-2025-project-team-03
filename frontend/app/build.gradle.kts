@@ -233,6 +233,8 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             "**/*_Factory.*",
             "**/*_MembersInjector.*",
             "**/*_Provide*Factory.*",
+            "**/dagger/hilt/internal/aggregatedroot/codegen/**",
+            "**/hilt_aggregated_deps/**",
         )
 
     // Android projects use multiple class output directories
