@@ -162,6 +162,8 @@ fun CreateAssignmentScreen(
     LaunchedEffect(actualTeacherId) {
         classViewModel.loadClasses(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
+        // 화면이 열릴 때 업로드 상태 초기화
+        actualAssignmentViewModel.resetUploadState()
     }
 
     LaunchedEffect(selectedClassId) {
@@ -526,7 +528,7 @@ fun CreateAssignmentScreen(
                             }
                         }
 
-                        if (uploadSuccess) {
+                        if (uploadSuccess && selectedFiles.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -852,6 +854,13 @@ fun CreateAssignmentScreen(
                 ?.toInstant()
                 ?.toEpochMilli()
                 ?: Instant.now().toEpochMilli()
+            
+            // 오늘 날짜를 밀리초로 계산
+            val todayMillis = LocalDate.now()
+                .atStartOfDay(zoneId)
+                .toInstant()
+                .toEpochMilli()
+            
             val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
 
             DatePickerDialog(
@@ -864,14 +873,18 @@ fun CreateAssignmentScreen(
                         onClick = {
                             val selectedMillis = datePickerState.selectedDateMillis
                             if (selectedMillis != null) {
-                                duePendingDate = Instant.ofEpochMilli(selectedMillis)
-                                    .atZone(zoneId)
-                                    .toLocalDate()
-                                dueShowDatePicker = false
-                                dueShowTimePicker = true
+                                // 선택된 날짜가 오늘 이후인지 확인
+                                if (selectedMillis >= todayMillis) {
+                                    duePendingDate = Instant.ofEpochMilli(selectedMillis)
+                                        .atZone(zoneId)
+                                        .toLocalDate()
+                                    dueShowDatePicker = false
+                                    dueShowTimePicker = true
+                                }
                             }
                         },
-                        enabled = datePickerState.selectedDateMillis != null,
+                        enabled = datePickerState.selectedDateMillis != null && 
+                            (datePickerState.selectedDateMillis ?: 0) >= todayMillis,
                         colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo),
                     ) {
                         Text("시간 선택")
@@ -906,8 +919,21 @@ fun CreateAssignmentScreen(
         }
 
         if (dueShowTimePicker) {
-            val initialHour = dueDateTime?.hour ?: LocalTime.now().hour
-            val initialMinute = dueDateTime?.minute ?: LocalTime.now().minute
+            val selectedDate = duePendingDate ?: dueDateTime?.toLocalDate() ?: LocalDate.now()
+            val isToday = selectedDate == LocalDate.now()
+            val now = LocalTime.now()
+            
+            val initialHour = if (isToday && dueDateTime == null) {
+                now.hour
+            } else {
+                dueDateTime?.hour ?: now.hour
+            }
+            val initialMinute = if (isToday && dueDateTime == null) {
+                now.minute
+            } else {
+                dueDateTime?.minute ?: now.minute
+            }
+            
             val timePickerState = rememberTimePickerState(
                 initialHour = initialHour,
                 initialMinute = initialMinute,
@@ -922,17 +948,26 @@ fun CreateAssignmentScreen(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            val selectedDate = duePendingDate ?: dueDateTime?.toLocalDate() ?: LocalDate.now()
                             val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
                             val finalDateTime = LocalDateTime.of(selectedDate, selectedTime)
-                            dueDateTime = finalDateTime
-                            dueDateText = finalDateTime.format(displayDateFormatter)
-                            dueDateRequest = finalDateTime
-                                .atZone(zoneId)
-                                .toOffsetDateTime()
-                                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                            dueShowTimePicker = false
-                            duePendingDate = null
+                            
+                            // 오늘 날짜인 경우 현재 시간 이후인지 확인
+                            val isValid = if (isToday) {
+                                finalDateTime.isAfter(LocalDateTime.now())
+                            } else {
+                                true
+                            }
+                            
+                            if (isValid) {
+                                dueDateTime = finalDateTime
+                                dueDateText = finalDateTime.format(displayDateFormatter)
+                                dueDateRequest = finalDateTime
+                                    .atZone(zoneId)
+                                    .toOffsetDateTime()
+                                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                                dueShowTimePicker = false
+                                duePendingDate = null
+                            }
                         },
                         colors = ButtonDefaults.textButtonColors(contentColor = PrimaryIndigo),
                     ) {

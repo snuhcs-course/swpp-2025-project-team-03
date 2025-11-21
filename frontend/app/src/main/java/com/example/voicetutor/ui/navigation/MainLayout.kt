@@ -55,7 +55,7 @@ fun getPageTitle(currentDestination: String?, userRole: UserRole): String {
         currentDestination == VoiceTutorScreens.AssignmentDetailedResults.route -> "리포트"
         currentDestination == VoiceTutorScreens.Progress.route -> "학습 리포트"
         currentDestination == VoiceTutorScreens.TeacherClasses.route -> "수업 관리"
-        currentDestination == VoiceTutorScreens.CreateClass.route -> "수업 관리"
+        currentDestination == VoiceTutorScreens.CreateClass.route -> "수업 생성"
         currentDestination == VoiceTutorScreens.TeacherStudents.route -> "학생 관리"
         currentDestination == VoiceTutorScreens.AllAssignments.route -> "전체 과제"
         currentDestination == VoiceTutorScreens.AllStudents.route -> "전체 학생"
@@ -176,7 +176,7 @@ fun MainLayout(
                 println("MainLayout - 질문 생성 완료 감지, 알림 표시")
                 hasShownSuccessMessage = true
                 showAssignmentCreatedToast = true
-                delay(3000)
+                delay(5000)
                 showAssignmentCreatedToast = false
                 assignmentViewModel.clearQuestionGenerationStatus()
                 lastGeneratingAssignmentTitle = null
@@ -197,7 +197,7 @@ fun MainLayout(
             println("MainLayout - questionGenerationSuccess가 true로 변경됨, 알림 표시")
             hasShownSuccessMessage = true
             showAssignmentCreatedToast = true
-            delay(3000)
+            delay(5000)
             showAssignmentCreatedToast = false
             assignmentViewModel.clearQuestionGenerationStatus()
             lastGeneratingAssignmentTitle = null
@@ -213,7 +213,7 @@ fun MainLayout(
         if (questionGenerationCancelled && !hasShownCancelledMessage) {
             hasShownCancelledMessage = true
             showCancelledToast = true
-            delay(3000)
+            delay(5000)
             showCancelledToast = false
             assignmentViewModel.clearQuestionGenerationStatus()
             // 메시지 표시 후 잠시 후 상태 리셋 (다음 취소 시 다시 표시되도록)
@@ -232,7 +232,7 @@ fun MainLayout(
                 hasShownSuccessMessage = true
                 showAssignmentCreatedToast = true
                 scope.launch {
-                    delay(3000)
+                    delay(5000)
                     showAssignmentCreatedToast = false
                     assignmentViewModel.clearQuestionGenerationStatus()
                     lastGeneratingAssignmentTitle = null
@@ -597,7 +597,7 @@ fun MainLayout(
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(max = 220.dp)
+                            modifier = Modifier.widthIn(max = 300.dp)
                         )
                     }
                 }
@@ -638,7 +638,7 @@ fun MainLayout(
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(max = 220.dp)
+                            modifier = Modifier.widthIn(max = 300.dp)
                         )
                     }
                 }
