@@ -327,22 +327,129 @@ fun AssignmentScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
 
-                    // 질문 카드
-                    VTCard(
-                        variant = CardVariant.Elevated,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                    ) {
-                        Column(
+                    // showResult일 때: 하나의 통합 카드
+                    if (showResult) {
+                        VTCard(
+                            variant = CardVariant.Elevated,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(0.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                                .fillMaxWidth()
+                                .weight(1f),
                         ) {
-                            // 질문 번호 표시
-                            if (!showResult) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(24.dp),
+                            ) {
+                                Spacer(modifier = Modifier.weight(1f))
+
+                                // 정답/오답 아이콘
+                                Icon(
+                                    imageVector = when {
+                                        isSkipped -> Icons.Filled.SkipNext
+                                        isAnswerCorrect -> Icons.Filled.CheckCircle
+                                        else -> Icons.Filled.Cancel
+                                    },
+                                    contentDescription = null,
+                                    tint = when {
+                                        isSkipped -> Warning
+                                        isAnswerCorrect -> Success
+                                        else -> Error
+                                    },
+                                    modifier = Modifier.size(56.dp),
+                                )
+                                val resultTextStyle = when {
+                                            isSkipped -> MaterialTheme.typography.titleLarge
+                                            else -> MaterialTheme.typography.headlineSmall
+                                        }
+                                // 정답/오답 텍스트
+                                Text(
+                                    text = when {
+                                        isSkipped -> "문제를 건너뛰었습니다"
+                                        isAnswerCorrect -> "정답입니다!"
+                                        else -> "틀렸습니다"
+                                    },
+                                    style = resultTextStyle,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when {
+                                        isSkipped -> Warning
+                                        isAnswerCorrect -> Success
+                                        else -> Error
+                                    },
+                                    textAlign = TextAlign.Center,
+                                )
+
+                                Spacer(modifier = Modifier.weight(1f))
+
+                                // 버튼
+                                val response = answerSubmissionResponse
+                                if (response != null) {
+                                    when {
+                                        // Case 1: 마지막 문제 완료
+                                        response.numberStr == null -> {
+                                            VTButton(
+                                                text = "완료",
+                                                onClick = {
+                                                    viewModel.setAssignmentCompleted(true)
+                                                },
+                                                variant = ButtonVariant.Gradient,
+                                                fullWidth = true,
+                                            )
+                                        }
+                                        // Case 2: 꼬리 질문으로 이동
+                                        response.numberStr.contains("-") -> {
+                                            VTButton(
+                                                text = "꼬리질문으로 넘어가기",
+                                                onClick = {
+                                                    showResult = false
+                                                    isSkipped = false
+                                                },
+                                                variant = ButtonVariant.Gradient,
+                                                fullWidth = true,
+                                            )
+                                        }
+                                        // Case 3: 다음 기본 질문으로 이동
+                                        else -> {
+                                            VTButton(
+                                                text = "다음 문제",
+                                                onClick = {
+                                                    viewModel.clearAnswerSubmissionResponse()
+                                                    showResult = false
+                                                    isSkipped = false
+                                                    currentTailQuestionNumber = null
+                                                    savedTailQuestion = null
+                                                    viewModel.moveToQuestionByNumber(
+                                                        response.numberStr,
+                                                        assignmentIdValue
+                                                    )
+                                                },
+                                                variant = ButtonVariant.Gradient,
+                                                fullWidth = true,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // !showResult일 때: 기존처럼 두 개의 카드
+                        // 질문 카드
+                        VTCard(
+                            variant = CardVariant.Elevated,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(0.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                // 질문 번호 표시
                                 val questionNumber = currentTailQuestionNumber?.let { tailNumber ->
                                     if (tailNumber.contains("-")) "꼬리 질문 $tailNumber" else "질문 $tailNumber"
                                 } ?: run {
@@ -365,538 +472,429 @@ fun AssignmentScreen(
                                     color = PrimaryIndigo,
                                     fontWeight = FontWeight.Bold,
                                 )
-                            }
 
-                            // 질문 텍스트 표시
-                            val response = answerSubmissionResponse
-                            val questionText = when {
-                                !showResult -> {
-                                    if (response != null && response.numberStr?.contains("-") == true) {
-                                        response.tailQuestion?.question ?: currentQuestion.question
-                                    } else if (currentTailQuestionNumber != null) {
-                                        savedTailQuestion?.question ?: currentQuestion.question
-                                    } else {
-                                        currentQuestion.question
-                                    }
-                                }
-
-                                else -> ""
-                            }
-                            if (!showResult && questionText.isNotEmpty()) {
-                                Text(
-                                    text = questionText,
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Gray800,
-                                )
-                            }
-
-                            // 응답 결과 표시
-                            if (showResult) {
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                // 정답/오답 표시
-                                VTCard(
-                                    variant = CardVariant.Outlined,
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(24.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    ) {
-                                        Icon(
-                                            imageVector = when {
-                                                isSkipped -> Icons.Filled.SkipNext
-                                                isAnswerCorrect -> Icons.Filled.CheckCircle
-                                                else -> Icons.Filled.Cancel
-                                            },
-                                            contentDescription = null,
-                                            tint = when {
-                                                isSkipped -> Warning
-                                                isAnswerCorrect -> Success
-                                                else -> Error
-                                            },
-                                            modifier = Modifier.size(56.dp),
-                                        )
-                                        val resultTextStyle = when {
-                                            isSkipped -> MaterialTheme.typography.titleLarge
-                                            else -> MaterialTheme.typography.headlineSmall
+                                // 질문 텍스트 표시
+                                val response = answerSubmissionResponse
+                                val questionText = when {
+                                    !showResult -> {
+                                        if (response != null && response.numberStr?.contains("-") == true) {
+                                            response.tailQuestion?.question
+                                                ?: currentQuestion.question
+                                        } else if (currentTailQuestionNumber != null) {
+                                            savedTailQuestion?.question ?: currentQuestion.question
+                                        } else {
+                                            currentQuestion.question
                                         }
-                                        Text(
-                                            text = when {
-                                                isSkipped -> "문제를 건너뛰었습니다"
-                                                isAnswerCorrect -> "정답입니다!"
-                                                else -> "틀렸습니다"
-                                            },
-                                            style = resultTextStyle,
-                                            fontWeight = FontWeight.Bold,
-                                            color = when {
-                                                isSkipped -> Warning
-                                                isAnswerCorrect -> Success
-                                                else -> Error
-                                            },
-                                            modifier = Modifier.padding(top = 8.dp),
-                                            textAlign = TextAlign.Center,
-                                        )
                                     }
+
+                                    else -> ""
+                                }
+                                if (questionText.isNotEmpty()) {
+                                    Text(
+                                        text = questionText,
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Gray800,
+                                    )
                                 }
                             }
                         }
-                    }
 
-                    // Recording and send area
-                    VTCard(variant = CardVariant.Outlined) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            contentAlignment = Alignment.TopCenter   
-                        ) {
-                            if (!showResult) {
+                        // 녹음 카드
+                        VTCard(variant = CardVariant.Outlined) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                contentAlignment = Alignment.TopCenter
+                            ) {
                                 if (audioRecordingState.isRecording) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically,
                                         ) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.RadioButtonChecked,
-                                                    contentDescription = null,
-                                                    tint = Error,
-                                                    modifier = Modifier.size(16.dp),
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.Filled.RadioButtonChecked,
+                                                contentDescription = null,
+                                                tint = Error,
+                                                modifier = Modifier.size(16.dp),
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "녹음 중... ${
+                                                    String.format(
+                                                        "%02d:%02d",
+                                                        audioRecordingState.recordingTime / 60,
+                                                        audioRecordingState.recordingTime % 60
+                                                    )
+                                                }/01:00",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = Error,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+
+                                    }
+                                } else if (audioRecordingState.audioFilePath != null) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        // 녹음 완료 표시
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.CheckCircle,
+                                                contentDescription = null,
+                                                tint = Success,
+                                                modifier = Modifier.size(16.dp),
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "녹음 완료 (${
+                                                    String.format(
+                                                        "%02d:%02d",
+                                                        audioRecordingState.recordingTime / 60,
+                                                        audioRecordingState.recordingTime % 60
+                                                    )
+                                                })",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = Success,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+
+                                        // 음성 다시 듣기 아이콘 버튼
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            if (isPlaying) {
                                                 Text(
-                                                    text = "녹음 중... ${
+                                                    text = "${
                                                         String.format(
                                                             "%02d:%02d",
-                                                            audioRecordingState.recordingTime / 60,
-                                                            audioRecordingState.recordingTime % 60
+                                                            playbackCurrentPosition / 60,
+                                                            playbackCurrentPosition % 60
                                                         )
-                                                    }/01:00",
-                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    } / ${
+                                                        String.format(
+                                                            "%02d:%02d",
+                                                            playbackDuration / 60,
+                                                            playbackDuration % 60
+                                                        )
+                                                    }",
+                                                    style = MaterialTheme.typography.bodySmall,
                                                     color = Error,
                                                     fontWeight = FontWeight.Bold,
                                                 )
-                                            }
-                                        
-                                        }
-                                    } else if (audioRecordingState.audioFilePath != null) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            // 녹음 완료 표시
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.CheckCircle,
-                                                    contentDescription = null,
-                                                    tint = Success,
-                                                    modifier = Modifier.size(16.dp),
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
+                                            } else {
                                                 Text(
-                                                    text = "녹음 완료 (${
-                                                        String.format(
-                                                            "%02d:%02d",
-                                                            audioRecordingState.recordingTime / 60,
-                                                            audioRecordingState.recordingTime % 60
-                                                        )
-                                                    })",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    color = Success,
-                                                    fontWeight = FontWeight.Bold,
+                                                    text = "다시 듣기",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = PrimaryIndigo,
+                                                    fontWeight = FontWeight.Medium,
                                                 )
                                             }
 
-                                            // 음성 다시 듣기 아이콘 버튼
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            ) {
-                                                if (isPlaying) {
-                                                    Text(
-                                                        text = "${
-                                                            String.format(
-                                                                "%02d:%02d",
-                                                                playbackCurrentPosition / 60,
-                                                                playbackCurrentPosition % 60
-                                                            )
-                                                        } / ${
-                                                            String.format(
-                                                                "%02d:%02d",
-                                                                playbackDuration / 60,
-                                                                playbackDuration % 60
-                                                            )
-                                                        }",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = Error,
-                                                        fontWeight = FontWeight.Bold,
-                                                    )
-                                                } else {
-                                                    Text(
-                                                        text = "다시 듣기",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = PrimaryIndigo,
-                                                        fontWeight = FontWeight.Medium,
-                                                    )
-                                                }
-
-                                                IconButton(
-                                                    onClick = {
-                                                        val audioFilePath =
-                                                            audioRecordingState.audioFilePath
-                                                        if (audioFilePath != null) {
-                                                            if (isPlaying) {
-                                                                mediaPlayer?.stop()
+                                            IconButton(
+                                                onClick = {
+                                                    val audioFilePath =
+                                                        audioRecordingState.audioFilePath
+                                                    if (audioFilePath != null) {
+                                                        if (isPlaying) {
+                                                            mediaPlayer?.stop()
+                                                            mediaPlayer?.release()
+                                                            mediaPlayer = null
+                                                            isPlaying = false
+                                                            playbackCurrentPosition = 0
+                                                        } else {
+                                                            try {
                                                                 mediaPlayer?.release()
-                                                                mediaPlayer = null
-                                                                isPlaying = false
-                                                                playbackCurrentPosition = 0
-                                                            } else {
-                                                                try {
-                                                                    mediaPlayer?.release()
-                                                                    mediaPlayer =
-                                                                        android.media.MediaPlayer()
-                                                                            .apply {
-                                                                                setDataSource(
-                                                                                    audioFilePath
-                                                                                )
-                                                                                prepare()
-                                                                                playbackDuration =
-                                                                                    duration / 1000
+                                                                mediaPlayer =
+                                                                    android.media.MediaPlayer()
+                                                                        .apply {
+                                                                            setDataSource(
+                                                                                audioFilePath
+                                                                            )
+                                                                            prepare()
+                                                                            playbackDuration =
+                                                                                duration / 1000
+                                                                            playbackCurrentPosition =
+                                                                                0
+                                                                            start()
+                                                                            isPlaying = true
+
+                                                                            setOnCompletionListener {
+                                                                                isPlaying = false
                                                                                 playbackCurrentPosition =
                                                                                     0
-                                                                                start()
-                                                                                isPlaying = true
-
-                                                                                setOnCompletionListener {
-                                                                                isPlaying = false
-                                                                                    playbackCurrentPosition =
-                                                                                        0
-                                                                                    release()
+                                                                                release()
                                                                                 mediaPlayer = null
-                                                                                }
-
-                                                                                setOnErrorListener { _, _, _ ->
-                                                                                isPlaying = false
-                                                                                    playbackCurrentPosition =
-                                                                                        0
-                                                                                    release()
-                                                                                mediaPlayer = null
-                                                                                    true
-                                                                                }
                                                                             }
-                                                                } catch (e: Exception) {
-                                                                    isPlaying = false
-                                                                    playbackCurrentPosition = 0
-                                                                    mediaPlayer?.release()
-                                                                    mediaPlayer = null
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    modifier = Modifier
-                                                        .background(
-                                                            color = if (isPlaying) Error.copy(alpha = 0.15f) else PrimaryIndigo.copy(
-                                                                alpha = 0.15f
-                                                            ),
-                                                            shape = androidx.compose.foundation.shape.CircleShape,
-                                                        )
-                                                        .size(40.dp),
-                                                ) {
-                                                    Icon(
-                                                        imageVector = if (isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                                                        contentDescription = if (isPlaying) "재생 중지" else "음성 재생",
-                                                        tint = if (isPlaying) Error else PrimaryIndigo,
-                                                        modifier = Modifier.size(20.dp),
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }else {
-                                        // 녹음 전 상태
-                                        Text(
-                                            text = "최대 녹음 시간 : 1분",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Gray600,
-                                            modifier = Modifier.padding(top = 10.dp)
-                                        )
-                                }
-                            }
-                        }
 
-                            // 하단 버튼 영역 (항상 아래에 고정)
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                // 녹음 버튼
-                                if (!showResult && audioRecordingState.audioFilePath == null && !audioRecordingState.isRecording) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        ) {
-                                    
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            ) {
-                                                VTButton(
-                                                    text = "녹음 시작",
-                                                    onClick = {
-                                                    if (!PermissionUtils.hasAudioPermission(context)) {
-                                                            permissionLauncher.launch(PermissionUtils.getRequiredPermissions())
-                                                        } else {
-                                                            val success = audioRecorder.startRecording()
-                                                            if (success) {
-                                                                viewModel.startRecording()
-                                                            }
-                                                        }
-                                                    },
-                                                    variant = ButtonVariant.Gradient,
-                                                    enabled = true,
-                                                    modifier = Modifier.weight(1f),
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            imageVector = Icons.Filled.Mic,
-                                                            contentDescription = null,
-                                                        )
-                                                    },
-                                                )
-
-                                                VTButton(
-                                                    text = "건너뛰기",
-                                                    onClick = {
-                                                        isSkipped = true
-
-                                                        scope.launch {
-                                                            try {
-                                                                val emptyFile =
-                                                                    audioRecorder.createEmptyWavFile()
-                                                                if (emptyFile != null && currentUser != null && currentQuestion != null) {
-                                                                    val questionIdToSubmit =
-                                                                        if (currentTailQuestionNumber != null && savedTailQuestion != null) {
-                                                                            savedTailQuestion!!.id
-                                                                        } else {
-                                                                            currentQuestion.id
+                                                                            setOnErrorListener { _, _, _ ->
+                                                                                isPlaying = false
+                                                                                playbackCurrentPosition =
+                                                                                    0
+                                                                                release()
+                                                                                mediaPlayer = null
+                                                                                true
+                                                                            }
                                                                         }
-
-                                                                    viewModel.submitAnswer(
-                                                                        personalAssignmentId = assignmentIdValue,
-                                                                        studentId = currentUser!!.id,
-                                                                        questionId = questionIdToSubmit,
-                                                                        audioFile = emptyFile,
-                                                                    )
-                                                                    viewModel.resetAudioRecording()
-                                                                }
                                                             } catch (e: Exception) {
-                                                                // 건너뛰기 실패 시 무시
+                                                                isPlaying = false
+                                                                playbackCurrentPosition = 0
+                                                                mediaPlayer?.release()
+                                                                mediaPlayer = null
                                                             }
-                                                        }
-                                                    },
-                                                    variant = ButtonVariant.Outline,
-                                                    enabled = !isSubmitting,
-                                                    modifier = Modifier.weight(1f),
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            imageVector = Icons.Filled.SkipNext,
-                                                            contentDescription = null,
-                                                        )
-                                                    },
-                                                )
-                                            }
-                                        }
-                                } else {
-                                    // 녹음 중 또는 녹음 완료: 단일 버튼
-                                    VTButton(
-                                        text = when {
-                                            audioRecordingState.isRecording -> "녹음 중지"
-                                            audioRecordingState.audioFilePath != null -> "다시 녹음하기"
-                                            else -> "녹음 시작"
-                                        },
-                                        onClick = {
-                                            if (audioRecordingState.isRecording) {
-                                                try {
-                                                
-                                                    scope.launch {
-                                                        try {
-                                                            audioRecorder.stopRecording()
-                                                        } catch (e: Exception) {
-                                                            viewModel.resetAudioRecording()
                                                         }
                                                     }
-                                                } catch (e: Exception) {
-                                                    viewModel.resetAudioRecording()
-                                                }
-                                            } else {
-                                                viewModel.resetAudioRecording()
-                                            }
-                                        },
-                                        variant = when {
-                                            audioRecordingState.isRecording -> ButtonVariant.Outline
-                                            else -> ButtonVariant.Gradient
-                                        },
-                                        enabled = true,
-                                        fullWidth = true,
-                                        leadingIcon = {
-                                            Icon(
-                                                imageVector = when {
-                                                    audioRecordingState.isRecording -> Icons.Filled.Stop
-                                                    audioRecordingState.audioFilePath != null -> Icons.Filled.Refresh
-                                                    else -> Icons.Filled.Mic
                                                 },
-                                                contentDescription = null,
-                                            )
-                                        },
-                                    )
-                                }
-
-                                // 응답 결과에 따른 버튼 표시
-                                if (showResult) {
-                                    // 응답 결과가 있을 때
-                                    val response = answerSubmissionResponse
-                                    if (response == null) return@Column
-
-                                    when {
-                                        // Case 1: numberStr이 null이면 마지막 문제 완료
-                                        response.numberStr == null -> {
-                                            VTButton(
-                                                text = "완료",
-                                                onClick = {
-                                                    viewModel.setAssignmentCompleted(true)
-                                                },
-                                                variant = ButtonVariant.Gradient,
-                                                fullWidth = true,
-                                            )
-                                        }
-                                        // Case 2: numberStr에 하이픈이 있으면 꼬리 질문으로 이동
-                                        response.numberStr.contains("-") -> {
-                                            VTButton(
-                                                text = "꼬리질문으로 넘어가기",
-                                                onClick = {
-                                                    showResult = false
-                                                    isSkipped = false
-                                                    // currentTailQuestionNumber와 savedTailQuestion은 이미 설정됨
-                                                },
-                                                variant = ButtonVariant.Gradient,
-                                                fullWidth = true,
-                                            )
-                                        }
-                                        // Case 3: 다음 기본 질문으로 이동
-                                        else -> {
-                                            VTButton(
-                                                text = "다음 문제",
-                                                onClick = {
-                                                    viewModel.clearAnswerSubmissionResponse()
-                                                    showResult = false
-                                                    isSkipped = false
-                                                    currentTailQuestionNumber = null
-                                                    savedTailQuestion = null
-
-                                                    // 서버에서 받은 numberStr로 질문 이동
-                                                    viewModel.moveToQuestionByNumber(
-                                                        response.numberStr,
-                                                        assignmentIdValue
+                                                modifier = Modifier
+                                                    .background(
+                                                        color = if (isPlaying) Error.copy(alpha = 0.15f) else PrimaryIndigo.copy(
+                                                            alpha = 0.15f
+                                                        ),
+                                                        shape = androidx.compose.foundation.shape.CircleShape,
                                                     )
-                                                },
-                                                variant = ButtonVariant.Gradient,
-                                                fullWidth = true,
-                                            )
+                                                    .size(40.dp),
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                                    contentDescription = if (isPlaying) "재생 중지" else "음성 재생",
+                                                    tint = if (isPlaying) Error else PrimaryIndigo,
+                                                    modifier = Modifier.size(20.dp),
+                                                )
+                                            }
                                         }
                                     }
-                                } else if (!showResult) {
-                                    // 전송 버튼
-                                    VTButton(
-                                        text = "전송",
-                                        onClick = {
-                                            val user = currentUser
-                                            val audioFilePath = audioRecordingState.audioFilePath
-
-                                            if (audioFilePath != null && user != null && currentQuestion != null) {
-                                                val audioFile = File(audioFilePath)
-
-                                                try {
-                                                    val questionIdToSubmit =
-                                                        if (currentTailQuestionNumber != null && savedTailQuestion != null) {
-                                                            savedTailQuestion!!.id
-                                                        } else {
-                                                            currentQuestion.id
-                                                        }
-
-                                                    viewModel.submitAnswer(
-                                                        personalAssignmentId = assignmentIdValue,
-                                                        studentId = user.id,
-                                                        questionId = questionIdToSubmit,
-                                                        audioFile = audioFile,
-                                                    )
-                                                    viewModel.resetAudioRecording()
-                                                } catch (e: Exception) {
-                                                    scope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = "전송 중 오류가 발생했습니다: ${e.message}",
-                                                            duration = SnackbarDuration.Long,
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        variant = ButtonVariant.Gradient,
-                                        fullWidth = true,
-                                        enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording,
+                                } else {
+                                    // 녹음 전 상태
+                                    Text(
+                                        text = "최대 녹음 시간 : 1분",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Gray600,
+                                        modifier = Modifier.padding(top = 10.dp)
                                     )
                                 }
                             }
-                        }
-                    }
+                        
 
-                    // 채점 중 오버레이
-                    if (isSubmitting) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center,
+                        // 하단 버튼 영역 (항상 아래에 고정)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                            ) {
-                                CircularProgressIndicator(
-                                    color = Color.White,
-                                    modifier = Modifier.size(48.dp),
-                                )
-                                Text(
-                                    text = "채점 중...",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.SemiBold,
+                            // 녹음 버튼
+                            if (audioRecordingState.audioFilePath == null && !audioRecordingState.isRecording) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        VTButton(
+                                            text = "녹음 시작",
+                                            onClick = {
+                                                if (!PermissionUtils.hasAudioPermission(context)) {
+                                                    permissionLauncher.launch(PermissionUtils.getRequiredPermissions())
+                                                } else {
+                                                    val success = audioRecorder.startRecording()
+                                                    if (success) {
+                                                        viewModel.startRecording()
+                                                    }
+                                                }
+                                            },
+                                            variant = ButtonVariant.Gradient,
+                                            enabled = true,
+                                            modifier = Modifier.weight(1f),
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Mic,
+                                                    contentDescription = null,
+                                                )
+                                            },
+                                        )
+
+                                        VTButton(
+                                            text = "건너뛰기",
+                                            onClick = {
+                                                isSkipped = true
+
+                                                scope.launch {
+                                                    try {
+                                                        val emptyFile =
+                                                            audioRecorder.createEmptyWavFile()
+                                                        if (emptyFile != null && currentUser != null && currentQuestion != null) {
+                                                            val questionIdToSubmit =
+                                                                if (currentTailQuestionNumber != null && savedTailQuestion != null) {
+                                                                    savedTailQuestion!!.id
+                                                                } else {
+                                                                    currentQuestion.id
+                                                                }
+
+                                                            viewModel.submitAnswer(
+                                                                personalAssignmentId = assignmentIdValue,
+                                                                studentId = currentUser!!.id,
+                                                                questionId = questionIdToSubmit,
+                                                                audioFile = emptyFile,
+                                                            )
+                                                            viewModel.resetAudioRecording()
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        // 건너뛰기 실패 시 무시
+                                                    }
+                                                }
+                                            },
+                                            variant = ButtonVariant.Outline,
+                                            enabled = !isSubmitting,
+                                            modifier = Modifier.weight(1f),
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Filled.SkipNext,
+                                                    contentDescription = null,
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
+                            } else {
+                                // 녹음 중 또는 녹음 완료: 단일 버튼
+                                VTButton(
+                                    text = when {
+                                        audioRecordingState.isRecording -> "녹음 중지"
+                                        audioRecordingState.audioFilePath != null -> "다시 녹음하기"
+                                        else -> "녹음 시작"
+                                    },
+                                    onClick = {
+                                        if (audioRecordingState.isRecording) {
+                                            try {
+
+                                                scope.launch {
+                                                    try {
+                                                        audioRecorder.stopRecording()
+                                                    } catch (e: Exception) {
+                                                        viewModel.resetAudioRecording()
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                viewModel.resetAudioRecording()
+                                            }
+                                        } else {
+                                            viewModel.resetAudioRecording()
+                                        }
+                                    },
+                                    variant = when {
+                                        audioRecordingState.isRecording -> ButtonVariant.Outline
+                                        else -> ButtonVariant.Gradient
+                                    },
+                                    enabled = true,
+                                    fullWidth = true,
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = when {
+                                                audioRecordingState.isRecording -> Icons.Filled.Stop
+                                                audioRecordingState.audioFilePath != null -> Icons.Filled.Refresh
+                                                else -> Icons.Filled.Mic
+                                            },
+                                            contentDescription = null,
+                                        )
+                                    },
                                 )
                             }
+
+                            // 전송 버튼
+                            VTButton(
+                                text = "전송",
+                                onClick = {
+                                    val user = currentUser
+                                    val audioFilePath = audioRecordingState.audioFilePath
+
+                                    if (audioFilePath != null && user != null && currentQuestion != null) {
+                                        val audioFile = File(audioFilePath)
+
+                                        try {
+                                            val questionIdToSubmit =
+                                                if (currentTailQuestionNumber != null && savedTailQuestion != null) {
+                                                    savedTailQuestion!!.id
+                                                } else {
+                                                    currentQuestion.id
+                                                }
+
+                                            viewModel.submitAnswer(
+                                                personalAssignmentId = assignmentIdValue,
+                                                studentId = user.id,
+                                                questionId = questionIdToSubmit,
+                                                audioFile = audioFile,
+                                            )
+                                            viewModel.resetAudioRecording()
+                                        } catch (e: Exception) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = "전송 중 오류가 발생했습니다: ${e.message}",
+                                                    duration = SnackbarDuration.Long,
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
+                                variant = ButtonVariant.Gradient,
+                                fullWidth = true,
+                                enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording,
+                            )
                         }
                     }
                 }
-
-                // Snackbar 표시
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
-                )
             }
+
+                // 채점 중 오버레이
+                if (isSubmitting) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(48.dp),
+                            )
+                            Text(
+                                text = "채점 중...",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Snackbar 표시
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+            )
         }
+    }
 }
 
 
