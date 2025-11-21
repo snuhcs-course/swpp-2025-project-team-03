@@ -53,7 +53,6 @@ fun AssignmentScreen(
     val isAssignmentCompleted by viewModel.isAssignmentCompleted.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isSubmitting by viewModel.isSubmitting.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val audioRecorder = remember { AudioRecorder(context) }
@@ -70,25 +69,7 @@ fun AssignmentScreen(
     // 채점 상태 polling
     var pollingJob by remember { mutableStateOf<Job?>(null) }
 
-    // ViewModel 에러 메시지 표시
-    LaunchedEffect(error) {
-        error?.let { errorMessage ->
-            snackbarHostState.showSnackbar(
-                message = errorMessage,
-                duration = SnackbarDuration.Long,
-            )
-        }
-    }
 
-    // AudioRecorder 에러 메시지 표시
-    LaunchedEffect(audioRecorderState.error) {
-        audioRecorderState.error?.let { errorMessage ->
-            snackbarHostState.showSnackbar(
-                message = "녹음 오류: $errorMessage",
-                duration = SnackbarDuration.Long,
-            )
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.refreshProcessingStatus(assignmentIdValue)
@@ -732,7 +713,7 @@ fun AssignmentScreen(
                                                     try {
                                                         val emptyFile =
                                                             audioRecorder.createEmptyWavFile()
-                                                        if (emptyFile != null && currentUser != null && currentQuestion != null) {
+                                                        if (emptyFile != null && currentUser != null) {
                                                             val questionIdToSubmit =
                                                                 if (currentTailQuestionNumber != null && savedTailQuestion != null) {
                                                                     savedTailQuestion!!.id
@@ -817,7 +798,7 @@ fun AssignmentScreen(
                                     val user = currentUser
                                     val audioFilePath = audioRecordingState.audioFilePath
 
-                                    if (audioFilePath != null && user != null && currentQuestion != null) {
+                                    if (audioFilePath != null && user != null) {
                                         val audioFile = File(audioFilePath)
 
                                         try {
@@ -888,13 +869,6 @@ fun AssignmentScreen(
                 }
             }
 
-            // Snackbar 표시
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-            )
         }
     }
 }
