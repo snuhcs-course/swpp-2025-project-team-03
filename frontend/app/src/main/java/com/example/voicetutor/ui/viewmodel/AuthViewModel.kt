@@ -41,9 +41,6 @@ class AuthViewModel @Inject constructor(
     private val _autoFillCredentials = MutableStateFlow<Pair<String, String>?>(null)
     val autoFillCredentials: StateFlow<Pair<String, String>?> = _autoFillCredentials.asStateFlow()
 
-    private val _initialAssignments = MutableStateFlow<List<com.example.voicetutor.data.models.AssignmentData>>(emptyList())
-    val initialAssignments: StateFlow<List<com.example.voicetutor.data.models.AssignmentData>> = _initialAssignments.asStateFlow()
-
     private val _accountDeleted = MutableStateFlow(false)
     val accountDeleted: StateFlow<Boolean> = _accountDeleted.asStateFlow()
 
@@ -57,10 +54,6 @@ class AuthViewModel @Inject constructor(
                 .onSuccess { user ->
                     _currentUser.value = user
                     _isLoggedIn.value = true
-
-                    user.assignments?.let { assignments ->
-                        _initialAssignments.value = assignments
-                    }
                 }
                 .onFailure { exception ->
                     val loginError = when (exception) {
@@ -181,10 +174,6 @@ class AuthViewModel @Inject constructor(
         _loginError.value = null
     }
 
-    fun setError(message: String) {
-        _error.value = message
-    }
-
     fun setSignupInputError(field: SignupField, message: String) {
         _signupError.value = SignupError.Input(field, message)
         _error.value = message
@@ -223,17 +212,5 @@ class AuthViewModel @Inject constructor(
 
     fun clearAutoFillCredentials() {
         _autoFillCredentials.value = null
-    }
-
-    fun getCurrentUser(): User? {
-        return _currentUser.value
-    }
-
-    fun getUserName(): String {
-        return _currentUser.value?.name ?: "사용자"
-    }
-
-    fun getUserRole(): UserRole? {
-        return _currentUser.value?.role
     }
 }

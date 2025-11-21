@@ -46,8 +46,4 @@ class ReportViewModel @Inject constructor(
     fun clearError() {
         _error.value = null
     }
-
-    fun clearReport() {
-        _curriculumReport.value = null
-    }
 }

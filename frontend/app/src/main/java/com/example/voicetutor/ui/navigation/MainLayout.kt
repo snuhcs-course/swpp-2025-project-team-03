@@ -1,6 +1,5 @@
 package com.example.voicetutor.ui.navigation
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,7 +27,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.ui.components.ButtonSize
 import com.example.voicetutor.ui.components.ButtonVariant
@@ -38,8 +35,6 @@ import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.MainLayoutViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-private const val MAIN_LAYOUT_TAG = "MainLayout"
 
 data class RecentAssignment(
     val id: String, // personal_assignment_id
@@ -82,29 +77,28 @@ fun MainLayout(
     val currentDestination = navBackStackEntry?.destination?.route
     val baseDestination = currentDestination?.split("?")?.first()
 
-    val mainLayoutViewModel: MainLayoutViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+    val graphEntry = remember(navController) {
+        navController.getBackStackEntry(navController.graph.id)
+    }
+    val mainLayoutViewModel: MainLayoutViewModel = hiltViewModel(graphEntry)
     val lastTeacherBaseRoute by mainLayoutViewModel.lastTeacherBaseRoute.collectAsStateWithLifecycle()
 
     val teacherBaseRoute = when (baseDestination) {
         VoiceTutorScreens.TeacherDashboard.route -> "teacher_dashboard"
         VoiceTutorScreens.TeacherClasses.route -> "teacher_classes"
         VoiceTutorScreens.AllStudents.route -> "teacher_students"
+        null -> null
         else -> null
     }
 
     LaunchedEffect(userRole) {
         if (userRole != UserRole.TEACHER) {
-            Log.d(MAIN_LAYOUT_TAG, "Resetting lastTeacherBaseRoute because userRole=$userRole")
             mainLayoutViewModel.resetTeacherBaseRoute()
         }
     }
 
     LaunchedEffect(userRole, teacherBaseRoute) {
         if (userRole == UserRole.TEACHER && teacherBaseRoute != null) {
-            Log.d(
-                MAIN_LAYOUT_TAG,
-                "Teacher base route detected. baseDestination=$baseDestination -> teacherBaseRoute=$teacherBaseRoute",
-            )
             mainLayoutViewModel.updateTeacherBaseRoute(teacherBaseRoute)
         }
     }
@@ -125,19 +119,8 @@ fun MainLayout(
         studentRoute
     }
 
-    LaunchedEffect(currentDestination, currentRoute, userRole) {
-        Log.d(
-            MAIN_LAYOUT_TAG,
-            "currentDestination=$currentDestination, baseDestination=$baseDestination, " +
-                "teacherBaseRoute=$teacherBaseRoute, lastTeacherBaseRoute=$lastTeacherBaseRoute, " +
-                "studentRoute=$studentRoute, resolvedRoute=$currentRoute, userRole=$userRole",
-        )
-    }
-
-    // Get recent assignment data from API for students
-    // Use graph-scoped ViewModels to share data between screens
-    val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
-    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
+    val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(graphEntry)
+    val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(graphEntry)
     val recentAssignmentState = assignmentViewModel.recentAssignment.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val recentAssignment = if (userRole == UserRole.STUDENT) recentAssignmentState.value else null
@@ -148,94 +131,64 @@ fun MainLayout(
     val questionGenerationSuccess by assignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
     val questionGenerationCancelled by assignmentViewModel.questionGenerationCancelled.collectAsStateWithLifecycle()
 
-    var lastGeneratingAssignmentTitle by remember { mutableStateOf<String?>(null) }
-    
     var showAssignmentCreatedToast by remember { mutableStateOf(false) }
     var showCancelledToast by remember { mutableStateOf(false) }
     
-    // 메시지 표시 여부를 추적 (한 번만 표시하도록)
     var hasShownSuccessMessage by remember { mutableStateOf(false) }
     var hasShownCancelledMessage by remember { mutableStateOf(false) }
     
-    // 이전 isGeneratingQuestions 상태 추적
     var previousIsGeneratingQuestions by remember { mutableStateOf(false) }
-
-    LaunchedEffect(generatingAssignmentTitle) {
-        if (generatingAssignmentTitle != null) {
-            lastGeneratingAssignmentTitle = generatingAssignmentTitle
-        }
-    }
     
-    // 질문 생성 중 모달이 사라졌을 때 완료 여부 확인
     LaunchedEffect(isGeneratingQuestions) {
-        // true에서 false로 변경되었고, 이전에 생성 중이었던 경우
         if (!isGeneratingQuestions && previousIsGeneratingQuestions) {
-            println("MainLayout - 질문 생성 중 모달이 사라짐, 완료 상태 확인")
-            // 질문 생성이 완료되었는지 확인
             if (questionGenerationSuccess && !hasShownSuccessMessage) {
-                println("MainLayout - 질문 생성 완료 감지, 알림 표시")
                 hasShownSuccessMessage = true
                 showAssignmentCreatedToast = true
                 delay(5000)
                 showAssignmentCreatedToast = false
                 assignmentViewModel.clearQuestionGenerationStatus()
-                lastGeneratingAssignmentTitle = null
                 delay(1000)
                 hasShownSuccessMessage = false
-            } else if (!questionGenerationCancelled && !hasShownSuccessMessage) {
-                // 완료도 취소도 아닌 경우 (에러 또는 기타 상황)
-                println("MainLayout - 질문 생성 중 모달이 사라졌지만 완료/취소 상태가 아님")
             }
         }
         previousIsGeneratingQuestions = isGeneratingQuestions
     }
     
-    // 과제 생성 성공 메시지 (질문 생성 완료 시)
     LaunchedEffect(questionGenerationSuccess) {
-        // true가 되고 아직 메시지를 표시하지 않았을 때만 실행
         if (questionGenerationSuccess && !hasShownSuccessMessage) {
-            println("MainLayout - questionGenerationSuccess가 true로 변경됨, 알림 표시")
             hasShownSuccessMessage = true
             showAssignmentCreatedToast = true
             delay(5000)
             showAssignmentCreatedToast = false
             assignmentViewModel.clearQuestionGenerationStatus()
-            lastGeneratingAssignmentTitle = null
-            // 메시지 표시 후 잠시 후 상태 리셋 (다음 생성 시 다시 표시되도록)
             delay(1000)
             hasShownSuccessMessage = false
         }
     }
     
-    // 취소 메시지
     LaunchedEffect(questionGenerationCancelled) {
-        // true가 되고 아직 메시지를 표시하지 않았을 때만 실행
         if (questionGenerationCancelled && !hasShownCancelledMessage) {
             hasShownCancelledMessage = true
             showCancelledToast = true
             delay(5000)
             showCancelledToast = false
             assignmentViewModel.clearQuestionGenerationStatus()
-            // 메시지 표시 후 잠시 후 상태 리셋 (다음 취소 시 다시 표시되도록)
             delay(1000)
             hasShownCancelledMessage = false
         }
     }
     
-    // 화면이 다시 포커스될 때 이미 완료된 상태인지 확인
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     DisposableEffect(lifecycleOwner, questionGenerationSuccess) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && questionGenerationSuccess && !hasShownSuccessMessage) {
-                // 화면이 다시 포커스될 때 이미 완료된 상태면 메시지 표시
                 hasShownSuccessMessage = true
                 showAssignmentCreatedToast = true
                 scope.launch {
                     delay(5000)
                     showAssignmentCreatedToast = false
                     assignmentViewModel.clearQuestionGenerationStatus()
-                    lastGeneratingAssignmentTitle = null
                     delay(1000)
                     hasShownSuccessMessage = false
                 }
@@ -361,10 +314,9 @@ fun MainLayout(
                         )
                         Text(
                             text = when (currentUser?.role) {
-                                com.example.voicetutor.data.models.UserRole.TEACHER -> "선생님"
-                                com.example.voicetutor.data.models.UserRole.STUDENT -> "학생"
+                                UserRole.TEACHER -> "선생님"
+                                UserRole.STUDENT -> "학생"
                                 null -> if (userRole == UserRole.TEACHER) "선생님" else "학생"
-                                else -> if (userRole == UserRole.TEACHER) "선생님" else "학생"
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = Gray500,
@@ -807,18 +759,5 @@ fun BottomNavigation(
                 ),
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainLayoutPreview() {
-    VoiceTutorTheme {
-        MainLayout(
-            navController = rememberNavController(),
-            userRole = UserRole.STUDENT,
-        ) {
-            Text("Preview Content")
         }
     }
-}

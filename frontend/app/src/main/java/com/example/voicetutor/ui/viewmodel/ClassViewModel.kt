@@ -101,30 +101,11 @@ class ClassViewModel @Inject constructor(
         }
     }
 
-    fun refreshClasses(teacherId: String) {
-        loadClasses(teacherId)
-    }
-
     fun enrollStudentToClass(classId: Int, studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             classRepository.enrollStudentToClass(classId, studentId)
-                .onSuccess {
-                    loadClassStudents(classId)
-                }
-                .onFailure { e ->
-                    _error.value = ErrorMessageMapper.getErrorMessage(e)
-                }
-            _isLoading.value = false
-        }
-    }
-
-    fun removeStudentFromClass(classId: Int, studentId: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            classRepository.removeStudentFromClass(classId, studentId)
                 .onSuccess {
                     loadClassStudents(classId)
                 }
