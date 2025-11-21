@@ -354,4 +354,77 @@ class StudentRepositoryTest {
         assert(result.isFailure)
         assert(result.exceptionOrNull()?.message == "Network error")
     }
+
+    @Test
+    fun getStudentClasses_success_returnsClassList() = runTest {
+        // Arrange
+        val repo = StudentRepository(apiService)
+        val classes = listOf(
+            ClassInfo(id = 1, name = "Class1"),
+            ClassInfo(id = 2, name = "Class2"),
+        )
+        val apiResponse = ApiResponse(
+            success = true,
+            data = classes,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.getStudentClasses(1)).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getStudentClasses(1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == classes)
+    }
+
+    @Test
+    fun getStudentClasses_emptyList_returnsEmptyList() = runTest {
+        // Arrange
+        val repo = StudentRepository(apiService)
+        val apiResponse = ApiResponse(
+            success = true,
+            data = emptyList<ClassInfo>(),
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.getStudentClasses(1)).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getStudentClasses(1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull()?.isEmpty() == true)
+    }
+
+    @Test
+    fun getStudentClasses_apiFailure_returnsFailure() = runTest {
+        // Arrange
+        val repo = StudentRepository(apiService)
+        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Failed"}""")
+        whenever(apiService.getStudentClasses(1)).thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.getStudentClasses(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun getStudentClasses_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = StudentRepository(apiService)
+        whenever(apiService.getStudentClasses(1)).thenThrow(RuntimeException("Network error"))
+
+        // Act
+        val result = repo.getStudentClasses(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "Network error")
+    }
 }
