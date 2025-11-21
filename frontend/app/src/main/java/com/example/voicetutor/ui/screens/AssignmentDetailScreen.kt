@@ -116,33 +116,118 @@ fun AssignmentDetailScreen(
                     color = PrimaryIndigo.copy(alpha = 0.08f),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 )
-                .padding(20.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 14.dp),
         ) {
-            Column {
+            // Left side: Title and subject/class info
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
                     text = actualTitle,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = Gray800,
+                    maxLines = 1,
+                    modifier = Modifier.widthIn(max = 180.dp),
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                val subtitle = buildString {
+                Spacer(modifier = Modifier.height(10.dp))
+                
+                // Subject and Class chips
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     val subject = currentAssignment?.courseClass?.subject?.name
                     val className = currentAssignment?.courseClass?.name
-                    val due = currentAssignment?.dueAt?.let { formatDueDate(it) } ?: ""
-
-                    if (!subject.isNullOrBlank()) append(subject)
-                    if (!subject.isNullOrBlank() && !className.isNullOrBlank()) append(" · ")
-                    if (!className.isNullOrBlank()) append(className)
-                    if ((!subject.isNullOrBlank() || !className.isNullOrBlank()) && due.isNotBlank()) append(" · ")
-                    if (due.isNotBlank()) append("마감: ").append(due)
+                    
+                    if (!subject.isNullOrBlank()) {
+                        Surface(
+                            color = PrimaryIndigo.copy(alpha = 0.12f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            modifier = Modifier.widthIn(max = 120.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Book,
+                                    contentDescription = null,
+                                    tint = PrimaryIndigo,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                                Text(
+                                    text = subject,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryIndigo,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                    }
+                    
+                    if (!className.isNullOrBlank()) {
+                        Surface(
+                            color = PrimaryEmerald.copy(alpha = 0.12f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            modifier = Modifier.widthIn(max = 120.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Group,
+                                    contentDescription = null,
+                                    tint = PrimaryEmerald,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                                Text(
+                                    text = className,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PrimaryEmerald,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                    }
                 }
-                if (subtitle.isNotBlank()) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600,
-                    )
+            }
+            
+            // Right side: Due date badge (absolute positioned)
+            currentAssignment?.dueAt?.let { dueDate ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 5.dp, y = (-3).dp)
+                ) {
+                    Surface(
+                        color = PrimaryIndigo.copy(alpha = 0.7f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.AccessTime,
+                                contentDescription = null,
+                                tint = androidx.compose.ui.graphics.Color.White,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = formatDueDate(dueDate),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = androidx.compose.ui.graphics.Color.White,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
                 }
             }
         }
