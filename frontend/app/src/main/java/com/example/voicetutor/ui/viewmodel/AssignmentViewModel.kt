@@ -622,7 +622,7 @@ class AssignmentViewModel @Inject constructor(
                         title = assignment.title,
                         description = assignment.description,
                         totalQuestions = assignment.total_questions ?: 0,
-                        createdAt = "", // 서버에서 받아올 수 있음
+                        createdAt = "",
                         dueAt = assignment.due_at,
                         courseClass = CourseClass(
                             id = assignment.class_id,
@@ -637,7 +637,6 @@ class AssignmentViewModel @Inject constructor(
                         grade = assignment.grade,
                     )
 
-                    // Refresh assignments list with teacherId to filter correctly
                     loadAllAssignments(teacherId = teacherId)
                 }
                 .onFailure { exception ->
@@ -680,11 +679,11 @@ class AssignmentViewModel @Inject constructor(
                             dueAt = personalAssignment.assignment.dueAt,
                             courseClass = CourseClass(
                                 id = 0,
-                                name = "", // 빈 문자열로 변경
+                                name = "",
                                 description = null,
                                 subject = Subject(
                                     id = 0,
-                                    name = "", // 빈 문자열로 변경
+                                    name = "",
                                     code = null,
                                 ),
                                 teacherName = "",
@@ -923,7 +922,7 @@ class AssignmentViewModel @Inject constructor(
                                     totalQuestions = personalAssignment.assignment.totalQuestions,
                                     createdAt = fullAssignment.createdAt,
                                     dueAt = personalAssignment.assignment.dueAt,
-                                    courseClass = fullAssignment.courseClass, // 실제 courseClass 정보 사용
+                                    courseClass = fullAssignment.courseClass,
                                     materials = fullAssignment.materials,
                                     grade = personalAssignment.assignment.grade,
                                     personalAssignmentStatus = personalAssignment.status,
@@ -1077,7 +1076,6 @@ class AssignmentViewModel @Inject constructor(
                                         generatingAssignmentId = null
                                     }
                                     
-                                    // 홈 리스트 새로고침 (질문 생성 완료된 과제가 표시되도록)
                                     try {
                                         println("[별도 스레드] 과제 목록 새로고침 (질문 생성 완료 후)")
                                         loadAllAssignments(silent = true)
@@ -1221,7 +1219,7 @@ class AssignmentViewModel @Inject constructor(
         _questionGenerationError.value = null
         _questionGenerationCancelled.value = false
         _generatingAssignmentTitle.value = null
-        generatingAssignmentId = null // 초기화
+        generatingAssignmentId = null
     }
     
     fun clearQuestionGenerationStatus() {
@@ -1238,7 +1236,7 @@ class AssignmentViewModel @Inject constructor(
         _generatingAssignmentTitle.value = null
         _questionGenerationSuccess.value = false
         _questionGenerationError.value = null
-        _questionGenerationCancelled.value = true // 취소 상태 설정
+        _questionGenerationCancelled.value = true
 
         if (assignmentId != null) {
             println("AssignmentViewModel - Updating assignment $assignmentId: totalQuestions = 0")
@@ -1250,15 +1248,15 @@ class AssignmentViewModel @Inject constructor(
                     assignmentRepository.updateAssignment(assignmentId, updateRequest)
                         .onSuccess {
                             println("Assignment $assignmentId: totalQuestions가 0으로 업데이트됨")
-                            generatingAssignmentId = null // 초기화
+                            generatingAssignmentId = null
                         }
                         .onFailure { e ->
                             println("Assignment $assignmentId 업데이트 실패: ${e.message}")
-                            generatingAssignmentId = null // 실패해도 초기화
+                            generatingAssignmentId = null
                         }
                 } catch (e: Exception) {
                     println("Assignment $assignmentId 업데이트 예외: ${e.message}")
-                    generatingAssignmentId = null // 예외 발생해도 초기화
+                    generatingAssignmentId = null
                 }
             }
         } else {
