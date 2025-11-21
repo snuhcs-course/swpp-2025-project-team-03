@@ -1,5 +1,6 @@
 package com.example.voicetutor.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +40,7 @@ fun TeacherDashboardScreen(
     assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null, // 실제 사용자 ID 사용
     refreshTimestamp: Long = 0L, // 새로고침 트리거
+    showDeletedToast: Boolean = false, // 삭제 후 Toast 표시 플래그
     onNavigateToAllAssignments: () -> Unit = {},
     onNavigateToAllStudents: () -> Unit = {},
     onNavigateToClasses: () -> Unit = {},
@@ -169,6 +171,17 @@ fun TeacherDashboardScreen(
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
             dashboardViewModel.loadDashboardData(actualTeacherId)
             studentViewModel.loadAllStudents(teacherId = actualTeacherId)
+        }
+    }
+
+    // 삭제 후 Toast 표시 및 목록 새로고침
+    LaunchedEffect(showDeletedToast) {
+        if (showDeletedToast && actualTeacherId != null) {
+            // Toast 메시지 표시
+            Toast.makeText(context, "과제가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+            // 과제 목록 새로고침
+            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+            dashboardViewModel.loadDashboardData(actualTeacherId)
         }
     }
 

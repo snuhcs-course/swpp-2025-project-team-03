@@ -44,6 +44,7 @@ fun EditAssignmentScreen(
     assignmentId: Int = 0,
     assignmentTitle: String? = null, // For backward compatibility
     onSaveAssignment: () -> Unit = {},
+    onDeleteAssignment: () -> Unit = {},
 ) {
     val classViewModel: ClassViewModel = hiltViewModel()
     val viewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
@@ -610,9 +611,10 @@ fun EditAssignmentScreen(
                             // 실제 삭제 API 호출
                             targetAssignment?.id?.let { id ->
                                 viewModel.deleteAssignment(id)
+                                showDeleteDialog = false
+                                // 삭제 후 대시보드로 이동
+                                onDeleteAssignment()
                             }
-                            showDeleteDialog = false
-                            onSaveAssignment() // 삭제 후 뒤로가기
                         },
                         variant = ButtonVariant.Primary,
                         size = ButtonSize.Small,

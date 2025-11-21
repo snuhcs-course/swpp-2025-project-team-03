@@ -150,7 +150,6 @@ fun CreateAssignmentScreen(
     val zoneId = remember { ZoneId.systemDefault() }
 
     val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
-    val isLoadingClassStudents by classViewModel.isLoading.collectAsStateWithLifecycle()
 
     val displayStudents = remember(selectedClassId, classStudents, students) {
         if (selectedClassId != null && classStudents.isNotEmpty()) {
@@ -720,17 +719,9 @@ fun CreateAssignmentScreen(
                                     modifier = Modifier.padding(start = 24.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
-                                    if (isLoadingClassStudents) {
-                                        // 로딩 중인 경우
+                                    if (displayStudents.isEmpty()) {
                                         Text(
                                             text = "학생 목록을 불러오는 중...",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Gray600,
-                                        )
-                                    } else if (displayStudents.isEmpty()) {
-                                        // 로딩 완료되었지만 학생이 없는 경우
-                                        Text(
-                                            text = "해당 반에 학생이 등록되지 않았습니다.",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Gray600,
                                         )

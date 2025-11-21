@@ -41,6 +41,7 @@ fun TeacherClassesScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
     teacherId: String? = null, // 파라미터로 받거나 현재 로그인한 사용자 ID 사용
+    showCreatedToast: Boolean = false, // 수업 생성 후 Toast 표시 플래그
     onNavigateToClassDetail: (String, Int) -> Unit = { _, _ -> },
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
@@ -88,6 +89,19 @@ fun TeacherClassesScreen(
         LaunchedEffect(errorMessage) {
             // Show error message
             classViewModel.clearError()
+        }
+    }
+
+    // 수업 생성 후 Toast 표시 및 목록 새로고침
+    LaunchedEffect(showCreatedToast, currentUser?.id) {
+        if (showCreatedToast && currentUser?.id != null) {
+            val actualTeacherId = teacherId ?: currentUser?.id?.toString()
+            if (actualTeacherId != null) {
+                // Toast 메시지 표시
+                Toast.makeText(context, "수업이 생성되었습니다.", Toast.LENGTH_SHORT).show()
+                // 수업 목록 새로고침
+                classViewModel.loadClasses(actualTeacherId)
+            }
         }
     }
 

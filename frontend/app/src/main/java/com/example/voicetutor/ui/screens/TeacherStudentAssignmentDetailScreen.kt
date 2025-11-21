@@ -34,12 +34,12 @@ private fun formatSubmittedTime(isoTime: String): String {
 private fun formatDuration(startIso: String?, endIso: String?): String {
     return try {
         if (startIso.isNullOrEmpty() || endIso.isNullOrEmpty()) {
-            return "-"
+            return "정보 없음"
         }
         val start = parseIsoToMillis(startIso)
         val end = parseIsoToMillis(endIso)
         if (start == null || end == null || end <= start) {
-            return "-"
+            return "정보 없음"
         }
         val diffMs = end - start
         val totalSeconds = diffMs / 1000
@@ -52,7 +52,7 @@ private fun formatDuration(startIso: String?, endIso: String?): String {
             String.format("%02d:%02d", minutes, seconds)
         }
     } catch (e: Exception) {
-        "-"
+        "정보 없음"
     }
 }
 

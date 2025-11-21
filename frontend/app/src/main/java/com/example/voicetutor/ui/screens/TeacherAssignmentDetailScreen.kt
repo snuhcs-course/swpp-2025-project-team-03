@@ -13,14 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import android.widget.Toast
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
@@ -320,19 +317,7 @@ fun TeacherAssignmentDetailScreen(
                         }
                     }
                 } else {
-                    // 학생 목록 정렬: 완료 > 진행중 > 미시작
-                    val sortedStudents = remember(students) {
-                        students.sortedBy { student ->
-                            when (student.status) {
-                                "완료" -> 0
-                                "진행중" -> 1
-                                "미시작" -> 2
-                                else -> 3
-                            }
-                        }
-                    }
-                    
-                    sortedStudents.forEachIndexed { index, student ->
+                    students.forEachIndexed { index, student ->
                         TeacherAssignmentResultCard(
                             student = student,
                             onStudentClick = {
@@ -343,7 +328,7 @@ fun TeacherAssignmentDetailScreen(
                             },
                         )
 
-                        if (index < sortedStudents.size - 1) {
+                        if (index < students.size - 1) {
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
@@ -358,22 +343,11 @@ fun TeacherAssignmentResultCard(
     student: StudentResult,
     onStudentClick: () -> Unit,
 ) {
-    val context = LocalContext.current
     val isCompleted = student.status == "완료"
-    val isNotStarted = student.status == "미시작"
-    val hasSubmittedAt = student.submittedAt.isNotBlank()
-
-    val handleClick: () -> Unit = {
-        if (isNotStarted) {
-            Toast.makeText(context, "아직 과제를 시작하지 않았습니다", Toast.LENGTH_SHORT).show()
-        } else {
-            onStudentClick()
-        }
-    }
 
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = handleClick,
+        onClick = onStudentClick,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -417,63 +391,54 @@ fun TeacherAssignmentResultCard(
                 }
             }
 
-            if (!isNotStarted) {
-                // 진행 중이거나 완료된 경우 제출 정보 표시
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    if (hasSubmittedAt) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Schedule,
-                                contentDescription = null,
-                                tint = Gray500,
-                                modifier = Modifier.size(14.dp),
-                            )
-                            Text(
-                                text = if (isCompleted) "제출: " else "최근 응시: ",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600,
-                            )
-                            Text(
-                                text = formatSubmittedTime(student.submittedAt),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600,
-                            )
-                        }
-                    } else {
-                        // 제출 시간이 없는 경우 공간 유지
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                    Icon(
+                        imageVector = Icons.Filled.Schedule,
+                        contentDescription = null,
+                        tint = Gray500,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = "제출: ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600,
+                    )
+                    Text(
+                        text = formatSubmittedTime(student.submittedAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600,
+                    )
+                }
 
-                    // 진행 중이거나 완료 상태일 때는 항상 점수 표시
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Grade,
-                            contentDescription = null,
-                            tint = Gray500,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            text = "점수: ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray600,
-                        )
-                        Text(
-                            text = "${student.score}점",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = Gray800,
-                        )
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Grade,
+                        contentDescription = null,
+                        tint = Gray500,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = "점수: ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray600,
+                    )
+                    Text(
+                        text = "${student.score}점",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray800,
+                    )
                 }
             }
 
