@@ -310,7 +310,7 @@ fun AssignmentDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "• 음성으로 답변을 녹음해주세요\n• 각 단계별로 명확하게 설명해주세요\n• 5분 이내로 완료해주세요",
+                    text = "• 음성으로 답변을 녹음해주세요\n• 각 단계별로 명확하게 설명해주세요\n• 각 문제는 1분 이내로 완료해주세요",
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600,
                 )
