@@ -456,6 +456,16 @@ class AnswerSubmitView(APIView):
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
+            # 파일 크기 검증 (최대 20MB)
+            MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
+            if audio_file.size > MAX_FILE_SIZE:
+                return create_api_response(
+                    success=False,
+                    error="File too large",
+                    message=f"파일 크기는 {MAX_FILE_SIZE / (1024 * 1024):.0f}MB를 초과할 수 없습니다. (현재: {audio_file.size / (1024 * 1024):.1f}MB)",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
             # Step 1-2: DB에서 학생과 문제 확인
             try:
                 student = Account.objects.get(id=student_id, is_student=True)
