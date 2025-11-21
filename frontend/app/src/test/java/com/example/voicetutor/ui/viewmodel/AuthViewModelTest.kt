@@ -761,4 +761,142 @@ class AuthViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun deleteAccount_success_setsAccountDeletedAndLogsOut() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        val user = User(id = 1, name = "Alice", email = "a@ex.com", role = UserRole.STUDENT)
+        Mockito.`when`(authRepository.login("a@ex.com", "pw"))
+            .thenReturn(Result.success(user))
+        Mockito.`when`(authRepository.deleteAccount())
+            .thenReturn(Result.success(Unit))
+
+        // Login first
+        vm.login("a@ex.com", "pw")
+        advanceUntilIdle()
+
+        // When
+        vm.deleteAccount()
+        advanceUntilIdle()
+
+        // Then
+        vm.accountDeleted.test {
+            assert(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.currentUser.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.isLoggedIn.test {
+            assert(!awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deleteAccount_failure_setsError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.deleteAccount())
+            .thenReturn(Result.failure(com.example.voicetutor.data.repository.DeleteAccountException.Unauthorized("권한이 없습니다")))
+
+        // When
+        vm.deleteAccount()
+        advanceUntilIdle()
+
+        // Then
+        vm.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("권한") == true || error?.contains("계정 삭제") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.accountDeleted.test {
+            assert(!awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deleteAccount_withServerException_setsError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.deleteAccount())
+            .thenReturn(Result.failure(com.example.voicetutor.data.repository.DeleteAccountException.Server("서버 오류")))
+
+        // When
+        vm.deleteAccount()
+        advanceUntilIdle()
+
+        // Then
+        vm.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("서버") == true || error?.contains("오류") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deleteAccount_withNetworkException_setsError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.deleteAccount())
+            .thenReturn(Result.failure(com.example.voicetutor.data.repository.DeleteAccountException.Network("네트워크 오류")))
+
+        // When
+        vm.deleteAccount()
+        advanceUntilIdle()
+
+        // Then
+        vm.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("네트워크") == true || error?.contains("연결") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deleteAccount_withUnknownException_setsError() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.deleteAccount())
+            .thenReturn(Result.failure(com.example.voicetutor.data.repository.DeleteAccountException.Unknown("알 수 없는 오류")))
+
+        // When
+        vm.deleteAccount()
+        advanceUntilIdle()
+
+        // Then
+        vm.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun clearAccountDeletedFlag_clearsFlag() = runTest {
+        // Given
+        val vm = AuthViewModel(authRepository)
+        Mockito.`when`(authRepository.deleteAccount())
+            .thenReturn(Result.success(Unit))
+
+        vm.deleteAccount()
+        advanceUntilIdle()
+
+        vm.accountDeleted.test {
+            assert(awaitItem()) // Verify it's set
+
+            // When
+            vm.clearAccountDeletedFlag()
+
+            // Then
+            assert(!awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

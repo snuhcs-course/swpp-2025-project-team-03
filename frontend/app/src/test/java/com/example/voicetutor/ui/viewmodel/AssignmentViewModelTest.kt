@@ -21,6 +21,8 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.times
@@ -588,5 +590,998 @@ class AssignmentViewModelTest {
 
         Mockito.verify(assignmentRepository, times(1))
             .getAllAssignments(null, "1", null)
+    }
+
+    @Test
+    fun getAssignmentSubmissionStats_success_returnsStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.SUBMITTED,
+                solvedNum = 10,
+                startedAt = "2025-01-01",
+                submittedAt = "2025-01-02"
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10,
+            correctAnswers = 8,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 10,
+            progress = 1.0f,
+            averageScore = 0.8f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+
+        // When
+        val result = viewModel.getAssignmentSubmissionStats(assignmentId)
+
+        // Then
+        // Note: averageScore is calculated as accuracy.toInt(), so 0.8f becomes 0
+        assertEquals(1, result.submittedStudents)
+        assertEquals(1, result.totalStudents)
+        assertEquals(0, result.averageScore) // 0.8f.toInt() = 0
+        assertEquals(100, result.completionRate)
+    }
+
+    @Test
+    fun getAssignmentSubmissionStats_emptyList_returnsZeroStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(emptyList()))
+
+        // When
+        val result = viewModel.getAssignmentSubmissionStats(assignmentId)
+
+        // Then
+        assertEquals(0, result.submittedStudents)
+        assertEquals(0, result.totalStudents)
+        assertEquals(0, result.averageScore)
+        assertEquals(0, result.completionRate)
+    }
+
+    @Test
+    fun getAssignmentSubmissionStats_failure_returnsZeroStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.failure(Exception("Network error")))
+
+        // When
+        val result = viewModel.getAssignmentSubmissionStats(assignmentId)
+
+        // Then
+        assertEquals(0, result.submittedStudents)
+        assertEquals(0, result.totalStudents)
+        assertEquals(0, result.averageScore)
+        assertEquals(0, result.completionRate)
+    }
+
+    @Test
+    fun cancelQuestionGeneration_setsCancellationFlags() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        // When - call cancelQuestionGeneration
+        // Since generatingAssignmentId is null by default, updateAssignment won't be called
+        viewModel.cancelQuestionGeneration()
+        advanceUntilIdle()
+
+        // Then - verify cancellation flags are set
+        assertTrue(viewModel.questionGenerationCancelled.value)
+        assertFalse(viewModel.isGeneratingQuestions.value)
+        assertNull(viewModel.generatingAssignmentTitle.value)
+        assertFalse(viewModel.questionGenerationSuccess.value)
+        assertNull(viewModel.questionGenerationError.value)
+    }
+
+    @Test
+    fun loadAssignmentCorrectnessFor_success_updatesCorrectness() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val correctness = listOf(
+            com.example.voicetutor.data.models.AssignmentCorrectnessItem(
+                questionContent = "Question 1",
+                questionModelAnswer = "Answer 1",
+                studentAnswer = "Answer 1",
+                isCorrect = true,
+                answeredAt = "2025-01-01",
+                questionNum = "1",
+                explanation = "Explanation"
+            )
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getAssignmentCorrectness(1))
+            .thenReturn(Result.success(correctness))
+
+        // When
+        viewModel.loadAssignmentCorrectnessFor(studentId, assignmentId)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentCorrectness.test {
+            assertEquals(correctness, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentCorrectnessFor_silent_doesNotSetLoading() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val correctness = emptyList<com.example.voicetutor.data.models.AssignmentCorrectnessItem>()
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getAssignmentCorrectness(1))
+            .thenReturn(Result.success(correctness))
+
+        // When
+        viewModel.loadAssignmentCorrectnessFor(studentId, assignmentId, silent = true)
+        advanceUntilIdle()
+
+        // Then - loading should remain false when silent
+        assertFalse(viewModel.isLoading.value)
+    }
+
+    @Test
+    fun loadAssignmentCorrectnessFor_noPersonalAssignment_setsError() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(emptyList()))
+
+        // When
+        viewModel.loadAssignmentCorrectnessFor(studentId, assignmentId)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("Personal assignment not found") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatisticsAndResults_success_updatesStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val fallbackTotalStudents = 10
+        val personalAssignments = emptyList<com.example.voicetutor.data.models.PersonalAssignmentData>()
+
+        // loadAssignmentStatisticsAndResults calls getPersonalAssignments
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+
+        // When
+        viewModel.loadAssignmentStatisticsAndResults(assignmentId, fallbackTotalStudents)
+        advanceUntilIdle()
+
+        // Then - verify statistics are updated
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(0, stats.submittedStudents) // empty list
+                assertEquals(0, stats.totalStudents)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_success_updatesStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.SUBMITTED,
+                solvedNum = 10,
+                startedAt = "2025-01-01",
+                submittedAt = "2025-01-02"
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10,
+            correctAnswers = 8,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 10,
+            progress = 1.0f,
+            averageScore = 0.8f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(1, stats.submittedStudents)
+                assertEquals(1, stats.totalStudents)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_failure_setsDefaultStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.failure(Exception("Network error")))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(0, stats.submittedStudents)
+                assertEquals(totalStudents, stats.totalStudents)
+                assertEquals(0, stats.averageScore)
+                assertEquals(0, stats.completionRate)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun refreshProcessingStatus_success_updatesProcessingState() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val personalAssignmentId = 1
+        val question = com.example.voicetutor.data.models.PersonalAssignmentQuestion(
+            id = 1,
+            number = "1",
+            question = "Question 1",
+            answer = "Answer 1",
+            explanation = "Explanation",
+            difficulty = "easy",
+            isProcessing = false
+        )
+
+        Mockito.`when`(assignmentRepository.getNextQuestion(personalAssignmentId))
+            .thenReturn(Result.success(question))
+
+        // When
+        viewModel.refreshProcessingStatus(personalAssignmentId)
+        advanceUntilIdle()
+
+        // Then
+        assertFalse(viewModel.isProcessing.value)
+        viewModel.personalAssignmentQuestions.test {
+            val questions = awaitItem()
+            assertEquals(1, questions.size)
+            assertEquals(question, questions[0])
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun refreshProcessingStatus_failureWithCompletionMessage_setsCompleted() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val personalAssignmentId = 1
+
+        Mockito.`when`(assignmentRepository.getNextQuestion(personalAssignmentId))
+            .thenReturn(Result.failure(Exception("모든 문제를 완료했습니다")))
+
+        // When
+        viewModel.refreshProcessingStatus(personalAssignmentId)
+        advanceUntilIdle()
+
+        // Then
+        assertFalse(viewModel.isProcessing.value)
+        assertTrue(viewModel.isAssignmentCompleted.value)
+    }
+
+    @Test
+    fun refreshProcessingStatus_failure_setsError() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val personalAssignmentId = 1
+
+        Mockito.`when`(assignmentRepository.getNextQuestion(personalAssignmentId))
+            .thenReturn(Result.failure(Exception("Network error")))
+
+        // When
+        viewModel.refreshProcessingStatus(personalAssignmentId)
+        advanceUntilIdle()
+
+        // Then
+        assertFalse(viewModel.isProcessing.value)
+        viewModel.error.test {
+            val error = awaitItem()
+            assertEquals("Network error", error)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_withNoSubmittedAssignments_setsZeroStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.NOT_STARTED,
+                solvedNum = 0,
+                startedAt = null,
+                submittedAt = null
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 0,
+            correctAnswers = 0,
+            accuracy = 0.0f,
+            totalProblem = 10,
+            solvedProblem = 0,
+            progress = 0.0f,
+            averageScore = 0.0f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(0, stats.submittedStudents)
+                assertEquals(1, stats.totalStudents)
+                assertEquals(0, stats.averageScore)
+                assertEquals(0, stats.completionRate)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_withExceptionInTryBlock_setsDefaultStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+
+        // This will cause an exception in the try block
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenThrow(RuntimeException("Unexpected error"))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(0, stats.submittedStudents)
+                assertEquals(totalStudents, stats.totalStudents)
+                assertEquals(0, stats.averageScore)
+                assertEquals(0, stats.completionRate)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_withMultipleCompletedAssignments_calculatesAverage() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.SUBMITTED,
+                solvedNum = 10,
+                startedAt = "2025-01-01",
+                submittedAt = "2025-01-02"
+            ),
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 2,
+                student = com.example.voicetutor.data.models.StudentInfo(2, "Student2", "s2@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.SUBMITTED,
+                solvedNum = 10,
+                startedAt = "2025-01-01",
+                submittedAt = "2025-01-02"
+            )
+        )
+        val statistics1 = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10,
+            correctAnswers = 8,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 10,
+            progress = 1.0f,
+            averageScore = 0.8f
+        )
+        val statistics2 = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10,
+            correctAnswers = 9,
+            accuracy = 0.9f,
+            totalProblem = 10,
+            solvedProblem = 10,
+            progress = 1.0f,
+            averageScore = 0.9f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics1))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(2))
+            .thenReturn(Result.success(statistics2))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(2, stats.submittedStudents)
+                assertEquals(2, stats.totalStudents)
+                // Average of 0.8 and 0.9 is 0.85, but accuracy.toInt() converts to 0
+                // So the average of (0.8.toInt(), 0.9.toInt()) = average of (0, 0) = 0
+                assertEquals(0, stats.averageScore)
+                assertEquals(100, stats.completionRate)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadPersonalAssignmentStatsAndCorrectness_success_updatesBoth() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 5,
+            correctAnswers = 4,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 5,
+            progress = 0.5f,
+            averageScore = 0.8f
+        )
+        val correctness = listOf(
+            com.example.voicetutor.data.models.AssignmentCorrectnessItem(
+                questionContent = "Question 1",
+                questionModelAnswer = "Answer 1",
+                studentAnswer = "Answer 1",
+                isCorrect = true,
+                answeredAt = "2025-01-01",
+                questionNum = "1",
+                explanation = "Explanation"
+            )
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+        Mockito.`when`(assignmentRepository.getAssignmentCorrectness(1))
+            .thenReturn(Result.success(correctness))
+
+        // When
+        viewModel.loadPersonalAssignmentStatsAndCorrectness(studentId, assignmentId)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.personalAssignmentStatistics.test {
+            assertEquals(statistics, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        viewModel.assignmentCorrectness.test {
+            assertEquals(correctness, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadPersonalAssignmentStatsAndCorrectness_silent_doesNotSetLoading() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 5,
+            correctAnswers = 4,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 5,
+            progress = 0.5f,
+            averageScore = 0.8f
+        )
+        val correctness = emptyList<com.example.voicetutor.data.models.AssignmentCorrectnessItem>()
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+        Mockito.`when`(assignmentRepository.getAssignmentCorrectness(1))
+            .thenReturn(Result.success(correctness))
+
+        // When
+        viewModel.loadPersonalAssignmentStatsAndCorrectness(studentId, assignmentId, silent = true)
+        advanceUntilIdle()
+
+        // Then - loading should remain false when silent
+        assertFalse(viewModel.isLoading.value)
+    }
+
+    @Test
+    fun loadPersonalAssignmentStatsAndCorrectness_noPersonalAssignment_setsError() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(emptyList()))
+
+        // When
+        viewModel.loadPersonalAssignmentStatsAndCorrectness(studentId, assignmentId)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("Personal assignment not found") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadPersonalAssignmentStatsAndCorrectness_statisticsFailure_setsError() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val correctness = emptyList<com.example.voicetutor.data.models.AssignmentCorrectnessItem>()
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.failure(Exception("Statistics error")))
+        Mockito.`when`(assignmentRepository.getAssignmentCorrectness(1))
+            .thenReturn(Result.success(correctness))
+
+        // When
+        viewModel.loadPersonalAssignmentStatsAndCorrectness(studentId, assignmentId)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("Statistics error") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadPersonalAssignmentStatsAndCorrectness_correctnessFailure_setsError() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val studentId = 1
+        val assignmentId = 1
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 5,
+            correctAnswers = 4,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 5,
+            progress = 0.5f,
+            averageScore = 0.8f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(studentId = studentId, assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+        Mockito.`when`(assignmentRepository.getAssignmentCorrectness(1))
+            .thenReturn(Result.failure(Exception("Correctness error")))
+
+        // When
+        viewModel.loadPersonalAssignmentStatsAndCorrectness(studentId, assignmentId)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("Correctness error") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_completedBySubmittedAt_setsStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = "2025-01-02" // Completed by submittedAt
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10,
+            correctAnswers = 8,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 10,
+            progress = 1.0f,
+            averageScore = 0.8f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(1, stats.submittedStudents)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_completedBySolvedNum_setsStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 10, // Completed by solvedNum >= totalQuestions
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10,
+            correctAnswers = 8,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 10,
+            progress = 1.0f,
+            averageScore = 0.8f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(1, stats.submittedStudents)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_completedByTotalProblem_setsStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10,
+            correctAnswers = 8,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 10, // Completed by totalProblem == solvedProblem
+            progress = 1.0f,
+            averageScore = 0.8f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(1, stats.submittedStudents)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatistics_completedByAnsweredQuestions_setsStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val totalStudents = 10
+        val personalAssignments = listOf(
+            com.example.voicetutor.data.models.PersonalAssignmentData(
+                id = 1,
+                student = com.example.voicetutor.data.models.StudentInfo(1, "Student1", "s1@test.com"),
+                assignment = com.example.voicetutor.data.models.PersonalAssignmentInfo(
+                    1, "Assignment 1", "Description", 10, "2025-01-01", "Grade 1"
+                ),
+                status = com.example.voicetutor.data.models.PersonalAssignmentStatus.IN_PROGRESS,
+                solvedNum = 5,
+                startedAt = "2025-01-01",
+                submittedAt = null
+            )
+        )
+        val statistics = com.example.voicetutor.data.models.PersonalAssignmentStatistics(
+            totalQuestions = 10,
+            answeredQuestions = 10, // Completed by answeredQuestions >= totalQuestions
+            correctAnswers = 8,
+            accuracy = 0.8f,
+            totalProblem = 10,
+            solvedProblem = 5,
+            progress = 0.5f,
+            averageScore = 0.8f
+        )
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(personalAssignments))
+        Mockito.`when`(assignmentRepository.getPersonalAssignmentStatistics(1))
+            .thenReturn(Result.success(statistics))
+
+        // When
+        viewModel.loadAssignmentStatistics(assignmentId, totalStudents)
+        advanceUntilIdle()
+
+        // Then
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(1, stats.submittedStudents)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun loadAssignmentStatisticsAndResults_withEmptyList_setsZeroStatistics() = runTest {
+        // Given
+        val viewModel = AssignmentViewModel(assignmentRepository)
+        val assignmentId = 1
+        val fallbackTotalStudents = 10
+
+        Mockito.`when`(assignmentRepository.getPersonalAssignments(assignmentId = assignmentId))
+            .thenReturn(Result.success(emptyList()))
+
+        // When
+        viewModel.loadAssignmentStatisticsAndResults(assignmentId, fallbackTotalStudents)
+        advanceUntilIdle()
+
+        // Then - verify statistics are set to zero
+        viewModel.assignmentStatistics.test {
+            val stats = awaitItem()
+            assert(stats != null)
+            if (stats != null) {
+                assertEquals(0, stats.submittedStudents)
+                assertEquals(0, stats.totalStudents)
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

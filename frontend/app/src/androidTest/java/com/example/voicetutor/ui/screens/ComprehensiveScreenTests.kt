@@ -174,6 +174,7 @@ class ComprehensiveScreenTests {
                     onClassClick = {},
                     onCreateAssignment = {},
                     onViewStudents = {},
+                    onDeleteClass = { _, _ -> },
                 )
             }
         }

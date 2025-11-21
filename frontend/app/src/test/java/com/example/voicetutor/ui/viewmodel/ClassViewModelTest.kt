@@ -400,4 +400,97 @@ class ClassViewModelTest {
         assert(callbackResult?.isSuccess == true)
         assertEquals(statistics, callbackResult?.getOrNull())
     }
+
+    @Test
+    fun deleteClass_success_removesFromClassesAndCallsCallback() = runTest {
+        // Given
+        val vm = ClassViewModel(classRepository)
+        val class1 = buildClassData(1, "Class 1")
+        val class2 = buildClassData(2, "Class 2")
+        vm.classes.test {
+            awaitItem() // initial empty
+            // Manually set classes for testing
+            // Since _classes is private, we'll test through the actual flow
+        }
+
+        Mockito.`when`(classRepository.getClasses("1"))
+            .thenReturn(Result.success(listOf(class1, class2)))
+        Mockito.`when`(classRepository.removeClassById(1))
+            .thenReturn(Result.success(Unit))
+
+        // Load classes first
+        vm.loadClasses("1")
+        advanceUntilIdle()
+
+        // When
+        var callbackCalled = false
+        var callbackResult = false
+        vm.deleteClass(1) { result ->
+            callbackCalled = true
+            callbackResult = result
+        }
+        advanceUntilIdle()
+
+        // Then
+        assert(callbackCalled)
+        assert(callbackResult)
+        vm.classes.test {
+            val classes = awaitItem()
+            assert(!classes.contains(class1))
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.isLoading.test {
+            assert(!awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deleteClass_failure_setsErrorAndCallsCallback() = runTest {
+        // Given
+        val vm = ClassViewModel(classRepository)
+        Mockito.`when`(classRepository.removeClassById(1))
+            .thenReturn(Result.failure(Exception("Deletion failed")))
+
+        // When
+        var callbackCalled = false
+        var callbackResult = false
+        vm.deleteClass(1) { result ->
+            callbackCalled = true
+            callbackResult = result
+        }
+        advanceUntilIdle()
+
+        // Then
+        assert(callbackCalled)
+        assert(!callbackResult)
+        vm.error.test {
+            val error = awaitItem()
+            assert(error != null)
+            assert(error?.contains("Deletion failed") == true || error?.contains("failed") == true)
+            cancelAndIgnoreRemainingEvents()
+        }
+        vm.isLoading.test {
+            assert(!awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deleteClass_withDefaultCallback_handlesCorrectly() = runTest {
+        // Given
+        val vm = ClassViewModel(classRepository)
+        Mockito.`when`(classRepository.removeClassById(1))
+            .thenReturn(Result.success(Unit))
+
+        // When - call without explicit callback (uses default empty callback)
+        vm.deleteClass(1)
+        advanceUntilIdle()
+
+        // Then - should complete without error
+        vm.isLoading.test {
+            assert(!awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }
