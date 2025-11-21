@@ -78,7 +78,7 @@ class NavigationHelperTest {
     @Test
     fun getPageTitle_withCreateClassRoute_returnsCorrectTitle() {
         val title = getPageTitle(VoiceTutorScreens.CreateClass.route, UserRole.TEACHER)
-        assertEquals("수업 관리", title)
+        assertEquals("수업 생성", title)
     }
 
     @Test

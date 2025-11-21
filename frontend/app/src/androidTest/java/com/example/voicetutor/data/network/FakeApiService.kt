@@ -447,6 +447,8 @@ class FakeApiService : ApiService {
     override suspend fun getClassById(id: Int): Response<ApiResponse<ClassData>> =
         success(classData.copy(id = id))
 
+    override suspend fun removeClassById(id: Int): Response<ApiResponse<Unit>> = success(Unit)
+
     var classStudentsResponse: List<Student> = listOf(student)
     var shouldFailClassStudents: Boolean = false
     var classStudentsErrorMessage: String = "Failed to load class students"
