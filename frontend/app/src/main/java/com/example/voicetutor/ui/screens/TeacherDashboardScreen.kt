@@ -38,9 +38,9 @@ import com.example.voicetutor.utils.TutorialPreferences
 fun TeacherDashboardScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
-    teacherId: String? = null, // 실제 사용자 ID 사용
-    refreshTimestamp: Long = 0L, // 새로고침 트리거
-    showDeletedToast: Boolean = false, // 삭제 후 Toast 표시 플래그
+    teacherId: String? = null,
+    refreshTimestamp: Long = 0L,
+    showDeletedToast: Boolean = false,
     onNavigateToAllAssignments: () -> Unit = {},
     onNavigateToAllStudents: () -> Unit = {},
     onNavigateToClasses: () -> Unit = {},
@@ -61,14 +61,10 @@ fun TeacherDashboardScreen(
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     val dashboardStats by dashboardViewModel.dashboardStats.collectAsStateWithLifecycle()
     val students by studentViewModel.students.collectAsStateWithLifecycle()
-    // 질문 생성 완료 상태 확인
     val questionGenerationSuccess by actualAssignmentViewModel.questionGenerationSuccess.collectAsStateWithLifecycle()
-    // Recent activities are not supported by current backend API
 
     var selectedFilter by remember { mutableStateOf(AssignmentFilter.ALL) }
     
-    // 클라이언트 사이드 필터링을 위해 전체 과제 목록 사용
-    // dueAt 기준으로 진행중/마감 판단
     val filteredAssignments = remember(assignments, selectedFilter) {
         val now = System.currentTimeMillis()
         when (selectedFilter) {
@@ -92,7 +88,6 @@ fun TeacherDashboardScreen(
         }
     }
     
-    // 각 필터별 개수 계산
     val allCount = remember(assignments) {
         assignments.size
     }
@@ -121,25 +116,20 @@ fun TeacherDashboardScreen(
         }
     }
 
-    // 튜토리얼 상태 관리
     val context = LocalContext.current
     val tutorialPrefs = remember { TutorialPreferences(context) }
     var showTutorial by remember { mutableStateOf(false) }
 
-    // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
-    // currentUser와 showTutorial을 모두 key로 사용하여 초기화 후에도 재확인
     LaunchedEffect(currentUser, showTutorial) {
         if (currentUser != null && !showTutorial) {
             val isNewUser = tutorialPrefs.isNewUser()
 
-            // 회원가입 시 또는 설정에서 초기화 후 로그인 시에만 표시
             if (isNewUser) {
                 showTutorial = true
             }
         }
     }
 
-    // 화면이 다시 포커스될 때 튜토리얼 상태 재확인 (설정에서 초기화 후 돌아올 때)
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, currentUser) {
         val observer = LifecycleEventObserver { _, event ->
@@ -156,16 +146,12 @@ fun TeacherDashboardScreen(
         }
     }
 
-    // Compute actual teacher ID
     val actualTeacherId = teacherId ?: currentUser?.id?.toString()
 
-    // Load assignments and dashboard data on first composition
     LaunchedEffect(Unit) {
-        // ViewModel 초기화 완료 대기
         kotlinx.coroutines.delay(100)
     }
 
-    // 강제 새로고침 처리 (과제 생성 후 등)
     LaunchedEffect(refreshTimestamp, actualTeacherId) {
         if (refreshTimestamp > 0L && actualTeacherId != null) {
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
@@ -174,12 +160,9 @@ fun TeacherDashboardScreen(
         }
     }
 
-    // 삭제 후 Toast 표시 및 목록 새로고침
     LaunchedEffect(showDeletedToast) {
         if (showDeletedToast && actualTeacherId != null) {
-            // Toast 메시지 표시
             Toast.makeText(context, "과제가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-            // 과제 목록 새로고침
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
             dashboardViewModel.loadDashboardData(actualTeacherId)
         }
@@ -190,34 +173,25 @@ fun TeacherDashboardScreen(
             return@LaunchedEffect
         }
 
-        // 항상 해당 선생님의 과제만 가져오도록 teacherId 필수로 전달
-        // 로그인 시 받은 assignments는 무시하고 항상 API로 최신 데이터 가져오기
         actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
         dashboardViewModel.loadDashboardData(actualTeacherId)
         studentViewModel.loadAllStudents(teacherId = actualTeacherId)
     }
 
-    // 필터 변경 시 API 호출하지 않고 클라이언트에서 필터링
-    // (개수 계산을 위해 항상 전체 목록 유지)
-    
-    // 질문 생성 완료 시 홈 리스트 새로고침
     LaunchedEffect(questionGenerationSuccess) {
         if (questionGenerationSuccess && actualTeacherId != null) {
             println("TeacherDashboardScreen - 질문 생성 완료 감지, 리스트 새로고침")
             actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId, status = null)
             dashboardViewModel.loadDashboardData(actualTeacherId)
-            // 메시지가 표시된 후 상태 초기화는 MainLayout에서 처리
         }
     }
 
-    // Handle error
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             actualAssignmentViewModel.clearError()
         }
     }
 
-    // 온보딩 튜토리얼 (7단계)
     if (showTutorial) {
         OnboardingPager(
             pages = TeacherOnboardingData.teacherOnboardingPages,
@@ -234,9 +208,7 @@ fun TeacherDashboardScreen(
         )
     }
 
-    // 오늘 마감인 과제 개수 계산 (API 24 호환)
     val dueTodayCount = remember(assignments) {
-        // API 26 미만에서는 java.time 일부 기능이 제한되므로 SimpleDateFormat 사용
         val todayStr = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             java.time.LocalDate.now().toString() // yyyy-MM-dd
         } else {
@@ -244,7 +216,6 @@ fun TeacherDashboardScreen(
         }
         assignments.count { a ->
             val due = a.dueAt
-            // dueAt이 비어있지 않고 앞 10자리가 yyyy-MM-dd 형태로 오늘과 일치하면 카운트
             due.isNotBlank() && due.length >= 10 && due.substring(0, 10) == todayStr
         }
     }
