@@ -449,18 +449,16 @@ fun AssignmentScreen(
 
                     // Recording and send area
                     VTCard(variant = CardVariant.Outlined) {
-                        Column(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
-                            verticalArrangement = Arrangement.SpaceBetween,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            contentAlignment = Alignment.TopCenter   
                         ) {
-        
                             if (!showResult) {
                                 if (audioRecordingState.isRecording) {
                                         Column(
-                                            modifier = Modifier.fillMaxWidth(),
+                                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             verticalArrangement = Arrangement.spacedBy(4.dp),
                                         ) {
@@ -633,6 +631,7 @@ fun AssignmentScreen(
                                             text = "최대 녹음 시간 : 1분",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = Gray600,
+                                            modifier = Modifier.padding(top = 10.dp)
                                         )
                                 }
                             }
