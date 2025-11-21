@@ -14,12 +14,17 @@ import com.example.voicetutor.data.network.S3UploadStatus
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.whenever
 import retrofit2.Response
 import java.io.File
@@ -29,6 +34,19 @@ class AssignmentRepositoryTest {
 
     @Mock
     lateinit var apiService: ApiService
+
+    private lateinit var mockWebServer: MockWebServer
+
+    @Before
+    fun setUp() {
+        mockWebServer = MockWebServer()
+        mockWebServer.start()
+    }
+
+    @After
+    fun tearDown() {
+        mockWebServer.shutdown()
+    }
 
     @Test
     fun getNextQuestion_404_withMessage_parsesKnownMessage() = runTest {
@@ -177,6 +195,148 @@ class AssignmentRepositoryTest {
         val tmp = File.createTempFile("sample", ".pdf").apply { writeBytes(byteArrayOf(1, 2, 3)) }
         val r = repo.uploadPdfToS3("http://invalid-host-${System.currentTimeMillis()}.local/upload", tmp)
         assert(r.isFailure)
+        tmp.delete()
+    }
+
+    @Test
+    fun uploadPdfToS3_success_returnsTrue() = runTest {
+        // Arrange
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("test", ".pdf").apply { writeBytes(byteArrayOf(1, 2, 3, 4, 5)) }
+        val uploadUrl = mockWebServer.url("/upload").toString()
+
+        // Mock successful response
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("Success"))
+
+        // Act
+        val result = repo.uploadPdfToS3(uploadUrl, tmp)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == true)
+        tmp.delete()
+    }
+
+    @Test
+    fun uploadPdfToS3_httpError_returnsFailure() = runTest {
+        // Arrange
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("test", ".pdf").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        val uploadUrl = mockWebServer.url("/upload").toString()
+
+        // Mock error response
+        mockWebServer.enqueue(MockResponse().setResponseCode(500).setBody("Internal Server Error"))
+
+        // Act
+        val result = repo.uploadPdfToS3(uploadUrl, tmp)
+
+        // Assert
+        assert(result.isFailure)
+        val exceptionMessage = result.exceptionOrNull()?.message ?: ""
+        assert(exceptionMessage.contains("500") || exceptionMessage.contains("Upload failed"))
+        tmp.delete()
+    }
+
+    @Test
+    fun uploadPdfToS3_http404_returnsFailure() = runTest {
+        // Arrange
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("test", ".pdf").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        val uploadUrl = mockWebServer.url("/upload").toString()
+
+        // Mock 404 response
+        mockWebServer.enqueue(MockResponse().setResponseCode(404).setBody("Not Found"))
+
+        // Act
+        val result = repo.uploadPdfToS3(uploadUrl, tmp)
+
+        // Assert
+        assert(result.isFailure)
+        val exceptionMessage = result.exceptionOrNull()?.message ?: ""
+        assert(exceptionMessage.contains("404") || exceptionMessage.contains("Upload failed"))
+        tmp.delete()
+    }
+
+    @Test
+    fun uploadPdfToS3_fileReadException_returnsFailure() = runTest {
+        // Arrange
+        val repo = AssignmentRepository(apiService)
+        // Create a file that exists but cannot be read
+        val tmp = File.createTempFile("test", ".pdf")
+        tmp.writeBytes(byteArrayOf(1, 2, 3))
+        // Make file unreadable (if possible on the platform)
+        try {
+            tmp.setReadable(false)
+        } catch (e: Exception) {
+            // If we can't make it unreadable, create a directory instead
+            tmp.delete()
+            val dir = File.createTempFile("test", ".pdf")
+            dir.delete()
+            dir.mkdirs()
+            val result = repo.uploadPdfToS3("http://test.com/upload", dir)
+            assert(result.isFailure)
+            dir.delete()
+            return@runTest
+        }
+
+        // Act
+        val result = repo.uploadPdfToS3("http://test.com/upload", tmp)
+
+        // Assert
+        assert(result.isFailure)
+        tmp.setReadable(true)
+        tmp.delete()
+    }
+
+    @Test
+    fun uploadPdfToS3_ioException_returnsFailure() = runTest {
+        // Arrange
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("test", ".pdf").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        // Use an invalid URL that will cause IOException
+        val invalidUrl = "not-a-valid-url"
+
+        // Act
+        val result = repo.uploadPdfToS3(invalidUrl, tmp)
+
+        // Assert
+        assert(result.isFailure)
+        tmp.delete()
+    }
+
+    @Test
+    fun uploadPdfToS3_emptyFile_handlesCorrectly() = runTest {
+        // Arrange
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("empty", ".pdf")
+        // Empty file
+        val uploadUrl = mockWebServer.url("/upload").toString()
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("Success"))
+
+        // Act
+        val result = repo.uploadPdfToS3(uploadUrl, tmp)
+
+        // Assert
+        assert(result.isSuccess)
+        tmp.delete()
+    }
+
+    @Test
+    fun uploadPdfToS3_largeFile_handlesCorrectly() = runTest {
+        // Arrange
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("large", ".pdf")
+        // Create a larger file (10KB)
+        val largeData = ByteArray(10 * 1024) { it.toByte() }
+        tmp.writeBytes(largeData)
+        val uploadUrl = mockWebServer.url("/upload").toString()
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("Success"))
+
+        // Act
+        val result = repo.uploadPdfToS3(uploadUrl, tmp)
+
+        // Assert
+        assert(result.isSuccess)
         tmp.delete()
     }
 
@@ -561,5 +721,323 @@ class AssignmentRepositoryTest {
         )
         val r = repo.completePersonalAssignment(1)
         assert(r.isSuccess)
+    }
+
+    // ===== Exception handling tests =====
+
+    @Test
+    fun getAllAssignments_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAllAssignments(isNull(), isNull(), isNull())).thenThrow(RuntimeException("Network error"))
+        val r = repo.getAllAssignments()
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getAssignmentById_noData_throwsException() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAssignmentById(1)).thenReturn(
+            Response.success(ApiResponse<AssignmentData>(success = true, data = null, message = null, error = null)),
+        )
+        val r = repo.getAssignmentById(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "No data")
+    }
+
+    @Test
+    fun getAssignmentById_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAssignmentById(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getAssignmentById(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getStudentAssignments_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getStudentAssignments(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getStudentAssignments(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getPersonalAssignments_byStudentId_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getPersonalAssignments(studentId = 1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getPersonalAssignments(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getPersonalAssignments_byStudentAndAssignment_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getPersonalAssignments(studentId = 1, assignmentId = 2)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getPersonalAssignments(1, 2)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun createAssignment_noData_throwsException() = runTest {
+        val repo = AssignmentRepository(apiService)
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("Test")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31T23:59:59Z")
+            .build()
+        whenever(apiService.createAssignment(any())).thenReturn(
+            Response.success(
+                ApiResponse<com.example.voicetutor.data.network.CreateAssignmentResponse>(
+                    success = true,
+                    data = null,
+                    message = null,
+                    error = null,
+                ),
+            ),
+        )
+        val r = repo.createAssignment(request)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "No data")
+    }
+
+    @Test
+    fun createAssignment_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        val request = com.example.voicetutor.data.network.CreateAssignmentRequest.builder()
+            .title("Test")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31T23:59:59Z")
+            .build()
+        whenever(apiService.createAssignment(any())).thenThrow(RuntimeException("Network error"))
+        val r = repo.createAssignment(request)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun updateAssignment_noData_throwsException() = runTest {
+        val repo = AssignmentRepository(apiService)
+        val request = com.example.voicetutor.data.network.UpdateAssignmentRequest.builder()
+            .title("Updated")
+            .build()
+        whenever(apiService.updateAssignment(eq(1), any())).thenReturn(
+            Response.success(ApiResponse<AssignmentData>(success = true, data = null, message = null, error = null)),
+        )
+        val r = repo.updateAssignment(1, request)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "No data")
+    }
+
+    @Test
+    fun updateAssignment_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        val request = com.example.voicetutor.data.network.UpdateAssignmentRequest.builder()
+            .title("Updated")
+            .build()
+        whenever(apiService.updateAssignment(eq(1), any())).thenThrow(RuntimeException("Network error"))
+        val r = repo.updateAssignment(1, request)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getAssignmentResult_noData_throwsException() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAssignmentResult(1)).thenReturn(
+            Response.success(ApiResponse<AssignmentResultData>(success = true, data = null, message = null, error = null)),
+        )
+        val r = repo.getAssignmentResult(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "No data")
+    }
+
+    @Test
+    fun getAssignmentResult_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAssignmentResult(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getAssignmentResult(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun deleteAssignment_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.deleteAssignment(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.deleteAssignment(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun checkS3Upload_noData_throwsException() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.checkS3Upload(1)).thenReturn(
+            Response.success(ApiResponse<S3UploadStatus>(success = true, data = null, message = null, error = null)),
+        )
+        val r = repo.checkS3Upload(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "No data")
+    }
+
+    @Test
+    fun checkS3Upload_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.checkS3Upload(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.checkS3Upload(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun createQuestionsAfterUpload_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.createQuestions(any())).thenThrow(RuntimeException("Network error"))
+        val r = repo.createQuestionsAfterUpload(1, 10, 5)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getPersonalAssignmentQuestions_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getPersonalAssignmentQuestions(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getPersonalAssignmentQuestions(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getNextQuestion_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getNextQuestion(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getNextQuestion(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getNextQuestion_errorBodyParseException_returnsUnknownError() = runTest {
+        val repo = AssignmentRepository(apiService)
+        // Create an error body that will cause parsing exception
+        val errorBody = ResponseBody.create("application/json".toMediaType(), "invalid json")
+        whenever(apiService.getNextQuestion(1)).thenReturn(Response.error(404, errorBody))
+        val r = repo.getNextQuestion(1)
+        assert(r.isFailure)
+        // Should return "Unknown error" when parsing fails
+        assert(r.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun getPersonalAssignmentStatistics_noData_throwsException() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getPersonalAssignmentStatistics(1)).thenReturn(
+            Response.success(
+                ApiResponse<PersonalAssignmentStatistics>(
+                    success = true,
+                    data = null,
+                    message = null,
+                    error = null,
+                ),
+            ),
+        )
+        val r = repo.getPersonalAssignmentStatistics(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "No statistics data")
+    }
+
+    @Test
+    fun getPersonalAssignmentStatistics_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getPersonalAssignmentStatistics(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getPersonalAssignmentStatistics(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getRecentPersonalAssignment_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getRecentPersonalAssignment(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getRecentPersonalAssignment(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun submitAnswer_noData_throwsException() = runTest {
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("audio", ".wav").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        whenever(apiService.submitAnswer(any(), any(), any(), any())).thenReturn(
+            Response.success(
+                ApiResponse<AnswerSubmissionResponse>(
+                    success = true,
+                    data = null,
+                    message = null,
+                    error = null,
+                ),
+            ),
+        )
+        val r = repo.submitAnswer(1, 2, 3, tmp)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "No submission data")
+        tmp.delete()
+    }
+
+    @Test
+    fun submitAnswer_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        val tmp = File.createTempFile("audio", ".wav").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        whenever(apiService.submitAnswer(any(), any(), any(), any())).thenThrow(RuntimeException("Network error"))
+        val r = repo.submitAnswer(1, 2, 3, tmp)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+        tmp.delete()
+    }
+
+    @Test
+    fun completePersonalAssignment_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.completePersonalAssignment(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.completePersonalAssignment(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getAssignmentCorrectness_networkException_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAssignmentCorrectness(1)).thenThrow(RuntimeException("Network error"))
+        val r = repo.getAssignmentCorrectness(1)
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getAllAssignments_responseNotSuccessful_returnsFailure() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAllAssignments(isNull(), isNull(), isNull())).thenReturn(
+            Response.success(ApiResponse<List<AssignmentData>>(success = false, data = null, message = null, error = "API Error")),
+        )
+        val r = repo.getAllAssignments()
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "API Error")
+    }
+
+    @Test
+    fun getAllAssignments_responseNotSuccessful_noError_returnsUnknownError() = runTest {
+        val repo = AssignmentRepository(apiService)
+        whenever(apiService.getAllAssignments(isNull(), isNull(), isNull())).thenReturn(
+            Response.success(ApiResponse<List<AssignmentData>>(success = false, data = null, message = null, error = null)),
+        )
+        val r = repo.getAllAssignments()
+        assert(r.isFailure)
+        assert(r.exceptionOrNull()?.message == "Unknown error")
     }
 }
