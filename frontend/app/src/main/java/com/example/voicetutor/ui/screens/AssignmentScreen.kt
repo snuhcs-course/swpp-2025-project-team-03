@@ -729,12 +729,12 @@ fun AssignmentScreen(
                                         onClick = {
                                             if (audioRecordingState.isRecording) {
                                                 try {
-                                                    viewModel.stopRecordingImmediately()
+                                                
                                                     scope.launch {
                                                         try {
                                                             audioRecorder.stopRecording()
                                                         } catch (e: Exception) {
-                                                            // 녹음 중지 실패 시 무시
+                                                            viewModel.resetAudioRecording()
                                                         }
                                                     }
                                                 } catch (e: Exception) {
