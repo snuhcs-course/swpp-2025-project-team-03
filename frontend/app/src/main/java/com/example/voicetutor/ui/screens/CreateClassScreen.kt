@@ -25,14 +25,13 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateClassScreen(
     onBackClick: () -> Unit = {},
+    onClassCreated: () -> Unit = {},
     teacherId: String? = null,
     classViewModel: ClassViewModel = hiltViewModel(),
 ) {
@@ -40,15 +39,26 @@ fun CreateClassScreen(
     var subject by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    // ViewModel 상태 관찰
     val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
     val error by classViewModel.error.collectAsStateWithLifecycle()
     val classes by classViewModel.classes.collectAsStateWithLifecycle()
-
-    // 클래스 생성 성공 시 백으로 이동
-    LaunchedEffect(classes.size) {
-        if (classes.isNotEmpty()) {
-            onBackClick()
+    
+    var previousClassesSize by remember { mutableStateOf(classes.size) }
+    var isCreating by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(classes.size, isLoading, error) {
+        if (isCreating) {
+            if (!isLoading) {
+                if (error == null && classes.size > previousClassesSize) {
+                    isCreating = false
+                    onClassCreated()
+                } else if (error != null) {
+                    isCreating = false
+                }
+                previousClassesSize = classes.size
+            }
+        } else if (!isLoading) {
+            previousClassesSize = classes.size
         }
     }
 
@@ -85,7 +95,6 @@ fun CreateClassScreen(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            // Class name input
                             OutlinedTextField(
                                 value = className,
                                 onValueChange = { className = it },
@@ -106,7 +115,6 @@ fun CreateClassScreen(
                                 ),
                             )
 
-                            // Subject input
                             OutlinedTextField(
                                 value = subject,
                                 onValueChange = { subject = it },
@@ -127,7 +135,6 @@ fun CreateClassScreen(
                                 ),
                             )
 
-                            // Description input
                             OutlinedTextField(
                                 value = description,
                                 onValueChange = { description = it },
@@ -153,21 +160,15 @@ fun CreateClassScreen(
                     }
                 }
 
-                // Create button
                 VTButton(
                     text = if (isLoading) "생성 중..." else "수업 생성",
                     onClick = {
-                        // 현재 시간을 ISO 형식으로 변환
-                        val now = LocalDateTime.now()
-                        val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                        // teacherId 사용 (파라미터로 받은 값 사용)
                         println("CreateClassScreen - teacherId: $teacherId")
 
                         if (teacherId != null) {
                             try {
                                 val teacherIdInt = teacherId.toInt()
 
-                                // 클래스 생성 요청
                                 val createClassRequest = CreateClassRequest.builder()
                                     .name(className)
                                     .description(description)
@@ -177,10 +178,11 @@ fun CreateClassScreen(
 
                                 println("CreateClassScreen - createClassRequest: $createClassRequest")
                                 println("CreateClassScreen - teacher_id: $teacherIdInt")
+                                previousClassesSize = classes.size
+                                isCreating = true
                                 classViewModel.createClass(createClassRequest)
                             } catch (e: NumberFormatException) {
                                 println("CreateClassScreen - ERROR: Invalid teacherId format: $teacherId")
-                                // 에러 처리 - 사용자에게 알림
                             }
                         } else {
                             println("CreateClassScreen - ERROR: teacherId is null!")
@@ -198,7 +200,6 @@ fun CreateClassScreen(
                     },
                 )
 
-                // 에러 메시지 표시
                 error?.let { errorMessage ->
                     Text(
                         text = ErrorMessageMapper.getErrorMessage(errorMessage),

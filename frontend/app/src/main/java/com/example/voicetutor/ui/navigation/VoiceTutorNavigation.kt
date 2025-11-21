@@ -259,16 +259,21 @@ fun VoiceTutorNavigation(
 
         // Teacher screens with layout
         composable(
-            route = "${VoiceTutorScreens.TeacherDashboard.route}?refresh={refresh}",
+            route = "${VoiceTutorScreens.TeacherDashboard.route}?refresh={refresh}&deleted={deleted}",
             arguments = listOf(
                 navArgument("refresh") {
                     type = NavType.LongType
                     defaultValue = 0L
                 },
+                navArgument("deleted") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
             ),
         ) { backStackEntry ->
             val refreshTimestamp = backStackEntry.arguments?.getLong("refresh") ?: 0L
-            println("TeacherDashboard composable - Received refresh timestamp: $refreshTimestamp")
+            val deleted = backStackEntry.arguments?.getBoolean("deleted") ?: false
+            println("TeacherDashboard composable - Received refresh timestamp: $refreshTimestamp, deleted: $deleted")
 
             // Use graph-scoped ViewModels to share data between screens
             val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
@@ -282,6 +287,7 @@ fun VoiceTutorNavigation(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
                     refreshTimestamp = refreshTimestamp,
+                    showDeletedToast = deleted,
                     onNavigateToAllAssignments = {
                         navController.navigate(VoiceTutorScreens.AllAssignments.route)
                     },
@@ -310,7 +316,16 @@ fun VoiceTutorNavigation(
             }
         }
 
-        composable(VoiceTutorScreens.TeacherClasses.route) {
+        composable(
+            route = "${VoiceTutorScreens.TeacherClasses.route}?created={created}",
+            arguments = listOf(
+                navArgument("created") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) { backStackEntry ->
+            val created = backStackEntry.arguments?.getBoolean("created") ?: false
             // Use graph-scoped ViewModels to share data between screens
             val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(navController.getBackStackEntry(navController.graph.id))
@@ -322,6 +337,7 @@ fun VoiceTutorNavigation(
                 TeacherClassesScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
+                    showCreatedToast = created,
                     onNavigateToClassDetail = { className, classId ->
                         navController.navigate(VoiceTutorScreens.TeacherClassDetail.createRoute(className, classId))
                     },
@@ -511,6 +527,14 @@ fun VoiceTutorNavigation(
                         println("Saving edited assignment: $assignmentId")
                         navController.popBackStack()
                     },
+                    onDeleteAssignment = {
+                        // Navigate to dashboard after deletion with deleted flag
+                        val timestamp = System.currentTimeMillis()
+                        navController.navigate("${VoiceTutorScreens.TeacherDashboard.route}?refresh=$timestamp&deleted=true") {
+                            popUpTo(VoiceTutorScreens.TeacherDashboard.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
         }
@@ -683,6 +707,13 @@ fun VoiceTutorNavigation(
                     teacherId = currentUser?.id?.toString(),
                     onBackClick = {
                         navController.popBackStack()
+                    },
+                    onClassCreated = {
+                        // 수업 생성 성공 시 수업 관리 화면으로 이동
+                        navController.navigate("${VoiceTutorScreens.TeacherClasses.route}?created=true") {
+                            popUpTo(VoiceTutorScreens.TeacherClasses.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
                     },
                 )
             }
