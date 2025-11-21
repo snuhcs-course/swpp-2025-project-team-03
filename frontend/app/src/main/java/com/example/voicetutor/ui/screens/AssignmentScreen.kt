@@ -2,11 +2,9 @@ package com.example.voicetutor.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.audio.AudioRecorder
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
@@ -687,9 +684,7 @@ fun AssignmentScreen(
                                     )
                                 }
                             }
-                        
-
-                        // 하단 버튼 영역 (항상 아래에 고정)
+                        // 하단 버튼 영역
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -817,7 +812,7 @@ fun AssignmentScreen(
 
                             // 전송 버튼
                             VTButton(
-                                text = "전송",
+                                text = "음성 답안 제출하기",
                                 onClick = {
                                     val user = currentUser
                                     val audioFilePath = audioRecordingState.audioFilePath
@@ -853,6 +848,13 @@ fun AssignmentScreen(
                                 variant = ButtonVariant.Gradient,
                                 fullWidth = true,
                                 enabled = audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.UploadFile,
+                                        contentDescription = null,
+                                        tint = if (audioRecordingState.audioFilePath != null && !audioRecordingState.isRecording) Gray800 else Gray400
+                                    )
+                                }
                             )
                         }
                     }
