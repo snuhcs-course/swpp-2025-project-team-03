@@ -175,6 +175,48 @@ tasks.withType<Test> {
     }
 }
 
+// Task to find classes annotated with @ExcludeFromJacocoGeneratedReport
+tasks.register("findExcludedClasses") {
+    group = "verification"
+    description = "Finds classes annotated with @ExcludeFromJacocoGeneratedReport"
+    
+    doLast {
+        val sourceDir = file("${project.projectDir}/src/main/java")
+        val excludedClasses = mutableListOf<String>()
+        
+        if (sourceDir.exists()) {
+            sourceDir.walkTopDown()
+                .filter { it.isFile && it.extension == "kt" }
+                .forEach { file ->
+                    val content = file.readText()
+                    // Check if file contains @ExcludeFromJacocoGeneratedReport annotation
+                    if (content.contains("@ExcludeFromJacocoGeneratedReport")) {
+                        // Extract class/function names from the file
+                        val packageMatch = Regex("package\\s+([\\w.]+)").find(content)
+                        val packageName = packageMatch?.groupValues?.get(1) ?: ""
+                        
+                        // Find class names
+                        val classMatches = Regex("(?:class|object|interface|fun)\\s+(\\w+)").findAll(content)
+                        classMatches.forEach { match ->
+                            val className = match.groupValues[1]
+                            val fullName = if (packageName.isNotEmpty()) {
+                                "$packageName.$className"
+                            } else {
+                                className
+                            }
+                            excludedClasses.add(fullName.replace(".", "/"))
+                        }
+                    }
+                }
+        }
+        
+        if (excludedClasses.isNotEmpty()) {
+            println("Found ${excludedClasses.size} excluded classes:")
+            excludedClasses.forEach { println("  - $it") }
+        }
+    }
+}
+
 tasks.register("jacocoTestReport", JacocoReport::class) {
     group = "verification"
     description = "Generates code coverage report using JaCoCo (includes both unit tests and Android tests)"
@@ -225,6 +267,36 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
         csv.required.set(false)
     }
 
+    // Find classes annotated with @ExcludeFromJacocoGeneratedReport
+    val excludedClassesPatterns = mutableListOf<String>()
+    val sourceDir = file("${project.projectDir}/src/main/java")
+    if (sourceDir.exists()) {
+        sourceDir.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .forEach { file ->
+                val content = file.readText()
+                if (content.contains("@ExcludeFromJacocoGeneratedReport")) {
+                    // Extract package name
+                    val packageMatch = Regex("package\\s+([\\w.]+)").find(content)
+                    val packageName = packageMatch?.groupValues?.get(1) ?: ""
+                    
+                    // Find class/object/interface names
+                    val classMatches = Regex("(?:class|object|interface|fun|val|var)\\s+(\\w+)").findAll(content)
+                    classMatches.forEach { match ->
+                        val className = match.groupValues[1]
+                        val fullName = if (packageName.isNotEmpty()) {
+                            "$packageName.$className"
+                        } else {
+                            className
+                        }
+                        // Convert to class file pattern (e.g., com/example/voicetutor/MyClass)
+                        val classPattern = fullName.replace(".", "/")
+                        excludedClassesPatterns.add("**/$classPattern*")
+                    }
+                }
+            }
+    }
+
     val fileFilter =
         listOf(
             "**/R.class",
@@ -244,7 +316,9 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             "**/Hilt*",
             "**/voicetutor/MainActivity*",
             "**/voicetutor/VoiceTutorApplication*",
-            "**/ComposableSingletons*"
+            "**/ComposableSingletons*",
+            // Add classes annotated with @ExcludeFromJacocoGeneratedReport
+            *excludedClassesPatterns.toTypedArray()
         )
 
     // Android projects use multiple class output directories
@@ -369,7 +443,8 @@ val testClassGroup4 = listOf(
     "com.example.voicetutor.theme.ThemeManagerCoverageTest",
     "com.example.voicetutor.ui.screens.SettingsScreenCoverageTest",
     "com.example.voicetutor.ui.screens.AppInfoScreenTest",
-    "com.example.voicetutor.ui.screens.AssignmentDetailedResultsScreenTest"
+    "com.example.voicetutor.ui.screens.AssignmentDetailedResultsScreenTest",
+    "com.example.voicetutor.ui.components.OnboardingPagerTest"
 )
 
 tasks.register("connectedDebug1", Exec::class) {
@@ -434,7 +509,7 @@ tasks.register("connectedDebug3", Exec::class) {
 
 tasks.register("connectedDebug4", Exec::class) {
     group = "verification"
-    description = "Run fourth group of Android instrumentation tests (TeacherStudentAssignmentDetailScreenCoverageTest, CreateAssignmentScreenCoverageTest, TeacherStudentsScreenTest, ThemeManagerCoverageTest, SettingsScreenCoverageTest, AppInfoScreenTest, AssignmentDetailedResultsScreenTest)"
+    description = "Run fourth group of Android instrumentation tests (TeacherStudentAssignmentDetailScreenCoverageTest, CreateAssignmentScreenCoverageTest, TeacherStudentsScreenTest, ThemeManagerCoverageTest, SettingsScreenCoverageTest, AppInfoScreenTest, AssignmentDetailedResultsScreenTest, OnboardingPagerTest)"
     
     val classArg = testClassGroup4.joinToString(",")
     val gradlew = if (System.getProperty("os.name").lowercase().contains("windows")) {

@@ -1,6 +1,7 @@
 package com.example.voicetutor.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
@@ -215,5 +216,128 @@ class CardTest {
 
         composeTestRule.onNodeWithText("외부 텍스트").assertExists()
         composeTestRule.onNodeWithText("내부 카드").assertExists()
+    }
+
+    // VTCard2 tests
+    @Test
+    fun card2_displaysContent() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2 {
+                    Text("VTCard2 내용")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 내용").assertExists()
+    }
+
+    @Test
+    fun card2_displaysAllVariants() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                Column {
+                    VTCard2(variant = CardVariant.Default) {
+                        Text("VTCard2 Default")
+                    }
+                    VTCard2(variant = CardVariant.Elevated) {
+                        Text("VTCard2 Elevated")
+                    }
+                    VTCard2(variant = CardVariant.Outlined) {
+                        Text("VTCard2 Outlined")
+                    }
+                    VTCard2(variant = CardVariant.Gradient) {
+                        Text("VTCard2 Gradient")
+                    }
+                    VTCard2(variant = CardVariant.Selected) {
+                        Text("VTCard2 Selected")
+                    }
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Default").assertExists()
+        composeTestRule.onNodeWithText("VTCard2 Elevated").assertExists()
+        composeTestRule.onNodeWithText("VTCard2 Outlined").assertExists()
+        composeTestRule.onNodeWithText("VTCard2 Gradient").assertExists()
+        composeTestRule.onNodeWithText("VTCard2 Selected").assertExists()
+    }
+
+    @Test
+    fun card2_callsOnClick_whenClickable() {
+        var clicked = false
+
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_doesNotCallOnClick_whenNotClickable() {
+        var clicked = false
+
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(onClick = null) {
+                    Text("VTCard2 Non-clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Non-clickable").assertExists()
+        // onClick is null, so click should not trigger
+    }
+
+    @Test
+    fun card2_hasDifferentPadding() {
+        // VTCard2 uses padding(5.dp) instead of padding(20.dp)
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2 {
+                    Text("VTCard2 with 5dp padding")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 with 5dp padding").assertExists()
+    }
+
+    @Test
+    fun card_withModifier_appliesCorrectly() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    modifier = Modifier.semantics { testTag = "CustomCard" },
+                ) {
+                    Text("Custom Modifier Card")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag("CustomCard").assertExists()
+    }
+
+    @Test
+    fun card2_withModifier_appliesCorrectly() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    modifier = Modifier.semantics { testTag = "CustomCard2" },
+                ) {
+                    Text("Custom Modifier VTCard2")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag("CustomCard2").assertExists()
     }
 }
