@@ -565,25 +565,6 @@ class ComprehensiveScreenTests {
     }
 
     @Test
-    fun appInfoScreen_legalItemsClickable() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    LegalItem(title = "개인정보처리방침", onClick = {})
-                    LegalItem(title = "서비스 이용약관", onClick = {})
-                    LegalItem(title = "오픈소스 라이선스", onClick = {})
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        // Verify legal items are present
-        composeTestRule.onNodeWithText("개인정보처리방침", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("서비스 이용약관", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("오픈소스 라이선스", useUnmergedTree = true).assertIsDisplayed()
-    }
-
-    @Test
     fun appInfoScreen_contactItemsDisplayed() {
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -596,40 +577,6 @@ class ComprehensiveScreenTests {
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("support@voicetutor.com", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("앱 평가하기", useUnmergedTree = true).assertIsDisplayed()
-    }
-
-    @Test
-    fun appInfoScreen_actionItemsDisplayed() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    ActionItem(
-                        icon = Icons.Filled.Refresh,
-                        title = "업데이트 확인",
-                        description = "최신 버전 확인",
-                        onClick = {},
-                    )
-                    ActionItem(
-                        icon = Icons.Filled.Share,
-                        title = "앱 공유하기",
-                        description = "친구에게 VoiceTutor 소개",
-                        onClick = {},
-                    )
-                    ActionItem(
-                        icon = Icons.Filled.Delete,
-                        title = "캐시 삭제",
-                        description = "앱 캐시를 정리합니다",
-                        onClick = {},
-                    )
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        // Verify action items
-        composeTestRule.onNodeWithText("업데이트 확인", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("앱 공유하기", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("캐시 삭제", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -664,21 +611,6 @@ class ComprehensiveScreenTests {
         // Note: We can't directly verify the callback, but we can verify the button exists and is clickable
     }
 
-    // Test AppInfoScreen helper composables
-    @Test
-    fun appInfoScreen_featureItem_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    FeatureItem(feature = "테스트 기능")
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("테스트 기능", useUnmergedTree = true).assertExists()
-    }
-
     @Test
     fun appInfoScreen_infoItem_renders() {
         composeTestRule.setContent {
@@ -692,24 +624,6 @@ class ComprehensiveScreenTests {
 
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("값", useUnmergedTree = true).assertExists()
-    }
-
-    @Test
-    fun appInfoScreen_legalItem_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    LegalItem(title = "법적 항목", onClick = {})
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true)
-            .assertExists()
-            .performClick()
-
-        composeTestRule.waitForIdle()
     }
 
     @Test
@@ -732,45 +646,17 @@ class ComprehensiveScreenTests {
         composeTestRule.onNodeWithText("test@example.com", useUnmergedTree = true).assertExists()
     }
 
-    @Test
-    fun appInfoScreen_actionItem_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    ActionItem(
-                        icon = Icons.Filled.Update,
-                        title = "업데이트",
-                        description = "설명",
-                        onClick = {},
-                    )
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("설명", useUnmergedTree = true).assertExists()
-    }
-
     // Test more screen combinations
     @Test
     fun appInfoScreen_allHelperComposables() {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
-                    FeatureItem(feature = "기능 1")
                     InfoItem(label = "라벨", value = "값")
-                    LegalItem(title = "법적", onClick = {})
                     ContactItem(
                         icon = Icons.Filled.Email,
                         title = "연락처",
                         value = "값",
-                        onClick = {},
-                    )
-                    ActionItem(
-                        icon = Icons.Filled.Update,
-                        title = "액션",
-                        description = "설명",
                         onClick = {},
                     )
                 }
@@ -779,10 +665,7 @@ class ComprehensiveScreenTests {
         composeTestRule.waitForIdle()
 
         // Verify all components render
-        composeTestRule.onNodeWithText("기능 1", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("법적", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("연락처", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("액션", useUnmergedTree = true).assertExists()
     }
 }

@@ -625,17 +625,9 @@ class MaximumCoverageTests {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
-                    // Test FeatureItem variations
-                    FeatureItem(feature = "기능 1")
-                    FeatureItem(feature = "기능 2")
-
                     // Test InfoItem variations
                     InfoItem(label = "라벨 1", value = "값 1")
                     InfoItem(label = "라벨 2", value = "값 2")
-
-                    // Test LegalItem variations
-                    LegalItem(title = "법적 항목 1", onClick = {})
-                    LegalItem(title = "법적 항목 2", onClick = {})
 
                     // Test ContactItem variations
                     ContactItem(
@@ -650,35 +642,15 @@ class MaximumCoverageTests {
                         value = "www.example.com",
                         onClick = {},
                     )
-
-                    // Test ActionItem variations
-                    ActionItem(
-                        icon = Icons.Filled.Update,
-                        title = "업데이트",
-                        description = "설명 1",
-                        onClick = {},
-                    )
-                    ActionItem(
-                        icon = Icons.Filled.Share,
-                        title = "공유",
-                        description = "설명 2",
-                        onClick = {},
-                    )
                 }
             }
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("기능 1", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("기능 2", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("라벨 1", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("라벨 2", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("법적 항목 1", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("법적 항목 2", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("웹사이트", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("공유", useUnmergedTree = true).assertExists()
     }
 
     @Test

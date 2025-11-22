@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -395,7 +396,7 @@ fun SettingsScreen(
                             showDeleteAccountDialog = false
                             authViewModel.deleteAccount()
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).testTag("delete_account_button"),
                         variant = ButtonVariant.Danger,
                         size = ButtonSize.Medium,
                         enabled = !isLoading,

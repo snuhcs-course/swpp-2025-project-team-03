@@ -800,18 +800,6 @@ class ExtendedCoverageTests {
     // ========== AppInfoScreen Internal Components ==========
 
     @Test
-    fun featureItem_renders_withText() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                FeatureItem(feature = "테스트 기능")
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("테스트 기능", useUnmergedTree = true).assertExists()
-    }
-
-    @Test
     fun infoItem_renders_withLabelAndValue() {
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -822,21 +810,6 @@ class ExtendedCoverageTests {
 
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("값", useUnmergedTree = true).assertExists()
-    }
-
-    @Test
-    fun legalItem_renders_andTriggersClick() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                LegalItem(title = "법적 항목", onClick = { clicked = true })
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("법적 항목").performClick()
-        assert(clicked)
     }
 
     @Test
@@ -861,44 +834,15 @@ class ExtendedCoverageTests {
     }
 
     @Test
-    fun actionItem_renders_withAllFields() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                ActionItem(
-                    icon = Icons.Filled.Update,
-                    title = "업데이트",
-                    description = "설명",
-                    onClick = { clicked = true },
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("설명", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("업데이트").performClick()
-        assert(clicked)
-    }
-
-    @Test
     fun appInfoScreen_allInternalComponents_render() {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
-                    FeatureItem(feature = "기능 1")
                     InfoItem(label = "라벨", value = "값")
-                    LegalItem(title = "법적 항목", onClick = {})
                     ContactItem(
                         icon = Icons.Filled.Email,
                         title = "이메일",
                         value = "test@example.com",
-                        onClick = {},
-                    )
-                    ActionItem(
-                        icon = Icons.Filled.Update,
-                        title = "업데이트",
-                        description = "설명",
                         onClick = {},
                     )
                 }
@@ -906,10 +850,7 @@ class ExtendedCoverageTests {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("기능 1", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
     }
 }

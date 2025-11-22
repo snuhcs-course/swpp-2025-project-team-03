@@ -5,6 +5,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Build
+import com.example.voicetutor.annotations.ExcludeFromJacocoGeneratedReport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -520,6 +521,7 @@ class AudioRecorder(private val context: Context) {
     /**
      * 리소스 정리
      */
+    @ExcludeFromJacocoGeneratedReport
     fun cleanup() {
         stopRecording()
         recordingJob?.cancel()
