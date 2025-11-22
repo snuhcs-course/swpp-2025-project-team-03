@@ -190,6 +190,7 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
     val connectedDebug1Task = tasks.findByName("connectedDebug1")
     val connectedDebug2Task = tasks.findByName("connectedDebug2")
     val connectedDebug3Task = tasks.findByName("connectedDebug3")
+    val connectedDebug4Task = tasks.findByName("connectedDebug4")
     
     if (uiTestTask != null) {
         mustRunAfter(uiTestTask)
@@ -202,6 +203,9 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
     }
     if (connectedDebug3Task != null) {
         mustRunAfter(connectedDebug3Task)
+    }
+    if (connectedDebug4Task != null) {
+        mustRunAfter(connectedDebug4Task)
     }
 
     // Log execution data files for debugging
@@ -355,6 +359,10 @@ val testClassGroup3 = listOf(
     "com.example.voicetutor.ui.viewmodel.StudentViewModelIntegrationTest"
 )
 
+val testClassGroup4 = listOf(
+    "com.example.voicetutor.ui.screens.TeacherStudentAssignmentDetailScreenCoverageTest"
+)
+
 tasks.register("connectedDebug1", Exec::class) {
     group = "verification"
     description = "Run first group of Android instrumentation tests (14 test classes)"
@@ -400,6 +408,26 @@ tasks.register("connectedDebug3", Exec::class) {
     description = "Run third group of Android instrumentation tests (14 test classes)"
     
     val classArg = testClassGroup3.joinToString(",")
+    val gradlew = if (System.getProperty("os.name").lowercase().contains("windows")) {
+        "gradlew.bat"
+    } else {
+        "./gradlew"
+    }
+    
+    commandLine = listOf(
+        gradlew,
+        "connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.class=$classArg"
+    )
+    workingDir = project.rootDir
+    isIgnoreExitValue = false
+}
+
+tasks.register("connectedDebug4", Exec::class) {
+    group = "verification"
+    description = "Run fourth group of Android instrumentation tests (TeacherStudentAssignmentDetailScreenCoverageTest)"
+    
+    val classArg = testClassGroup4.joinToString(",")
     val gradlew = if (System.getProperty("os.name").lowercase().contains("windows")) {
         "gradlew.bat"
     } else {
