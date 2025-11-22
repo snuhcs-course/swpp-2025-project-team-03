@@ -21,8 +21,13 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.isNull
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.kotlin.any as kotlinAny
+import java.io.File
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.times
@@ -2477,5 +2482,73 @@ class AssignmentViewModelTest {
             }
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun uploadPdfToS3_success_setsSuccessStateAndTriggersQuestionGeneration() = runTest {
+        // Given - uploadPdfToS3 성공 후 onSuccess 블록 테스트 (lines 1035-1078)
+        val createRequest = com.example.voicetutor.data.network.CreateAssignmentRequest(
+            title = "Test Assignment",
+            description = "Description",
+            total_questions = 10,
+            due_at = "2025-01-01",
+            class_id = 1,
+            grade = "Grade 1",
+            subject = "Math"
+        )
+        val createResponse = com.example.voicetutor.data.network.CreateAssignmentResponse(
+            assignment_id = 1,
+            material_id = 10,
+            s3_key = "some-key",
+            upload_url = "https://dummy-upload"
+        )
+        val pdfFile = java.io.File.createTempFile("test", ".pdf")
+        val viewModel = AssignmentViewModel(assignmentRepository)
+
+        Mockito.`when`(assignmentRepository.createAssignment(createRequest))
+            .thenReturn(Result.success(createResponse))
+        Mockito.`when`(assignmentRepository.uploadPdfToS3(anyString(), kotlinAny<File>()))
+            .thenReturn(Result.success(true))
+        Mockito.`when`(assignmentRepository.createQuestionsAfterUpload(anyInt(), anyInt(), anyInt()))
+            .thenReturn(Result.success(Unit))
+        Mockito.`when`(assignmentRepository.getAllAssignments(anyString(), isNull(), isNull()))
+            .thenReturn(Result.success<List<AssignmentData>>(emptyList()))
+        Mockito.`when`(assignmentRepository.getAllAssignments(isNull(), isNull(), isNull()))
+            .thenReturn(Result.success<List<AssignmentData>>(emptyList()))
+
+        // When
+        viewModel.createAssignmentWithPdf(
+            assignment = createRequest,
+            pdfFile = pdfFile,
+            totalNumber = 10,
+            teacherId = "123"
+        )
+
+        // Then - uploadPdfToS3 성공 후 onSuccess 블록에서 설정된 상태 확인
+        // GlobalScope.launch로 인해 비동기 작업이 완료될 때까지 기다림
+        viewModel.uploadSuccess.test {
+            awaitItem() // initial false
+            val success = awaitItem() // true after upload success
+            assertTrue(success)
+            cancelAndIgnoreRemainingEvents()
+        }
+        
+        // 추가 상태 확인을 위해 잠시 대기
+        runCurrent()
+        advanceUntilIdle()
+        
+        assertFalse(viewModel.isUploading.value)
+        assertFalse(viewModel.isCreatingAssignment.value)
+        
+        // questionGenerationSuccess는 GlobalScope에서 설정되므로 별도로 확인
+        viewModel.questionGenerationSuccess.test {
+            awaitItem() // initial false
+            val success = awaitItem() // true after question generation
+            assertTrue(success)
+            cancelAndIgnoreRemainingEvents()
+        }
+        
+        runCurrent()
+        advanceUntilIdle()
     }
 }
