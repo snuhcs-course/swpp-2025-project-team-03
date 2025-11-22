@@ -27,6 +27,7 @@ data class AudioConfig(
     val channelConfig: Int = AudioFormat.CHANNEL_IN_MONO,
     val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT,
     val audioSource: Int = MediaRecorder.AudioSource.MIC,
+    val maxRecordingDurationSeconds: Int = 60, // 최대 녹음 시간: 1분
 )
 
 class AudioRecorder(private val context: Context) {
@@ -186,6 +187,13 @@ class AudioRecorder(private val context: Context) {
                 delay(1000)
                 val elapsedTime = ((System.currentTimeMillis() - startTime) / 1000).toInt()
                 _recordingState.value = _recordingState.value.copy(recordingTime = elapsedTime)
+                
+                // 최대 녹음 시간 도달 시 자동 중지
+                if (elapsedTime >= audioConfig.maxRecordingDurationSeconds) {
+                    println("AudioRecorder - 최대 녹음 시간 도달, 자동 중지")
+                    stopRecording()
+                    break
+                }
             }
         }
     }
