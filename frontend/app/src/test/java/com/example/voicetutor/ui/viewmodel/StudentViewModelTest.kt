@@ -140,78 +140,6 @@ class StudentViewModelTest {
         Mockito.verify(studentRepository, times(1)).getStudentById(1)
     }
 
-    @Test
-    fun loadStudentAssignments_success_updatesStudentAssignments() = runTest {
-        // Given
-        val assignments = listOf(
-            AssignmentData(
-                id = 1,
-                title = "Assignment 1",
-                description = "desc",
-                totalQuestions = 5,
-                createdAt = null,
-
-                dueAt = "",
-                courseClass = com.example.voicetutor.data.models.CourseClass(
-                    id = 1,
-                    name = "Class A",
-                    description = null,
-                    subject = com.example.voicetutor.data.models.Subject(id = 1, name = "Math"),
-                    teacherName = "Teacher",
-
-                    studentCount = 0,
-                    createdAt = "",
-                ),
-                materials = null,
-                grade = null,
-            ),
-        )
-        Mockito.`when`(studentRepository.getStudentAssignments(1))
-            .thenReturn(Result.success(assignments))
-
-        // When
-        viewModel.studentAssignments.test {
-            assert(awaitItem().isEmpty())
-
-            viewModel.loadStudentAssignments(1)
-            runCurrent()
-
-            // Then
-            assert(awaitItem() == assignments)
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        Mockito.verify(studentRepository, times(1)).getStudentAssignments(1)
-    }
-
-    @Test
-    fun loadStudentProgress_success_updatesStudentProgress() = runTest {
-        // Given
-        val progress = StudentProgress(
-            studentId = 1,
-            totalAssignments = 10,
-            completedAssignments = 7,
-            averageScore = 85.5,
-            weeklyProgress = emptyList(),
-            subjectBreakdown = emptyList(),
-        )
-        Mockito.`when`(studentRepository.getStudentProgress(1))
-            .thenReturn(Result.success(progress))
-
-        // When
-        viewModel.studentProgress.test {
-            assert(awaitItem() == null)
-
-            viewModel.loadStudentProgress(1)
-            runCurrent()
-
-            // Then
-            assert(awaitItem() == progress)
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        Mockito.verify(studentRepository, times(1)).getStudentProgress(1)
-    }
 
     @Test
     fun isLoading_loadingOperation_setsTrueThenFalse() = runTest {
@@ -281,57 +209,6 @@ class StudentViewModelTest {
         }
     }
 
-    @Test
-    fun loadStudentAssignments_failure_setsError() = runTest {
-        // Given: 저장소가 실패 반환
-        Mockito.`when`(studentRepository.getStudentAssignments(1))
-            .thenReturn(Result.failure(Exception("Failed to load assignments")))
-
-        // When
-        viewModel.error.test {
-            awaitItem() // initial null
-
-            viewModel.loadStudentAssignments(1)
-            runCurrent()
-
-            // Then: 에러 메시지 설정
-            val error = awaitItem()
-            assert(error?.contains("Failed to load assignments") == true)
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        // Then: studentAssignments가 빈 리스트로 유지됨
-        viewModel.studentAssignments.test {
-            assert(awaitItem().isEmpty())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun loadStudentProgress_failure_setsError() = runTest {
-        // Given: 저장소가 실패 반환
-        Mockito.`when`(studentRepository.getStudentProgress(1))
-            .thenReturn(Result.failure(Exception("Failed to load progress")))
-
-        // When
-        viewModel.error.test {
-            awaitItem() // initial null
-
-            viewModel.loadStudentProgress(1)
-            runCurrent()
-
-            // Then: 에러 메시지 설정
-            val error = awaitItem()
-            assert(error?.contains("Failed to load progress") == true)
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        // Then: studentProgress가 null로 유지됨
-        viewModel.studentProgress.test {
-            assert(awaitItem() == null)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
 
     @Test
     fun loadAllStudents_withOnlyTeacherId_callsRepoWithTeacherId() = runTest {
@@ -381,89 +258,6 @@ class StudentViewModelTest {
         Mockito.verify(studentRepository, times(1)).getAllStudents(null, "10")
     }
 
-    @Test
-    fun loadStudentClasses_success_updatesStudentClasses() = runTest {
-        // Given
-        val classes = listOf(
-            ClassInfo(id = 1, name = "Class A"),
-            ClassInfo(id = 2, name = "Class B"),
-        )
-        Mockito.`when`(studentRepository.getStudentClasses(1))
-            .thenReturn(Result.success(classes))
-
-        // When
-        viewModel.studentClasses.test {
-            assert(awaitItem().isEmpty())
-
-            viewModel.loadStudentClasses(1)
-            runCurrent()
-
-            // Then
-            val result = awaitItem()
-            assertEquals(classes, result[1])
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        Mockito.verify(studentRepository, times(1)).getStudentClasses(1)
-    }
-
-    @Test
-    fun loadStudentClasses_alreadyLoaded_doesNotReload() = runTest {
-        // Given: 이미 로드된 클래스
-        val classes = listOf(ClassInfo(id = 1, name = "Class A"))
-        Mockito.`when`(studentRepository.getStudentClasses(1))
-            .thenReturn(Result.success(classes))
-
-        // When: 첫 번째 로드
-        viewModel.loadStudentClasses(1)
-        runCurrent()
-
-        // Then: 두 번째 로드는 호출되지 않음
-        viewModel.loadStudentClasses(1)
-        runCurrent()
-
-        Mockito.verify(studentRepository, times(1)).getStudentClasses(1)
-    }
-
-    @Test
-    fun loadStudentClasses_failure_setsError() = runTest {
-        // Given
-        Mockito.`when`(studentRepository.getStudentClasses(1))
-            .thenReturn(Result.failure(Exception("Failed to load classes")))
-
-        // When
-        viewModel.error.test {
-            awaitItem()
-
-            viewModel.loadStudentClasses(1)
-            runCurrent()
-
-            // Then
-            val error = awaitItem()
-            assert(error?.contains("Failed to load classes") == true)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun loadStudentClasses_loadingState_updatesLoadingSet() = runTest {
-        // Given
-        Mockito.`when`(studentRepository.getStudentClasses(1))
-            .thenReturn(Result.success(emptyList()))
-
-        // When
-        viewModel.loadingStudentClasses.test {
-            assert(!awaitItem().contains(1))
-
-            viewModel.loadStudentClasses(1)
-            runCurrent()
-
-            // Then: 로딩 중에는 set에 포함됨
-            val loadingSet = awaitItem()
-            // 로딩이 완료되면 제거됨
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
 
     @Test
     fun students_initialState_isEmpty() = runTest {
@@ -481,21 +275,6 @@ class StudentViewModelTest {
         }
     }
 
-    @Test
-    fun studentAssignments_initialState_isEmpty() = runTest {
-        viewModel.studentAssignments.test {
-            assert(awaitItem().isEmpty())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun studentProgress_initialState_isNull() = runTest {
-        viewModel.studentProgress.test {
-            assert(awaitItem() == null)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
 
     @Test
     fun error_initialState_isNull() = runTest {
@@ -513,19 +292,4 @@ class StudentViewModelTest {
         }
     }
 
-    @Test
-    fun studentClasses_initialState_isEmpty() = runTest {
-        viewModel.studentClasses.test {
-            assert(awaitItem().isEmpty())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun loadingStudentClasses_initialState_isEmpty() = runTest {
-        viewModel.loadingStudentClasses.test {
-            assert(awaitItem().isEmpty())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
 }

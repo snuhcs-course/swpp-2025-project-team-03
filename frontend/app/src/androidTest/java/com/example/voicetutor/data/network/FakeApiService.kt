@@ -479,6 +479,9 @@ class FakeApiService : ApiService {
     override suspend fun removeStudentFromClass(id: Int, student_id: Int): Response<ApiResponse<Unit>> =
         success(Unit)
 
+    override suspend fun removeClassById(id: Int): Response<ApiResponse<Unit>> =
+        success(Unit)
+
     var classStudentsStatisticsResponse: ClassStudentsStatistics = ClassStudentsStatistics(
         overallCompletionRate = 0.75f,
         students = listOf(

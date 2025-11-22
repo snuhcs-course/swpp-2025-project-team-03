@@ -134,11 +134,11 @@ class ReportViewModelTest {
         vm.loadCurriculumReport(1, 1)
         advanceUntilIdle()
 
-        // When
-        vm.clearReport()
+        // When: clearError 호출 (clearReport는 없음)
+        vm.clearError()
 
-        // Then
-        vm.curriculumReport.test {
+        // Then: error가 클리어됨
+        vm.error.test {
             assert(awaitItem() == null)
             cancelAndIgnoreRemainingEvents()
         }

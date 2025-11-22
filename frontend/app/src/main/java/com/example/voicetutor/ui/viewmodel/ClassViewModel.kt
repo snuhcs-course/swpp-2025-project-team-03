@@ -91,7 +91,6 @@ class ClassViewModel @Inject constructor(
 
             classRepository.createClass(createClassRequest)
                 .onSuccess { classData ->
-                    // 새로 생성된 클래스를 목록에 추가
                     _classes.value = _classes.value + classData
                 }
                 .onFailure { exception ->
@@ -102,33 +101,12 @@ class ClassViewModel @Inject constructor(
         }
     }
 
-    fun refreshClasses(teacherId: String) {
-        loadClasses(teacherId)
-    }
-
     fun enrollStudentToClass(classId: Int, studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             classRepository.enrollStudentToClass(classId, studentId)
                 .onSuccess {
-                    // 등록 성공 후 해당 반 학생 목록 갱신
-                    loadClassStudents(classId)
-                }
-                .onFailure { e ->
-                    _error.value = ErrorMessageMapper.getErrorMessage(e)
-                }
-            _isLoading.value = false
-        }
-    }
-
-    fun removeStudentFromClass(classId: Int, studentId: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            classRepository.removeStudentFromClass(classId, studentId)
-                .onSuccess {
-                    // 제거 성공 후 해당 반 학생 목록 갱신
                     loadClassStudents(classId)
                 }
                 .onFailure { e ->

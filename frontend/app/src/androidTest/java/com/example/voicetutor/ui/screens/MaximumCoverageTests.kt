@@ -161,24 +161,28 @@ class MaximumCoverageTests {
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                     ClassCard(
                         classRoom = ClassRoom(1, "Success 반", "과목", "설명", 30, 5, 0.8f, Success),
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                     ClassCard(
                         classRoom = ClassRoom(2, "Warning 반", "과목", "설명", 30, 5, 0.8f, Warning),
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                     ClassCard(
                         classRoom = ClassRoom(3, "Error 반", "과목", "설명", 30, 5, 0.8f, Error),
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                 }
             }

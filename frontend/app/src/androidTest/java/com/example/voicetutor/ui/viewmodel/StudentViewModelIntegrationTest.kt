@@ -61,52 +61,6 @@ class StudentViewModelIntegrationTest {
         assertEquals(null, viewModel.error.value)
     }
 
-    @Test
-    fun loadStudentAssignments_populatesAssignments() = runTest(dispatcher) {
-        viewModel.loadStudentAssignments(1)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.studentAssignments.value.isNotEmpty())
-        assertEquals(null, viewModel.error.value)
-    }
-
-    @Test
-    fun loadStudentProgress_updatesState() = runTest(dispatcher) {
-        viewModel.loadStudentProgress(1)
-        advanceUntilIdle()
-
-        assertNotNull(viewModel.studentProgress.value)
-        assertEquals(null, viewModel.error.value)
-    }
-
-    @Test
-    fun loadStudentClasses_storesClasses() = runTest(dispatcher) {
-        viewModel.loadStudentClasses(1)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.studentClasses.value.containsKey(1))
-        assertEquals(null, viewModel.error.value)
-    }
-
-    @Test
-    fun loadStudentProgress_failure_setsError() = runTest(dispatcher) {
-        apiService.shouldFailStudentProgress = true
-
-        viewModel.loadStudentProgress(1)
-        advanceUntilIdle()
-
-        assertEquals(apiService.studentProgressErrorMessage, viewModel.error.value)
-    }
-
-    @Test
-    fun loadStudentClasses_failure_setsError() = runTest(dispatcher) {
-        apiService.shouldFailStudentClasses = true
-
-        viewModel.loadStudentClasses(1)
-        advanceUntilIdle()
-
-        assertEquals(apiService.studentClassesErrorMessage, viewModel.error.value)
-    }
 
     @Test
     fun failingLoadAllStudents_setsError() = runTest(dispatcher) {

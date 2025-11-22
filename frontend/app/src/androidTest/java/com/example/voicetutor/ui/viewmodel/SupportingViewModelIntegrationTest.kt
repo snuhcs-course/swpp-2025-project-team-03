@@ -94,9 +94,6 @@ class SupportingViewModelIntegrationTest {
         advanceUntilIdle()
         assertEquals(null, classViewModel.error.value)
 
-        classViewModel.removeStudentFromClass(classId = 1, studentId = 3)
-        advanceUntilIdle()
-        assertEquals(null, classViewModel.error.value)
     }
 
     @Test
@@ -154,9 +151,6 @@ class SupportingViewModelIntegrationTest {
         advanceUntilIdle()
         assertEquals("enroll error", failingClassViewModel.error.value)
 
-        failingClassViewModel.removeStudentFromClass(classId = 1, studentId = 3)
-        advanceUntilIdle()
-        assertEquals("remove error", failingClassViewModel.error.value)
     }
 
     @Test

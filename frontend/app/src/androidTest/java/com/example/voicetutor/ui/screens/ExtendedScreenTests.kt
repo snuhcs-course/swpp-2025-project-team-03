@@ -191,6 +191,7 @@ class ExtendedScreenTests {
                             onClassClick = {},
                             onCreateAssignment = {},
                             onViewStudents = {},
+                            onDeleteClass = { _, _ -> },
                         )
                     }
                 }

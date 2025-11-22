@@ -108,6 +108,7 @@ class ScreenComposableTests {
                     onClassClick = {},
                     onCreateAssignment = {},
                     onViewStudents = {},
+                    onDeleteClass = { _, _ -> },
                 )
             }
         }
