@@ -208,28 +208,6 @@ fun AppInfoScreen(
 }
 
 @Composable
-fun FeatureItem(
-    feature: String,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Check,
-            contentDescription = null,
-            tint = Success,
-            modifier = Modifier.size(16.dp),
-        )
-        Text(
-            text = feature,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Gray800,
-        )
-    }
-}
-
-@Composable
 fun InfoItem(
     label: String,
     value: String,
@@ -249,32 +227,6 @@ fun InfoItem(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = Gray800,
-        )
-    }
-}
-
-@Composable
-fun LegalItem(
-    title: String,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = PrimaryIndigo,
-        )
-        Icon(
-            imageVector = Icons.Filled.ChevronRight,
-            contentDescription = null,
-            tint = Gray400,
-            modifier = Modifier.size(16.dp),
         )
     }
 }
@@ -309,50 +261,6 @@ fun ContactItem(
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray600,
-            )
-        }
-
-        Icon(
-            imageVector = Icons.Filled.ChevronRight,
-            contentDescription = null,
-            tint = Gray400,
-            modifier = Modifier.size(16.dp),
-        )
-    }
-}
-
-@Composable
-fun ActionItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    description: String,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = PrimaryIndigo,
-            modifier = Modifier.size(20.dp),
-        )
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = Gray800,
-            )
-            Text(
-                text = description,
                 style = MaterialTheme.typography.bodySmall,
                 color = Gray600,
             )

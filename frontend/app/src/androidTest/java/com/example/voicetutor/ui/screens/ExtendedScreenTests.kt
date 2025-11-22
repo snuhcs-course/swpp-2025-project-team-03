@@ -488,27 +488,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test FeatureItem with various features
-    @Test
-    fun featureItem_variousFeatures() {
-        val features = listOf(
-            "음성 인식 기능",
-            "AI 기반 피드백",
-            "실시간 진행 상황 추적",
-        )
-        // Render all features in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    features.forEach { feature ->
-                        FeatureItem(feature = feature)
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
     // Test InfoItem with various info
     @Test
     fun infoItem_variousInfo() {
@@ -522,23 +501,6 @@ class ExtendedScreenTests {
                 Column {
                     infoPairs.forEach { (label, value) ->
                         InfoItem(label = label, value = value)
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test LegalItem with various items
-    @Test
-    fun legalItem_variousItems() {
-        val legalItems = listOf("이용약관", "개인정보처리방침")
-        // Render all items in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    legalItems.forEach { title ->
-                        LegalItem(title = title, onClick = {})
                     }
                 }
             }
@@ -571,51 +533,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test ActionItem with various actions
-    @Test
-    fun actionItem_variousActions() {
-        val actions = listOf(
-            Triple(Icons.Filled.Update, "업데이트 확인", "최신 버전으로 업데이트하세요"),
-            Triple(Icons.Filled.Share, "앱 공유하기", "VoiceTutor를 친구들에게 추천하세요"),
-        )
-        // Render all actions in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    actions.forEach { (icon, title, description) ->
-                        ActionItem(
-                            icon = icon,
-                            title = title,
-                            description = description,
-                            onClick = {},
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test AppInfoScreen helper composables with different data
-    @Test
-    fun appInfoScreen_featureItem_multipleFeatures() {
-        val features = listOf("기능 1", "기능 2", "기능 3")
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    features.forEach { feature ->
-                        FeatureItem(feature = feature)
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        features.forEach { feature ->
-            composeTestRule.onNodeWithText(feature, useUnmergedTree = true).assertExists()
-        }
-    }
-
     @Test
     fun appInfoScreen_infoItem_multipleItems() {
         val infoItems = listOf(
@@ -637,25 +554,6 @@ class ExtendedScreenTests {
         infoItems.forEach { (label, value) ->
             composeTestRule.onNodeWithText(label, useUnmergedTree = true).assertExists()
             composeTestRule.onNodeWithText(value, useUnmergedTree = true).assertExists()
-        }
-    }
-
-    @Test
-    fun appInfoScreen_legalItem_multipleItems() {
-        val legalItems = listOf("개인정보처리방침", "서비스 이용약관", "오픈소스 라이선스")
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    legalItems.forEach { title ->
-                        LegalItem(title = title, onClick = {})
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        legalItems.forEach { title ->
-            composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
         }
     }
 
@@ -685,35 +583,6 @@ class ExtendedScreenTests {
         contactItems.forEach { (_, title, value) ->
             composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
             composeTestRule.onNodeWithText(value, useUnmergedTree = true).assertExists()
-        }
-    }
-
-    @Test
-    fun appInfoScreen_actionItem_multipleItems() {
-        val actionItems = listOf(
-            Triple(Icons.Filled.Update, "업데이트 확인", "최신 버전으로 업데이트하세요"),
-            Triple(Icons.Filled.Share, "앱 공유하기", "VoiceTutor를 친구들에게 추천하세요"),
-            Triple(Icons.Filled.Delete, "캐시 삭제", "앱 데이터를 정리하여 공간을 확보하세요"),
-        )
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    actionItems.forEach { (icon, title, description) ->
-                        ActionItem(
-                            icon = icon,
-                            title = title,
-                            description = description,
-                            onClick = {},
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        actionItems.forEach { (_, title, description) ->
-            composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
-            composeTestRule.onNodeWithText(description, useUnmergedTree = true).assertExists()
         }
     }
 

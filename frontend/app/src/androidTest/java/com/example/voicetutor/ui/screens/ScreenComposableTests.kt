@@ -488,18 +488,6 @@ class ScreenComposableTests {
     }
 
     @Test
-    fun featureItem_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                FeatureItem(feature = "음성 인식 기능")
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("음성 인식 기능", substring = true).assertExists()
-    }
-
-    @Test
     fun infoItem_renders() {
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -513,24 +501,6 @@ class ScreenComposableTests {
 
         composeTestRule.onNodeWithText("버전", substring = true).assertExists()
         composeTestRule.onNodeWithText("1.0.0", substring = true).assertExists()
-    }
-
-    @Test
-    fun legalItem_renders_andClickable() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                LegalItem(
-                    title = "이용약관",
-                    onClick = { clicked = true },
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("이용약관", substring = true).assertExists()
-        composeTestRule.onNodeWithText("이용약관", substring = true).performClick()
-        assert(clicked)
     }
 
     @Test
@@ -551,27 +521,6 @@ class ScreenComposableTests {
         composeTestRule.onNodeWithText("이메일", substring = true).assertExists()
         composeTestRule.onNodeWithText("support@voicetutor.com", substring = true).assertExists()
         composeTestRule.onNodeWithText("이메일", substring = true).performClick()
-        assert(clicked)
-    }
-
-    @Test
-    fun actionItem_renders_andClickable() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                ActionItem(
-                    icon = Icons.Filled.Update,
-                    title = "설정",
-                    description = "앱 설정을 변경합니다",
-                    onClick = { clicked = true },
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("설정", substring = true).assertExists()
-        composeTestRule.onNodeWithText("앱 설정을 변경합니다", substring = true).assertExists()
-        composeTestRule.onNodeWithText("설정", substring = true).performClick()
         assert(clicked)
     }
 
