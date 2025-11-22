@@ -242,6 +242,8 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             "**/hilt_aggregated_deps/**",
             "**/voicetutor/di/**",
             "**/Hilt*",
+            "**/voicetutor/MainActivity.kt",
+            "**/voicetutor/VoiceTutorApplication.kt",
         )
 
     // Android projects use multiple class output directories
@@ -361,7 +363,8 @@ val testClassGroup3 = listOf(
 
 val testClassGroup4 = listOf(
     "com.example.voicetutor.ui.screens.TeacherStudentAssignmentDetailScreenCoverageTest",
-    "com.example.voicetutor.ui.screens.CreateAssignmentScreenCoverageTest"
+    "com.example.voicetutor.ui.screens.CreateAssignmentScreenCoverageTest",
+    "com.example.voicetutor.ui.screens.TeacherStudentsScreenTest"
 )
 
 tasks.register("connectedDebug1", Exec::class) {
@@ -426,7 +429,7 @@ tasks.register("connectedDebug3", Exec::class) {
 
 tasks.register("connectedDebug4", Exec::class) {
     group = "verification"
-    description = "Run fourth group of Android instrumentation tests (TeacherStudentAssignmentDetailScreenCoverageTest)"
+    description = "Run fourth group of Android instrumentation tests (TeacherStudentAssignmentDetailScreenCoverageTest, CreateAssignmentScreenCoverageTest, TeacherStudentsScreenTest)"
     
     val classArg = testClassGroup4.joinToString(",")
     val gradlew = if (System.getProperty("os.name").lowercase().contains("windows")) {

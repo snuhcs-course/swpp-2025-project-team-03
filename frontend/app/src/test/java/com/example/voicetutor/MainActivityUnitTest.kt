@@ -15,11 +15,6 @@ class MainActivityUnitTest {
         assertTrue(true)
     }
 
-    @Test
-    fun componentShowcase_composable_exists() {
-        // Test that the ComponentShowcase composable exists
-        assertTrue(true)
-    }
 
     @Test
     fun mainActivity_hasRequiredAnnotations() {

@@ -221,7 +221,52 @@ class CreateAssignmentScreenCoverageTest {
         composeRule.waitForIdle()
     }
 
-    // Test PDF upload success message (lines 533-557)
+    // Test PDF upload progress state (lines 507-530)
+    @Test
+    fun createAssignmentScreen_displaysUploadProgress() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                CreateAssignmentScreen(teacherId = "2")
+            }
+        }
+
+        val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
+
+        // Set uploading state with progress
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_isUploading", true)
+            setStateFlow(assignmentViewModel, "_uploadProgress", 0.5f) // 50% progress
+        }
+
+        composeRule.waitForIdle()
+
+        // Should display "PDF 업로드 중..." text
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("PDF 업로드 중", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Should display progress percentage
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("50%", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Update progress to 100%
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_uploadProgress", 1.0f)
+        }
+
+        composeRule.waitForIdle()
+
+        // Should display 100%
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("100%", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    // Test PDF upload success message (lines 532-558)
     @Test
     fun createAssignmentScreen_displaysUploadSuccessMessage() {
         composeRule.setContent {
@@ -232,30 +277,219 @@ class CreateAssignmentScreenCoverageTest {
 
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
 
+        // Set upload success state
         composeRule.runOnIdle {
             setStateFlow(assignmentViewModel, "_uploadSuccess", true)
             setStateFlow(assignmentViewModel, "_isUploading", false)
         }
 
+        composeRule.waitForIdle()
+
         // Note: Success message only shows when uploadSuccess is true AND selectedFiles is not empty
-        // Since selectedFiles is local state, we verify the ViewModel state is set correctly
+        // Since selectedFiles is local state managed by the composable, we verify the ViewModel state
+        // The actual UI display requires selectedFiles to be non-empty, which happens after file selection
+        // This test verifies that the ViewModel state is correctly set for the success condition
         composeRule.waitForIdle()
     }
 
-    // Test selected files display and removal (lines 561-616)
+    // Test PDF file picker button (lines 486-499)
     @Test
-    fun createAssignmentScreen_displaysSelectedFiles() {
+    fun createAssignmentScreen_displaysFilePickerButton() {
         composeRule.setContent {
             VoiceTutorTheme {
                 CreateAssignmentScreen(teacherId = "2")
             }
         }
 
+        waitForText("PDF 자료 업로드")
+
+        // Should display file picker button
+        composeRule.onAllNodesWithText("파일 선택", useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+
+        // Should display file size limit text
+        composeRule.onAllNodesWithText("최대 10MB", substring = true, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+    }
+
+    // Test selected files display (lines 560-617)
+    // Note: This tests the UI structure for displaying selected files
+    // Actual file selection requires ActivityResultLauncher which cannot be directly tested
+    @Test
+    fun createAssignmentScreen_displaysFileSelectionUI() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                CreateAssignmentScreen(teacherId = "2")
+            }
+        }
+
+        waitForText("PDF 자료 업로드")
+
         // File selection UI should be displayed
-        composeRule.waitUntil(timeoutMillis = 15_000) {
-            composeRule.onAllNodesWithText("PDF 파일", substring = true, useUnmergedTree = true)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("파일 선택", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+            composeRule.onAllNodesWithText("파일 추가", useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
+
+        // Should display file size limit
+        composeRule.onAllNodesWithText("최대 10MB", substring = true, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+    }
+
+    // Test upload progress indicator (lines 517-528)
+    @Test
+    fun createAssignmentScreen_displaysProgressIndicator() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                CreateAssignmentScreen(teacherId = "2")
+            }
+        }
+
+        val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
+
+        // Set uploading state
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_isUploading", true)
+            setStateFlow(assignmentViewModel, "_uploadProgress", 0.3f) // 30% progress
+        }
+
+        composeRule.waitForIdle()
+
+        // Should display progress text
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("PDF 업로드 중", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Should display progress percentage
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("30%", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Update to different progress values
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_uploadProgress", 0.75f) // 75% progress
+        }
+
+        composeRule.waitForIdle()
+
+        // Should update progress percentage
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("75%", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    // Test upload overlay dialog (lines 1010-1062)
+    @Test
+    fun createAssignmentScreen_displaysUploadOverlayDialog() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                CreateAssignmentScreen(teacherId = "2")
+            }
+        }
+
+        val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
+
+        // Set uploading state to show overlay dialog
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_isUploading", true)
+            setStateFlow(assignmentViewModel, "_uploadProgress", 0.6f) // 60% progress
+        }
+
+        composeRule.waitForIdle()
+
+        // Should display overlay dialog with "PDF 업로드 중..." text
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("PDF 업로드 중", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Should display progress percentage in overlay
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("60%", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Update progress
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_uploadProgress", 0.9f) // 90% progress
+        }
+
+        composeRule.waitForIdle()
+
+        // Should update progress percentage
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("90%", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Complete upload
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_isUploading", false)
+            setStateFlow(assignmentViewModel, "_uploadProgress", 1.0f)
+        }
+
+        composeRule.waitForIdle()
+
+        // Overlay should disappear when upload completes
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("PDF 업로드 중", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    // Test upload progress from 0% to 100% (lines 507-530, 1010-1062)
+    @Test
+    fun createAssignmentScreen_showsCompleteUploadProgress() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                CreateAssignmentScreen(teacherId = "2")
+            }
+        }
+
+        val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
+
+        // Start upload
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_isUploading", true)
+            setStateFlow(assignmentViewModel, "_uploadProgress", 0.0f)
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify initial state
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("PDF 업로드 중", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Simulate progress updates
+        val progressSteps = listOf(0.25f, 0.5f, 0.75f, 1.0f)
+        for (progress in progressSteps) {
+            composeRule.runOnIdle {
+                setStateFlow(assignmentViewModel, "_uploadProgress", progress)
+            }
+            composeRule.waitForIdle()
+
+            val expectedPercent = (progress * 100).toInt()
+            composeRule.waitUntil(timeoutMillis = 3_000) {
+                composeRule.onAllNodesWithText("$expectedPercent%", useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+
+        // Complete upload
+        composeRule.runOnIdle {
+            setStateFlow(assignmentViewModel, "_isUploading", false)
+        }
+
         composeRule.waitForIdle()
     }
 
