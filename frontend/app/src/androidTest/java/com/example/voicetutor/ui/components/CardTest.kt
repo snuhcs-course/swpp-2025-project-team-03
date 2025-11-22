@@ -340,4 +340,416 @@ class CardTest {
 
         composeTestRule.onNodeWithTag("CustomCard2").assertExists()
     }
+
+    // Additional tests for Default variant
+    @Test
+    fun card_defaultVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Default,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Default Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Default Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_defaultVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Default,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Default Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Default Clickable").performClick()
+        assert(clicked)
+    }
+
+    // Additional tests for Outlined variant
+    @Test
+    fun card_outlinedVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Outlined,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Outlined Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Outlined Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_outlinedVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Outlined,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Outlined Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Outlined Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card_outlinedVariant_displaysContent() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(variant = CardVariant.Outlined) {
+                    Text("Outlined Content")
+                    Text("Additional text")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Outlined Content").assertExists()
+        composeTestRule.onNodeWithText("Additional text").assertExists()
+    }
+
+    @Test
+    fun card2_outlinedVariant_displaysContent() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(variant = CardVariant.Outlined) {
+                    Text("VTCard2 Outlined Content")
+                    Text("Additional text")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Outlined Content").assertExists()
+        composeTestRule.onNodeWithText("Additional text").assertExists()
+    }
+
+    // Additional tests for Gradient variant
+    @Test
+    fun card_gradientVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Gradient,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Gradient Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Gradient Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_gradientVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Gradient,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Gradient Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Gradient Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card_gradientVariant_displaysContent() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(variant = CardVariant.Gradient) {
+                    Text("Gradient Content")
+                    Text("With gradient background")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Gradient Content").assertExists()
+        composeTestRule.onNodeWithText("With gradient background").assertExists()
+    }
+
+    @Test
+    fun card2_gradientVariant_displaysContent() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(variant = CardVariant.Gradient) {
+                    Text("VTCard2 Gradient Content")
+                    Text("With gradient background")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Gradient Content").assertExists()
+        composeTestRule.onNodeWithText("With gradient background").assertExists()
+    }
+
+    // Additional tests for Selected variant
+    @Test
+    fun card_selectedVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Selected,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Selected Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Selected Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_selectedVariant_isClickable() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Selected,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Selected Clickable")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Selected Clickable").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card_selectedVariant_displaysContent() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(variant = CardVariant.Selected) {
+                    Text("Selected Content")
+                    Text("With selected border")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Selected Content").assertExists()
+        composeTestRule.onNodeWithText("With selected border").assertExists()
+    }
+
+    @Test
+    fun card2_selectedVariant_displaysContent() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(variant = CardVariant.Selected) {
+                    Text("VTCard2 Selected Content")
+                    Text("With selected border")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Selected Content").assertExists()
+        composeTestRule.onNodeWithText("With selected border").assertExists()
+    }
+
+    // Test all variants together for VTCard
+    @Test
+    fun card_displaysAllVariantsTogether() {
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                Column {
+                    VTCard(variant = CardVariant.Default) {
+                        Text("Default Card")
+                    }
+                    VTCard(variant = CardVariant.Outlined) {
+                        Text("Outlined Card")
+                    }
+                    VTCard(variant = CardVariant.Gradient) {
+                        Text("Gradient Card")
+                    }
+                    VTCard(variant = CardVariant.Selected) {
+                        Text("Selected Card")
+                    }
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Default Card").assertExists()
+        composeTestRule.onNodeWithText("Outlined Card").assertExists()
+        composeTestRule.onNodeWithText("Gradient Card").assertExists()
+        composeTestRule.onNodeWithText("Selected Card").assertExists()
+    }
+
+    // Test variant combinations with onClick
+    @Test
+    fun card_defaultVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Default,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Default with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Default with onClick").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card_outlinedVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Outlined,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Outlined with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Outlined with onClick").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card_gradientVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Gradient,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Gradient with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Gradient with onClick").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card_selectedVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard(
+                    variant = CardVariant.Selected,
+                    onClick = { clicked = true },
+                ) {
+                    Text("Selected with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Selected with onClick").performClick()
+        assert(clicked)
+    }
+
+    // Test VTCard2 variant combinations with onClick
+    @Test
+    fun card2_defaultVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Default,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Default with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Default with onClick").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_outlinedVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Outlined,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Outlined with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Outlined with onClick").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_gradientVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Gradient,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Gradient with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Gradient with onClick").performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun card2_selectedVariant_withOnClick_works() {
+        var clicked = false
+        composeTestRule.setContent {
+            VoiceTutorTheme {
+                VTCard2(
+                    variant = CardVariant.Selected,
+                    onClick = { clicked = true },
+                ) {
+                    Text("VTCard2 Selected with onClick")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("VTCard2 Selected with onClick").performClick()
+        assert(clicked)
+    }
 }
