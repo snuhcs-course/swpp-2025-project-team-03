@@ -242,8 +242,9 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
             "**/hilt_aggregated_deps/**",
             "**/voicetutor/di/**",
             "**/Hilt*",
-            "**/voicetutor/MainActivity.kt",
-            "**/voicetutor/VoiceTutorApplication.kt",
+            "**/voicetutor/MainActivity*",
+            "**/voicetutor/VoiceTutorApplication*",
+            "**/ComposableSingletons*"
         )
 
     // Android projects use multiple class output directories

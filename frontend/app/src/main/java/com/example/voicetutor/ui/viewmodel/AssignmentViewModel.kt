@@ -264,12 +264,13 @@ class AssignmentViewModel @Inject constructor(
     
     private fun loadAssignmentResult(assignmentId: Int, fallbackTotalStudents: Int) {
         viewModelScope.launch {
+            @Suppress("UNNECESSARY_SAFE_CALL")
             assignmentRepository.getAssignmentResult(assignmentId)
                 .onSuccess { result ->
-                    val submitted = result.submittedStudents ?: 0
-                    val total = result.totalStudents ?: fallbackTotalStudents
-                    val average = result.averageScore?.toInt() ?: 0
-                    val completionRate = result.completionRate?.toInt() ?: if (total > 0) (submitted * 100) / total else 0
+                    val submitted = result?.submittedStudents ?: 0
+                    val total = result?.totalStudents ?: fallbackTotalStudents
+                    val average = result?.averageScore?.toInt() ?: 0
+                    val completionRate = result?.completionRate?.toInt() ?: if (total > 0) (submitted * 100) / total else 0
                     _assignmentStatistics.value = AssignmentStatistics(
                         submittedStudents = submitted,
                         totalStudents = total,
@@ -1316,7 +1317,7 @@ class AssignmentViewModel @Inject constructor(
                     _personalAssignmentQuestions.value = questions
                     _currentQuestionIndex.value = 0
                     lastLoadedPersonalAssignmentId = personalAssignmentId
-                    println("AssignmentViewModel - Successfully loaded ${questions.size} questions")
+                    println("AssignmentViewModel - Successfully loaded ${questions?.size ?: 0} questions")
                 }
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
