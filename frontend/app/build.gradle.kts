@@ -360,7 +360,8 @@ val testClassGroup3 = listOf(
 )
 
 val testClassGroup4 = listOf(
-    "com.example.voicetutor.ui.screens.TeacherStudentAssignmentDetailScreenCoverageTest"
+    "com.example.voicetutor.ui.screens.TeacherStudentAssignmentDetailScreenCoverageTest",
+    "com.example.voicetutor.ui.screens.CreateAssignmentScreenCoverageTest"
 )
 
 tasks.register("connectedDebug1", Exec::class) {
