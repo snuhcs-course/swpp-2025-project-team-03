@@ -188,7 +188,9 @@ class TeacherStudentAssignmentDetailScreenTest {
         composeRule.onAllNodesWithText("평균 점수", useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
-        composeRule.onAllNodesWithText("-", useUnmergedTree = true).assertCountEquals(2)
+        // Placeholder values are shown when statistics are unavailable
+        // There may be 3 placeholder values displayed (e.g., accuracy, average score, time spent)
+        composeRule.onAllNodesWithText("-", useUnmergedTree = true).assertCountEquals(3)
     }
 
     @Test

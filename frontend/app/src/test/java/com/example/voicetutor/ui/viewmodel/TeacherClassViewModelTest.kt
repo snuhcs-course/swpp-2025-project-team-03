@@ -228,7 +228,7 @@ class TeacherClassViewModelTest {
             whenever(repository.getClasses("1")).thenReturn(Result.success(emptyList()))
 
             // when
-            viewModel.refreshClasses("1")
+            viewModel.loadClasses("1")
             runCurrent()
 
             // then: loadClasses가 호출됨 (내부적으로 getClasses 호출)

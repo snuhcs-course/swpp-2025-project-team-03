@@ -49,6 +49,7 @@ class LowCoverageScreenTests {
                     onClassClick = {},
                     onCreateAssignment = {},
                     onViewStudents = {},
+                    onDeleteClass = { _, _ -> },
                 )
             }
         }
@@ -74,6 +75,7 @@ class LowCoverageScreenTests {
                     onClassClick = { clicked = true },
                     onCreateAssignment = {},
                     onViewStudents = {},
+                    onDeleteClass = { _, _ -> },
                 )
             }
         }
@@ -94,6 +96,7 @@ class LowCoverageScreenTests {
                     onClassClick = {},
                     onCreateAssignment = { assignmentCreated = true },
                     onViewStudents = {},
+                    onDeleteClass = { _, _ -> },
                 )
             }
         }
@@ -114,6 +117,7 @@ class LowCoverageScreenTests {
                     onClassClick = {},
                     onCreateAssignment = {},
                     onViewStudents = { studentsViewed = true },
+                    onDeleteClass = { _, _ -> },
                 )
             }
         }
@@ -149,24 +153,28 @@ class LowCoverageScreenTests {
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                     ClassCard(
                         classRoom = ClassRoom(2, "Success 반", "과목 2", "설명", 30, 5, 0.8f, Success),
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                     ClassCard(
                         classRoom = ClassRoom(3, "Warning 반", "과목 3", "설명", 30, 5, 0.8f, Warning),
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                     ClassCard(
                         classRoom = ClassRoom(4, "Error 반", "과목 4", "설명", 30, 5, 0.8f, Error),
                         onClassClick = {},
                         onCreateAssignment = {},
                         onViewStudents = {},
+                        onDeleteClass = { _, _ -> },
                     )
                 }
             }
@@ -186,6 +194,7 @@ class LowCoverageScreenTests {
                     onClassClick = {},
                     onCreateAssignment = {},
                     onViewStudents = {},
+                    onDeleteClass = { _, _ -> },
                 )
             }
         }

@@ -255,7 +255,7 @@ class ClassViewModelTest {
         Mockito.`when`(classRepository.getClasses("1")).thenReturn(Result.success(classes))
 
         // When
-        vm.refreshClasses("1")
+        vm.loadClasses("1")
         advanceUntilIdle()
 
         // Then
@@ -312,45 +312,6 @@ class ClassViewModelTest {
         }
     }
 
-    @Test
-    fun removeStudentFromClass_success_refreshesClassStudents() = runTest {
-        // Given
-        val vm = ClassViewModel(classRepository)
-        val students = emptyList<Student>()
-        Mockito.`when`(classRepository.removeStudentFromClass(1, 1)).thenReturn(Result.success(Unit))
-        Mockito.`when`(classRepository.getClassStudents(1)).thenReturn(Result.success(students))
-
-        // When
-        vm.removeStudentFromClass(1, 1)
-        advanceUntilIdle()
-
-        // Then
-        vm.classStudents.test {
-            assertEquals(students, awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-        vm.isLoading.test {
-            assert(!awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun removeStudentFromClass_failure_setsError() = runTest {
-        // Given
-        val vm = ClassViewModel(classRepository)
-        Mockito.`when`(classRepository.removeStudentFromClass(1, 1)).thenReturn(Result.failure(Exception("Removal failed")))
-
-        // When
-        vm.removeStudentFromClass(1, 1)
-        advanceUntilIdle()
-
-        // Then
-        vm.error.test {
-            assertEquals("Removal failed", awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
 
     @Test
     fun clearError_clearsError() = runTest {

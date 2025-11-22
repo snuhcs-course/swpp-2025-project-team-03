@@ -256,9 +256,12 @@ class AuthViewModelTest {
         // Given: 초기 상태
         val vm = AuthViewModel(authRepository)
 
-        // When: getCurrentUser 호출
+        // When: currentUser 확인
         // Then: null 반환
-        assert(vm.getCurrentUser() == null)
+        vm.currentUser.test {
+            assert(awaitItem() == null)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -272,9 +275,12 @@ class AuthViewModelTest {
         vm.login("b@ex.com", "pw")
         advanceUntilIdle()
 
-        // When: getCurrentUser 호출
+        // When: currentUser 확인
         // Then: user 반환
-        assert(vm.getCurrentUser() == user)
+        vm.currentUser.test {
+            assert(awaitItem() == user)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -282,9 +288,13 @@ class AuthViewModelTest {
         // Given: 초기 상태 (currentUser가 null)
         val vm = AuthViewModel(authRepository)
 
-        // When: getUserName 호출
-        // Then: "사용자" 반환
-        assert(vm.getUserName() == "사용자")
+        // When: currentUser.name 확인
+        // Then: null이므로 기본값 사용
+        vm.currentUser.test {
+            val currentUser = awaitItem()
+            assert(currentUser == null)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -298,9 +308,13 @@ class AuthViewModelTest {
         vm.login("b@ex.com", "pw")
         advanceUntilIdle()
 
-        // When: getUserName 호출
+        // When: currentUser.name 확인
         // Then: user.name 반환
-        assert(vm.getUserName() == "Bob")
+        vm.currentUser.test {
+            val currentUser = awaitItem()
+            assert(currentUser?.name == "Bob")
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -308,9 +322,13 @@ class AuthViewModelTest {
         // Given: 초기 상태
         val vm = AuthViewModel(authRepository)
 
-        // When: getUserRole 호출
+        // When: currentUser.role 확인
         // Then: null 반환
-        assert(vm.getUserRole() == null)
+        vm.currentUser.test {
+            val currentUser = awaitItem()
+            assert(currentUser?.role == null)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -324,13 +342,17 @@ class AuthViewModelTest {
         vm.login("b@ex.com", "pw")
         advanceUntilIdle()
 
-        // When: getUserRole 호출
+        // When: currentUser.role 확인
         // Then: user.role 반환
-        assert(vm.getUserRole() == UserRole.TEACHER)
+        vm.currentUser.test {
+            val currentUser = awaitItem()
+            assert(currentUser?.role == UserRole.TEACHER)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
-    fun login_success_withAssignments_setsInitialAssignments() = runTest {
+    fun login_success_withAssignments_setsCurrentUser() = runTest {
         // Given: 로그인 시 assignments가 포함된 user
         val vm = AuthViewModel(authRepository)
         val assignments = listOf(
@@ -370,15 +392,17 @@ class AuthViewModelTest {
         vm.login("a@ex.com", "pw")
         advanceUntilIdle()
 
-        // Then: initialAssignments가 설정됨
-        vm.initialAssignments.test {
-            assert(awaitItem() == assignments)
+        // Then: currentUser가 설정됨
+        vm.currentUser.test {
+            val currentUser = awaitItem()
+            assert(currentUser != null)
+            assert(currentUser?.assignments == assignments)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun login_success_withoutAssignments_keepsEmptyInitialAssignments() = runTest {
+    fun login_success_withoutAssignments_setsCurrentUser() = runTest {
         // Given: 로그인 시 assignments가 null인 user
         val vm = AuthViewModel(authRepository)
         val user = User(id = 1, name = "Alice", email = "a@ex.com", role = UserRole.STUDENT, assignments = null)
@@ -389,9 +413,11 @@ class AuthViewModelTest {
         vm.login("a@ex.com", "pw")
         advanceUntilIdle()
 
-        // Then: initialAssignments가 빈 리스트로 유지됨
-        vm.initialAssignments.test {
-            assert(awaitItem().isEmpty())
+        // Then: currentUser가 설정됨
+        vm.currentUser.test {
+            val currentUser = awaitItem()
+            assert(currentUser != null)
+            assert(currentUser?.assignments == null)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -401,8 +427,8 @@ class AuthViewModelTest {
         // Given
         val vm = AuthViewModel(authRepository)
 
-        // When
-        vm.setError("테스트 에러 메시지")
+        // When: setSignupInputError를 사용하여 에러 설정 (setError는 없으므로)
+        vm.setSignupInputError(SignupField.EMAIL, "테스트 에러 메시지")
 
         // Then
         vm.error.test {
@@ -721,7 +747,6 @@ class AuthViewModelTest {
     fun logout_clearsAllErrors() = runTest {
         // Given: 에러가 설정된 상태
         val vm = AuthViewModel(authRepository)
-        vm.setError("일반 에러")
         vm.setSignupInputError(SignupField.EMAIL, "이메일 에러")
         vm.setLoginInputError(LoginField.PASSWORD, "비밀번호 에러")
 
