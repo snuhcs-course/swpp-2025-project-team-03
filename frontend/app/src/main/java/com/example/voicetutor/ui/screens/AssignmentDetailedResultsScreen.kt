@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voicetutor.data.models.DetailedQuestionResult
+import com.example.voicetutor.data.models.DetailedQuestionResultFactory
 import com.example.voicetutor.data.models.QuestionGroup
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
@@ -42,18 +43,9 @@ fun AssignmentDetailedResultsScreen(
     val error by viewModel.error.collectAsState()
     val statistics by viewModel.personalAssignmentStatistics.collectAsState()
 
-    // API 데이터를 더미 데이터 형식으로 변환
+    // API 데이터를 더미 데이터 형식으로 변환 (Factory Pattern 사용)
     val detailedResults = remember(correctnessData) {
-        correctnessData.map { item ->
-            DetailedQuestionResult(
-                questionNumber = item.questionNum,
-                question = item.questionContent,
-                myAnswer = item.studentAnswer,
-                correctAnswer = item.questionModelAnswer,
-                isCorrect = item.isCorrect,
-                explanation = item.explanation,
-            )
-        }
+        DetailedQuestionResultFactory.fromCorrectnessItems(correctnessData)
     }
 
     // base question과 tail question으로 그룹화

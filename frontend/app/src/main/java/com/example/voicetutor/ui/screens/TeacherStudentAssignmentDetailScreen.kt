@@ -418,16 +418,7 @@ fun TeacherStudentAssignmentDetailScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     val detailedResults = remember(correctnessData) {
-                        correctnessData.map { item ->
-                            DetailedQuestionResult(
-                                questionNumber = item.questionNum,
-                                question = item.questionContent,
-                                myAnswer = item.studentAnswer,
-                                correctAnswer = item.questionModelAnswer,
-                                isCorrect = item.isCorrect,
-                                explanation = item.explanation,
-                            )
-                        }
+                        DetailedQuestionResultFactory.fromCorrectnessItems(correctnessData)
                     }
                     val questionGroups = remember(detailedResults) {
                         val grouped = mutableMapOf<String, MutableList<DetailedQuestionResult>>()
