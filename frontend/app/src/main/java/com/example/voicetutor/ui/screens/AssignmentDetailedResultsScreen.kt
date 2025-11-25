@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voicetutor.data.models.DetailedQuestionResult
 import com.example.voicetutor.data.models.QuestionGroup
+import com.example.voicetutor.data.models.QuestionFactory
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.utils.ErrorMessageMapper
@@ -42,48 +43,9 @@ fun AssignmentDetailedResultsScreen(
     val error by viewModel.error.collectAsState()
     val statistics by viewModel.personalAssignmentStatistics.collectAsState()
 
-    // API 데이터를 더미 데이터 형식으로 변환
-    val detailedResults = remember(correctnessData) {
-        correctnessData.map { item ->
-            DetailedQuestionResult(
-                questionNumber = item.questionNum,
-                question = item.questionContent,
-                myAnswer = item.studentAnswer,
-                correctAnswer = item.questionModelAnswer,
-                isCorrect = item.isCorrect,
-                explanation = item.explanation,
-            )
-        }
-    }
-
-    // base question과 tail question으로 그룹화
-    val questionGroups = remember(detailedResults) {
-        val grouped = mutableMapOf<String, MutableList<DetailedQuestionResult>>()
-
-        detailedResults.forEach { result ->
-            val baseNum = if (result.questionNumber.contains("-")) {
-                result.questionNumber.substringBefore("-")
-            } else {
-                result.questionNumber
-            }
-
-            if (!grouped.containsKey(baseNum)) {
-                grouped[baseNum] = mutableListOf()
-            }
-            grouped[baseNum]?.add(result)
-        }
-
-        // QuestionGroup 리스트로 변환
-        grouped.entries.sortedBy { it.key.toIntOrNull() ?: 0 }.map { (baseNum, questions) ->
-            val base = questions.find { it.questionNumber == baseNum }
-            val tails = questions.filter { it.questionNumber != baseNum }
-                .sortedBy { it.questionNumber }
-
-            QuestionGroup(
-                baseQuestion = base ?: questions.first(),
-                tailQuestions = tails,
-            )
-        }
+    // Factory Pattern을 사용하여 Base Question과 Tail Question을 구분해서 생성
+    val questionGroups = remember(correctnessData) {
+        QuestionFactory.createQuestionGroupsFromCorrectnessItems(correctnessData)
     }
 
     // 각 그룹의 토글 상태 관리
@@ -129,7 +91,7 @@ fun AssignmentDetailedResultsScreen(
                 )
             }
         }
-    } else if (detailedResults.isEmpty()) {
+    } else if (questionGroups.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,

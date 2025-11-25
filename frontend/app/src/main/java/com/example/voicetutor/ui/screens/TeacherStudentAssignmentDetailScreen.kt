@@ -417,30 +417,11 @@ fun TeacherStudentAssignmentDetailScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    val detailedResults = remember(correctnessData) {
-                        correctnessData.map { item ->
-                            DetailedQuestionResult(
-                                questionNumber = item.questionNum,
-                                question = item.questionContent,
-                                myAnswer = item.studentAnswer,
-                                correctAnswer = item.questionModelAnswer,
-                                isCorrect = item.isCorrect,
-                                explanation = item.explanation,
-                            )
-                        }
+                    // Factory Pattern을 사용하여 Base Question과 Tail Question을 구분해서 생성
+                    val questionGroups = remember(correctnessData) {
+                        QuestionFactory.createQuestionGroupsFromCorrectnessItems(correctnessData)
                     }
-                    val questionGroups = remember(detailedResults) {
-                        val grouped = mutableMapOf<String, MutableList<DetailedQuestionResult>>()
-                        detailedResults.forEach { result ->
-                            val baseNum = if (result.questionNumber.contains("-")) result.questionNumber.substringBefore("-") else result.questionNumber
-                            grouped.getOrPut(baseNum) { mutableListOf() }.add(result)
-                        }
-                        grouped.entries.sortedBy { it.key.toIntOrNull() ?: 0 }.map { (baseNum, questions) ->
-                            val base = questions.find { it.questionNumber == baseNum } ?: questions.first()
-                            val tails = questions.filter { it.questionNumber != baseNum }.sortedBy { it.questionNumber }
-                            QuestionGroup(baseQuestion = base, tailQuestions = tails)
-                        }
-                    }
+
                     val expandedStates = remember(questionGroups) {
                         mutableStateMapOf<String, Boolean>().apply {
                             questionGroups.forEach { group -> this[group.baseQuestion.questionNumber] = false }
