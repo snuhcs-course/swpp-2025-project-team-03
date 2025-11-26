@@ -11,13 +11,59 @@ package com.example.voicetutor.data.models
 object QuestionFactory {
 
     /**
+     * Question Factory가 생산하는 기본 Question 클래스
+     */
+    open class Question(
+        open val questionNumber: String,
+        open val questionText: String,
+    )
+
+    /**
+     * Base Question 구현체 (하이픈이 없는 질문 번호)
+     */
+    class BaseQuestion(
+        override val questionNumber: String,
+        override val questionText: String,
+    ) : Question(questionNumber, questionText)
+
+    /**
+     * Tail Question 구현체 (하이픈이 있는 질문 번호)
+     */
+    class TailQuestion(
+        val baseNumber: String,
+        override val questionNumber: String,
+        override val questionText: String,
+    ) : Question(questionNumber, questionText)
+
+    /**
+     * 전달받은 질문 번호/본문으로 Base 또는 Tail Question을 생성합니다.
+     *
+     * @param number 질문 번호
+     * @param text 질문 본문
+     * @return BaseQuestion 또는 TailQuestion 인스턴스
+     */
+    fun createQuestion(number: String, text: String): Question {
+        return if ("-" in number) {
+            TailQuestion(
+                baseNumber = number.substringBefore("-"),
+                questionNumber = number,
+                questionText = text,
+            )
+        } else {
+            BaseQuestion(
+                questionNumber = number,
+                questionText = text,
+            )
+        }
+    }
+
+    /**
      * AssignmentCorrectnessItem에서 DetailedQuestionResult를 생성합니다.
-     * Base Question인지 Tail Question인지는 질문 번호로 자동 판단됩니다.
      *
      * @param item API에서 받은 정답 여부 데이터
      * @return DetailedQuestionResult 객체
      */
-    fun createQuestion(item: AssignmentCorrectnessItem): DetailedQuestionResult {
+    fun createDetailedResult(item: AssignmentCorrectnessItem): DetailedQuestionResult {
         return DetailedQuestionResult(
             questionNumber = item.questionNum,
             question = item.questionContent,
@@ -35,7 +81,7 @@ object QuestionFactory {
      * @return DetailedQuestionResult 리스트
      */
     fun createQuestions(items: List<AssignmentCorrectnessItem>): List<DetailedQuestionResult> {
-        return items.map { createQuestion(it) }
+        return items.map { createDetailedResult(it) }
     }
 
     /**
@@ -86,9 +132,14 @@ object QuestionFactory {
         // Base Question 번호별로 그룹화
         val grouped = mutableMapOf<String, MutableList<DetailedQuestionResult>>()
 
-        questions.forEach { question ->
-            val baseNum = extractBaseNumber(question.questionNumber)
-            grouped.getOrPut(baseNum) { mutableListOf() }.add(question)
+        questions.forEach { result ->
+            val questionMeta = createQuestion(result.questionNumber, result.question)
+            val baseNum = when (questionMeta) {
+                is BaseQuestion -> questionMeta.questionNumber
+                is TailQuestion -> questionMeta.baseNumber
+                else -> extractBaseNumber(questionMeta.questionNumber)
+            }
+            grouped.getOrPut(baseNum) { mutableListOf() }.add(result)
         }
 
         // QuestionGroup 리스트로 변환 (Base Question 번호로 정렬)
