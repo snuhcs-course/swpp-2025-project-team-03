@@ -3,14 +3,14 @@ name: Deploy Backend on Develop Merge
 on:
   push:
     branches:
-      - develop
+      - test/cd
     paths:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
   pull_request:
     types: [closed, opened, synchronize]
     branches:
-      - test/cd
+      - develop
     paths:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
