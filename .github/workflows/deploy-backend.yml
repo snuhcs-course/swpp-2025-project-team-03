@@ -41,7 +41,7 @@ jobs:
 
   deploy-backend:
     needs: check-backend-changes
-    if: needs.check-backend-changes.outputs.has-changes == 'true'
+    if: needs.check-backend-changes.outputs.has-changes == 'false'
     runs-on: ubuntu-latest
 
     steps:
