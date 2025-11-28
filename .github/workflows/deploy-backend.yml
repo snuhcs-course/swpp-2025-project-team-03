@@ -8,9 +8,9 @@ on:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
   pull_request:
-    types: [closed]
+    types: [closed, opened, synchronize]
     branches:
-      - develop
+      - test/cd
     paths:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
@@ -31,12 +31,9 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # PR이 머지되었는지 확인
-            if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
-              # PR 머지 시 변경사항 확인
-              git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^backend/" && echo "backend=true" >> $GITHUB_OUTPUT || echo "backend=false" >> $GITHUB_OUTPUT
-            else
-              echo "backend=false" >> $GITHUB_OUTPUT
-            fi
+            
+            # PR 머지 시 변경사항 확인
+            git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^backend/" && echo "backend=true" >> $GITHUB_OUTPUT || echo "backend=false" >> $GITHUB_OUTPUT
           else
             # 직접 push 시 변경사항 확인
             git diff --name-only HEAD~1 HEAD | grep -E "^backend/" && echo "backend=true" >> $GITHUB_OUTPUT || echo "backend=false" >> $GITHUB_OUTPUT
