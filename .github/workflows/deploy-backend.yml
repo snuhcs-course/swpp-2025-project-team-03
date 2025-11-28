@@ -63,7 +63,7 @@ jobs:
           echo "Starting backend deployment..."
 
           # 서버에 접속하여 배포 수행
-          ssh -o StrictHostKeyChecking=no -T -p $SSH_PORT $SERVER_USER@$SERVER_HOST "SERVER_PATH='$SERVER_PATH' bash -s" << 'ENDSSH'
+          ssh -vvv -o StrictHostKeyChecking=no -T -p $SSH_PORT $SERVER_USER@$SERVER_HOST "SERVER_PATH='$SERVER_PATH' bash -s" << 'ENDSSH'
             set -e
             echo "Pulling latest code from develop branch..."
             cd "$SERVER_PATH" || { echo "Server path not found: $SERVER_PATH"; exit 1; }
