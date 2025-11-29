@@ -1,5 +1,6 @@
 package com.example.voicetutor.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,6 +31,7 @@ fun AssignmentDetailScreen(
     onStartAssignment: () -> Unit = {},
     assignmentViewModelParam: AssignmentViewModel? = null,
 ) {
+    val context = LocalContext.current
     val assignmentViewModel: AssignmentViewModel = assignmentViewModelParam ?: hiltViewModel()
     val currentAssignment by assignmentViewModel.currentAssignment.collectAsStateWithLifecycle()
     val personalAssignmentStatistics by assignmentViewModel.personalAssignmentStatistics.collectAsStateWithLifecycle()
@@ -47,6 +50,15 @@ fun AssignmentDetailScreen(
 
         personalId?.let { pid ->
             assignmentViewModel.loadPersonalAssignmentStatistics(pid)
+        }
+    }
+
+    // 네트워크 오류 시 Toast 표시
+    LaunchedEffect(error) {
+        error?.let {
+            if (ErrorMessageMapper.isNetworkError(it)) {
+                Toast.makeText(context, "네트워크가 불안정합니다.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

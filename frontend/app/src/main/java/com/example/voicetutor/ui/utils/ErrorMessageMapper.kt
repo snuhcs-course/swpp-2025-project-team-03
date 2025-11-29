@@ -135,10 +135,31 @@ object ErrorMessageMapper {
             "Connection refused",
             "SSL",
             "보안 연결",
+            "요청 시간이 초과",
+            "네트워크 연결에 실패",
         )
 
         return networkErrorKeywords.any { keyword ->
             errorMessage.contains(keyword, ignoreCase = true)
+        }
+    }
+
+    /**
+     * 예외가 네트워크 관련 에러인지 확인합니다.
+     */
+    fun isNetworkError(exception: Throwable?): Boolean {
+        if (exception == null) return false
+
+        return when (exception) {
+            is java.net.ConnectException,
+            is java.net.UnknownHostException,
+            is java.net.SocketTimeoutException,
+            is javax.net.ssl.SSLException,
+            -> true
+            else -> {
+                val message = exception.message ?: ""
+                isNetworkError(message)
+            }
         }
     }
 }

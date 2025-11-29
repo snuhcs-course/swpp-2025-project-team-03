@@ -67,6 +67,9 @@ class AssignmentViewModel @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+    
+    private val _errorException = MutableStateFlow<Throwable?>(null)
+    val errorException: StateFlow<Throwable?> = _errorException.asStateFlow()
 
     private val _uploadProgress = MutableStateFlow(0f.coerceIn(0f, 1f))
     val uploadProgress: StateFlow<Float> = _uploadProgress.asStateFlow()
@@ -1046,6 +1049,12 @@ class AssignmentViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
+        _errorException.value = null
+    }
+    
+    private fun setError(exception: Throwable) {
+        _error.value = ErrorMessageMapper.getErrorMessage(exception)
+        _errorException.value = exception
     }
 
     fun setInitialAssignments(assignments: List<AssignmentData>) {
@@ -1188,14 +1197,15 @@ class AssignmentViewModel @Inject constructor(
                                         }
                                         .onFailure { statsException ->
                                             _error.value = "통계를 확인할 수 없습니다: ${ErrorMessageMapper.getErrorMessage(statsException)}"
+                                            _errorException.value = statsException
                                         }
                                 } else {
-                                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
+                                    setError(exception)
                                 }
                             }
                     }
                     .onFailure { exception ->
-                        _error.value = ErrorMessageMapper.getErrorMessage(exception)
+                        setError(exception)
                     }
             } finally {
                 _isLoading.value = false
@@ -1237,10 +1247,11 @@ class AssignmentViewModel @Inject constructor(
                                     }
                                 }
                                 .onFailure { statsException ->
-                                    _error.value = "통계를 확인할 수 없습니다: ${statsException.message}"
+                                    _error.value = "통계를 확인할 수 없습니다: ${ErrorMessageMapper.getErrorMessage(statsException)}"
+                                    _errorException.value = statsException
                                 }
                         } else {
-                            _error.value = ErrorMessageMapper.getErrorMessage(exception)
+                            setError(exception)
                         }
                     }
             } finally {
@@ -1266,7 +1277,7 @@ class AssignmentViewModel @Inject constructor(
                         _isAssignmentCompleted.value = true
                     } else {
                         _isProcessing.value = false
-                        _error.value = msg
+                        setError(e)
                     }
                 }
         }
@@ -1309,14 +1320,14 @@ class AssignmentViewModel @Inject constructor(
                                 }
                                 .onFailure { e ->
                                     if (!silent) {
-                                        _error.value = e.message
+                                        _error.value = ErrorMessageMapper.getErrorMessage(e)
                                     }
                                 }
                         }
                     }
                     .onFailure { e ->
                         if (!silent) {
-                            _error.value = e.message
+                            _error.value = ErrorMessageMapper.getErrorMessage(e)
                         }
                     }
             } finally {
@@ -1489,10 +1500,10 @@ class AssignmentViewModel @Inject constructor(
                         }
                     }
                     .onFailure { exception ->
-                        _error.value = ErrorMessageMapper.getErrorMessage(exception)
+                        setError(exception)
                     }
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = ErrorMessageMapper.getErrorMessage(e)
             }
         }
     }
@@ -1592,14 +1603,14 @@ class AssignmentViewModel @Inject constructor(
                                 }
                                 .onFailure { e ->
                                     if (!silent) {
-                                        _error.value = e.message
+                                        _error.value = ErrorMessageMapper.getErrorMessage(e)
                                     }
                                 }
                         }
                     }
                     .onFailure { e ->
                         if (!silent) {
-                            _error.value = e.message
+                            _error.value = ErrorMessageMapper.getErrorMessage(e)
                         }
                     }
             } finally {
@@ -1639,7 +1650,7 @@ class AssignmentViewModel @Inject constructor(
                                     }
                                     .onFailure { e ->
                                         if (!silent) {
-                                            _error.value = e.message
+                                            _error.value = ErrorMessageMapper.getErrorMessage(e)
                                         }
                                     }
 
@@ -1649,7 +1660,7 @@ class AssignmentViewModel @Inject constructor(
                                     }
                                     .onFailure { e ->
                                         if (!silent) {
-                                            _error.value = e.message
+                                            _error.value = ErrorMessageMapper.getErrorMessage(e)
                                         }
                                     }
                             }
@@ -1657,7 +1668,7 @@ class AssignmentViewModel @Inject constructor(
                     }
                     .onFailure { e ->
                         if (!silent) {
-                            _error.value = e.message
+                            _error.value = ErrorMessageMapper.getErrorMessage(e)
                         }
                     }
             } finally {
