@@ -90,37 +90,34 @@ fun AssignmentDetailScreen(
         }
 
         // 에러가 있고 과제 데이터가 없을 때만 에러를 표시
-        // 네트워크 에러인 경우 더 명확한 메시지 표시
+        // 네트워크 에러는 Toast로만 표시하고 화면에는 표시하지 않음
         if (error != null && currentAssignment == null) {
             val isNetworkError = ErrorMessageMapper.isNetworkError(error)
-            val errorMessage = if (isNetworkError) {
-                "네트워크가 불안정합니다"
-            } else {
-                ErrorMessageMapper.getErrorMessage(error)
-            }
-            
-            VTCard(
-                variant = CardVariant.Outlined,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            // 네트워크 오류가 아닌 경우에만 화면에 표시
+            if (!isNetworkError) {
+                VTCard(
+                    variant = CardVariant.Outlined,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Error,
-                        contentDescription = null,
-                        tint = Error,
-                        modifier = Modifier.size(48.dp),
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = errorMessage,
-                        color = Error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Error,
+                            contentDescription = null,
+                            tint = Error,
+                            modifier = Modifier.size(48.dp),
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = ErrorMessageMapper.getErrorMessage(error),
+                            color = Error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+                    }
                 }
             }
         } else if (error != null && currentAssignment != null) {
