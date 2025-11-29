@@ -1011,6 +1011,7 @@ class AssignmentViewModel @Inject constructor(
     fun loadRecentAssignment(studentId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
 
             assignmentRepository.getRecentPersonalAssignment(studentId)
                 .onSuccess { personalAssignmentId ->
@@ -1029,12 +1030,14 @@ class AssignmentViewModel @Inject constructor(
                         } else {
                             _recentAssignment.value = null
                         }
-                    }.onFailure {
+                    }.onFailure { exception ->
                         _recentAssignment.value = null
+                        _error.value = ErrorMessageMapper.getErrorMessage(exception)
                     }
                 }
-                .onFailure {
+                .onFailure { exception ->
                     _recentAssignment.value = null
+                    _error.value = ErrorMessageMapper.getErrorMessage(exception)
                 }
 
             _isLoading.value = false

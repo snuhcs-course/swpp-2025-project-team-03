@@ -27,6 +27,7 @@ import com.example.voicetutor.audio.AudioRecorder
 import com.example.voicetutor.data.models.QuestionGroupFactory
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import com.example.voicetutor.utils.PermissionUtils
@@ -229,7 +230,8 @@ fun AssignmentScreen(
                         color = PrimaryIndigo,
                     )
                 }
-            } else if (isAssignmentCompleted || personalAssignmentQuestions.isEmpty() || currentQuestion == null) {
+            } else if (isAssignmentCompleted) {
+                // 실제로 과제가 완료된 경우에만 완료 화면 표시
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -266,6 +268,60 @@ fun AssignmentScreen(
                                 textAlign = TextAlign.Center,
                                 lineHeight = 24.sp,
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            VTButton(
+                                text = "홈으로 돌아가기",
+                                onClick = {
+                                    onNavigateToHome()
+                                },
+                                variant = ButtonVariant.Gradient,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                }
+            } else if (personalAssignmentQuestions.isEmpty() || currentQuestion == null) {
+                // 질문이 없는 경우: 네트워크 오류인지 확인
+                val errorMessage = error
+                val isNetworkError = errorMessage != null && ErrorMessageMapper.isNetworkError(errorMessage)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    VTCard(
+                        variant = CardVariant.Elevated,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(24.dp),
+                        ) {
+                            Icon(
+                                imageVector = if (isNetworkError) Icons.Filled.WifiOff else Icons.Filled.AssignmentTurnedIn,
+                                contentDescription = null,
+                                tint = if (isNetworkError) Error else PrimaryIndigo,
+                                modifier = Modifier.size(80.dp),
+                            )
+                            Text(
+                                text = if (isNetworkError) "네트워크 오류" else "과제 정보를 불러올 수 없습니다",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Gray800,
+                                textAlign = TextAlign.Center,
+                            )
+                            if (errorMessage != null) {
+                                Text(
+                                    text = errorMessage,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Gray600,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 24.sp,
+                                )
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
                             VTButton(
                                 text = "홈으로 돌아가기",

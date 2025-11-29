@@ -76,6 +76,8 @@ fun EditAssignmentScreen(
     var dueShowTimePicker by remember { mutableStateOf(false) }
     var duePendingDate by remember { mutableStateOf<Calendar?>(null) }
     var validationDialogMessage by remember { mutableStateOf<String?>(null) }
+    var isUpdatingAssignment by remember { mutableStateOf(false) }
+    var isDeletingAssignment by remember { mutableStateOf(false) }
 
     val displayDateFormatter = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
     val isoDateFormatter = remember { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") } }
@@ -459,9 +461,8 @@ fun EditAssignmentScreen(
                         )
                         .build()
 
+                    isUpdatingAssignment = true
                     viewModel.updateAssignment(assignmentIdToUpdate, updateRequest)
-                    Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
-                    onSaveAssignment()
                 } else {
                     validationDialogMessage = "필수 항목을 모두 입력하고 올바른 형식인지 확인해주세요."
                 }
@@ -546,9 +547,9 @@ fun EditAssignmentScreen(
                         text = "삭제",
                         onClick = {
                             targetAssignment?.id?.let { id ->
+                                isDeletingAssignment = true
                                 viewModel.deleteAssignment(id)
                                 showDeleteDialog = false
-                                onDeleteAssignment()
                             }
                         },
                         variant = ButtonVariant.Primary,
@@ -713,12 +714,40 @@ fun EditAssignmentScreen(
             )
         }
 
-        LaunchedEffect(error) {
+    LaunchedEffect(isUpdatingAssignment, isLoading, error) {
+        if (isUpdatingAssignment && !isLoading) {
+            if (error == null) {
+                Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
+                onSaveAssignment()
+            } else {
+                Toast.makeText(context, "과제 수정에 실패했습니다. 인터넷 연결을 확인하세요.", Toast.LENGTH_SHORT).show()
+            }
+            isUpdatingAssignment = false
+            viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(isDeletingAssignment, isLoading, error) {
+        if (isDeletingAssignment && !isLoading) {
+            if (error == null) {
+                Toast.makeText(context, "과제가 성공적으로 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                onDeleteAssignment()
+            } else {
+                Toast.makeText(context, "과제 삭제에 실패했습니다. 인터넷 연결을 확인하세요.", Toast.LENGTH_SHORT).show()
+            }
+            isDeletingAssignment = false
+            viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(error) {
+        if (!isUpdatingAssignment && !isDeletingAssignment) {
             error?.let {
                 Toast.makeText(context, "네트워크가 불안정합니다.", Toast.LENGTH_SHORT).show()
                 viewModel.clearError()
             }
         }
+    }
     }
 }
 
