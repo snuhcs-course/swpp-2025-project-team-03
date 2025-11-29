@@ -155,6 +155,7 @@ fun CreateAssignmentScreen(
     var dueDateRequest by remember { mutableStateOf("") }
     var dueDateTime by remember { mutableStateOf<Calendar?>(null) }
     var questionCount by remember { mutableStateOf("5") }
+    var questionCountError by remember { mutableStateOf<String?>(null) }
     var assignToAll by remember { mutableStateOf(true) }
     var showClassSelectionWarning by remember { mutableStateOf(false) }
     var classSelectionExpanded by remember { mutableStateOf(false) }
@@ -731,7 +732,29 @@ fun CreateAssignmentScreen(
 
                         OutlinedTextField(
                             value = questionCount,
-                            onValueChange = { questionCount = it },
+                            onValueChange = { newValue ->
+                                // 비숫자 문자 필터링 (숫자만 허용)
+                                val filtered = newValue.filter { it.isDigit() }
+                                
+                                // 필터링된 값이 원래 값과 다르면 (비숫자 문자가 제거됨)
+                                if (filtered != newValue) {
+                                    questionCount = filtered
+                                } else {
+                                    questionCount = newValue
+                                }
+                                
+                                // 검증 로직
+                                if (filtered.isBlank()) {
+                                    questionCountError = null // 빈 값일 때는 에러 표시 안 함 (사용자가 입력 중일 수 있음)
+                                } else {
+                                    val count = filtered.toIntOrNull()
+                                    if (count == null || count <= 0) {
+                                        questionCountError = "문제 개수는 1 이상이어야 합니다"
+                                    } else {
+                                        questionCountError = null
+                                    }
+                                }
+                            },
                             label = { Text("문제 개수") },
                             placeholder = { Text("5") },
                             modifier = Modifier.fillMaxWidth(),
@@ -740,6 +763,12 @@ fun CreateAssignmentScreen(
                                 imeAction = ImeAction.Done,
                             ),
                             singleLine = true,
+                            isError = questionCountError != null,
+                            supportingText = questionCountError?.let { error ->
+                                {
+                                    Text(text = error, color = Error)
+                                }
+                            },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryIndigo,
                                 focusedLabelColor = PrimaryIndigo,
@@ -899,32 +928,36 @@ fun CreateAssignmentScreen(
                     selectedGrade.isNotBlank() && selectedSubject.isNotBlank() &&
                     dueDateRequest.isNotBlank() &&
                     questionCount.isNotBlank() && selectedFiles.isNotEmpty() &&
-                    assignmentTitleError == null
+                    assignmentTitleError == null && questionCountError == null
 
                 VTButton(
                     text = "과제 생성",
-                    onClick = {
+                            onClick = {
                         if (isFormValid && selectedClassId != null) {
-                            val questionCountInt = questionCount.toIntOrNull() ?: 0
-
-                            val createRequest = CreateAssignmentRequest.builder()
-                                .title(assignmentTitle)
-                                .subject(selectedSubject)
-                                .classId(selectedClassId!!)
-                                .dueAt(dueDateRequest)
-                                .grade(selectedGrade)
-                                .description(assignmentDescription)
-                                .totalQuestions(questionCountInt)
-                                .build()
-
-                            val pdfFile = selectedPdfFile
-                            if (pdfFile != null) {
-                                actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile, totalNumber = questionCountInt, teacherId = actualTeacherId)
+                            // 최종 검증 (빈 값이거나 0 이하인 경우 방지)
+                            val questionCountInt = questionCount.toIntOrNull()
+                            if (questionCountInt == null || questionCountInt <= 0) {
+                                questionCountError = "문제 개수는 1 이상이어야 합니다"
                             } else {
-                                actualAssignmentViewModel.createAssignment(createRequest, teacherId = actualTeacherId)
-                            }
+                                val createRequest = CreateAssignmentRequest.builder()
+                                    .title(assignmentTitle)
+                                    .subject(selectedSubject)
+                                    .classId(selectedClassId!!)
+                                    .dueAt(dueDateRequest)
+                                    .grade(selectedGrade)
+                                    .description(assignmentDescription)
+                                    .totalQuestions(questionCountInt)
+                                    .build()
 
-                            assignmentCreated = true
+                                val pdfFile = selectedPdfFile
+                                if (pdfFile != null) {
+                                    actualAssignmentViewModel.createAssignmentWithPdf(createRequest, pdfFile, totalNumber = questionCountInt, teacherId = actualTeacherId)
+                                } else {
+                                    actualAssignmentViewModel.createAssignment(createRequest, teacherId = actualTeacherId)
+                                }
+
+                                assignmentCreated = true
+                            }
                         }
                     },
                     variant = ButtonVariant.Gradient,
