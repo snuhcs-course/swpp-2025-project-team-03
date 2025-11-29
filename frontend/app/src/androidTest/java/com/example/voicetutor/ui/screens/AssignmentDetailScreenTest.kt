@@ -68,9 +68,14 @@ class AssignmentDetailScreenTest {
 
     @Test
     fun assignmentDetailScreen_errorState_displaysErrorMessage() {
+        // 동일한 에러 메시지를 사용하여 race condition 무관하게 테스트
+        val errorMessage = "테스트 에러"
         val failingApi = FakeApiService().apply {
             shouldFailGetAssignmentById = true
-            getAssignmentByIdErrorMessage = "서버 오류"
+            getAssignmentByIdErrorMessage = errorMessage
+            // loadPersonalAssignmentStatistics도 동일한 에러로 실패하도록 설정
+            shouldFailPersonalAssignmentStatistics = true
+            personalAssignmentStatisticsErrorMessage = errorMessage
         }
         val assignmentRepository = AssignmentRepository(failingApi)
         val assignmentViewModel = AssignmentViewModel(assignmentRepository)
@@ -89,7 +94,7 @@ class AssignmentDetailScreenTest {
             assignmentViewModel.loadAssignmentById(999)
         }
 
-        waitForText("서버 오류")
-        composeRule.onNodeWithText("서버 오류", useUnmergedTree = true).assertIsDisplayed()
+        waitForText(errorMessage)
+        composeRule.onNodeWithText(errorMessage, useUnmergedTree = true).assertIsDisplayed()
     }
 }

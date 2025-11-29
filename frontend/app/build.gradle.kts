@@ -239,6 +239,7 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
     val connectedDebug2Task = tasks.findByName("connectedDebug2")
     val connectedDebug3Task = tasks.findByName("connectedDebug3")
     val connectedDebug4Task = tasks.findByName("connectedDebug4")
+    val connectedDebug5Task = tasks.findByName("connectedDebug5")
 
     if (uiTestTask != null) {
         mustRunAfter(uiTestTask)
@@ -254,6 +255,9 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
     }
     if (connectedDebug4Task != null) {
         mustRunAfter(connectedDebug4Task)
+    }
+    if (connectedDebug5Task != null) {
+        mustRunAfter(connectedDebug5Task)
     }
 
     // Log execution data files for debugging
