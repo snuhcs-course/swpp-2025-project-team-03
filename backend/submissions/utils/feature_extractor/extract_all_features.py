@@ -60,10 +60,10 @@ def extract_all_features(wav_path: str, model_name: str = None) -> dict:
 
     except Exception as e:
         traceback.print_exc()
-        # 기본값으로 빈 딕셔너리 반환
-        script_feats = {}
+        # 예외 발생 시 acoustic features만이라도 유지
+        script_feats = features_dict
 
-    return features_dict
+    return script_feats
 
 
 if __name__ == "__main__":  # pragma: no cover
