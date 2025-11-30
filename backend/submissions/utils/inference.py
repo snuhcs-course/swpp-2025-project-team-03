@@ -51,12 +51,55 @@ def to_letter_grade(num):
         return "D"
 
 
+# 에러/빈 처리로 넣은 script 목록 (이 경우 script 기반 features를 0으로 처리)
+INVALID_SCRIPT_MARKERS = [
+    "음성 인식 결과 없음",
+    "음성 인식 실패",
+    "",
+]
+
+# script 기반 semantic features (에러 script일 때 0으로 강제 설정)
+SCRIPT_BASED_FEATURES = [
+    "repeat_cnt_ratio",
+    "filler_words_cnt_ratio",
+    "voc_speed",
+    "word_speed",
+    "avg_sentence_len",
+    "adj_sim_mean",
+    "adj_sim_std",
+    "adj_sim_p10",
+    "adj_sim_p50",
+    "adj_sim_p90",
+    "adj_sim_frac_high",
+    "adj_sim_frac_low",
+    "topic_path_len",
+    "dist_to_centroid_mean",
+    "dist_to_centroid_std",
+    "coherence_score",
+    "intra_coh",
+    "inter_div",
+]
+
+
+def is_invalid_script(script: str) -> bool:
+    """script가 에러/빈 처리로 넣은 값인지 확인"""
+    if script is None:
+        return True
+    script_stripped = script.strip()
+    return script_stripped in INVALID_SCRIPT_MARKERS or len(script_stripped) == 0
+
+
 def build_feature_row(js: dict):
     """
     훈련 시 전처리 규칙과 동일하게 JSON에서 피처를 추출해 dict 반환
     - *_ratio 항목은 word_cnt로 나눠서 계산
     - 없거나 0인 경우/키 누락은 합리적으로 처리
+    - 에러/빈 script인 경우 script 기반 features를 0으로 처리
     """
+    # script가 유효하지 않은 경우 체크
+    script = js.get("script", "")
+    script_invalid = is_invalid_script(script)
+
     word_cnt = js.get("word_cnt", 0) or 0
 
     # 0 division 방지: 분모가 0이면 0.0으로
@@ -93,17 +136,31 @@ def build_feature_row(js: dict):
         "inter_div": js.get("inter_div", None),
     }
 
-    # None이 남아있으면 0으로 채움(훈련 데이터가 모두 유효값만 사용됐다면,
-    # 실사용에서 값이 빠진 경우 0 대체가 가장 안전한 기본값)
+    # None이 남아있으면 0으로 채움
     for k, v in row.items():
         if row[k] is None:
             row[k] = 0.0
+
+    # 에러/빈 script인 경우 script 기반 features를 0으로 강제 설정
+    if script_invalid:
+        for feature_name in SCRIPT_BASED_FEATURES:
+            if feature_name in row:
+                row[feature_name] = 0.0
 
     return row
 
 
 def run_inference(model_path: str, js: dict) -> dict:
     """모델 경로와 feature dict(js)를 입력받아 단일 예측 결과 반환"""
+    # 에러/빈 script인 경우 무조건 1점(최저점) 반환
+    script = js.get("script", "")
+    if is_invalid_script(script):
+        return {
+            "pred_cont": 1.0,
+            "pred_rounded": 1,
+            "pred_letter": "D",
+        }
+
     model = joblib.load(model_path)
 
     feat_row = build_feature_row(js)

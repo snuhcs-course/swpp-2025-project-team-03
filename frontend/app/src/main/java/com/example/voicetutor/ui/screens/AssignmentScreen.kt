@@ -70,6 +70,7 @@ fun AssignmentScreen(
     val audioRecorderState by audioRecorder.recordingState.collectAsStateWithLifecycle()
     val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val errorException by viewModel.errorException.collectAsStateWithLifecycle()
 
     // 채점 상태 polling
     var pollingJob by remember { mutableStateOf<Job?>(null) }
@@ -96,9 +97,24 @@ fun AssignmentScreen(
     }
 
     // 네트워크 오류 시 Toast 표시
-    LaunchedEffect(error) {
-        error?.let {
+    LaunchedEffect(error, errorException) {
+        val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) } 
+            ?: error?.let { ErrorMessageMapper.isNetworkError(it) } 
+            ?: false
+        
+        if (isNetworkError) {
             Toast.makeText(context, "네트워크가 불안정합니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // 네트워크 에러가 아닌 경우에만 에러를 클리어합니다.
+    // 네트워크 에러는 화면에 표시하기 위해 유지합니다.
+    LaunchedEffect(error, errorException) {
+        val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) } 
+            ?: error?.let { ErrorMessageMapper.isNetworkError(it) } 
+            ?: false
+        
+        if (!isNetworkError && error != null) {
             viewModel.clearError()
         }
     }
@@ -283,7 +299,9 @@ fun AssignmentScreen(
             } else if (personalAssignmentQuestions.isEmpty() || currentQuestion == null) {
                 // 질문이 없는 경우: 네트워크 오류인지 확인
                 val errorMessage = error
-                val isNetworkError = errorMessage != null && ErrorMessageMapper.isNetworkError(errorMessage)
+                val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) } 
+                    ?: errorMessage?.let { ErrorMessageMapper.isNetworkError(it) } 
+                    ?: false
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -307,13 +325,13 @@ fun AssignmentScreen(
                                 modifier = Modifier.size(80.dp),
                             )
                             Text(
-                                text = if (isNetworkError) "네트워크 오류" else "과제 정보를 불러올 수 없습니다",
+                                text = if (isNetworkError) "네트워크가 불안정합니다" else "과제 정보를 불러올 수 없습니다",
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Gray800,
                                 textAlign = TextAlign.Center,
                             )
-                            if (errorMessage != null) {
+                            if (errorMessage != null && !isNetworkError) {
                                 Text(
                                     text = errorMessage,
                                     style = MaterialTheme.typography.bodyMedium,
