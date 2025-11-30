@@ -2,7 +2,7 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -10,17 +10,12 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Simple rendering tests for screen components without ViewModel dependencies.
- * These tests verify that UI components render without crashing.
- */
 @RunWith(AndroidJUnit4::class)
 class ScreensRenderingTest {
 
@@ -31,13 +26,12 @@ class ScreensRenderingTest {
     fun loginScreen_welcomeText_renders() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                // Simple welcome card from login screen
                 VTCard {
                     Text("VoiceTutor")
                 }
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("VoiceTutor").assertExists()
     }
@@ -52,7 +46,7 @@ class ScreensRenderingTest {
                 }
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("학생").assertExists()
         composeTestRule.onNodeWithText("선생님").assertExists()
@@ -65,11 +59,11 @@ class ScreensRenderingTest {
                 VTStatsCard(
                     title = "완료한 과제",
                     value = "5",
-                    icon = Icons.Filled.Assignment
+                    icon = Icons.AutoMirrored.Filled.Assignment,
                 )
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("완료한 과제").assertExists()
         composeTestRule.onNodeWithText("5").assertExists()
@@ -85,7 +79,7 @@ class ScreensRenderingTest {
                 }
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("1단원 복습 과제").assertExists()
         composeTestRule.onNodeWithText("수학").assertExists()
@@ -97,13 +91,13 @@ class ScreensRenderingTest {
             VoiceTutorTheme {
                 LinearProgressIndicator(
                     progress = { 0.5f },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
-        
+
         composeTestRule.waitForIdle()
-        // Progress indicator exists
+
         composeTestRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo(0.5f, 0f..1f)))
             .assertExists()
     }
@@ -115,11 +109,11 @@ class ScreensRenderingTest {
             VoiceTutorTheme {
                 VTButton(
                     text = "시작하기",
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 )
             }
         }
-        
+
         composeTestRule.onNodeWithText("시작하기").assertExists()
         composeTestRule.onNodeWithText("시작하기").performClick()
         assert(clicked)
@@ -135,7 +129,7 @@ class ScreensRenderingTest {
                 }
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("환영합니다").assertExists()
         composeTestRule.onNodeWithText("VoiceTutor에 오신 것을 환영합니다").assertExists()
@@ -149,11 +143,11 @@ class ScreensRenderingTest {
                 FilterChip(
                     selected = false,
                     onClick = { clicked = true },
-                    label = { Text("전체") }
+                    label = { Text("전체") },
                 )
             }
         }
-        
+
         composeTestRule.onNodeWithText("전체").assertExists()
         composeTestRule.onNodeWithText("전체").performClick()
         assert(clicked)
@@ -166,14 +160,14 @@ class ScreensRenderingTest {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     Text("과제가 없습니다")
                     Text("새로운 과제를 생성해보세요")
                 }
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("과제가 없습니다").assertExists()
     }
@@ -184,15 +178,14 @@ class ScreensRenderingTest {
             VoiceTutorTheme {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
             }
         }
-        
+
         composeTestRule.waitForIdle()
-        // Loading indicator exists (it's a progress indicator with indeterminate state)
     }
 
     @Test
@@ -202,12 +195,12 @@ class ScreensRenderingTest {
                 VTCard {
                     Text(
                         text = "오류가 발생했습니다",
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("오류가 발생했습니다").assertExists()
     }
@@ -219,11 +212,11 @@ class ScreensRenderingTest {
                 OutlinedTextField(
                     value = "",
                     onValueChange = {},
-                    label = { Text("이름") }
+                    label = { Text("이름") },
                 )
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("이름").assertExists()
     }
@@ -236,11 +229,11 @@ class ScreensRenderingTest {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
-                    label = { Text("입력") }
+                    label = { Text("입력") },
                 )
             }
         }
-        
+
         composeTestRule.onNodeWithText("입력").performTextInput("테스트")
         assert(text == "테스트")
     }
@@ -249,7 +242,7 @@ class ScreensRenderingTest {
     fun multipleButtons_render_andClickable() {
         var button1Clicked = false
         var button2Clicked = false
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -257,18 +250,18 @@ class ScreensRenderingTest {
                     VTButton(
                         text = "취소",
                         onClick = { button2Clicked = true },
-                        variant = ButtonVariant.Outline
+                        variant = ButtonVariant.Outline,
                     )
                 }
             }
         }
-        
+
         composeTestRule.onNodeWithText("제출").assertExists()
         composeTestRule.onNodeWithText("취소").assertExists()
-        
+
         composeTestRule.onNodeWithText("제출").performClick()
         assert(button1Clicked)
-        
+
         composeTestRule.onNodeWithText("취소").performClick()
         assert(button2Clicked)
     }
@@ -280,13 +273,13 @@ class ScreensRenderingTest {
                 VTStatsCard(
                     title = "정확도",
                     value = "85%",
-                    icon = Icons.Filled.Assignment,
+                    icon = Icons.AutoMirrored.Filled.Assignment,
                     trend = TrendDirection.Up,
-                    trendValue = "+5%"
+                    trendValue = "+5%",
                 )
             }
         }
-        
+
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("정확도").assertExists()
         composeTestRule.onNodeWithText("85%").assertExists()
@@ -298,15 +291,14 @@ class ScreensRenderingTest {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTCard(
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 ) {
                     Text("클릭 가능한 카드")
                 }
             }
         }
-        
+
         composeTestRule.onNodeWithText("클릭 가능한 카드").performClick()
         assert(clicked)
     }
 }
-

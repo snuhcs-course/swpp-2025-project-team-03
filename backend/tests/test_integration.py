@@ -134,6 +134,8 @@ class TestFullWorkflow:
             title="영어 발음 연습",
             description="기본 단어 발음",
             due_at=timezone.now() + timedelta(days=7),
+            total_questions=5,
+            is_question_created=True,
         )
 
         personal_assignment = PersonalAssignment.objects.create(

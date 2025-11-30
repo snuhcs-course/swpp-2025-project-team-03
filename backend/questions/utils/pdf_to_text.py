@@ -29,8 +29,13 @@ You are given an image extracted from a class slide, textbook, or diagram.
 - Do not mention redundant details like colors, shapes, or positions.
 - Summarize in **natural, fluent text**.
 
-# Output Format
-Return text with this structure:
+
+# Rules
+- You must transcribe all the text shown in the image without leaving anything out.
+- Focus on educational meaning, not aesthetics.
+- Resources may contain both Korean and English, but use Korean primarily. Use English only for technical terms if necessary.
+
+
 
 **Example:**
 사과는 왜 땅에 떨어질까요?
@@ -60,11 +65,7 @@ r은 두 물체 사이의 거리 (미터, m)입니다.
 
 결국, 중력은 질량을 가진 모든 물체가 서로 끌어당기는 힘이며,
 이 힘 덕분에 행성은 태양 주위를 돌고, 달은 지구 주위를 도는 거예요.
-                                                         
-# Rules
-- You must transcribe all the text shown in the image without leaving anything out.
-- Focus on educational meaning, not aesthetics.
-- Resources may contain both Korean and English.
+                                                        
 """
 )
 

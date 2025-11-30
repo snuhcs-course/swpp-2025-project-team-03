@@ -106,22 +106,39 @@ class TestQuestionCreateView(TestCase):
             self.assertIn("questions", response.data)
             self.assertEqual(len(response.data["questions"]), 2)
 
+    @patch("questions.views.generate_base_quizzes")
+    @patch("questions.views.infer_relevant_achievement_codes_from_summary")
     @patch("questions.views.Assignment.objects.get")
     @patch("questions.views.Material.objects.get")
     @patch("questions.views.PersonalAssignment.objects.filter")
     def test_post_no_personal_assignments(
-        self, mock_personal_assignment_filter, mock_material_get, mock_assignment_get
+        self,
+        mock_personal_assignment_filter,
+        mock_material_get,
+        mock_assignment_get,
+        mock_infer_achievement,
+        mock_generate,
     ):
         """PersonalAssignment가 없는 경우 테스트"""
         # Given
         mock_assignment = Mock()
         mock_assignment.id = 1
+        mock_assignment.subject.name = "과학"
+        mock_assignment.grade = "중학교 2학년"
         mock_assignment_get.return_value = mock_assignment
 
         mock_material = Mock()
         mock_material.id = 1
         mock_material.summary = "테스트 요약"
         mock_material_get.return_value = mock_material
+
+        # Mock achievement inference
+        mock_infer_achievement.return_value = {"codes": [], "details": {}}
+
+        # Mock generate_base_quizzes (실제 API 호출 방지)
+        mock_generate.return_value = [
+            Mock(question="질문1", explanation="설명1", model_answer="답1", difficulty="EASY"),
+        ]
 
         # PersonalAssignment가 없는 경우
         mock_personal_assignment_qs = Mock()

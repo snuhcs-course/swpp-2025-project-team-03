@@ -82,6 +82,7 @@ def assignment(course_class, subject):
         total_questions=3,
         due_at=timezone.now() + timedelta(days=7),
         grade="",
+        is_question_created=True,
     )
 
 

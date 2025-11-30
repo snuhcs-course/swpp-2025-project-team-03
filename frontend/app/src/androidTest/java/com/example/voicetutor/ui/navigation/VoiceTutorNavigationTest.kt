@@ -1,10 +1,7 @@
 package com.example.voicetutor.ui.navigation
 
-import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.navigation.compose.rememberNavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -59,9 +56,6 @@ class VoiceTutorNavigationTest {
         val route = VoiceTutorScreens.Settings.createRoute()
         assertEquals("settings/-1", route)
     }
-
-    // Note: PendingAssignments, CompletedAssignments, AllStudentAssignments screens don't exist
-    // These tests are commented out as they reference non-existent navigation screens
 
     @Test
     fun voiceTutorScreens_teacherStudents_createRoute_worksCorrectly() {
@@ -130,15 +124,11 @@ class VoiceTutorNavigationTest {
             VoiceTutorScreens.AllStudents.route,
             VoiceTutorScreens.CreateAssignment.route,
             VoiceTutorScreens.CreateClass.route,
-            VoiceTutorScreens.AppInfo.route
+            VoiceTutorScreens.AppInfo.route,
         )
 
-        // 모든 기본 라우트가 고유한지 확인
         assertEquals(routes.size, routes.distinct().size)
     }
-
-    // Route creation tests
-    // Note: AllStudentAssignments, CompletedAssignments, PendingAssignments screens don't exist
 
     @Test
     fun voiceTutorScreens_assignment_createRoute_handlesEmptyTitle() {
@@ -264,10 +254,9 @@ class VoiceTutorNavigationTest {
             VoiceTutorScreens.Settings.createRoute(),
             VoiceTutorScreens.EditAssignment.createRoute(1),
             VoiceTutorScreens.TeacherAssignmentResults.createRoute(1),
-            VoiceTutorScreens.TeacherAssignmentDetail.createRoute(1)
+            VoiceTutorScreens.TeacherAssignmentDetail.createRoute(1),
         )
 
-        // 모든 라우트가 비어있지 않은지 확인
         routes.forEach { route ->
             assertTrue("Route should not be empty: $route", route.isNotBlank())
         }
@@ -275,11 +264,9 @@ class VoiceTutorNavigationTest {
 
     @Test
     fun voiceTutorNavigation_handlesSpecialCharactersInRoutes() {
-        // 특수 문자가 포함된 제목으로 라우트 생성 테스트
         val specialTitle = "과제: 테스트/문제"
         val route = VoiceTutorScreens.TeacherStudentAssignmentDetail.createRoute("1", 2, specialTitle)
-        
-        // 슬래시는 언더스코어로 치환되어야 함
+
         assertTrue(route.contains("테스트_문제") || route.contains("테스트/문제"))
     }
 
@@ -307,7 +294,7 @@ class VoiceTutorNavigationTest {
             VoiceTutorScreens.AttendanceManagement.route,
             VoiceTutorScreens.Settings.route,
             VoiceTutorScreens.CreateClass.route,
-            VoiceTutorScreens.AppInfo.route
+            VoiceTutorScreens.AppInfo.route,
         )
 
         allRoutes.forEach { route ->
@@ -315,4 +302,3 @@ class VoiceTutorNavigationTest {
         }
     }
 }
-

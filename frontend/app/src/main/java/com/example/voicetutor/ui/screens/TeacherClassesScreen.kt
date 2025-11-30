@@ -1,32 +1,31 @@
 package com.example.voicetutor.ui.screens
 
-import androidx.compose.foundation.BorderStroke
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
-import com.example.voicetutor.ui.viewmodel.ClassViewModel
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import com.example.voicetutor.ui.viewmodel.ClassViewModel
 
 data class ClassRoom(
     val id: Int,
@@ -36,69 +35,65 @@ data class ClassRoom(
     val studentCount: Int,
     val assignmentCount: Int,
     val completionRate: Float,
-    val color: Color
+    val color: Color,
 )
+
+private const val HEADER_ALPHA = 0.08f
+private const val HEADER_CORNER_RADIUS = 16
+private const val COLOR_COUNT = 4
+private const val EMPTY_STATE_ICON_SIZE = 48
 
 @Composable
 fun TeacherClassesScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
-    teacherId: String? = null, // 파라미터로 받거나 현재 로그인한 사용자 ID 사용
+    classViewModel: ClassViewModel? = null,
+    teacherId: String? = null,
     onNavigateToClassDetail: (String, Int) -> Unit = { _, _ -> },
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
-    onNavigateToStudents: (Int) -> Unit = {}
+    onNavigateToStudents: (Int) -> Unit = {},
 ) {
-    val classViewModel: ClassViewModel = hiltViewModel()
+    val actualClassViewModel: ClassViewModel = classViewModel ?: hiltViewModel()
     val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
-    
-    val classes by classViewModel.classes.collectAsStateWithLifecycle()
+
+    val classes by actualClassViewModel.classes.collectAsStateWithLifecycle()
     val assignments by actualAssignmentViewModel.assignments.collectAsStateWithLifecycle()
-    val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by classViewModel.error.collectAsStateWithLifecycle()
+    val isLoading by actualClassViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by actualClassViewModel.error.collectAsStateWithLifecycle()
+    val classCreatedEvent by actualClassViewModel.classCreatedEvent.collectAsStateWithLifecycle()
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
-    
-    // Load classes and assignments on first composition
+    val context = LocalContext.current
+
     LaunchedEffect(currentUser?.id) {
         val actualTeacherId = teacherId ?: currentUser?.id?.toString()
-        
-        if (actualTeacherId == null) {
-            println("TeacherClassesScreen - Waiting for user to be loaded...")
-            return@LaunchedEffect
-        }
-        
-        // 이미 assignments가 있으면 재호출하지 않음
-        if (assignments.isEmpty()) {
-            println("TeacherClassesScreen - Loading assignments for teacher ID: $actualTeacherId")
-            actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
-        } else {
-            println("TeacherClassesScreen - Already have ${assignments.size} assignments from login")
-        }
-        
-        // 이미 classes가 있으면 재호출하지 않음
-        if (classes.isEmpty()) {
-            println("TeacherClassesScreen - Loading classes for teacher ID: $actualTeacherId")
-            classViewModel.loadClasses(actualTeacherId)
-        } else {
-            println("TeacherClassesScreen - Already have ${classes.size} classes")
-        }
+        if (actualTeacherId == null) return@LaunchedEffect
+        actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
+        actualClassViewModel.loadClasses(actualTeacherId)
     }
-    
-    // Handle error
+
+    // 네트워크 에러가 아닌 경우에만 에러를 클리어
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
-            classViewModel.clearError()
+            if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
+                actualClassViewModel.clearError()
+            }
         }
     }
-    
-    // Convert ClassData to ClassRoom for UI
+
+    // 수업 생성 이벤트 처리
+    LaunchedEffect(classCreatedEvent) {
+        if (classCreatedEvent) {
+            Toast.makeText(context, "수업이 생성되었습니다.", Toast.LENGTH_SHORT).show()
+            actualClassViewModel.clearClassCreatedEvent()
+        }
+    }
+
     val classRooms = classes.map { classData ->
-        // Calculate assignment count from actual data
         val classAssignments = assignments.filter { it.courseClass.id == classData.id }
         val assignmentCount = classAssignments.size
-        
+
         ClassRoom(
             id = classData.id,
             name = classData.name,
@@ -106,13 +101,13 @@ fun TeacherClassesScreen(
             description = classData.description,
             studentCount = classData.actualStudentCount,
             assignmentCount = assignmentCount,
-            completionRate = 0f, // Not used in UI, kept for data model compatibility
-            color = when (classData.id % 4) {
+            completionRate = 0f,
+            color = when (classData.id % COLOR_COUNT) {
                 0 -> PrimaryIndigo
                 1 -> Success
                 2 -> Warning
                 else -> Error
-            }
+            },
         )
     }
 
@@ -120,50 +115,48 @@ fun TeacherClassesScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Header Banner
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryIndigo.copy(alpha = 0.08f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    color = PrimaryIndigo.copy(alpha = HEADER_ALPHA),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(HEADER_CORNER_RADIUS.dp),
                 )
-                .padding(20.dp)
+                .padding(20.dp),
         ) {
             Column {
                 Text(
                     text = "수업 관리",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "내 수업을 관리하고 과제를 생성하세요",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
+                    color = Gray600,
                 )
             }
         }
-        
-        // Action section with button
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "수업 목록",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = Gray800
+                color = Gray800,
             )
-            
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 VTButton(
                     text = "수업 생성",
@@ -174,47 +167,52 @@ fun TeacherClassesScreen(
                         Icon(
                             imageVector = Icons.Filled.Add,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
                         )
-                    }
+                    },
                 )
             }
         }
-        
-        // Classes list
+
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            
-            // Loading indicator
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                 }
             } else if (classRooms.isEmpty()) {
+                // classRooms.isEmpty()일 때 네트워크 에러인지 확인
+                val isNetworkErrorState = error != null && ErrorMessageMapper.isNetworkError(error)
+                val emptyStateMessage = if (isNetworkErrorState) {
+                    "네트워크가 불안정합니다"
+                } else {
+                    "반이 없습니다"
+                }
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.School,
                             contentDescription = null,
                             tint = Gray400,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(EMPTY_STATE_ICON_SIZE.dp),
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "반이 없습니다",
+                            text = emptyStateMessage,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
@@ -224,7 +222,18 @@ fun TeacherClassesScreen(
                         classRoom = classRoom,
                         onClassClick = { onNavigateToClassDetail(classRoom.name, classRoom.id) },
                         onCreateAssignment = { classId -> onNavigateToCreateAssignment(classId) },
-                        onViewStudents = { onNavigateToStudents(classRoom.id) }
+                        onViewStudents = { onNavigateToStudents(classRoom.id) },
+                        onDeleteClass = { room, resultCallback ->
+                            actualClassViewModel.deleteClass(room.id) { success ->
+                                resultCallback(success)
+                                val message = if (success) {
+                                    "${room.name} 수업이 삭제되었어요"
+                                } else {
+                                    "수업 삭제에 실패했어요"
+                                }
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            }
+                        },
                     )
                 }
             }
@@ -237,80 +246,95 @@ fun ClassCard(
     classRoom: ClassRoom,
     onClassClick: (Int) -> Unit,
     onCreateAssignment: (Int) -> Unit,
-    onViewStudents: (Int) -> Unit
+    onViewStudents: (Int) -> Unit,
+    onDeleteClass: (ClassRoom, (Boolean) -> Unit) -> Unit,
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var isDeleting by remember { mutableStateOf(false) }
+
     VTCard(
         variant = CardVariant.Elevated,
-        onClick = { onClassClick(classRoom.id) }
+        onClick = { onClassClick(classRoom.id) },
     ) {
         Column(
             modifier = Modifier.padding(3.5.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
                         .background(classRoom.color.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.MenuBook,
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
                         contentDescription = null,
                         tint = classRoom.color,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
+
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
                         text = classRoom.name,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Gray800
+                        color = Gray800,
                     )
                     Text(
                         text = classRoom.subject,
                         style = MaterialTheme.typography.bodyMedium,
                         color = classRoom.color,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.offset(y = (-12).dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "수업 삭제",
+                        tint = Error,
                     )
                 }
             }
-            
-            // Stats row
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 ClassStatItem(
                     icon = Icons.Filled.People,
                     value = classRoom.studentCount.toString(),
                     label = "학생",
-                    color = Gray600
+                    color = Gray600,
                 )
-                
+
                 ClassStatItem(
-                    icon = Icons.Filled.Assignment,
+                    icon = Icons.AutoMirrored.Filled.Assignment,
                     value = classRoom.assignmentCount.toString(),
                     label = "과제",
-                    color = Gray600
-                )                
+                    color = Gray600,
+                )
             }
-            
-            // Action buttons
+
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 VTButton(
                     text = "과제 생성",
@@ -323,20 +347,70 @@ fun ClassCard(
                             imageVector = Icons.Filled.Add,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
                         )
-                    }
+                    },
                 )
-                
+
                 VTButton(
                     text = "학생 상세",
                     onClick = { onViewStudents(classRoom.id) },
                     variant = ButtonVariant.Outline,
                     size = ButtonSize.Small,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isDeleting) {
+                    showDeleteDialog = false
+                }
+            },
+            title = {
+                Text(
+                    text = "수업 삭제",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            },
+            text = {
+                Text(
+                    text = "\"${classRoom.name}\" 수업을 삭제하시겠습니까?\n삭제하면 되돌릴 수 없어요!",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isDeleting = true
+                        onDeleteClass(classRoom) { success ->
+                            isDeleting = false
+                            if (success) {
+                                showDeleteDialog = false
+                            }
+                        }
+                    },
+                    enabled = !isDeleting,
+                ) {
+                    Text(if (isDeleting) "삭제 중..." else "삭제하기", color = Error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        if (!isDeleting) {
+                            showDeleteDialog = false
+                        }
+                    },
+                ) {
+                    Text("취소")
+                }
+            },
+        )
     }
 }
 
@@ -345,23 +419,23 @@ fun ClassStatItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     value: String,
     label: String,
-    color: Color
+    color: Color,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         )
         Text(
             text = "$label: $value",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            color = Gray800
+            color = Gray800,
         )
     }
 }

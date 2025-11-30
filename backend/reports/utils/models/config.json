@@ -1,0 +1,7 @@
+{
+  "base_model": "klue/roberta-large",
+  "max_length": 256,
+  "dropout": 0.1,
+  "pooling": "cls"
+}
+

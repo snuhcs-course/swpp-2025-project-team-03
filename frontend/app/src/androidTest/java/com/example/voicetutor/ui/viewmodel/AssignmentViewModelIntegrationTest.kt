@@ -1,19 +1,15 @@
 package com.example.voicetutor.ui.viewmodel
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.data.network.AnswerSubmission
 import com.example.voicetutor.data.models.AssignmentStatus
 import com.example.voicetutor.data.models.PersonalAssignmentStatistics
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
-import com.example.voicetutor.data.network.AssignmentSubmissionRequest
 import com.example.voicetutor.data.network.ApiResponse
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -77,7 +73,6 @@ class AssignmentViewModelIntegrationTest {
         advanceUntilIdle()
 
         assertEquals(null, viewModel.error.value)
-        assertTrue(viewModel.assignments.value.size >= 0)
         assertNotNull(viewModel.studentStats.value)
     }
 
@@ -86,7 +81,6 @@ class AssignmentViewModelIntegrationTest {
         viewModel.loadCompletedStudentAssignments(studentId = 1)
         advanceUntilIdle()
 
-        // Even if fake data returns empty list, the pipeline executes and stats are calculated.
         assertEquals(null, viewModel.error.value)
         assertNotNull(viewModel.studentStats.value)
     }
@@ -139,12 +133,10 @@ class AssignmentViewModelIntegrationTest {
     fun resumePersonalAssignment_afterInterruption_restoresProgress() = runTest(dispatcher) {
         val personalAssignmentId = apiService.personalAssignmentsResponse.first().id
 
-        // Initial session load
         viewModel.loadAllQuestions(personalAssignmentId = personalAssignmentId)
         advanceUntilIdle()
         assertTrue(viewModel.personalAssignmentQuestions.value.isNotEmpty())
 
-        // Simulate progress saved on the server after interruption
         val resumedStats = PersonalAssignmentStatistics(
             totalQuestions = 10,
             answeredQuestions = 6,
@@ -153,7 +145,7 @@ class AssignmentViewModelIntegrationTest {
             totalProblem = 10,
             solvedProblem = 6,
             progress = 0.6f,
-            averageScore = 82f
+            averageScore = 82f,
         )
         apiService.personalAssignmentStatisticsResponses[personalAssignmentId] = resumedStats
         apiService.personalAssignmentsResponse = apiService.personalAssignmentsResponse.map {
@@ -161,11 +153,10 @@ class AssignmentViewModelIntegrationTest {
                 status = PersonalAssignmentStatus.IN_PROGRESS,
                 solvedNum = 6,
                 startedAt = it.startedAt ?: "2024-01-02T09:00:00Z",
-                submittedAt = null
+                submittedAt = null,
             )
         }
 
-        // Recreate ViewModel to mimic process death / resume flow
         val resumedViewModel = AssignmentViewModel(AssignmentRepository(apiService))
 
         resumedViewModel.loadPersonalAssignmentStatistics(personalAssignmentId = personalAssignmentId)
@@ -249,26 +240,6 @@ class AssignmentViewModelIntegrationTest {
     }
 
     @Test
-    fun submitAssignment_successKeepsErrorNull() = runTest(dispatcher) {
-        val submission = AssignmentSubmissionRequest(
-            studentId = 1,
-            answers = listOf(
-                AnswerSubmission(
-                    questionId = 1,
-                    answer = "A",
-                    audioFile = null,
-                    confidence = 0.9f
-                )
-            )
-        )
-
-        viewModel.submitAssignment(id = 1, submission = submission)
-        advanceUntilIdle()
-
-        assertEquals(null, viewModel.error.value)
-    }
-
-    @Test
     fun loadRecentAssignment_setsRecentState() = runTest(dispatcher) {
         viewModel.loadRecentAssignment(studentId = 1)
         advanceUntilIdle()
@@ -300,19 +271,19 @@ class AssignmentViewModelIntegrationTest {
                     override suspend fun getAllAssignments(
                         teacherId: String?,
                         classId: String?,
-                        status: String?
+                        status: String?,
                     ): Response<ApiResponse<List<com.example.voicetutor.data.models.AssignmentData>>> {
                         return Response.success(
                             ApiResponse(
                                 success = false,
                                 data = null,
                                 message = null,
-                                error = "network error"
-                            )
+                                error = "network error",
+                            ),
                         )
                     }
-                }
-            )
+                },
+            ),
         )
 
         failingViewModel.loadAllAssignments(teacherId = "2")
@@ -321,4 +292,3 @@ class AssignmentViewModelIntegrationTest {
         assertEquals("network error", failingViewModel.error.value)
     }
 }
-

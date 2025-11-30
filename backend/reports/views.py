@@ -1,4 +1,5 @@
 import logging
+import time
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -27,6 +28,8 @@ class CurriculumAnalysisView(APIView):
     )
     def get(self, request, class_id, student_id):
         """성취기준 분석 및 통계량 조회"""
+        api_start_time = time.time()
+
         try:
             # URL 파라미터 검증
             if class_id <= 0:
@@ -51,7 +54,7 @@ class CurriculumAnalysisView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            logger.info(f"성취기준 분석 요청: student_id={student_id}, class_id={class_id}")
+            logger.info(f"[TIMING] 성취기준 분석 시작: student_id={student_id}, class_id={class_id}")
 
             # 성취기준 분석 및 통계량 계산
             statistics = parse_curriculum(student_id, class_id)
@@ -70,7 +73,11 @@ class CurriculumAnalysisView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
-            logger.info(f"성취기준 분석 완료: student_id={student_id}, class_id={class_id}")
+            api_total_time = time.time() - api_start_time
+            logger.info(
+                f"[TIMING] 성취기준 분석 완료: student_id={student_id}, class_id={class_id}, "
+                f"총 소요시간={api_total_time:.2f}초"
+            )
 
             return Response(
                 {
@@ -83,7 +90,8 @@ class CurriculumAnalysisView(APIView):
             )
 
         except Exception as e:
-            logger.error(f"성취기준 분석 중 오류 발생: {str(e)}")
+            api_total_time = time.time() - api_start_time
+            logger.error(f"[TIMING] 성취기준 분석 중 오류 발생 (소요시간={api_total_time:.2f}초): {str(e)}")
             return Response(
                 {"success": False, "data": None, "message": "성취기준 분석 중 오류가 발생했습니다.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

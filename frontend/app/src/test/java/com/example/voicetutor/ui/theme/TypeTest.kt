@@ -1,12 +1,9 @@
-package com.example.voicetutor.ui.theme
+﻿package com.example.voicetutor.ui.theme
 
 import androidx.compose.ui.text.font.FontWeight
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
-/**
- * Unit tests for Typography.
- */
 class TypeTest {
 
     @Test
@@ -116,4 +113,3 @@ class TypeTest {
         assertTrue(Typography.labelSmall.lineHeight.value > 0)
     }
 }
-

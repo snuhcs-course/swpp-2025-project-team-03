@@ -36,6 +36,7 @@ class TestParseCurriculumUnit:
         mock_question_qs.count.return_value = 1
         mock_question_qs.__iter__ = Mock(return_value=iter([mock_question]))
         mock_question_qs.select_related.return_value = mock_question_qs
+        mock_question_qs.filter.return_value = mock_question_qs  # For chained filter with Q objects
         mock_question_objects.filter.return_value = mock_question_qs
 
         # Mock CSV 파일
@@ -81,6 +82,7 @@ class TestParseCurriculumUnit:
         mock_question_qs = Mock()
         mock_question_qs.count.return_value = 0
         mock_question_qs.select_related.return_value = mock_question_qs
+        mock_question_qs.filter.return_value = mock_question_qs  # For chained filter with Q objects
         mock_question_qs.__iter__ = Mock(return_value=iter([]))  # 빈 이터레이터
         mock_question_objects.filter.return_value = mock_question_qs
 
@@ -123,6 +125,7 @@ class TestParseCurriculumUnit:
         mock_question_qs.count.return_value = 1
         mock_question_qs.__iter__ = Mock(return_value=iter([mock_question]))
         mock_question_qs.select_related.return_value = mock_question_qs
+        mock_question_qs.filter.return_value = mock_question_qs  # For chained filter with Q objects
         mock_question_objects.filter.return_value = mock_question_qs
 
         # Mock CSV 파일
@@ -161,6 +164,7 @@ class TestCalculateStatisticsUnit:
         mock_question_qs = Mock()
         mock_question_qs.count.return_value = 1
         mock_question_qs.select_related.return_value = mock_question_qs
+        mock_question_qs.exclude.return_value = mock_question_qs  # For chained exclude calls
         mock_question_objects.filter.return_value = mock_question_qs
 
         # Mock Answer QuerySet
@@ -202,6 +206,7 @@ class TestCalculateStatisticsUnit:
         mock_question_qs = Mock()
         mock_question_qs.count.return_value = 0
         mock_question_qs.select_related.return_value = mock_question_qs
+        mock_question_qs.exclude.return_value = mock_question_qs  # For chained exclude calls
         mock_question_objects.filter.return_value = mock_question_qs
 
         # Mock Answer QuerySet (빈 결과)
@@ -233,6 +238,7 @@ class TestCalculateStatisticsUnit:
         mock_question_qs = Mock()
         mock_question_qs.count.return_value = 2
         mock_question_qs.select_related.return_value = mock_question_qs
+        mock_question_qs.exclude.return_value = mock_question_qs  # For chained exclude calls
         mock_question_objects.filter.return_value = mock_question_qs
 
         # Mock Answer QuerySet
@@ -298,7 +304,12 @@ class TestFindBestAchievementCodeUnit:
         ]
 
         # 함수 실행
-        result = find_best_achievement_code(question_content, achievement_standards)
+        result = find_best_achievement_code(
+            question_content=question_content,
+            answer=None,
+            explanation=None,
+            achievement_standards=achievement_standards,
+        )
 
         # 검증
         assert result == "4과01-01"
@@ -315,7 +326,12 @@ class TestFindBestAchievementCodeUnit:
         achievement_standards = [{"code": "4과01-01", "content": "테스트 성취기준", "grade": "2학년"}]
 
         # 함수 실행
-        result = find_best_achievement_code(question_content, achievement_standards)
+        result = find_best_achievement_code(
+            question_content=question_content,
+            answer=None,
+            explanation=None,
+            achievement_standards=achievement_standards,
+        )
 
         # 검증
         assert result is None
@@ -338,7 +354,12 @@ class TestFindBestAchievementCodeUnit:
         achievement_standards = [{"code": "4과01-01", "content": "테스트 성취기준", "grade": "2학년"}]
 
         # 함수 실행
-        result = find_best_achievement_code(question_content, achievement_standards)
+        result = find_best_achievement_code(
+            question_content=question_content,
+            answer=None,
+            explanation=None,
+            achievement_standards=achievement_standards,
+        )
 
         # 검증
         assert result is None
@@ -361,7 +382,12 @@ class TestFindBestAchievementCodeUnit:
         achievement_standards = [{"code": "4과01-01", "content": "테스트 성취기준", "grade": "2학년"}]
 
         # 함수 실행
-        result = find_best_achievement_code(question_content, achievement_standards)
+        result = find_best_achievement_code(
+            question_content=question_content,
+            answer=None,
+            explanation=None,
+            achievement_standards=achievement_standards,
+        )
 
         # 검증
         assert result is None
@@ -381,7 +407,12 @@ class TestFindBestAchievementCodeUnit:
         achievement_standards = [{"code": "4과01-01", "content": "테스트 성취기준", "grade": "2학년"}]
 
         # 함수 실행
-        result = find_best_achievement_code(question_content, achievement_standards)
+        result = find_best_achievement_code(
+            question_content=question_content,
+            answer=None,
+            explanation=None,
+            achievement_standards=achievement_standards,
+        )
 
         # 검증
         assert result is None

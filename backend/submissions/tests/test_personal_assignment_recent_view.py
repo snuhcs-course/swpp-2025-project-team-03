@@ -67,6 +67,7 @@ def assignment(course_class, subject):
         total_questions=3,
         due_at=timezone.now() + timedelta(days=7),
         grade="",
+        is_question_created=True,
     )
 
 
@@ -150,6 +151,7 @@ class TestPersonalAssignmentRecentViewUpdated:
             total_questions=2,
             due_at=timezone.now() + timedelta(days=7),
             grade="",
+            is_question_created=True,
         )
 
         pa1 = PersonalAssignment.objects.create(
@@ -213,6 +215,7 @@ class TestPersonalAssignmentRecentViewUpdated:
             total_questions=2,
             due_at=timezone.now() + timedelta(days=7),
             grade="",
+            is_question_created=True,
         )
 
         pa2 = PersonalAssignment.objects.create(
@@ -301,6 +304,7 @@ class TestPersonalAssignmentRecentViewUpdated:
             total_questions=2,
             due_at=timezone.now() + timedelta(days=7),
             grade="",
+            is_question_created=True,
         )
 
         pa1 = PersonalAssignment.objects.create(
@@ -414,6 +418,7 @@ class TestPersonalAssignmentRecentViewUpdated:
             total_questions=2,
             due_at=timezone.now() + timedelta(days=7),
             grade="",
+            is_question_created=True,
         )
 
         assignment3 = Assignment.objects.create(
@@ -424,6 +429,7 @@ class TestPersonalAssignmentRecentViewUpdated:
             total_questions=2,
             due_at=timezone.now() + timedelta(days=7),
             grade="",
+            is_question_created=True,
         )
 
         pa1 = PersonalAssignment.objects.create(

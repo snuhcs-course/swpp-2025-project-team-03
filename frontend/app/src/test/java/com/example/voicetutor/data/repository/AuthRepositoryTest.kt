@@ -1,20 +1,20 @@
-package com.example.voicetutor.data.repository
+﻿package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.LoginRequest
+import com.example.voicetutor.data.models.LoginResponse
 import com.example.voicetutor.data.models.SignupRequest
+import com.example.voicetutor.data.models.User
 import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.ApiService
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.whenever
 import retrofit2.Response
-import com.example.voicetutor.data.models.LoginResponse
-import com.example.voicetutor.data.models.User
 
 @RunWith(MockitoJUnitRunner::class)
 class AuthRepositoryTest {
@@ -30,7 +30,7 @@ class AuthRepositoryTest {
         // Response.error를 사용하면 response.body()는 null이므로 parseErrorMessage가 호출됨
         // parseErrorMessage는 errorBody().string()을 파싱하므로 errorBody를 제대로 설정해야 함
         val json = """{"success":false,"error":"로그인에 실패했습니다"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         whenever(apiService.login(req)).thenReturn(Response.error(401, errorBody))
 
         // When
@@ -49,7 +49,7 @@ class AuthRepositoryTest {
         val repo = AuthRepository(apiService)
         val req = SignupRequest(name = "n", email = "a@ex.com", password = "pw", role = UserRole.STUDENT.name)
         val json = """{"success":false,"error":"회원가입에 실패했습니다"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         whenever(apiService.signup(req)).thenReturn(Response.error(400, errorBody))
 
         // When
@@ -104,7 +104,7 @@ class AuthRepositoryTest {
     fun login_apiFailure_noErrorBody_returnsDefaultMessage() = runTest {
         // Arrange
         val repo = AuthRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{}""")
+        val errorBody = """{}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(500, errorBody))
 
         // Act
@@ -172,7 +172,7 @@ class AuthRepositoryTest {
         // Arrange
         val repo = AuthRepository(apiService)
         val json = """{"success":false,"error":"계정을 찾을 수 없습니다"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(404, errorBody))
 
         // Act
@@ -189,7 +189,7 @@ class AuthRepositoryTest {
         // Arrange
         val repo = AuthRepository(apiService)
         val json = """{"success":false,"error":"계정이 잠겨 있습니다"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(423, errorBody))
 
         // Act
@@ -206,7 +206,7 @@ class AuthRepositoryTest {
         // Arrange
         val repo = AuthRepository(apiService)
         val json = """{"success":false,"error":"서버 오류"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(500, errorBody))
 
         // Act
@@ -225,7 +225,7 @@ class AuthRepositoryTest {
         // Response.error()를 사용하면 response.body()가 null이므로 parseErrorMessage가 호출됨
         // parseErrorMessage가 errorBody에서 "비밀번호" 키워드를 파싱하면 InvalidCredentials 예외 발생
         val json = """{"success":false,"error":"비밀번호가 올바르지 않습니다"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(400, errorBody))
 
         // Act
@@ -238,11 +238,13 @@ class AuthRepositoryTest {
         // 400 상태 코드와 "비밀번호" 키워드로 InvalidCredentials 예외가 발생해야 함
         // 하지만 Mock 환경에서 errorBody.string()이 제대로 동작하지 않을 수 있으므로
         // Unknown 예외가 발생할 수도 있음
-        assert(exception is LoginException.InvalidCredentials || 
-               exception is LoginException.Unknown ||
-               exception?.message?.contains("이메일 또는 비밀번호") == true ||
-               exception?.message?.contains("비밀번호") == true ||
-               exception?.message?.contains("로그인에 실패했습니다") == true)
+        assert(
+            exception is LoginException.InvalidCredentials ||
+                exception is LoginException.Unknown ||
+                exception?.message?.contains("이메일 또는 비밀번호") == true ||
+                exception?.message?.contains("비밀번호") == true ||
+                exception?.message?.contains("로그인에 실패했습니다") == true,
+        )
     }
 
     @Test
@@ -250,7 +252,7 @@ class AuthRepositoryTest {
         // Arrange
         val repo = AuthRepository(apiService)
         val json = """{"success":false,"error":"이미 사용 중인 이메일입니다"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         val req = SignupRequest(name = "Bob", email = "b@ex.com", password = "pw", role = UserRole.TEACHER.name)
         whenever(apiService.signup(req)).thenReturn(Response.error(409, errorBody))
 
@@ -268,7 +270,7 @@ class AuthRepositoryTest {
         // Arrange
         val repo = AuthRepository(apiService)
         val json = """{"success":false,"message":"로그인 실패 메시지"}"""
-        val errorBody = ResponseBody.create("application/json".toMediaType(), json)
+        val errorBody = json.toResponseBody("application/json".toMediaType())
         whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(400, errorBody))
 
         // Act
@@ -284,7 +286,7 @@ class AuthRepositoryTest {
     fun login_responseWithEmptyErrorBody_usesDefaultMessage() = runTest {
         // Arrange
         val repo = AuthRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), "")
+        val errorBody = "".toResponseBody("application/json".toMediaType())
         whenever(apiService.login(LoginRequest("a@ex.com", "pw"))).thenReturn(Response.error(400, errorBody))
 
         // Act
@@ -296,9 +298,11 @@ class AuthRepositoryTest {
         // 빈 에러 바디의 경우 parseErrorMessage가 response.message()를 반환하거나 null을 반환
         // null이면 기본 메시지 "로그인에 실패했습니다"를 사용
         // response.message()가 "Response.error()"를 반환할 수도 있음
-        assert(exceptionMessage.contains("로그인에 실패했습니다") || 
-               exceptionMessage.contains("Response.error") ||
-               exceptionMessage.isNotEmpty())
+        assert(
+            exceptionMessage.contains("로그인에 실패했습니다") ||
+                exceptionMessage.contains("Response.error") ||
+                exceptionMessage.isNotEmpty(),
+        )
     }
 
     @Test
@@ -363,6 +367,162 @@ class AuthRepositoryTest {
         val exception = r.exceptionOrNull()
         assert(exception is SignupException.Unknown || exception?.message?.contains("알 수 없는") == true)
     }
+
+    @Test
+    fun deleteAccount_success_returnsUnit() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val apiResponse = com.example.voicetutor.data.network.ApiResponse(
+            success = true,
+            data = Unit,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.deleteAccount()).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == Unit)
+    }
+
+    @Test
+    fun deleteAccount_successFalse_returnsFailure() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val apiResponse = com.example.voicetutor.data.network.ApiResponse<Unit>(
+            success = false,
+            data = null,
+            message = null,
+            error = "Failed to delete",
+        )
+        whenever(apiService.deleteAccount()).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Failed to delete") == true)
+    }
+
+    @Test
+    fun deleteAccount_unauthorized_returnsUnauthorizedException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val json = """{"success":false,"error":"Unauthorized"}"""
+        val errorBody = json.toResponseBody("application/json".toMediaType())
+        whenever(apiService.deleteAccount()).thenReturn(Response.error(401, errorBody))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Unauthorized ||
+                exception?.message?.contains("다시 로그인") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_forbidden_returnsUnauthorizedException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val json = """{"success":false,"error":"Forbidden"}"""
+        val errorBody = json.toResponseBody("application/json".toMediaType())
+        whenever(apiService.deleteAccount()).thenReturn(Response.error(403, errorBody))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Unauthorized ||
+                exception?.message?.contains("다시 로그인") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_serverError_returnsServerException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val json = """{"success":false,"error":"Server error"}"""
+        val errorBody = json.toResponseBody("application/json".toMediaType())
+        whenever(apiService.deleteAccount()).thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Server ||
+                exception?.message?.contains("서버에서 오류가 발생했습니다") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_networkException_returnsNetworkException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        org.mockito.kotlin.doAnswer { throw java.net.UnknownHostException("Network error") }
+            .whenever(apiService).deleteAccount()
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Network ||
+                exception?.message?.contains("네트워크") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_genericException_returnsUnknownException() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        org.mockito.kotlin.doAnswer { throw RuntimeException("Generic error") }
+            .whenever(apiService).deleteAccount()
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assert(
+            exception is DeleteAccountException.Unknown ||
+                exception?.message?.contains("알 수 없는") == true,
+        )
+    }
+
+    @Test
+    fun deleteAccount_successFalse_noError_returnsDefaultMessage() = runTest {
+        // Arrange
+        val repo = AuthRepository(apiService)
+        val apiResponse = com.example.voicetutor.data.network.ApiResponse<Unit>(
+            success = false,
+            data = null,
+            message = null,
+            error = null,
+        )
+        whenever(apiService.deleteAccount()).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.deleteAccount()
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("계정 삭제에 실패했습니다") == true)
+    }
 }
-
-

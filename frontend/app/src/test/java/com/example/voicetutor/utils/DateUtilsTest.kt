@@ -1,9 +1,7 @@
-package com.example.voicetutor.utils
+﻿package com.example.voicetutor.utils
 
-import org.junit.Test
 import org.junit.Assert.*
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import org.junit.Test
 
 class DateUtilsTest {
 
@@ -275,18 +273,6 @@ class DateUtilsTest {
     }
 
     @Test
-    fun formatDueDate_nullString_handlesGracefully() {
-        // Given
-        val nullString: String? = null
-
-        // When
-        val result = nullString?.let { formatDueDate(it) }
-
-        // Then
-        assertNull(result)
-    }
-
-    @Test
     fun formatDueDate_whitespaceOnly_returnsOriginal() {
         // Given
         val whitespace = "   "
@@ -406,4 +392,3 @@ class DateUtilsTest {
         assertEquals(partialDate, result)
     }
 }
-

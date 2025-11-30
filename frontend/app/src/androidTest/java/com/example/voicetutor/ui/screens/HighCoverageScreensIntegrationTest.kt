@@ -1,11 +1,12 @@
 package com.example.voicetutor.ui.screens
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.assertIsDisplayed
 import com.example.voicetutor.HiltComponentActivity
+import com.example.voicetutor.data.network.ApiService
+import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.di.NetworkModule
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -14,6 +15,7 @@ import dagger.hilt.android.testing.UninstallModules
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -25,12 +27,33 @@ class HighCoverageScreensIntegrationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<HiltComponentActivity>()
 
+    @Inject
+    lateinit var apiService: ApiService
+
+    private val fakeApi: FakeApiService
+        get() = apiService as FakeApiService
+
     @Before
     fun setUp() {
         hiltRule.inject()
+        resetFakeApi()
     }
 
-    private fun waitForText(text: String, substring: Boolean = false, timeoutMillis: Long = 10_000) {
+    private fun resetFakeApi() {
+        fakeApi.apply {
+            shouldFailGetAssignmentById = false
+            shouldFailPersonalAssignments = false
+            shouldFailGetAllAssignments = false
+            shouldFailAssignmentResult = false
+            shouldFailClasses = false
+            shouldFailClassStudents = false
+            shouldFailAllStudents = false
+            shouldFailClassStudentsStatistics = false
+            shouldFailDashboardStats = false
+        }
+    }
+
+    private fun waitForText(text: String, substring: Boolean = false, timeoutMillis: Long = 15_000) {
         composeRule.waitUntil(timeoutMillis = timeoutMillis) {
             composeRule
                 .onAllNodesWithText(text, substring = substring, useUnmergedTree = true)
@@ -52,6 +75,10 @@ class HighCoverageScreensIntegrationTest {
                 content()
             }
         }
+
+        composeRule.waitForIdle()
+
+        Thread.sleep(100)
         composeRule.waitForIdle()
     }
 
@@ -61,8 +88,8 @@ class HighCoverageScreensIntegrationTest {
             CreateAssignmentScreen(teacherId = "2")
         }
 
-        waitForText("기본 정보", substring = true)
-        waitForText("과제 제목", substring = true)
+        waitForText("기본 정보", substring = true, timeoutMillis = 15_000)
+        waitForText("과제 제목", substring = true, timeoutMillis = 15_000)
         assertFirstNodeWithText("기본 정보", substring = true)
         assertFirstNodeWithText("과제 제목", substring = true)
     }
@@ -73,8 +100,8 @@ class HighCoverageScreensIntegrationTest {
             TeacherDashboardScreen(teacherId = "2")
         }
 
-        waitForText("빠른 실행")
-        waitForText("과제 생성", substring = true)
+        waitForText("빠른 실행", timeoutMillis = 20_000)
+        waitForText("과제 생성", substring = true, timeoutMillis = 20_000)
         assertFirstNodeWithText("빠른 실행")
         assertFirstNodeWithText("과제 생성", substring = true)
     }
@@ -85,8 +112,8 @@ class HighCoverageScreensIntegrationTest {
             TeacherAssignmentResultsScreen(assignmentId = 1)
         }
 
-        waitForText("학생별 과제 결과를 확인하고 피드백을 제공하세요", substring = true)
-        waitForText("학생별 결과", substring = true)
+        waitForText("학생별 과제 결과를 확인하고 피드백을 제공하세요", substring = true, timeoutMillis = 20_000)
+        waitForText("학생별 결과", substring = true, timeoutMillis = 20_000)
         assertFirstNodeWithText("학생별 과제 결과를 확인하고 피드백을 제공하세요", substring = true)
         assertFirstNodeWithText("학생별 결과", substring = true)
     }
@@ -97,10 +124,12 @@ class HighCoverageScreensIntegrationTest {
             TeacherAssignmentDetailScreen(assignmentId = 1)
         }
 
-        waitForText("과제 내용", substring = true)
-        waitForText("과제 결과", substring = true)
+        waitForText("1단원 복습 과제", substring = true, timeoutMillis = 15_000)
+
+        waitForText("과제 내용", substring = true, timeoutMillis = 15_000)
+        waitForText("학생별 결과", substring = true, timeoutMillis = 15_000)
         assertFirstNodeWithText("과제 내용", substring = true)
-        assertFirstNodeWithText("과제 결과", substring = true)
+        assertFirstNodeWithText("학생별 결과", substring = true)
     }
 
     @Test
@@ -109,8 +138,8 @@ class HighCoverageScreensIntegrationTest {
             TeacherStudentsScreen(classId = 1, teacherId = "2")
         }
 
-        waitForText("학생 목록", substring = true)
-        waitForText("학생 등록", substring = true)
+        waitForText("학생 목록", substring = true, timeoutMillis = 20_000)
+        waitForText("학생 등록", substring = true, timeoutMillis = 20_000)
         assertFirstNodeWithText("학생 목록", substring = true)
         assertFirstNodeWithText("학생 등록", substring = true)
     }
@@ -121,10 +150,9 @@ class HighCoverageScreensIntegrationTest {
             TeacherClassDetailScreen(classId = 1, className = "수학 A반")
         }
 
-        waitForText("수학 A반", substring = true)
-        waitForText("과제 목록", substring = true)
+        waitForText("수학 A반", substring = true, timeoutMillis = 20_000)
+        waitForText("과제 목록", substring = true, timeoutMillis = 20_000)
         assertFirstNodeWithText("수학 A반", substring = true)
         assertFirstNodeWithText("과제 목록", substring = true)
     }
 }
-

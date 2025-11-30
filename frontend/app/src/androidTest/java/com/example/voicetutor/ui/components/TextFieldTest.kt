@@ -24,13 +24,13 @@ class TextFieldTest {
                 VTTextField(
                     value = "",
                     onValueChange = {},
-                    modifier = Modifier.semantics { testTag = "EmptyTextField" }
+                    modifier = Modifier.semantics { testTag = "EmptyTextField" },
                 )
             }
         }
 
         composeTestRule.onNodeWithTag("EmptyTextField").assertExists()
-        // Empty text field should exist even with empty value
+
         composeTestRule.onAllNodes(hasText("")).assertCountEquals(1)
     }
 
@@ -41,7 +41,7 @@ class TextFieldTest {
                 VTTextField(
                     value = "",
                     onValueChange = {},
-                    label = "이름"
+                    label = "이름",
                 )
             }
         }
@@ -56,7 +56,7 @@ class TextFieldTest {
                 VTTextField(
                     value = "",
                     onValueChange = {},
-                    placeholder = "이름을 입력하세요"
+                    placeholder = "이름을 입력하세요",
                 )
             }
         }
@@ -71,7 +71,7 @@ class TextFieldTest {
                 VTTextField(
                     value = "김학생",
                     onValueChange = {},
-                    placeholder = "이름을 입력하세요"
+                    placeholder = "이름을 입력하세요",
                 )
             }
         }
@@ -88,7 +88,7 @@ class TextFieldTest {
                     value = "",
                     onValueChange = {},
                     isError = true,
-                    errorMessage = "이 필드는 필수입니다"
+                    errorMessage = "이 필드는 필수입니다",
                 )
             }
         }
@@ -102,7 +102,7 @@ class TextFieldTest {
             VoiceTutorTheme {
                 VTTextField(
                     value = "기존 값",
-                    onValueChange = {}
+                    onValueChange = {},
                 )
             }
         }
@@ -117,7 +117,7 @@ class TextFieldTest {
                 VTTextField(
                     value = "비활성화된 필드",
                     onValueChange = {},
-                    enabled = false
+                    enabled = false,
                 )
             }
         }
@@ -134,7 +134,7 @@ class TextFieldTest {
                 VTTextField(
                     value = "첫 번째 줄\n두 번째 줄\n세 번째 줄",
                     onValueChange = {},
-                    maxLines = 3
+                    maxLines = 3,
                 )
             }
         }
@@ -152,24 +152,23 @@ class TextFieldTest {
                     onValueChange = {},
                     isError = true,
                     errorMessage = "에러 메시지",
-                    modifier = Modifier.semantics { testTag = "ErrorTextField" }
+                    modifier = Modifier.semantics { testTag = "ErrorTextField" },
                 )
             }
         }
 
-        // Error state should be applied - check for error message
         composeTestRule.onNodeWithText("에러 메시지").assertExists()
     }
 
     @Test
     fun textField_handlesLongText() {
         val longText = "이것은 매우 긴 텍스트입니다. " + "반복 ".repeat(50)
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTTextField(
                     value = longText,
-                    onValueChange = {}
+                    onValueChange = {},
                 )
             }
         }
@@ -180,12 +179,12 @@ class TextFieldTest {
     @Test
     fun textField_handlesSpecialCharacters() {
         val specialText = "특수문자: !@#$%^&*()_+-=[]{}|;:'\",.<>?/~`"
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTTextField(
                     value = specialText,
-                    onValueChange = {}
+                    onValueChange = {},
                 )
             }
         }
@@ -200,7 +199,7 @@ class TextFieldTest {
                 VTTextField(
                     value = "테스트",
                     onValueChange = {},
-                    label = null
+                    label = null,
                 )
             }
         }
@@ -216,12 +215,11 @@ class TextFieldTest {
                     value = "",
                     onValueChange = {},
                     placeholder = null,
-                    modifier = Modifier.semantics { testTag = "EmptyPlaceholderTextField" }
+                    modifier = Modifier.semantics { testTag = "EmptyPlaceholderTextField" },
                 )
             }
         }
 
-        // Should not crash when placeholder is null - verify field exists
         composeTestRule.onNodeWithTag("EmptyPlaceholderTextField").assertExists()
     }
 
@@ -234,13 +232,11 @@ class TextFieldTest {
                     onValueChange = {},
                     isError = true,
                     errorMessage = null,
-                    modifier = Modifier.semantics { testTag = "EmptyErrorMessageTextField" }
+                    modifier = Modifier.semantics { testTag = "EmptyErrorMessageTextField" },
                 )
             }
         }
 
-        // Should not crash when errorMessage is null - verify field exists
         composeTestRule.onNodeWithTag("EmptyErrorMessageTextField").assertExists()
     }
 }
-

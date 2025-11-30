@@ -8,7 +8,7 @@ import argparse
 import json
 import os
 import time
-from typing import Literal, Optional, Tuple, TypedDict
+from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict
 
 from dotenv import load_dotenv
 from langchain_core.output_parsers import JsonOutputParser
@@ -445,7 +445,7 @@ Input:
 "Student: 백도요"),
 
 Output:
-{{"is_correct": true}}
+{{"is_correct": false}}
 
 # Contradiction
 
@@ -456,7 +456,7 @@ Input:
 "Student: 어.. 양전하였나?"),
 
 Output:
-{{"is_correct": true}}
+{{"is_correct": false}}
 
 # Concise entailment
 
@@ -528,6 +528,92 @@ strategy_D = """
 """
 
 
+# ---- Student Context Formatting ----
+def format_student_context(context: Optional[Dict[str, Any]]) -> str:
+    """
+    Format student learning context for the LLM prompt.
+
+    Args:
+        context: Dictionary containing:
+            - question_chain: List of previous attempts on this question chain
+            - overall_accuracy: Overall accuracy in this assignment (0.0 ~ 1.0)
+            - avg_confidence: Average confidence score (0 ~ 5)
+            - total_answered: Total questions answered
+            - recent_trend: List of recent correctness [True, False, ...] (newest first)
+            - weak_concepts: List of concepts the student struggles with (optional)
+
+    Returns:
+        Formatted string for the LLM prompt
+    """
+    if not context:
+        return "No previous learning context available."
+
+    lines: List[str] = []
+
+    # 1. Question chain history (previous attempts on this topic)
+    question_chain = context.get("question_chain", [])
+    if question_chain:
+        lines.append("## 이 문항에서의 이전 시도:")
+        for i, item in enumerate(question_chain, 1):
+            status = "✓ 정답" if item.get("is_correct") else "✗ 오답"
+            conf = item.get("confidence", 0)
+            conf_str = f"(자신감: {conf:.1f}/5)" if conf else ""
+            lines.append(f"  시도 {i}: {status} {conf_str}")
+
+            # Show student's previous answer (truncated)
+            prev_answer = item.get("student_answer", "")
+            if prev_answer:
+                truncated = prev_answer[:60] + "..." if len(prev_answer) > 60 else prev_answer
+                lines.append(f'    학생 답변: "{truncated}"')
+
+            # Show difficulty progression
+            diff = item.get("difficulty", "")
+            if diff:
+                lines.append(f"    난이도: {diff}")
+        lines.append("")
+
+    # 2. Overall assignment statistics
+    total_answered = context.get("total_answered", 0)
+    if total_answered > 0:
+        accuracy = context.get("overall_accuracy", 0)
+        avg_conf = context.get("avg_confidence", 0)
+        lines.append("## 전체 과제 수행 현황:")
+        lines.append(f"  - 정답률: {accuracy * 100:.0f}%")
+        lines.append(f"  - 평균 자신감: {avg_conf:.1f}/5")
+        lines.append(f"  - 답변한 문제 수: {total_answered}")
+
+    # 3. Recent trend (learning trajectory)
+    recent_trend = context.get("recent_trend", [])
+    if recent_trend:
+        # Reverse to show oldest → newest
+        trend_display = list(reversed(recent_trend))
+        trend_str = " → ".join(["O" if c else "X" for c in trend_display])
+
+        # Analyze trend
+        if len(recent_trend) >= 3:
+            recent_correct = sum(recent_trend[:3])
+            if recent_correct >= 2:
+                trend_analysis = "(최근 향상 중)"
+            elif recent_correct == 0:
+                trend_analysis = "(최근 어려움을 겪는 중)"
+            else:
+                trend_analysis = "(불안정)"
+        else:
+            trend_analysis = ""
+
+        lines.append(f"  - 최근 추이 (과거→현재): {trend_str} {trend_analysis}")
+
+    # 4. Weak concepts (if available)
+    weak_concepts = context.get("weak_concepts", [])
+    if weak_concepts:
+        lines.append("")
+        lines.append("## 취약 개념:")
+        for concept in weak_concepts[:3]:  # Limit to top 3
+            lines.append(f"  - {concept}")
+
+    return "\n".join(lines) if lines else "No previous learning context available."
+
+
 ACTOR_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
@@ -536,6 +622,16 @@ ACTOR_PROMPT = ChatPromptTemplate.from_messages(
 
 Strategy: 
 {strategy}
+
+**Student Learning Context:**
+{student_context}
+
+**How to use the context:**
+1. If the student has previous attempts on this question chain, avoid repeating similar questions they already answered correctly.
+2. If the student shows a pattern of the same misconception (repeated wrong answers), address it more directly with a contrasting example.
+3. If the student is improving (recent trend shows more correct answers), you may slightly increase the challenge.
+4. If the student is struggling (low overall accuracy or recent failures), provide more scaffolding and simpler questions.
+5. Consider the student's confidence level - low confidence with correct answers needs reinforcement, high confidence with wrong answers needs misconception correction.
 
 Return ONLY this JSON:
 {{
@@ -557,11 +653,12 @@ Output Requirements:
 - Ensure the question is conceptually aligned with the original topic.
 - Include a clear model answer and concise explanation.
 - The question should help the student **progress** from their current understanding state.
+- Use the student context to personalize the question appropriately.
 
 Few-shot examples (multiple):
 {example}""",
         ),
-        ("user", "Original Question: {question}\nModel Answer: {model_answer}\nStudent Answer: {student_answer}\n}}"),
+        ("user", "Original Question: {question}\nModel Answer: {model_answer}\nStudent Answer: {student_answer}"),
     ]
 )
 
@@ -606,6 +703,7 @@ class ReplanState(TypedDict):
     eval_grade: float
     recalled_time: int
     high_thr: float
+    student_context: Optional[Dict[str, Any]]  # Student learning context
     # planner output
     is_correct: Optional[bool]
     strategy: Optional[str]
@@ -646,12 +744,17 @@ def derive_and_route_node(state: ReplanState) -> ReplanState:
 def actor_node(state: ReplanState) -> ReplanState:
     """Generate the tail question; increment recalled_time in result."""
     next_rt = int(state["recalled_time"]) + 1
+
+    # Format student context for the prompt
+    formatted_context = format_student_context(state.get("student_context"))
+
     msg = ACTOR_PROMPT.format_messages(
         question=state["question"],
         model_answer=state["model_answer"],
         student_answer=state["student_answer"],
         strategy=state["strategy"],
         example=json.dumps(state["example"], ensure_ascii=False, indent=2),
+        student_context=formatted_context,
     )
     out = actor_llm.invoke(msg).content
     response = parser.parse(out)["response"]
@@ -710,7 +813,42 @@ app = graph.compile()
 
 
 # returns final output (return empty tail question if not generated)
-def generate_tail_question(question, model_answer, student_answer, eval_grade, recalled_time, high_thr=4):
+def generate_tail_question(
+    question: str,
+    model_answer: str,
+    student_answer: str,
+    eval_grade: float,
+    recalled_time: int,
+    high_thr: float = 4,
+    student_context: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Generate a tail question based on student's answer and learning context.
+
+    Args:
+        question: The original question content
+        model_answer: The expected correct answer
+        student_answer: The student's answer (from STT)
+        eval_grade: Confidence score from ML inference (0-5)
+        recalled_time: How many times this question has been recalled (0 = first time)
+        high_thr: Threshold for high confidence (default: 4)
+        student_context: Optional dict containing student's learning history:
+            - question_chain: List of previous attempts [{question, model_answer, student_answer, is_correct, confidence, difficulty}]
+            - overall_accuracy: Overall accuracy in this assignment (0.0 ~ 1.0)
+            - avg_confidence: Average confidence score
+            - total_answered: Total number of questions answered
+            - recent_trend: List of recent correctness [True, False, ...] (newest first)
+            - weak_concepts: Optional list of weak concept names
+
+    Returns:
+        Dict containing:
+            - is_correct: Whether the student's answer was correct
+            - confidence: "high" or "low"
+            - bucket: "A", "B", "C", or "D"
+            - plan: "ASK" or "ONLY_CORRECT"
+            - recalled_time: Updated recall count
+            - tail_question: Generated follow-up question (or empty dict)
+    """
     init: ReplanState = {
         "question": question,
         "model_answer": model_answer,
@@ -718,6 +856,7 @@ def generate_tail_question(question, model_answer, student_answer, eval_grade, r
         "eval_grade": float(eval_grade),
         "recalled_time": int(recalled_time),
         "high_thr": float(high_thr),
+        "student_context": student_context,
         "is_correct": None,
         "bucket": None,
         "confidence": None,

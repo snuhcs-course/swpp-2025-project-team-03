@@ -3,30 +3,42 @@ package com.example.voicetutor.ui.screens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.*
+import com.example.voicetutor.di.NetworkModule
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Additional comprehensive tests to maximize coverage.
- * Tests various composable functions with different data combinations.
- */
+@HiltAndroidTest
+@UninstallModules(NetworkModule::class)
 @RunWith(AndroidJUnit4::class)
 class ExtendedScreenTests {
 
-    @get:Rule
-    val composeTestRule = createComposeRule()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
 
-    // Test AppInfoScreen multiple times to cover all code paths
+    @get:Rule(order = 1)
+    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+
+    @Before
+    fun init() {
+        hiltRule.inject()
+    }
+
     @Test
     fun appInfoScreen_multipleRenders() {
-        // Render once - multiple renders don't add coverage value
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AppInfoScreen()
@@ -35,10 +47,8 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test NoRecentAssignmentScreen multiple times
     @Test
     fun noRecentAssignmentScreen_multipleRenders() {
-        // Render once - multiple renders don't add coverage value
         composeTestRule.setContent {
             VoiceTutorTheme {
                 NoRecentAssignmentScreen()
@@ -47,7 +57,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test AssignmentReportCard with various assignments
     @Test
     fun assignmentReportCard_variousAssignments() {
         val assignments = listOf(
@@ -61,11 +70,10 @@ class ExtendedScreenTests {
                     name = "1학년 1반",
                     teacherName = "김선생님",
                     subject = Subject(id = 1, name = "수학"),
-                    
-                    
+
                     studentCount = 20,
-                    createdAt = "2024-01-01"
-                )
+                    createdAt = "2024-01-01",
+                ),
             ),
             AssignmentData(
                 id = 2,
@@ -77,21 +85,20 @@ class ExtendedScreenTests {
                     name = "2학년 1반",
                     teacherName = "이선생님",
                     subject = Subject(id = 2, name = "과학"),
-                    
-                    
+
                     studentCount = 25,
-                    createdAt = "2024-01-01"
-                )
-            )
+                    createdAt = "2024-01-01",
+                ),
+            ),
         )
-        // Render all assignments in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
                     assignments.forEach { assignment ->
                         AssignmentReportCard(
                             assignment = assignment,
-                            onReportClick = {}
+                            onReportClick = {},
                         )
                     }
                 }
@@ -100,11 +107,10 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test StudentAssignmentCard with various progress values
     @Test
     fun studentAssignmentCard_variousProgress() {
         val progressValues = listOf(0f, 0.25f, 0.5f, 0.75f, 1f)
-        // Render all progress values in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -114,11 +120,9 @@ class ExtendedScreenTests {
                             subject = "수학",
                             dueDate = "2024-12-31",
                             progress = progress,
-                            solvedNum = (progress * 10).toInt(),
                             totalQuestions = 10,
                             status = PersonalAssignmentStatus.IN_PROGRESS,
                             onClick = {},
-                            onStartAssignment = {}
                         )
                     }
                 }
@@ -127,15 +131,14 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test TeacherAssignmentCard with various statuses
     @Test
     fun teacherAssignmentCard_allStatuses() {
         val statuses = listOf(
             AssignmentStatus.DRAFT,
             AssignmentStatus.IN_PROGRESS,
-            AssignmentStatus.COMPLETED
+            AssignmentStatus.COMPLETED,
         )
-        // Render all statuses in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -146,10 +149,7 @@ class ExtendedScreenTests {
                             submittedCount = 5,
                             totalCount = 10,
                             dueDate = "2024-12-31T23:59:59Z",
-                            status = status,
                             onClick = {},
-                            onViewResults = {},
-                            onEdit = {}
                         )
                     }
                 }
@@ -158,7 +158,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test ClassCard with various data
     @Test
     fun classCard_variousData() {
         val classes = listOf(
@@ -170,7 +169,7 @@ class ExtendedScreenTests {
                 studentCount = 20,
                 assignmentCount = 5,
                 completionRate = 0.8f,
-                color = androidx.compose.ui.graphics.Color(0xFF6200EE)
+                color = androidx.compose.ui.graphics.Color(0xFF6200EE),
             ),
             ClassRoom(
                 id = 2,
@@ -180,10 +179,10 @@ class ExtendedScreenTests {
                 studentCount = 25,
                 assignmentCount = 10,
                 completionRate = 0.9f,
-                color = androidx.compose.ui.graphics.Color(0xFF00BCD4)
-            )
+                color = androidx.compose.ui.graphics.Color(0xFF00BCD4),
+            ),
         )
-        // Render all classes in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -192,7 +191,8 @@ class ExtendedScreenTests {
                             classRoom = classRoom,
                             onClassClick = {},
                             onCreateAssignment = {},
-                            onViewStudents = {}
+                            onViewStudents = {},
+                            onDeleteClass = { _, _ -> },
                         )
                     }
                 }
@@ -201,7 +201,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test AllStudentsCard with various student data
     @Test
     fun allStudentsCard_variousStudents() {
         val students = listOf(
@@ -209,25 +208,23 @@ class ExtendedScreenTests {
                 id = 1,
                 name = "홍길동",
                 email = "hong@test.com",
-                role = UserRole.STUDENT
+                role = UserRole.STUDENT,
             ),
             AllStudentsStudent(
                 id = 2,
                 name = "김철수",
                 email = "kim@test.com",
-                role = UserRole.STUDENT
-            )
+                role = UserRole.STUDENT,
+            ),
         )
-        // Render all students in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
                     students.forEach { student ->
                         AllStudentsCard(
                             student = student,
-                            classNames = listOf("${student.name}의 반"),
-                            isLoadingClasses = false,
-                            onReportClick = {}
+                            onReportClick = {},
                         )
                     }
                 }
@@ -236,7 +233,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test QuestionGroupCard with tail questions
     @Test
     fun questionGroupCard_withTailQuestions() {
         val baseQuestion = DetailedQuestionResult(
@@ -245,7 +241,7 @@ class ExtendedScreenTests {
             myAnswer = "답1",
             correctAnswer = "답1",
             isCorrect = true,
-            explanation = "설명"
+            explanation = "설명",
         )
         val tailQuestions = listOf(
             DetailedQuestionResult(
@@ -254,7 +250,7 @@ class ExtendedScreenTests {
                 myAnswer = "답2",
                 correctAnswer = "답2",
                 isCorrect = true,
-                explanation = "설명"
+                explanation = "설명",
             ),
             DetailedQuestionResult(
                 questionNumber = "1-2",
@@ -262,28 +258,27 @@ class ExtendedScreenTests {
                 myAnswer = "답3",
                 correctAnswer = "답3",
                 isCorrect = true,
-                explanation = "설명"
-            )
+                explanation = "설명",
+            ),
         )
         val group = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = tailQuestions
+            tailQuestions = tailQuestions,
         )
         composeTestRule.setContent {
             VoiceTutorTheme {
                 QuestionGroupCard(
                     group = group,
                     isExpanded = true,
-                    onToggle = {}
+                    onToggle = {},
                 )
             }
         }
         composeTestRule.waitForIdle()
-        // Verify that the base question is rendered - the text is "문제 1"
+
         composeTestRule.onNodeWithText("문제 1", useUnmergedTree = true).assertExists()
     }
 
-    // Test DetailedQuestionResultCard with various states
     @Test
     fun detailedQuestionResultCard_variousStates() {
         val questions = listOf(
@@ -293,7 +288,7 @@ class ExtendedScreenTests {
                 myAnswer = "정답",
                 correctAnswer = "정답",
                 isCorrect = true,
-                explanation = "맞습니다!"
+                explanation = "맞습니다!",
             ),
             DetailedQuestionResult(
                 questionNumber = "2",
@@ -301,10 +296,10 @@ class ExtendedScreenTests {
                 myAnswer = "오답",
                 correctAnswer = "정답",
                 isCorrect = false,
-                explanation = "틀렸습니다"
-            )
+                explanation = "틀렸습니다",
+            ),
         )
-        // Render all questions in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -317,7 +312,6 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test TeacherAssignmentResultCard with various scores
     @Test
     fun teacherAssignmentResultCard_variousScores() {
         val students = listOf(
@@ -329,7 +323,7 @@ class ExtendedScreenTests {
                 status = "SUBMITTED",
                 submittedAt = "2024-01-15T10:00:00Z",
                 answers = emptyList(),
-                detailedAnswers = emptyList()
+                detailedAnswers = emptyList(),
             ),
             StudentResult(
                 studentId = "S002",
@@ -339,17 +333,17 @@ class ExtendedScreenTests {
                 status = "SUBMITTED",
                 submittedAt = "2024-01-15T10:00:00Z",
                 answers = emptyList(),
-                detailedAnswers = emptyList()
-            )
+                detailedAnswers = emptyList(),
+            ),
         )
-        // Render all students in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
                     students.forEach { student ->
                         TeacherAssignmentResultCard(
                             student = student,
-                            onStudentClick = {}
+                            onStudentClick = {},
                         )
                     }
                 }
@@ -358,43 +352,14 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test OptionButton with all combinations
-    @Test
-    fun optionButton_allCombinations() {
-        val combinations = listOf(
-            Triple(false, false, false), // Normal
-            Triple(true, false, false),  // Selected
-            Triple(false, true, false),  // Correct
-            Triple(false, false, true)   // Wrong
-        )
-        // Render all combinations in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    combinations.forEachIndexed { index, (selected, correct, wrong) ->
-                        OptionButton(
-                            text = "선택지 ${index + 1}",
-                            isSelected = selected,
-                            isCorrect = correct,
-                            isWrong = wrong,
-                            onClick = {}
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test StatusBadge all statuses multiple times
     @Test
     fun statusBadge_allStatuses_multipleTimes() {
         val statuses = listOf(
             AssignmentStatus.IN_PROGRESS,
             AssignmentStatus.COMPLETED,
-            AssignmentStatus.DRAFT
+            AssignmentStatus.DRAFT,
         )
-        // Render all statuses in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -407,11 +372,10 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test TypeBadge all types multiple times
     @Test
     fun typeBadge_allTypes_multipleTimes() {
         val types = listOf("Quiz", "Continuous", "Discussion", "Unknown")
-        // Render all types in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -424,11 +388,10 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test CustomStatusBadge all statuses multiple times
     @Test
     fun customStatusBadge_allStatuses_multipleTimes() {
         val statuses = listOf("시작 안함", "진행 중", "완료", "알 수 없음")
-        // Render all statuses in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -441,10 +404,8 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test RoleCard both roles multiple times
     @Test
     fun roleCard_bothRoles_multipleTimes() {
-        // Render both roles in one composition
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Row {
@@ -453,14 +414,14 @@ class ExtendedScreenTests {
                         description = "과제를 받고 학습합니다",
                         icon = Icons.Filled.School,
                         isSelected = true,
-                        onClick = {}
+                        onClick = {},
                     )
                     RoleCard(
                         title = "선생님",
                         description = "과제를 생성하고 관리합니다",
                         icon = Icons.Filled.Person,
                         isSelected = false,
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
@@ -468,36 +429,14 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test ConversationBubble with various messages
-    @Test
-    fun conversationBubble_variousMessages() {
-        val messages = listOf(
-            "안녕하세요",
-            "질문이 있습니다",
-            "답변해주세요"
-        )
-        // Render all messages in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    messages.forEach { message ->
-                        ConversationBubble(message = message)
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test ClassStatItem with various stats
     @Test
     fun classStatItem_variousStats() {
         val stats = listOf(
             Triple("25", "학생", Icons.Filled.Person),
-            Triple("10", "과제", Icons.Filled.Assignment),
-            Triple("85", "평균", Icons.Filled.TrendingUp)
+            Triple("10", "과제", Icons.AutoMirrored.Filled.Assignment),
+            Triple("85", "평균", Icons.AutoMirrored.Filled.TrendingUp),
         )
-        // Render all stats in one composition
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -506,7 +445,7 @@ class ExtendedScreenTests {
                             icon = icon,
                             value = value,
                             label = label,
-                            color = androidx.compose.ui.graphics.Color(0xFF6200EE)
+                            color = androidx.compose.ui.graphics.Color(0xFF6200EE),
                         )
                     }
                 }
@@ -515,261 +454,64 @@ class ExtendedScreenTests {
         composeTestRule.waitForIdle()
     }
 
-    // Test SettingsItem with various items
     @Test
-    fun settingsItem_variousItems() {
-        val items = listOf(
-            Triple("앱 설정", "앱 설정을 변경합니다", Icons.Filled.Settings),
-            Triple("알림 설정", "알림을 관리합니다", Icons.Filled.Notifications)
-        )
-        // Render all items in one composition
+    fun settingsScreen_settingsItem_variousItems() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                Column {
-                    items.forEach { (title, subtitle, icon) ->
-                        SettingsItem(
-                            icon = icon,
-                            title = title,
-                            subtitle = subtitle,
-                            onClick = {}
-                        )
-                    }
-                }
+                SettingsScreen()
             }
         }
         composeTestRule.waitForIdle()
-    }
 
-    // Test FeatureItem with various features
-    @Test
-    fun featureItem_variousFeatures() {
-        val features = listOf(
-            "음성 인식 기능",
-            "AI 기반 피드백",
-            "실시간 진행 상황 추적"
-        )
-        // Render all features in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    features.forEach { feature ->
-                        FeatureItem(feature = feature)
-                    }
-                }
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            try {
+                composeTestRule.onAllNodesWithText("튜토리얼 다시 보기", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            } catch (e: Exception) {
+                false
             }
         }
-        composeTestRule.waitForIdle()
-    }
 
-    // Test InfoItem with various info
-    @Test
-    fun infoItem_variousInfo() {
-        val infoPairs = listOf(
-            Pair("버전", "1.0.0"),
-            Pair("빌드 번호", "100")
-        )
-        // Render all info in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    infoPairs.forEach { (label, value) ->
-                        InfoItem(label = label, value = value)
-                    }
-                }
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            try {
+                composeTestRule.onAllNodesWithText("앱 정보", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            } catch (e: Exception) {
+                false
             }
         }
-        composeTestRule.waitForIdle()
-    }
 
-    // Test LegalItem with various items
-    @Test
-    fun legalItem_variousItems() {
-        val legalItems = listOf("이용약관", "개인정보처리방침")
-        // Render all items in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    legalItems.forEach { title ->
-                        LegalItem(title = title, onClick = {})
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test ContactItem with various contacts
-    @Test
-    fun contactItem_variousContacts() {
-        val contacts = listOf(
-            Triple(Icons.Filled.Email, "이메일", "support@voicetutor.com"),
-            Triple(Icons.Filled.Language, "웹사이트", "www.voicetutor.com")
-        )
-        // Render all contacts in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    contacts.forEach { (icon, title, value) ->
-                        ContactItem(
-                            icon = icon,
-                            title = title,
-                            value = value,
-                            onClick = {}
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test ActionItem with various actions
-    @Test
-    fun actionItem_variousActions() {
-        val actions = listOf(
-            Triple(Icons.Filled.Update, "업데이트 확인", "최신 버전으로 업데이트하세요"),
-            Triple(Icons.Filled.Share, "앱 공유하기", "VoiceTutor를 친구들에게 추천하세요")
-        )
-        // Render all actions in one composition
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    actions.forEach { (icon, title, description) ->
-                        ActionItem(
-                            icon = icon,
-                            title = title,
-                            description = description,
-                            onClick = {}
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    // Test AppInfoScreen helper composables with different data
-    @Test
-    fun appInfoScreen_featureItem_multipleFeatures() {
-        val features = listOf("기능 1", "기능 2", "기능 3")
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    features.forEach { feature ->
-                        FeatureItem(feature = feature)
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        features.forEach { feature ->
-            composeTestRule.onNodeWithText(feature, useUnmergedTree = true).assertExists()
-        }
+        composeTestRule.onNodeWithText("튜토리얼 다시 보기", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("앱 정보", useUnmergedTree = true).assertExists()
     }
 
     @Test
-    fun appInfoScreen_infoItem_multipleItems() {
-        val infoItems = listOf(
-            "라벨 1" to "값 1",
-            "라벨 2" to "값 2",
-            "라벨 3" to "값 3"
-        )
+    fun appInfoScreen_displaysAllInfoItems() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                Column {
-                    infoItems.forEach { (label, value) ->
-                        InfoItem(label = label, value = value)
-                    }
-                }
+                AppInfoScreen()
             }
         }
         composeTestRule.waitForIdle()
-        
-        infoItems.forEach { (label, value) ->
-            composeTestRule.onNodeWithText(label, useUnmergedTree = true).assertExists()
-            composeTestRule.onNodeWithText(value, useUnmergedTree = true).assertExists()
-        }
+
+        composeTestRule.onNodeWithText("개발사", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("빌드 번호", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("최종 업데이트", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("플랫폼", useUnmergedTree = true).assertExists()
     }
 
     @Test
-    fun appInfoScreen_legalItem_multipleItems() {
-        val legalItems = listOf("개인정보처리방침", "서비스 이용약관", "오픈소스 라이선스")
+    fun appInfoScreen_displaysAllContactItems() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                Column {
-                    legalItems.forEach { title ->
-                        LegalItem(title = title, onClick = {})
-                    }
-                }
+                AppInfoScreen()
             }
         }
         composeTestRule.waitForIdle()
-        
-        legalItems.forEach { title ->
-            composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
-        }
+
+        composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("앱 평가하기", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("support@voicetutor.com", useUnmergedTree = true).assertExists()
     }
 
-    @Test
-    fun appInfoScreen_contactItem_multipleItems() {
-        val contactItems = listOf(
-            Triple(Icons.Filled.Email, "이메일", "email@example.com"),
-            Triple(Icons.Filled.Language, "웹사이트", "www.example.com"),
-            Triple(Icons.Filled.Star, "앱 평가하기", "Google Play Store")
-        )
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    contactItems.forEach { (icon, title, value) ->
-                        ContactItem(
-                            icon = icon,
-                            title = title,
-                            value = value,
-                            onClick = {}
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        contactItems.forEach { (_, title, value) ->
-            composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
-            composeTestRule.onNodeWithText(value, useUnmergedTree = true).assertExists()
-        }
-    }
-
-    @Test
-    fun appInfoScreen_actionItem_multipleItems() {
-        val actionItems = listOf(
-            Triple(Icons.Filled.Update, "업데이트 확인", "최신 버전으로 업데이트하세요"),
-            Triple(Icons.Filled.Share, "앱 공유하기", "VoiceTutor를 친구들에게 추천하세요"),
-            Triple(Icons.Filled.Delete, "캐시 삭제", "앱 데이터를 정리하여 공간을 확보하세요")
-        )
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    actionItems.forEach { (icon, title, description) ->
-                        ActionItem(
-                            icon = icon,
-                            title = title,
-                            description = description,
-                            onClick = {}
-                        )
-                    }
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        actionItems.forEach { (_, title, description) ->
-            composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertExists()
-            composeTestRule.onNodeWithText(description, useUnmergedTree = true).assertExists()
-        }
-    }
-
-    // Test NoRecentAssignmentScreen with different states
     @Test
     fun noRecentAssignmentScreen_rendersAllElements() {
         composeTestRule.setContent {
@@ -778,10 +520,8 @@ class ExtendedScreenTests {
             }
         }
         composeTestRule.waitForIdle()
-        
-        // Verify all elements exist
+
         composeTestRule.onNodeWithText("이어할 과제가 없습니다", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("홈 화면에서 새로운 과제를 확인해보세요", useUnmergedTree = true).assertExists()
     }
 }
-

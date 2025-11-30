@@ -1,12 +1,9 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
@@ -21,11 +18,11 @@ import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -52,27 +49,26 @@ class TeacherAssignmentDetailScreenTest {
 
     private val testAssignment: AssignmentData
         get() = fakeApi.assignmentsResponse.firstOrNull() ?: AssignmentData(
-        id = 1,
-        title = "테스트 과제",
-        description = "테스트 설명",
-        totalQuestions = 10,
-        createdAt = "2024-01-01T09:00:00Z",
-        
-        dueAt = "2024-02-01T23:59:59Z",
-        courseClass = CourseClass(
             id = 1,
-            name = "수학 A반",
-            description = "기초 수학 수업",
-            subject = Subject(id = 1, name = "수학", code = "MATH"),
-            teacherName = "김선생님",
-            
-            
-            studentCount = 25,
-            createdAt = "2024-01-01T00:00:00Z"
-        ),
-        materials = emptyList(),
-        grade = "중학교 1학년"
-    )
+            title = "테스트 과제",
+            description = "테스트 설명",
+            totalQuestions = 10,
+            createdAt = "2024-01-01T09:00:00Z",
+
+            dueAt = "2024-02-01T23:59:59Z",
+            courseClass = CourseClass(
+                id = 1,
+                name = "수학 A반",
+                description = "기초 수학 수업",
+                subject = Subject(id = 1, name = "수학", code = "MATH"),
+                teacherName = "김선생님",
+
+                studentCount = 25,
+                createdAt = "2024-01-01T00:00:00Z",
+            ),
+            materials = emptyList(),
+            grade = "중학교 1학년",
+        )
 
     private fun resetFakeApi() {
         val defaultAssignment = AssignmentData(
@@ -81,7 +77,7 @@ class TeacherAssignmentDetailScreenTest {
             description = "테스트 설명",
             totalQuestions = 10,
             createdAt = "2024-01-01T09:00:00Z",
-            
+
             dueAt = "2024-02-01T23:59:59Z",
             courseClass = CourseClass(
                 id = 1,
@@ -89,13 +85,12 @@ class TeacherAssignmentDetailScreenTest {
                 description = "기초 수학 수업",
                 subject = Subject(id = 1, name = "수학", code = "MATH"),
                 teacherName = "김선생님",
-                
-                
+
                 studentCount = 25,
-                createdAt = "2024-01-01T00:00:00Z"
+                createdAt = "2024-01-01T00:00:00Z",
             ),
             materials = emptyList(),
-            grade = "중학교 1학년"
+            grade = "중학교 1학년",
         )
         fakeApi.apply {
             shouldFailPersonalAssignments = false
@@ -107,7 +102,7 @@ class TeacherAssignmentDetailScreenTest {
                 submittedStudents = 5,
                 totalStudents = 10,
                 averageScore = 85.0,
-                completionRate = 0.5
+                completionRate = 0.5,
             )
             shouldFailAssignmentResult = false
         }
@@ -127,7 +122,7 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
@@ -161,7 +156,7 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
@@ -174,19 +169,16 @@ class TeacherAssignmentDetailScreenTest {
 
     @Test
     fun teacherAssignmentDetailScreen_showsLoadingState() {
-        // Simulate loading delay
-
         val assignmentId = testAssignment.id
 
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
 
-        // Loading indicator should be displayed initially
         composeRule.waitForIdle()
     }
 
@@ -195,12 +187,11 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = 0
+                    assignmentId = 0,
                 )
             }
         }
 
-        // Should handle zero assignmentId gracefully
         composeRule.waitForIdle()
     }
 
@@ -211,7 +202,7 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
@@ -237,12 +228,11 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
 
-        // Should handle statistics loading error gracefully
         composeRule.waitForIdle()
     }
 
@@ -253,7 +243,7 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
@@ -264,7 +254,6 @@ class TeacherAssignmentDetailScreenTest {
             assignmentViewModel.assignmentStatistics.value != null
         }
 
-        // Statistics should be displayed
         waitForText("제출률")
         waitForText("평균 점수")
         waitForText("제출 학생")
@@ -276,7 +265,7 @@ class TeacherAssignmentDetailScreenTest {
             submittedStudents = 0,
             totalStudents = 0,
             averageScore = 0.0,
-            completionRate = 0.0
+            completionRate = 0.0,
         )
 
         val assignmentId = testAssignment.id
@@ -284,12 +273,11 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
 
-        // Should handle null statistics gracefully
         composeRule.waitForIdle()
     }
 
@@ -299,7 +287,7 @@ class TeacherAssignmentDetailScreenTest {
             submittedStudents = 0,
             totalStudents = 0,
             averageScore = 0.0,
-            completionRate = 0.0
+            completionRate = 0.0,
         )
 
         val assignmentId = testAssignment.id
@@ -307,7 +295,7 @@ class TeacherAssignmentDetailScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentDetailScreen(
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
@@ -318,9 +306,6 @@ class TeacherAssignmentDetailScreenTest {
             assignmentViewModel.assignmentStatistics.value != null
         }
 
-        // Zero statistics should be displayed
         composeRule.waitForIdle()
     }
-
 }
-

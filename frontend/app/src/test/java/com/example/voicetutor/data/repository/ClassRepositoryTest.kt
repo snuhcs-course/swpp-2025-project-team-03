@@ -1,12 +1,12 @@
-package com.example.voicetutor.data.repository
+﻿package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.*
-import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.ApiResponse
+import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.CreateClassRequest
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
@@ -28,10 +28,9 @@ class ClassRepositoryTest {
         subject = buildSubject(),
         description = "Description",
         teacherId = 1,
-        
-        
+
         studentCount = 10,
-        createdAt = "2025-01-01"
+        createdAt = "2025-01-01",
     )
 
     @Test
@@ -43,7 +42,7 @@ class ClassRepositoryTest {
             success = true,
             data = classes,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClasses("1")).thenReturn(Response.success(apiResponse))
 
@@ -63,7 +62,7 @@ class ClassRepositoryTest {
             success = true,
             data = emptyList<ClassData>(),
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClasses("1")).thenReturn(Response.success(apiResponse))
 
@@ -79,7 +78,7 @@ class ClassRepositoryTest {
     fun getClasses_apiFailure_returnsFailure() = runTest {
         // Arrange
         val repo = ClassRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Failed"}""")
+        val errorBody = """{"error":"Failed"}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.getClasses("1")).thenReturn(Response.error(500, errorBody))
 
         // Act
@@ -114,7 +113,7 @@ class ClassRepositoryTest {
             success = true,
             data = classData,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassById(1)).thenReturn(Response.success(apiResponse))
 
@@ -134,7 +133,7 @@ class ClassRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassById(1)).thenReturn(Response.success(apiResponse))
 
@@ -150,7 +149,7 @@ class ClassRepositoryTest {
     fun getClassById_apiFailure_returnsFailure() = runTest {
         // Arrange
         val repo = ClassRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Not found"}""")
+        val errorBody = """{"error":"Not found"}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.getClassById(1)).thenReturn(Response.error(404, errorBody))
 
         // Act
@@ -168,13 +167,13 @@ class ClassRepositoryTest {
         val repo = ClassRepository(apiService)
         val students = listOf(
             Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT),
-            Student(id = 2, name = "Student2", email = "s2@test.com", role = UserRole.STUDENT)
+            Student(id = 2, name = "Student2", email = "s2@test.com", role = UserRole.STUDENT),
         )
         val apiResponse = ApiResponse(
             success = true,
             data = students,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassStudents(1)).thenReturn(Response.success(apiResponse))
 
@@ -194,7 +193,7 @@ class ClassRepositoryTest {
             success = true,
             data = emptyList<Student>(),
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getClassStudents(1)).thenReturn(Response.success(apiResponse))
 
@@ -210,7 +209,7 @@ class ClassRepositoryTest {
     fun getClassStudents_apiFailure_returnsFailure() = runTest {
         // Arrange
         val repo = ClassRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Failed"}""")
+        val errorBody = """{"error":"Failed"}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.getClassStudents(1)).thenReturn(Response.error(500, errorBody))
 
         // Act
@@ -235,7 +234,7 @@ class ClassRepositoryTest {
             success = true,
             data = classData,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.createClass(request)).thenReturn(Response.success(apiResponse))
 
@@ -256,13 +255,13 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            
+
         )
         val apiResponse = ApiResponse<ClassData>(
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.createClass(request)).thenReturn(Response.success(apiResponse))
 
@@ -283,9 +282,9 @@ class ClassRepositoryTest {
             description = null,
             subject_name = "Math",
             teacher_id = 1,
-            
+
         )
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Creation failed"}""")
+        val errorBody = """{"error":"Creation failed"}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.createClass(request)).thenReturn(Response.error(400, errorBody))
 
         // Act
@@ -306,13 +305,13 @@ class ClassRepositoryTest {
         val enrollment = EnrollmentData(
             student = student,
             courseClass = classData,
-            status = "enrolled"
+            status = "enrolled",
         )
         val apiResponse = ApiResponse(
             success = true,
             data = enrollment,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.success(apiResponse))
@@ -325,7 +324,6 @@ class ClassRepositoryTest {
         assert(result.getOrNull() == enrollment)
     }
 
-
     @Test
     fun enrollStudentToClass_noData_returnsFailure() = runTest {
         // Arrange
@@ -334,7 +332,7 @@ class ClassRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.success(apiResponse))
@@ -351,7 +349,7 @@ class ClassRepositoryTest {
     fun enrollStudentToClass_apiFailure_returnsFailure() = runTest {
         // Arrange
         val repo = ClassRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Enrollment failed"}""")
+        val errorBody = """{"error":"Enrollment failed"}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.enrollStudentToClass(1, studentId = 1))
             .thenReturn(Response.error(400, errorBody))
 
@@ -378,5 +376,193 @@ class ClassRepositoryTest {
         assert(result.isFailure)
         assert(result.exceptionOrNull()?.message == "Network error")
     }
-}
 
+    @Test
+    fun removeStudentFromClass_success_returnsUnit() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val apiResponse = ApiResponse(
+            success = true,
+            data = Unit,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.removeStudentFromClass(1, 1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.removeStudentFromClass(1, 1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == Unit)
+    }
+
+    @Test
+    fun removeStudentFromClass_apiFailure_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val errorBody = """{"error":"Failed to remove"}""".toResponseBody("application/json".toMediaType())
+        whenever(apiService.removeStudentFromClass(1, 1))
+            .thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.removeStudentFromClass(1, 1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun removeStudentFromClass_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        whenever(apiService.removeStudentFromClass(1, 1))
+            .thenThrow(RuntimeException("Network error"))
+
+        // Act
+        val result = repo.removeStudentFromClass(1, 1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun removeClassById_success_returnsUnit() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val apiResponse = ApiResponse(
+            success = true,
+            data = Unit,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.removeClassById(1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.removeClassById(1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == Unit)
+    }
+
+    @Test
+    fun removeClassById_apiFailure_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val errorBody = """{"error":"Failed to remove class"}""".toResponseBody("application/json".toMediaType())
+        whenever(apiService.removeClassById(1))
+            .thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.removeClassById(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun removeClassById_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        whenever(apiService.removeClassById(1))
+            .thenThrow(RuntimeException("Network error"))
+
+        // Act
+        val result = repo.removeClassById(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "Network error")
+    }
+
+    @Test
+    fun getClassStudentsStatistics_success_returnsStatistics() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val statistics = ClassStudentsStatistics(
+            overallCompletionRate = 0.75f,
+            students = listOf(
+                StudentStatisticsItem(
+                    studentId = 1,
+                    averageScore = 88.0f,
+                    completionRate = 0.9f,
+                    totalAssignments = 10,
+                    completedAssignments = 9,
+                ),
+            ),
+        )
+        val apiResponse = ApiResponse(
+            success = true,
+            data = statistics,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isSuccess)
+        assert(result.getOrNull() == statistics)
+    }
+
+    @Test
+    fun getClassStudentsStatistics_noData_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val apiResponse = ApiResponse<ClassStudentsStatistics>(
+            success = true,
+            data = null,
+            message = "Success",
+            error = null,
+        )
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "No data")
+    }
+
+    @Test
+    fun getClassStudentsStatistics_apiFailure_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        val errorBody = """{"error":"Failed"}""".toResponseBody("application/json".toMediaType())
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenReturn(Response.error(500, errorBody))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Unknown error") == true)
+    }
+
+    @Test
+    fun getClassStudentsStatistics_networkException_returnsFailure() = runTest {
+        // Arrange
+        val repo = ClassRepository(apiService)
+        whenever(apiService.getClassStudentsStatistics(1))
+            .thenThrow(RuntimeException("Network error"))
+
+        // Act
+        val result = repo.getClassStudentsStatistics(1)
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message == "Network error")
+    }
+}

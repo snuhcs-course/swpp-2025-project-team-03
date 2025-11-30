@@ -1,17 +1,20 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.ClassData
+import com.example.voicetutor.data.models.ClassStudentsStatistics
 import com.example.voicetutor.data.models.Student
 import com.example.voicetutor.data.models.StudentStatisticsItem
 import com.example.voicetutor.data.models.Subject
 import com.example.voicetutor.data.models.UserRole
-import com.example.voicetutor.data.models.ClassStudentsStatistics
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.di.NetworkModule
@@ -19,11 +22,11 @@ import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -59,13 +62,12 @@ class TeacherStudentsScreenTest {
             studentCount = 2,
             studentCountAlt = 2,
             createdAt = "2024-01-01T00:00:00Z",
-            
-            
+
         )
 
         val defaultStudents = listOf(
             Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT),
-            Student(id = 2, name = "이몽룡", email = "lee@school.com", role = UserRole.STUDENT)
+            Student(id = 2, name = "이몽룡", email = "lee@school.com", role = UserRole.STUDENT),
         )
 
         val defaultStats = ClassStudentsStatistics(
@@ -76,16 +78,16 @@ class TeacherStudentsScreenTest {
                     averageScore = 90f,
                     completionRate = 0.9f,
                     totalAssignments = 10,
-                    completedAssignments = 9
+                    completedAssignments = 9,
                 ),
                 StudentStatisticsItem(
                     studentId = 2,
                     averageScore = 85f,
                     completionRate = 0.75f,
                     totalAssignments = 12,
-                    completedAssignments = 9
-                )
-            )
+                    completedAssignments = 9,
+                ),
+            ),
         )
 
         fakeApi.apply {
@@ -93,7 +95,13 @@ class TeacherStudentsScreenTest {
             shouldFailClasses = false
             classStudentsResponse = defaultStudents
             shouldFailClassStudents = false
-            allStudentsResponse = defaultStudents
+            allStudentsResponse = listOf(
+
+                Student(id = 1, name = "홍길동", email = "hong@school.com", role = UserRole.STUDENT),
+                Student(id = 2, name = "이몽룡", email = "lee@school.com", role = UserRole.STUDENT),
+                Student(id = 3, name = "김영희", email = "kim@school.com", role = UserRole.STUDENT),
+                Student(id = 4, name = "박철수", email = "park@school.com", role = UserRole.STUDENT),
+            )
             shouldFailAllStudents = false
             classStudentsStatisticsResponse = defaultStats
             shouldFailClassStudentsStatistics = false
@@ -115,7 +123,7 @@ class TeacherStudentsScreenTest {
         fakeApi.allStudentsResponse = emptyList()
         fakeApi.classStudentsStatisticsResponse = ClassStudentsStatistics(
             overallCompletionRate = 0f,
-            students = emptyList()
+            students = emptyList(),
         )
 
         composeRule.setContent {
@@ -134,6 +142,7 @@ class TeacherStudentsScreenTest {
         fakeApi.classStudentsErrorMessage = "학생 목록 로드 실패"
         fakeApi.shouldFailAllStudents = true
         fakeApi.allStudentsErrorMessage = "전체 학생 로드 실패"
+        fakeApi.allStudentsResponse = emptyList()
         fakeApi.shouldFailClassStudentsStatistics = true
         fakeApi.classStudentsStatisticsErrorMessage = "통계 로드 실패"
 
@@ -143,7 +152,17 @@ class TeacherStudentsScreenTest {
             }
         }
 
-        waitForText("학생이 없습니다")
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule
+                .onAllNodesWithText("학생이 없습니다", useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty() &&
+                composeRule
+                    .onAllNodesWithText("0%", useUnmergedTree = true)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+        }
+
         composeRule.onAllNodesWithText("학생이 없습니다", useUnmergedTree = true).onFirst().assertIsDisplayed()
         composeRule.onAllNodesWithText("0%", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
@@ -200,7 +219,6 @@ class TeacherStudentsScreenTest {
             }
         }
 
-        // Screen should handle null classId gracefully
         composeRule.waitForIdle()
     }
 
@@ -212,7 +230,6 @@ class TeacherStudentsScreenTest {
             }
         }
 
-        // Screen should handle null teacherId gracefully
         composeRule.waitForIdle()
     }
 
@@ -239,7 +256,7 @@ class TeacherStudentsScreenTest {
         }
 
         waitForText("홍길동")
-        // Assignment counts should be displayed (9/10, 9/12)
+
         composeRule.waitUntil(timeoutMillis = 15_000) {
             composeRule.onAllNodesWithText("9", substring = true, useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
@@ -251,7 +268,7 @@ class TeacherStudentsScreenTest {
     fun teacherStudentsScreen_showsZeroCompletionRateWhenNoStats() {
         fakeApi.classStudentsStatisticsResponse = ClassStudentsStatistics(
             overallCompletionRate = 0f,
-            students = emptyList()
+            students = emptyList(),
         )
 
         composeRule.setContent {
@@ -299,7 +316,6 @@ class TeacherStudentsScreenTest {
         }
 
         composeRule.waitForIdle()
-        // Should handle empty list gracefully
     }
 
     @Test
@@ -379,7 +395,7 @@ class TeacherStudentsScreenTest {
     fun teacherStudentsScreen_displaysZeroCompletionRate() {
         fakeApi.classStudentsStatisticsResponse = ClassStudentsStatistics(
             overallCompletionRate = 0f,
-            students = emptyList()
+            students = emptyList(),
         )
 
         composeRule.setContent {
@@ -401,9 +417,9 @@ class TeacherStudentsScreenTest {
                     averageScore = 100f,
                     completionRate = 1f,
                     totalAssignments = 10,
-                    completedAssignments = 10
-                )
-            )
+                    completedAssignments = 10,
+                ),
+            ),
         )
 
         composeRule.setContent {
@@ -439,5 +455,417 @@ class TeacherStudentsScreenTest {
         waitForText("홍길동")
         composeRule.waitForIdle()
     }
-}
 
+    @Test
+    fun teacherStudentsScreen_displaysEnrollBottomSheet() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 등록")
+
+        composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("이름 또는 이메일로 검색", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun teacherStudentsScreen_enrollBottomSheet_searchFiltersStudents() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 등록")
+
+        composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+                .fetchSemanticsNodes().size >= 2
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                val searchFields = composeRule.onAllNodes(hasSetTextAction(), useUnmergedTree = true)
+                if (searchFields.fetchSemanticsNodes().isNotEmpty()) {
+                    searchFields[0].performClick()
+                    composeRule.waitForIdle()
+                    searchFields[0].performTextReplacement("김영희")
+                    true
+                } else {
+                    false
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("김영희", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun teacherStudentsScreen_enrollBottomSheet_selectsStudents() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 등록")
+
+        composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onAllNodesWithText("김영희", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("등록 가능한 학생이 없습니다", substring = true, useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun teacherStudentsScreen_enrollBottomSheet_cancelsOnCancelButton() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 등록")
+
+        composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("취소", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onAllNodesWithText("취소", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+                .fetchSemanticsNodes().size == 1
+        }
+    }
+
+    @Test
+    fun teacherStudentsScreen_displaysDeleteBottomSheet() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+                .fetchSemanticsNodes().size >= 2
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("이름 또는 이메일로 검색", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun teacherStudentsScreen_deleteBottomSheet_searchFiltersStudents() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+                .fetchSemanticsNodes().size >= 2
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                val searchFields = composeRule.onAllNodes(hasSetTextAction(), useUnmergedTree = true)
+                if (searchFields.fetchSemanticsNodes().isNotEmpty()) {
+                    searchFields[0].performClick()
+                    composeRule.waitForIdle()
+                    searchFields[0].performTextReplacement("홍길동")
+                    true
+                } else {
+                    false
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("홍길동", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun teacherStudentsScreen_deleteBottomSheet_selectsStudents() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onAllNodesWithText("홍길동", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("삭제할 학생이 없습니다", substring = true, useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun teacherStudentsScreen_deleteBottomSheet_opensConfirmationDialog() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+                .fetchSemanticsNodes().size >= 2
+        }
+
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onAllNodesWithText("홍길동", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("삭제할 학생이 없습니다", substring = true, useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                composeRule.onAllNodesWithText("삭제", useUnmergedTree = true)
+                    .onFirst()
+                    .performClick()
+                true
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun teacherStudentsScreen_displaysDeleteConfirmationDialog() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+                .fetchSemanticsNodes().size >= 2
+        }
+
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onAllNodesWithText("홍길동", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("삭제할 학생이 없습니다", substring = true, useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun teacherStudentsScreen_deleteConfirmationDialog_cancelsOnCancelButton() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+                .fetchSemanticsNodes().size >= 2
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun teacherStudentsScreen_deleteBottomSheet_cancelsOnCancelButton() {
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("취소", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onAllNodesWithText("취소", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+                .fetchSemanticsNodes().size == 1
+        }
+    }
+
+    @Test
+    fun teacherStudentsScreen_enrollBottomSheet_showsEmptyState() {
+        fakeApi.allStudentsResponse = emptyList()
+
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 등록")
+
+        composeRule.onAllNodesWithText("학생 등록", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("등록 가능한 학생이 없습니다", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun teacherStudentsScreen_deleteBottomSheet_showsEmptyState() {
+        fakeApi.classStudentsResponse = emptyList()
+
+        composeRule.setContent {
+            VoiceTutorTheme {
+                TeacherStudentsScreen(classId = 1, teacherId = "2")
+            }
+        }
+
+        waitForText("학생 삭제")
+
+        composeRule.onAllNodesWithText("학생 삭제", useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("삭제할 학생이 없습니다", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+}

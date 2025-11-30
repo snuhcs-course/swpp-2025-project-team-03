@@ -2,38 +2,29 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Full screen rendering tests to maximize coverage.
- * These tests render entire screens with mock ViewModels to cover as much code as possible.
- */
 @RunWith(AndroidJUnit4::class)
 class FullScreenRenderingTests {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // ========== CreateAssignmentScreen Tests ==========
-    // Note: This screen requires ViewModels, so we'll test composable parts that don't need them
-
     @Test
     fun createAssignmentScreen_uiComponents_render() {
-        // Test UI components that can be rendered without ViewModel
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
@@ -41,12 +32,12 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("과제명") }
+                        label = { Text("과제명") },
                     )
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("설명") }
+                        label = { Text("설명") },
                     )
                     VTButton(text = "생성", onClick = {})
                 }
@@ -57,8 +48,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("과제 생성", substring = true).assertExists()
         composeTestRule.onNodeWithText("과제명", substring = true).assertExists()
     }
-
-    // ========== TeacherAssignmentResultsScreen Tests ==========
 
     @Test
     fun teacherAssignmentResultsScreen_uiComponents_render() {
@@ -78,8 +67,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("과제 결과", substring = true).assertExists()
     }
 
-    // ========== TeacherStudentAssignmentDetailScreen Tests ==========
-
     @Test
     fun teacherStudentAssignmentDetailScreen_uiComponents_render() {
         composeTestRule.setContent {
@@ -98,8 +85,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("학생 과제 상세", substring = true).assertExists()
     }
 
-    // ========== EditAssignmentScreen Tests ==========
-
     @Test
     fun editAssignmentScreen_uiComponents_render() {
         composeTestRule.setContent {
@@ -109,7 +94,7 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = "과제 1",
                         onValueChange = {},
-                        label = { Text("과제명") }
+                        label = { Text("과제명") },
                     )
                     VTButton(text = "저장", onClick = {})
                 }
@@ -119,8 +104,6 @@ class FullScreenRenderingTests {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("과제 수정", substring = true).assertExists()
     }
-
-    // ========== TeacherAssignmentDetailScreen Tests ==========
 
     @Test
     fun teacherAssignmentDetailScreen_uiComponents_render() {
@@ -141,8 +124,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("과제 상세", substring = true).assertExists()
     }
 
-    // ========== AssignmentDetailScreen Tests ==========
-
     @Test
     fun assignmentDetailScreen_uiComponents_render() {
         composeTestRule.setContent {
@@ -162,8 +143,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("과제 상세 정보", substring = true).assertExists()
     }
 
-    // ========== CreateClassScreen Tests ==========
-
     @Test
     fun createClassScreen_uiComponents_render() {
         composeTestRule.setContent {
@@ -173,12 +152,12 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("수업명") }
+                        label = { Text("수업명") },
                     )
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("과목") }
+                        label = { Text("과목") },
                     )
                     VTButton(text = "생성", onClick = {})
                 }
@@ -189,34 +168,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("수업 생성", substring = true).assertExists()
         composeTestRule.onNodeWithText("수업명", substring = true).assertExists()
     }
-
-    // ========== AssignmentScreen Tests ==========
-
-    @Test
-    fun assignmentScreen_questionCard_renders() {
-        val question = QuizQuestionData(
-            questionNumber = 1,
-            question = "질문",
-            hint = "힌트",
-            modelAnswer = "정답"
-        )
-
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                VTCard {
-                    Text("문제 ${question.questionNumber}")
-                    Text(question.question)
-                    Text("힌트: ${question.hint}")
-                }
-            }
-        }
-
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("문제 1", substring = true).assertExists()
-        composeTestRule.onNodeWithText("질문", substring = true).assertExists()
-    }
-
-    // ========== TeacherStudentsScreen Tests ==========
 
     @Test
     fun teacherStudentsScreen_studentList_renders() {
@@ -237,8 +188,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("학생 목록", substring = true).assertExists()
     }
 
-    // ========== AllAssignmentsScreen Tests ==========
-
     @Test
     fun allAssignmentsScreen_assignmentList_renders() {
         composeTestRule.setContent {
@@ -258,8 +207,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("전체 과제", substring = true).assertExists()
     }
 
-    // ========== StudentDashboardScreen Tests ==========
-
     @Test
     fun studentDashboardScreen_assignmentCards_renders() {
         composeTestRule.setContent {
@@ -278,8 +225,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("학생 대시보드", substring = true).assertExists()
     }
 
-    // ========== TeacherDashboardScreen Tests ==========
-
     @Test
     fun teacherDashboardScreen_statsCards_renders() {
         composeTestRule.setContent {
@@ -289,7 +234,7 @@ class FullScreenRenderingTests {
                     VTStatsCard(
                         title = "과제",
                         value = "10개",
-                        icon = androidx.compose.material.icons.Icons.Filled.Assignment
+                        icon = Icons.AutoMirrored.Filled.Assignment,
                     )
                 }
             }
@@ -299,8 +244,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("선생님 대시보드", substring = true).assertExists()
         composeTestRule.onNodeWithText("과제", substring = true).assertExists()
     }
-
-    // ========== ReportScreen Tests ==========
 
     @Test
     fun reportScreen_reportCards_renders() {
@@ -322,8 +265,6 @@ class FullScreenRenderingTests {
         composeTestRule.onRoot().assertExists()
     }
 
-    // ========== TeacherStudentReportScreen Tests ==========
-
     @Test
     fun teacherStudentReportScreen_statistics_renders() {
         composeTestRule.setContent {
@@ -342,8 +283,6 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("학생 리포트", substring = true).assertExists()
     }
 
-    // ========== SettingsScreen Tests ==========
-
     @Test
     fun settingsScreen_settingsItems_renders() {
         composeTestRule.setContent {
@@ -352,12 +291,12 @@ class FullScreenRenderingTests {
                     Text("설정", style = MaterialTheme.typography.headlineMedium)
                     VTCard(
                         variant = CardVariant.Elevated,
-                        onClick = {}
+                        onClick = {},
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text("알림 설정", style = MaterialTheme.typography.bodyLarge)
                             Icon(Icons.Filled.ChevronRight, contentDescription = null)
@@ -370,8 +309,6 @@ class FullScreenRenderingTests {
         composeTestRule.waitForIdle()
         composeTestRule.onRoot().assertExists()
     }
-
-    // ========== AppInfoScreen Tests ==========
 
     @Test
     fun appInfoScreen_infoItems_renders() {
@@ -389,8 +326,6 @@ class FullScreenRenderingTests {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("앱 정보", substring = true).assertExists()
     }
-
-    // ========== Additional Coverage Tests ==========
 
     @Test
     fun multipleScreens_renderedSequentially() {
@@ -414,23 +349,18 @@ class FullScreenRenderingTests {
 
     @Test
     fun screenComponents_withDifferentStates_render() {
-        // Test components with different states
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
-                    // Loading state
                     CircularProgressIndicator()
-                    
-                    // Empty state
+
                     Text("데이터가 없습니다")
-                    
-                    // Error state
+
                     Text(
                         text = "오류",
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     )
-                    
-                    // Success state
+
                     VTCard {
                         Text("성공")
                     }
@@ -451,11 +381,11 @@ class FullScreenRenderingTests {
                     OutlinedTextField(
                         value = text,
                         onValueChange = { text = it },
-                        label = { Text("입력") }
+                        label = { Text("입력") },
                     )
                     VTButton(
                         text = "제출",
-                        onClick = {}
+                        onClick = {},
                     )
                 }
             }
@@ -515,14 +445,14 @@ class FullScreenRenderingTests {
                     VTStatsCard(
                         title = "Horizontal",
                         value = "100",
-                        icon = androidx.compose.material.icons.Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Horizontal
+                        icon = Icons.AutoMirrored.Filled.Assignment,
+                        layout = StatsCardLayout.Horizontal,
                     )
                     VTStatsCard(
                         title = "Vertical",
                         value = "100",
-                        icon = androidx.compose.material.icons.Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Vertical
+                        icon = Icons.AutoMirrored.Filled.Assignment,
+                        layout = StatsCardLayout.Vertical,
                     )
                 }
             }
@@ -533,4 +463,3 @@ class FullScreenRenderingTests {
         composeTestRule.onNodeWithText("Vertical", substring = true).assertExists()
     }
 }
-

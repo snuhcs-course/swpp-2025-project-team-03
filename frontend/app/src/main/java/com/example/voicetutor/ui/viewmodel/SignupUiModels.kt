@@ -4,7 +4,7 @@ enum class SignupField {
     NAME,
     EMAIL,
     PASSWORD,
-    CONFIRM_PASSWORD
+    CONFIRM_PASSWORD,
 }
 
 sealed class SignupError {
@@ -17,4 +17,3 @@ sealed class SignupError {
         data class Unknown(override val message: String) : General(message, true)
     }
 }
-

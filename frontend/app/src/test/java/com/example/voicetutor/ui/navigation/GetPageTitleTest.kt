@@ -1,4 +1,4 @@
-package com.example.voicetutor.ui.navigation
+﻿package com.example.voicetutor.ui.navigation
 
 import com.example.voicetutor.data.models.UserRole
 import org.junit.Assert.*
@@ -120,4 +120,3 @@ class GetPageTitleTest {
         assertEquals("학생 페이지", title)
     }
 }
-

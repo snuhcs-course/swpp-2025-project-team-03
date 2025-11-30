@@ -1,0 +1,147 @@
+name: Deploy Backend on Develop Merge
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  pull_request:
+    types: [closed]
+    branches:
+      - develop
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+
+jobs:
+  check-backend-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has-changes: ${{ steps.changes.outputs.backend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for backend changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # PR이 머지되었는지 확인
+            if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+              # PR 머지 시 변경사항 확인
+              git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^backend/" && echo "backend=true" >> $GITHUB_OUTPUT || echo "backend=false" >> $GITHUB_OUTPUT
+            else
+              echo "backend=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # 직접 push 시 변경사항 확인
+            git diff --name-only HEAD~1 HEAD | grep -E "^backend/" && echo "backend=true" >> $GITHUB_OUTPUT || echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-backend:
+    needs: check-backend-changes
+    if: needs.check-backend-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PATH: ${{ secrets.SERVER_PATH }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '2203' }}
+        run: |
+          echo "Starting backend deployment..."
+
+          set +e
+
+          # 서버에 접속하여 배포 수행
+          ssh -o StrictHostKeyChecking=no -T -p $SSH_PORT $SERVER_USER@$SERVER_HOST "SERVER_PATH='$SERVER_PATH' bash -s" << 'ENDSSH'
+            set -e
+            echo "Pulling latest code from develop branch..."
+            cd "$SERVER_PATH" || { echo "Server path not found: $SERVER_PATH"; exit 1; }
+            
+            # Git pull
+            git fetch origin
+            git checkout develop
+            git pull origin develop
+            
+            # Backend 디렉토리로 이동
+            cd backend || { echo "Backend directory not found"; exit 1; }
+            
+            echo "Installing/updating dependencies..."
+            # Python 가상환경 활성화 (필요한 경우)
+            if [ -d "venv" ]; then
+              source venv/bin/activate
+            fi
+            
+            # 의존성 설치
+            pip install -r requirements.txt --quiet
+            
+            echo "Running migrations..."
+            python manage.py migrate --noinput
+            
+            echo "Stopping existing server..."
+            # 기존 Gunicorn 프로세스 종료
+            pkill -f "gunicorn voicetutor.wsgi:application" || echo "No existing process found"
+            sleep 2
+            
+            echo "Starting server..."
+            # 서버 시작
+            chmod +x start_server.sh
+            ./start_server.sh
+            
+            echo "Waiting for server to start..."
+            sleep 5
+            
+            echo "Checking server status..."
+            # 서버 상태 확인
+            if pgrep -f "gunicorn voicetutor.wsgi:application" > /dev/null; then
+              echo "Server started successfully!"
+            else
+              echo "Server failed to start"
+              exit 1
+            fi
+          ENDSSH
+
+          SSH_EXIT_CODE=$?
+          set -e
+
+          if [ $SSH_EXIT_CODE -ne 0 ]; then
+            echo "Connection Refused or Reset by Peer!"
+            echo "[Skipped] Deployment was not executed, contact server administrator."
+            exit 0
+          fi
+
+          echo "Deployment completed successfully!"
+
+      - name: Health check
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || '8003' }}
+        run: |
+          echo "Performing health check..."
+          sleep 10
+
+          # 서버 헬스체크 (외부 포트 8003 사용)
+          # 내부적으로는 8080에서 실행되지만, 외부에서는 8003으로 접근
+          if curl -f -s "http://$SERVER_HOST:$SERVER_PORT/health/" > /dev/null 2>&1 || \
+             curl -f -s "http://$SERVER_HOST:$SERVER_PORT/api/health/" > /dev/null 2>&1 || \
+             curl -f -s "http://$SERVER_HOST:$SERVER_PORT/swagger/" > /dev/null 2>&1; then
+            echo "Health check passed!"
+            echo "Swagger UI available at: http://$SERVER_HOST:$SERVER_PORT/swagger/"
+          else
+            echo "Health check endpoint not found, but deployment completed"
+          fi

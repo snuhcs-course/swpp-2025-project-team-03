@@ -40,12 +40,20 @@ import com.example.voicetutor.ui.viewmodel.LoginError
 import com.example.voicetutor.ui.viewmodel.LoginField
 
 @Composable
+private fun loginTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = PrimaryIndigo,
+    focusedLabelColor = PrimaryIndigo,
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    cursorColor = Color.Black,
+)
+
+@Composable
 fun LoginScreen(
     authViewModel: AuthViewModel? = null,
     assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel? = null,
     onLoginSuccess: () -> Unit = {},
     onSignupClick: () -> Unit = {},
-    onForgotPasswordClick: () -> Unit = {}
 ) {
     val viewModelAuth = authViewModel ?: hiltViewModel()
     val viewModelAssignment = assignmentViewModel ?: hiltViewModel()
@@ -53,7 +61,7 @@ fun LoginScreen(
     val loginError by viewModelAuth.loginError.collectAsStateWithLifecycle()
     val currentUser by viewModelAuth.currentUser.collectAsStateWithLifecycle()
     val autoFillCredentials by viewModelAuth.autoFillCredentials.collectAsStateWithLifecycle()
-    
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -64,7 +72,6 @@ fun LoginScreen(
     val passwordErrorMessage = if (inputError?.field == LoginField.PASSWORD) inputError.message else null
     val generalError = loginError as? LoginError.General
 
-    // 로그인 로직을 함수로 분리
     val performLogin = {
         viewModelAuth.clearLoginError()
         when {
@@ -80,30 +87,22 @@ fun LoginScreen(
         }
     }
 
-    // 자동 입력 정보가 있을 때 필드에 설정
     LaunchedEffect(autoFillCredentials) {
         autoFillCredentials?.let { (autoEmail, autoPassword) ->
             email = autoEmail
             password = autoPassword
-            // 자동 입력 정보 사용 후 초기화
             viewModelAuth.clearAutoFillCredentials()
         }
     }
-    
-    // Handle login success
+
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
-            println("LoginScreen - currentUser: ${currentUser?.email}")
-            println("LoginScreen - assignments: ${currentUser?.assignments?.size}")
-            
-            // 로그인 시 받은 과제를 AssignmentViewModel에 저장
             currentUser?.assignments?.let { assignments ->
                 if (assignments.isNotEmpty()) {
-                    println("LoginScreen - Setting ${assignments.size} assignments to ViewModel")
                     viewModelAssignment.setInitialAssignments(assignments)
                 }
             }
-            
+
             onLoginSuccess()
         }
     }
@@ -116,12 +115,11 @@ fun LoginScreen(
                     colors = listOf(
                         LightIndigo,
                         LightPurple,
-                        LightBlue
-                    )
-                )
-            )
+                        LightBlue,
+                    ),
+                ),
+            ),
     ) {
-        // Background decorative elements
         Box(
             modifier = Modifier
                 .size(288.dp)
@@ -130,14 +128,14 @@ fun LoginScreen(
                     brush = Brush.radialGradient(
                         colors = listOf(
                             PrimaryIndigo.copy(alpha = 0.2f),
-                            PrimaryPurple.copy(alpha = 0.2f)
-                        )
+                            PrimaryPurple.copy(alpha = 0.2f),
+                        ),
                     ),
-                    shape = RoundedCornerShape(50)
+                    shape = RoundedCornerShape(50),
                 )
-                .blur(60.dp)
+                .blur(60.dp),
         )
-        
+
         Box(
             modifier = Modifier
                 .size(384.dp)
@@ -145,16 +143,15 @@ fun LoginScreen(
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color(0xFF3B82F6).copy(alpha = 0.2f),
-                            PrimaryIndigo.copy(alpha = 0.2f)
-                        )
+                            Info.copy(alpha = 0.2f),
+                            PrimaryIndigo.copy(alpha = 0.2f),
+                        ),
                     ),
-                    shape = RoundedCornerShape(50)
+                    shape = RoundedCornerShape(50),
                 )
-                .blur(60.dp)
+                .blur(60.dp),
         )
 
-        // Main content
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -162,69 +159,66 @@ fun LoginScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             VTCard(
                 variant = CardVariant.Elevated,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
+                    .padding(horizontal = 8.dp),
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Logo
+
                     Box(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(RoundedCornerShape(24.dp))
                             .background(
                                 brush = Brush.linearGradient(
-                                    colors = listOf(PrimaryIndigo, PrimaryPurple)
-                                )
+                                    colors = listOf(PrimaryIndigo, PrimaryPurple),
+                                ),
                             ),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = "V",
                             color = Color.White,
                             fontSize = 36.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(20.dp))
-                    
-                    // Title
+
                     Text(
                         text = "VoiceTutor",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
-                    
+
                     Spacer(modifier = Modifier.height(6.dp))
-                    
+
                     Text(
                         text = "말하는 순간, 나만의 AI 튜터가 시작됩니다",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray600,
                         textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
-                    
+
                     Spacer(modifier = Modifier.height(20.dp))
-                    
+
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                        verticalArrangement = Arrangement.spacedBy(0.dp),
                     ) {
-                        // Email field
                         OutlinedTextField(
                             value = email,
-                            onValueChange = { 
+                            onValueChange = {
                                 email = it
                                 viewModelAuth.clearLoginFieldError(LoginField.EMAIL)
                             },
@@ -234,43 +228,36 @@ fun LoginScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Email,
                                     contentDescription = null,
-                                    tint = PrimaryIndigo
+                                    tint = PrimaryIndigo,
                                 )
                             },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
-                                imeAction = ImeAction.Next
+                                imeAction = ImeAction.Next,
                             ),
                             keyboardActions = KeyboardActions(
                                 onNext = {
                                     focusManager.moveFocus(FocusDirection.Down)
-                                }
+                                },
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
                             isError = emailErrorMessage != null,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryIndigo,
-                                focusedLabelColor = PrimaryIndigo,
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                cursorColor = Color.Black
-                            ),
+                            colors = loginTextFieldColors(),
                             supportingText = {
                                 if (emailErrorMessage != null) {
                                     Text(
                                         text = emailErrorMessage,
                                         color = Error,
-                                        style = MaterialTheme.typography.bodySmall
+                                        style = MaterialTheme.typography.bodySmall,
                                     )
                                 }
-                            }
+                            },
                         )
-                        
-                        // Password field
+
                         OutlinedTextField(
                             value = password,
-                            onValueChange = { 
+                            onValueChange = {
                                 password = it
                                 viewModelAuth.clearLoginFieldError(LoginField.PASSWORD)
                             },
@@ -280,7 +267,7 @@ fun LoginScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Lock,
                                     contentDescription = null,
-                                    tint = PrimaryIndigo
+                                    tint = PrimaryIndigo,
                                 )
                             },
                             trailingIcon = {
@@ -288,69 +275,62 @@ fun LoginScreen(
                                     Icon(
                                         imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                         contentDescription = if (passwordVisible) "비밀번호 숨기기" else "비밀번호 보기",
-                                        tint = Gray500
+                                        tint = Gray500,
                                     )
                                 }
                             },
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
-                                imeAction = ImeAction.Done
+                                imeAction = ImeAction.Done,
                             ),
                             keyboardActions = KeyboardActions(
                                 onDone = {
                                     focusManager.clearFocus()
                                     performLogin()
-                                }
+                                },
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
                             isError = passwordErrorMessage != null,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryIndigo,
-                                focusedLabelColor = PrimaryIndigo,
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                cursorColor = Color.Black
-                            ),
+                            colors = loginTextFieldColors(),
                             supportingText = {
                                 if (passwordErrorMessage != null) {
                                     Text(
                                         text = passwordErrorMessage,
                                         color = Error,
-                                        style = MaterialTheme.typography.bodySmall
+                                        style = MaterialTheme.typography.bodySmall,
                                     )
                                 }
-                            }
+                            },
                         )
                     }
-                    
+
                     if (generalError != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         VTCard(
                             variant = CardVariant.Outlined,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 Text(
                                     text = generalError.message,
                                     color = Error,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium,
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
                                 )
                             }
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(20.dp))
-                    
-                    // Login button
+
                     VTButton(
                         text = if (isLoading) "로그인 중..." else "로그인",
                         onClick = {
@@ -360,34 +340,32 @@ fun LoginScreen(
                         variant = ButtonVariant.Gradient,
                         size = ButtonSize.Large,
                         fullWidth = true,
-                        enabled = !isLoading
+                        enabled = !isLoading,
                     )
-                    
+
                     Spacer(modifier = Modifier.height(20.dp))
-                    
-                    // Divider
+
                     HorizontalDivider(color = Gray200)
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // Signup section
+
                     Text(
                         text = "계정이 없으신가요?",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray600,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     VTButton(
                         text = "계정 만들기",
                         onClick = onSignupClick,
                         variant = ButtonVariant.Outline,
                         size = ButtonSize.Large,
-                        fullWidth = true
+                        fullWidth = true,
                     )
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }

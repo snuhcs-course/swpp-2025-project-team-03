@@ -14,14 +14,13 @@ class ProgressBarTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // VTProgressBar Tests
     @Test
     fun progressBar_displaysProgressText() {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 0.5f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -36,7 +35,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 0f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -50,7 +49,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 1f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -64,7 +63,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = 0.5f,
-                    showPercentage = false
+                    showPercentage = false,
                 )
             }
         }
@@ -78,12 +77,11 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTProgressBar(
                     progress = -0.5f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
 
-        // Progress should be clamped to 0
         composeTestRule.onNodeWithText("0%", substring = true).assertExists()
     }
 
@@ -94,23 +92,21 @@ class ProgressBarTest {
                 VTProgressBar(
                     progress = 0.5f,
                     height = 12,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
 
-        // Verify progress bar exists by checking for percentage text
         composeTestRule.onNodeWithText("50%", substring = true).assertExists()
     }
 
-    // VTCircularProgress Tests
     @Test
     fun circularProgress_displaysProgressText() {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 0.75f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -124,7 +120,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 0f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -138,7 +134,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 1f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -152,7 +148,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = 0.5f,
-                    showPercentage = false
+                    showPercentage = false,
                 )
             }
         }
@@ -167,12 +163,11 @@ class ProgressBarTest {
                 VTCircularProgress(
                     progress = 0.5f,
                     size = 80,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
 
-        // Verify circular progress exists by checking for percentage text
         composeTestRule.onNodeWithText("50%", substring = true).assertExists()
     }
 
@@ -182,7 +177,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTCircularProgress(
                     progress = -0.5f,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -190,19 +185,17 @@ class ProgressBarTest {
         composeTestRule.onNodeWithText("0%", substring = true).assertExists()
     }
 
-    // VTStepProgress Tests
     @Test
     fun stepProgress_displaysSteps() {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 2,
-                    totalSteps = 4
+                    totalSteps = 4,
                 )
             }
         }
 
-        // Should display step numbers
         composeTestRule.onNodeWithText("1").assertExists()
         composeTestRule.onNodeWithText("2").assertExists()
         composeTestRule.onNodeWithText("3").assertExists()
@@ -216,7 +209,7 @@ class ProgressBarTest {
                 VTStepProgress(
                     currentStep = 2,
                     totalSteps = 4,
-                    stepLabels = listOf("시작", "진행", "검토", "완료")
+                    stepLabels = listOf("시작", "진행", "검토", "완료"),
                 )
             }
         }
@@ -233,7 +226,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 1,
-                    totalSteps = 1
+                    totalSteps = 1,
                 )
             }
         }
@@ -247,7 +240,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 1,
-                    totalSteps = 5
+                    totalSteps = 5,
                 )
             }
         }
@@ -261,7 +254,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 5,
-                    totalSteps = 5
+                    totalSteps = 5,
                 )
             }
         }
@@ -275,7 +268,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 0,
-                    totalSteps = 3
+                    totalSteps = 3,
                 )
             }
         }
@@ -289,7 +282,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 10,
-                    totalSteps = 5
+                    totalSteps = 5,
                 )
             }
         }
@@ -304,12 +297,11 @@ class ProgressBarTest {
                 VTStepProgress(
                     currentStep = 2,
                     totalSteps = 4,
-                    stepLabels = emptyList()
+                    stepLabels = emptyList(),
                 )
             }
         }
 
-        // Should still display step numbers
         composeTestRule.onNodeWithText("1").assertExists()
     }
 
@@ -320,12 +312,11 @@ class ProgressBarTest {
                 VTStepProgress(
                     currentStep = 2,
                     totalSteps = 4,
-                    stepLabels = listOf("시작", "진행")
+                    stepLabels = listOf("시작", "진행"),
                 )
             }
         }
 
-        // Should only display labels for first two steps
         composeTestRule.onNodeWithText("1").assertExists()
         composeTestRule.onNodeWithText("2").assertExists()
     }
@@ -336,7 +327,7 @@ class ProgressBarTest {
             VoiceTutorTheme {
                 VTStepProgress(
                     currentStep = 5,
-                    totalSteps = 10
+                    totalSteps = 10,
                 )
             }
         }
@@ -352,7 +343,7 @@ class ProgressBarTest {
                     progress = 0.5f,
                     color = androidx.compose.ui.graphics.Color.Red,
                     backgroundColor = androidx.compose.ui.graphics.Color.Gray,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -368,7 +359,7 @@ class ProgressBarTest {
                     progress = 0.5f,
                     color = androidx.compose.ui.graphics.Color.Green,
                     backgroundColor = androidx.compose.ui.graphics.Color.LightGray,
-                    showPercentage = true
+                    showPercentage = true,
                 )
             }
         }
@@ -384,7 +375,7 @@ class ProgressBarTest {
                     currentStep = 2,
                     totalSteps = 4,
                     color = androidx.compose.ui.graphics.Color.Blue,
-                    backgroundColor = androidx.compose.ui.graphics.Color.LightGray
+                    backgroundColor = androidx.compose.ui.graphics.Color.LightGray,
                 )
             }
         }
@@ -392,4 +383,3 @@ class ProgressBarTest {
         composeTestRule.onNodeWithText("2").assertExists()
     }
 }
-

@@ -6,7 +6,7 @@ from .models import Account
 
 @admin.register(Account)
 class AccountAdmin(UserAdmin):
-    # username 제거 → email을 사용자명 필드처럼 사용
+    # email을 사용자명 필드처럼 사용
     model = Account
     list_display = ("id", "email", "display_name", "is_student", "is_staff", "date_joined")
     list_filter = ("is_student", "is_staff", "is_superuser", "is_active")

@@ -2,8 +2,6 @@ package com.example.voicetutor.ui.navigation
 
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -15,15 +13,13 @@ import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.di.NetworkModule
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
-import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
-import org.junit.Test
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -86,31 +82,6 @@ class VoiceTutorNavigationRouteCoverageTest {
         waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
     }
 
-    private fun loginStudent() {
-        var authViewModel: AuthViewModel? = null
-        composeRule.runOnIdle {
-            val entry = navController.getBackStackEntry(navController.graph.id)
-            authViewModel = ViewModelProvider(entry)[AuthViewModel::class.java]
-        }
-        val viewModel = checkNotNull(authViewModel)
-        composeRule.runOnIdle {
-            viewModel.login("student@voicetutor.com", "student123")
-        }
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            viewModel.currentUser.value != null
-        }
-        waitForRoutePrefix(VoiceTutorScreens.StudentDashboard.route)
-    }
-
-    private fun assignmentViewModel(): AssignmentViewModel {
-        var viewModel: AssignmentViewModel? = null
-        composeRule.runOnIdle {
-            val entry = navController.getBackStackEntry(navController.graph.id)
-            viewModel = ViewModelProvider(entry)[AssignmentViewModel::class.java]
-        }
-        return checkNotNull(viewModel)
-    }
-
     private fun waitForRoutePrefix(prefix: String, timeoutMillis: Long = 15_000) {
         composeRule.waitUntil(timeoutMillis) {
             var matches = false
@@ -122,39 +93,96 @@ class VoiceTutorNavigationRouteCoverageTest {
         }
     }
 
-    private fun navigateAndAssert(route: String, expectedText: String, substring: Boolean = true, timeoutMillis: Long = 20_000) {
+    private fun navigateAndAssert(route: String, expectedText: String, substring: Boolean = true, timeoutMillis: Long = 30_000) {
         val prefix = route.substringBefore("{")
+        val targetRoute = prefix.ifEmpty { route }
+
+        var alreadyOnRoute = false
         composeRule.runOnIdle {
-            navController.navigate(route)
+            val currentRoute = navController.currentBackStackEntry?.destination?.route
+            alreadyOnRoute = currentRoute?.startsWith(targetRoute) == true
         }
-        waitForRoutePrefix(prefix.ifEmpty { route }, timeoutMillis = timeoutMillis)
-        
-        // Wait for screen to load and display expected text
+
+        if (!alreadyOnRoute) {
+            composeRule.runOnIdle {
+                navController.navigate(route)
+            }
+            waitForRoutePrefix(targetRoute, timeoutMillis = timeoutMillis)
+        }
+
         composeRule.waitUntil(timeoutMillis = timeoutMillis) {
             try {
                 composeRule
                     .onAllNodesWithText(
                         expectedText,
                         substring = substring,
-                        useUnmergedTree = true
+                        useUnmergedTree = true,
                     )
                     .fetchSemanticsNodes(atLeastOneRootRequired = false)
                     .isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
-        
-        // Verify the text is displayed
+
         composeRule
             .onAllNodesWithText(expectedText, substring = substring, useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
-        
-        // Wait a bit for screen to fully render
+
         composeRule.waitForIdle()
     }
 
+    @org.junit.Test
+    fun testTeacherDashboardRoute() {
+        waitForRoutePrefix(VoiceTutorScreens.TeacherDashboard.route)
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            try {
+                composeRule
+                    .onAllNodesWithText("환영", substring = true, useUnmergedTree = true)
+                    .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                    .isNotEmpty()
+            } catch (_: Exception) {
+                false
+            }
+        }
+        composeRule
+            .onAllNodesWithText("환영", substring = true, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
+    }
+
+    @org.junit.Test
+    fun testTeacherClassesRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.TeacherClasses.route,
+            expectedText = "수업",
+        )
+    }
+
+    @org.junit.Test
+    fun testAllAssignmentsRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.AllAssignments.route,
+            expectedText = "과제",
+        )
+    }
+
+    @org.junit.Test
+    fun testAllStudentsRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.AllStudents.route,
+            expectedText = "학생",
+        )
+    }
+
+    @org.junit.Test
+    fun testAppInfoRoute() {
+        navigateAndAssert(
+            route = VoiceTutorScreens.AppInfo.route,
+            expectedText = "정보",
+        )
+    }
 }
-
-

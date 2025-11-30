@@ -2,89 +2,24 @@ package com.example.voicetutor.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.*
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Extended coverage tests for UI screens.
- * Tests more components and edge cases to maximize code coverage.
- */
 @RunWith(AndroidJUnit4::class)
 class ExtendedCoverageTests {
 
     @get:Rule
     val composeTestRule = createComposeRule()
-
-    // ========== AssignmentScreen Components ==========
-
-    @Test
-    fun optionButton_renders_withAllVariants() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                Column {
-                    OptionButton(
-                        text = "옵션 1",
-                        isSelected = true,
-                        isCorrect = false,
-                        isWrong = false,
-                        onClick = {}
-                    )
-                    OptionButton(
-                        text = "옵션 2",
-                        isSelected = false,
-                        isCorrect = true,
-                        isWrong = false,
-                        onClick = {}
-                    )
-                    OptionButton(
-                        text = "옵션 3",
-                        isSelected = false,
-                        isCorrect = false,
-                        isWrong = true,
-                        onClick = {}
-                    )
-                }
-            }
-        }
-
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("옵션 1", substring = true).assertExists()
-        composeTestRule.onNodeWithText("옵션 2", substring = true).assertExists()
-        composeTestRule.onNodeWithText("옵션 3", substring = true).assertExists()
-    }
-
-    @Test
-    fun optionButton_onClick_triggersCallback() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                OptionButton(
-                    text = "옵션",
-                    isSelected = false,
-                    isCorrect = false,
-                    isWrong = false,
-                    onClick = { clicked = true }
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText("옵션", substring = true).performClick()
-        assert(clicked)
-    }
-
-    // ========== TeacherAssignmentResultsScreen Components ==========
 
     @Test
     fun teacherAssignmentResultCard_renders_withAllData() {
@@ -97,24 +32,24 @@ class ExtendedCoverageTests {
             startedAt = "2024-12-29",
             submittedAt = "2024-12-30",
             answers = emptyList(),
-            detailedAnswers = emptyList()
+            detailedAnswers = emptyList(),
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentResultCard(
                     student = student,
-                    onStudentClick = {}
+                    onStudentClick = {},
                 )
             }
         }
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("홍길동", substring = true, useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("2024001", substring = true, useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("완료", substring = true, useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("소요 시간", substring = true, useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("제출 시간", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("제출", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("점수", substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("85점", substring = true, useUnmergedTree = true).assertExists()
     }
 
     @Test
@@ -129,23 +64,23 @@ class ExtendedCoverageTests {
             startedAt = "2024-12-29",
             submittedAt = "2024-12-30",
             answers = emptyList(),
-            detailedAnswers = emptyList()
+            detailedAnswers = emptyList(),
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentResultCard(
                     student = student,
-                    onStudentClick = { clicked = true }
+                    onStudentClick = { clicked = true },
                 )
             }
         }
 
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("홍길동", substring = true).performClick()
+        composeTestRule.waitForIdle()
         assert(clicked)
     }
-
-    // ========== AssignmentDetailedResultsScreen Components ==========
 
     @Test
     fun questionGroupCard_renders_withQuestions() {
@@ -154,11 +89,11 @@ class ExtendedCoverageTests {
             question = "질문 1",
             myAnswer = "답변 1",
             correctAnswer = "정답 1",
-            isCorrect = true
+            isCorrect = true,
         )
         val group = QuestionGroup(
             baseQuestion = baseQuestion,
-            tailQuestions = emptyList()
+            tailQuestions = emptyList(),
         )
 
         composeTestRule.setContent {
@@ -166,7 +101,7 @@ class ExtendedCoverageTests {
                 QuestionGroupCard(
                     group = group,
                     isExpanded = false,
-                    onToggle = {}
+                    onToggle = {},
                 )
             }
         }
@@ -182,13 +117,13 @@ class ExtendedCoverageTests {
             question = "질문",
             myAnswer = "답변",
             correctAnswer = "정답",
-            isCorrect = true
+            isCorrect = true,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 DetailedQuestionResultCard(
-                    question = question
+                    question = question,
                 )
             }
         }
@@ -196,8 +131,6 @@ class ExtendedCoverageTests {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("질문", substring = true).assertExists()
     }
-
-    // ========== TeacherStudentAssignmentDetailScreen Components ==========
 
     @Test
     fun questionGroupCard2_renders_withData() {
@@ -215,8 +148,6 @@ class ExtendedCoverageTests {
         composeTestRule.onNodeWithText("문제 그룹", substring = true).assertExists()
     }
 
-    // ========== AllAssignmentsScreen Components ==========
-
     @Test
     fun assignmentCard_allVariants_renders() {
         composeTestRule.setContent {
@@ -229,7 +160,7 @@ class ExtendedCoverageTests {
                             description = "설명",
                             totalQuestions = 10,
                             dueAt = "2024-12-31T23:59:59Z",
-                            
+
                             createdAt = "2024-01-01T00:00:00Z",
                             courseClass = CourseClass(
                                 id = 1,
@@ -237,20 +168,18 @@ class ExtendedCoverageTests {
                                 description = null,
                                 subject = Subject(1, "수학", "MATH"),
                                 teacherName = "선생님",
-                                
-                                
+
                                 studentCount = 30,
-                                createdAt = "2024-01-01T00:00:00Z"
+                                createdAt = "2024-01-01T00:00:00Z",
                             ),
                             grade = "1",
-                            materials = null
+                            materials = null,
                         ),
                         submittedCount = 5,
                         totalCount = 10,
                         onAssignmentClick = {},
                         onEditClick = {},
-                        onDeleteClick = {},
-                        onViewResults = {}
+                        onViewResults = {},
                     )
                 }
             }
@@ -259,8 +188,6 @@ class ExtendedCoverageTests {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("과제 1", substring = true).assertExists()
     }
-
-    // ========== StudentDashboardScreen Components ==========
 
     @Test
     fun studentAssignmentCard_allStatuses_renders() {
@@ -272,33 +199,27 @@ class ExtendedCoverageTests {
                         subject = "수학",
                         dueDate = "2024-12-31",
                         progress = 0f,
-                        solvedNum = 0,
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.NOT_STARTED,
                         onClick = {},
-                        onStartAssignment = {}
                     )
                     StudentAssignmentCard(
                         title = "진행중 과제",
                         subject = "수학",
                         dueDate = "2024-12-31",
                         progress = 0.5f,
-                        solvedNum = 5,
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onStartAssignment = {}
                     )
                     StudentAssignmentCard(
                         title = "제출된 과제",
                         subject = "수학",
                         dueDate = "2024-12-31",
                         progress = 1.0f,
-                        solvedNum = 10,
                         totalQuestions = 10,
                         status = PersonalAssignmentStatus.SUBMITTED,
                         onClick = {},
-                        onStartAssignment = {}
                     )
                 }
             }
@@ -306,8 +227,6 @@ class ExtendedCoverageTests {
         composeTestRule.waitForIdle()
         composeTestRule.onRoot().assertExists()
     }
-
-    // ========== TeacherDashboardScreen Components ==========
 
     @Test
     fun teacherAssignmentCard_allStatuses_renders() {
@@ -320,10 +239,7 @@ class ExtendedCoverageTests {
                         submittedCount = 5,
                         totalCount = 10,
                         dueDate = "2024-12-31T23:59:59Z",
-                        status = AssignmentStatus.IN_PROGRESS,
                         onClick = {},
-                        onViewResults = {},
-                        onEdit = {}
                     )
                     TeacherAssignmentCard(
                         title = "완료된 과제",
@@ -331,10 +247,7 @@ class ExtendedCoverageTests {
                         submittedCount = 10,
                         totalCount = 10,
                         dueDate = "2024-12-31T23:59:59Z",
-                        status = AssignmentStatus.COMPLETED,
                         onClick = {},
-                        onViewResults = {},
-                        onEdit = {}
                     )
                     TeacherAssignmentCard(
                         title = "초안 과제",
@@ -342,10 +255,7 @@ class ExtendedCoverageTests {
                         submittedCount = 0,
                         totalCount = 10,
                         dueDate = "2024-12-31T23:59:59Z",
-                        status = AssignmentStatus.DRAFT,
                         onClick = {},
-                        onViewResults = {},
-                        onEdit = {}
                     )
                 }
             }
@@ -356,19 +266,18 @@ class ExtendedCoverageTests {
 
     @Test
     fun dashboardSummaryCard_renders_withStats() {
-        // DashboardSummaryCard is private, so we test through TeacherDashboardScreen components
         composeTestRule.setContent {
             VoiceTutorTheme {
                 Column {
                     VTStatsCard(
                         title = "전체 과제",
                         value = "10",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.AutoMirrored.Filled.Assignment,
                     )
                     VTStatsCard(
                         title = "완료 과제",
                         value = "5",
-                        icon = Icons.Filled.CheckCircle
+                        icon = Icons.Filled.CheckCircle,
                     )
                 }
             }
@@ -379,15 +288,13 @@ class ExtendedCoverageTests {
         composeTestRule.onAllNodesWithText("10", substring = true, useUnmergedTree = true).onFirst().assertExists()
     }
 
-    // ========== TeacherStudentsScreen Components ==========
-
     @Test
     fun studentListItem_renders_withAllData() {
         val student = Student(
             id = 1,
             name = "홍길동",
             email = "test@example.com",
-            role = UserRole.STUDENT
+            role = UserRole.STUDENT,
         )
 
         composeTestRule.setContent {
@@ -399,7 +306,7 @@ class ExtendedCoverageTests {
                     totalAssignments = 10,
                     completedAssignments = 8,
                     isLoadingStats = false,
-                    isLastItem = false
+                    isLastItem = false,
                 )
             }
         }
@@ -407,8 +314,6 @@ class ExtendedCoverageTests {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("홍길동", substring = true).assertExists()
     }
-
-    // ========== ReportScreen Components ==========
 
     @Test
     fun assignmentReportCard_renders_withReportData() {
@@ -418,7 +323,7 @@ class ExtendedCoverageTests {
             description = "설명",
             totalQuestions = 10,
             dueAt = "2024-12-31T23:59:59Z",
-            
+
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -426,20 +331,19 @@ class ExtendedCoverageTests {
                 description = null,
                 subject = Subject(1, "수학", "MATH"),
                 teacherName = "선생님",
-                
-                
+
                 studentCount = 30,
-                createdAt = "2024-01-01T00:00:00Z"
+                createdAt = "2024-01-01T00:00:00Z",
             ),
             grade = "1",
-            materials = null
+            materials = null,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AssignmentReportCard(
                     assignment = assignment,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
@@ -457,7 +361,7 @@ class ExtendedCoverageTests {
             description = "설명",
             totalQuestions = 10,
             dueAt = "2024-12-31T23:59:59Z",
-            
+
             createdAt = "2024-01-01T00:00:00Z",
             courseClass = CourseClass(
                 id = 1,
@@ -465,20 +369,19 @@ class ExtendedCoverageTests {
                 description = null,
                 subject = Subject(1, "수학", "MATH"),
                 teacherName = "선생님",
-                
-                
+
                 studentCount = 30,
-                createdAt = "2024-01-01T00:00:00Z"
+                createdAt = "2024-01-01T00:00:00Z",
             ),
             grade = "1",
-            materials = null
+            materials = null,
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AssignmentReportCard(
                     assignment = assignment,
-                    onReportClick = { clicked = true }
+                    onReportClick = { clicked = true },
                 )
             }
         }
@@ -487,22 +390,20 @@ class ExtendedCoverageTests {
         assert(clicked)
     }
 
-    // ========== TeacherStudentReportScreen Components ==========
-
     @Test
     fun achievementStatisticCard_renders_withStats() {
         val statistics = AchievementStatistics(
             totalQuestions = 10,
             correctQuestions = 8,
             accuracy = 80.0,
-            content = "수학"
+            content = "수학",
         )
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 AchievementStatisticCard(
                     achievementCode = "MATH-001",
-                    statistics = statistics
+                    statistics = statistics,
                 )
             }
         }
@@ -510,8 +411,6 @@ class ExtendedCoverageTests {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("MATH-001", substring = true).assertExists()
     }
-
-    // ========== Additional Component Tests ==========
 
     @Test
     fun allStudentsCard_renders_withStudents() {
@@ -522,11 +421,9 @@ class ExtendedCoverageTests {
                         id = 1,
                         name = "홍길동",
                         email = "test@example.com",
-                        role = UserRole.STUDENT
+                        role = UserRole.STUDENT,
                     ),
-                    classNames = listOf("수학 A반", "영어 B반"),
-                    isLoadingClasses = false,
-                    onReportClick = {}
+                    onReportClick = {},
                 )
             }
         }
@@ -545,22 +442,17 @@ class ExtendedCoverageTests {
                         id = 1,
                         name = "홍길동",
                         email = "test@example.com",
-                        role = UserRole.STUDENT
+                        role = UserRole.STUDENT,
                     ),
-                    classNames = listOf("수학 A반"),
-                    isLoadingClasses = false,
-                    onReportClick = { clicked = true }
+                    onReportClick = { clicked = true },
                 )
             }
         }
 
-        composeTestRule.onNodeWithText("홍길동", substring = true).performClick()
-        // Note: AllStudentsCard doesn't have onClick, only onReportClick
-        // So we test the card renders correctly
-        assert(true)
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("리포트 보기", substring = true).performClick()
+        assert(clicked)
     }
-
-    // ========== Edge Cases and Multiple Renders ==========
 
     @Test
     fun multipleComponents_renderedTogether() {
@@ -575,7 +467,7 @@ class ExtendedCoverageTests {
                     VTStatsCard(
                         title = "통계",
                         value = "100",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.AutoMirrored.Filled.Assignment,
                     )
                 }
             }
@@ -602,14 +494,13 @@ class ExtendedCoverageTests {
                     VTStatsCard(
                         title = "",
                         value = "",
-                        icon = Icons.Filled.Assignment
+                        icon = Icons.AutoMirrored.Filled.Assignment,
                     )
                 }
             }
         }
 
         composeTestRule.waitForIdle()
-        // Components should render even with empty data
     }
 
     @Test
@@ -627,7 +518,6 @@ class ExtendedCoverageTests {
         }
 
         composeTestRule.waitForIdle()
-        // Components should handle long text
     }
 
     @Test
@@ -655,22 +545,22 @@ class ExtendedCoverageTests {
                     VTStatsCard(
                         title = "통계 Up",
                         value = "100",
-                        icon = Icons.Filled.Assignment,
+                        icon = Icons.AutoMirrored.Filled.Assignment,
                         trend = TrendDirection.Up,
-                        trendValue = "+5"
+                        trendValue = "+5",
                     )
                     VTStatsCard(
                         title = "통계 Down",
                         value = "100",
-                        icon = Icons.Filled.Assignment,
+                        icon = Icons.AutoMirrored.Filled.Assignment,
                         trend = TrendDirection.Down,
-                        trendValue = "-5"
+                        trendValue = "-5",
                     )
                     VTStatsCard(
                         title = "통계 None",
                         value = "100",
-                        icon = Icons.Filled.Assignment,
-                        trend = TrendDirection.None
+                        icon = Icons.AutoMirrored.Filled.Assignment,
+                        trend = TrendDirection.None,
                     )
                 }
             }
@@ -708,17 +598,17 @@ class ExtendedCoverageTests {
                     VTButton(
                         text = "Primary 버튼",
                         onClick = {},
-                        variant = ButtonVariant.Primary
+                        variant = ButtonVariant.Primary,
                     )
                     VTButton(
                         text = "Outline 버튼",
                         onClick = {},
-                        variant = ButtonVariant.Outline
+                        variant = ButtonVariant.Outline,
                     )
                     VTButton(
                         text = "Gradient 버튼",
                         onClick = {},
-                        variant = ButtonVariant.Gradient
+                        variant = ButtonVariant.Gradient,
                     )
                 }
             }
@@ -735,17 +625,17 @@ class ExtendedCoverageTests {
                     VTButton(
                         text = "Small 버튼",
                         onClick = {},
-                        size = ButtonSize.Small
+                        size = ButtonSize.Small,
                     )
                     VTButton(
                         text = "Medium 버튼",
                         onClick = {},
-                        size = ButtonSize.Medium
+                        size = ButtonSize.Medium,
                     )
                     VTButton(
                         text = "Large 버튼",
                         onClick = {},
-                        size = ButtonSize.Large
+                        size = ButtonSize.Large,
                     )
                 }
             }
@@ -762,14 +652,14 @@ class ExtendedCoverageTests {
                     VTStatsCard(
                         title = "Horizontal 통계",
                         value = "100",
-                        icon = Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Horizontal
+                        icon = Icons.AutoMirrored.Filled.Assignment,
+                        layout = StatsCardLayout.Horizontal,
                     )
                     VTStatsCard(
                         title = "Vertical 통계",
                         value = "100",
-                        icon = Icons.Filled.Assignment,
-                        layout = StatsCardLayout.Vertical
+                        icon = Icons.AutoMirrored.Filled.Assignment,
+                        layout = StatsCardLayout.Vertical,
                     )
                 }
             }
@@ -777,8 +667,6 @@ class ExtendedCoverageTests {
         composeTestRule.waitForIdle()
         composeTestRule.onRoot().assertExists()
     }
-
-    // ========== Interactive Components ==========
 
     @Test
     fun textField_withDifferentInputs_handlesCorrectly() {
@@ -788,7 +676,7 @@ class ExtendedCoverageTests {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
-                    label = { Text("입력") }
+                    label = { Text("입력") },
                 )
             }
         }
@@ -805,7 +693,7 @@ class ExtendedCoverageTests {
                 FilterChip(
                     selected = selected,
                     onClick = { selected = !selected },
-                    label = { Text("필터") }
+                    label = { Text("필터") },
                 )
             }
         }
@@ -865,120 +753,43 @@ class ExtendedCoverageTests {
         assert(card2Clicked)
     }
 
-    // ========== AppInfoScreen Internal Components ==========
-
     @Test
-    fun featureItem_renders_withText() {
+    fun appInfoScreen_infoItem_renders_withLabelAndValue() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                FeatureItem(feature = "테스트 기능")
+                AppInfoScreen()
             }
         }
         composeTestRule.waitForIdle()
-        
-        composeTestRule.onNodeWithText("테스트 기능", useUnmergedTree = true).assertExists()
+
+        composeTestRule.onNodeWithText("개발사", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("빌드 번호", useUnmergedTree = true).assertExists()
     }
 
     @Test
-    fun infoItem_renders_withLabelAndValue() {
+    fun appInfoScreen_contactItem_renders_withAllFields() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                InfoItem(label = "라벨", value = "값")
+                AppInfoScreen()
             }
         }
         composeTestRule.waitForIdle()
-        
-        composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("값", useUnmergedTree = true).assertExists()
-    }
 
-    @Test
-    fun legalItem_renders_andTriggersClick() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                LegalItem(title = "법적 항목", onClick = { clicked = true })
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("법적 항목").performClick()
-        assert(clicked)
-    }
-
-    @Test
-    fun contactItem_renders_withAllFields() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                ContactItem(
-                    icon = Icons.Filled.Email,
-                    title = "이메일",
-                    value = "test@example.com",
-                    onClick = { clicked = true }
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("test@example.com", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("이메일").performClick()
-        assert(clicked)
-    }
-
-    @Test
-    fun actionItem_renders_withAllFields() {
-        var clicked = false
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                ActionItem(
-                    icon = Icons.Filled.Update,
-                    title = "업데이트",
-                    description = "설명",
-                    onClick = { clicked = true }
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-        
-        composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("설명", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("업데이트").performClick()
-        assert(clicked)
+        composeTestRule.onNodeWithText("support@voicetutor.com", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("앱 평가하기", useUnmergedTree = true).assertExists()
     }
 
     @Test
     fun appInfoScreen_allInternalComponents_render() {
         composeTestRule.setContent {
             VoiceTutorTheme {
-                Column {
-                    FeatureItem(feature = "기능 1")
-                    InfoItem(label = "라벨", value = "값")
-                    LegalItem(title = "법적 항목", onClick = {})
-                    ContactItem(
-                        icon = Icons.Filled.Email,
-                        title = "이메일",
-                        value = "test@example.com",
-                        onClick = {}
-                    )
-                    ActionItem(
-                        icon = Icons.Filled.Update,
-                        title = "업데이트",
-                        description = "설명",
-                        onClick = {}
-                    )
-                }
+                AppInfoScreen()
             }
         }
         composeTestRule.waitForIdle()
-        
-        composeTestRule.onNodeWithText("기능 1", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("라벨", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("법적 항목", useUnmergedTree = true).assertExists()
+
+        composeTestRule.onNodeWithText("개발사", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("업데이트", useUnmergedTree = true).assertExists()
     }
 }
-

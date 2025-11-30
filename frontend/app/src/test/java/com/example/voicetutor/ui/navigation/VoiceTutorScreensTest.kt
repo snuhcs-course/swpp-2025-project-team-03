@@ -139,4 +139,3 @@ class VoiceTutorScreensTest {
         assertEquals("attendance_management/123", route)
     }
 }
-

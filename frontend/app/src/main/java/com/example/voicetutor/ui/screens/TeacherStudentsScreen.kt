@@ -13,86 +13,89 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.voicetutor.ApiServiceEntryPoint
+import com.example.voicetutor.data.models.*
+import com.example.voicetutor.data.repository.StudentRepository
 import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
-import com.example.voicetutor.data.models.*
-import com.example.voicetutor.ui.viewmodel.StudentViewModel
+import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.ClassViewModel
-import com.example.voicetutor.data.repository.StudentRepository
-import com.example.voicetutor.ApiServiceEntryPoint
+import com.example.voicetutor.ui.viewmodel.StudentViewModel
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+private const val HEADER_ALPHA = 0.08f
+private const val HEADER_CORNER_RADIUS = 16
+private const val EMPTY_STATE_ICON_SIZE = 48
+private const val AVATAR_SIZE = 32
+private const val AVATAR_BACKGROUND_ALPHA = 0.1f
+private const val SCORE_BADGE_ALPHA = 0.08f
+private const val PROGRESS_BAR_HEIGHT = 6
+private const val EMAIL_MAX_LENGTH = 24
+private const val DELAY_AFTER_ENROLL = 500L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeacherStudentsScreen(
     classId: Int? = null,
     teacherId: String? = null,
-    onNavigateToStudentDetail: (Int) -> Unit = {},
-    navController: androidx.navigation.NavHostController? = null
 ) {
     val viewModel: StudentViewModel = hiltViewModel()
     val classViewModel: ClassViewModel = hiltViewModel()
     val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel()
     val coroutineScope = rememberCoroutineScope()
-    
+
     val students by viewModel.students.collectAsStateWithLifecycle()
     val classStudents by classViewModel.classStudents.collectAsStateWithLifecycle()
     val currentClass by classViewModel.currentClass.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val classError by classViewModel.error.collectAsStateWithLifecycle()
+    val classIsLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
-    
-    // 동적 클래스 정보 가져오기
+
     val className = currentClass?.name ?: "고등학교 1학년 A반"
     val subjectName = currentClass?.subject?.name ?: "과목"
     val description = currentClass?.description ?: "과목 설명"
-    val teacherName = currentClass?.teacherName ?: currentUser?.name ?: "선생님"
-    
-    // 학생 통계 데이터
+
     data class StudentStats(
         val averageScore: Float,
         val completionRate: Float,
         val totalAssignments: Int,
-        val completedAssignments: Int
+        val completedAssignments: Int,
     )
-    
+
     var studentsStatisticsMap by remember { mutableStateOf<Map<Int, StudentStats>>(emptyMap()) }
     var isLoadingStatistics by remember { mutableStateOf(true) }
     var overallCompletionRate by remember { mutableStateOf(0f) }
-    
-    // Load students and class data on first composition
+
     LaunchedEffect(classId, currentUser?.id) {
         val actualTeacherId = teacherId ?: currentUser?.id?.toString()
         if (classId != null && actualTeacherId != null) {
-            println("TeacherStudentsScreen - Loading students for class ID: $classId, teacher ID: $actualTeacherId")
             viewModel.loadAllStudents(teacherId = actualTeacherId, classId = classId.toString())
             classViewModel.loadClassById(classId)
             classViewModel.loadClassStudents(classId)
-            
-            // 학생 통계 로드
+
             isLoadingStatistics = true
             classViewModel.loadClassStudentsStatistics(classId) { result ->
                 result.onSuccess { stats ->
                     overallCompletionRate = stats.overallCompletionRate
-                    studentsStatisticsMap = stats.students.associate { 
+                    studentsStatisticsMap = stats.students.associate {
                         it.studentId to StudentStats(
                             averageScore = it.averageScore,
                             completionRate = it.completionRate,
                             totalAssignments = it.totalAssignments,
-                            completedAssignments = it.completedAssignments
+                            completedAssignments = it.completedAssignments,
                         )
                     }
                     isLoadingStatistics = false
@@ -104,36 +107,34 @@ fun TeacherStudentsScreen(
             }
         }
     }
-    
-    // Handle error
+
+    // 네트워크 에러가 아닌 경우에만 에러를 클리어합니다.
+    // 네트워크 에러는 students.isEmpty()일 때 구분하기 위해 유지합니다.
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // Show error message
-            viewModel.clearError()
+            if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
+                viewModel.clearError()
+            }
         }
     }
-    
-    // 학생 등록 바텀시트 상태
+
     var showEnrollSheet by remember { mutableStateOf(false) }
     val selectedToEnroll = remember { mutableStateListOf<Int>() }
     val allStudentsForEnroll = remember { mutableStateListOf<Student>() }
     var isLoadingAllStudents by remember { mutableStateOf(false) }
+    var enrollNetworkError by remember { mutableStateOf<String?>(null) }
     var enrollSearchQuery by remember { mutableStateOf("") }
-    
-    // 학생 삭제 바텀시트 상태
+
     var showDeleteSheet by remember { mutableStateOf(false) }
     val selectedToDelete = remember { mutableStateListOf<Int>() }
     var deleteSearchQuery by remember { mutableStateOf("") }
-    
-    // 학생 삭제 재확인 다이얼로그 상태
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    
-    // EntryPoint를 통해 ApiService 주입받기 (바텀시트 독립적 데이터 로딩용)
+
     val context = LocalContext.current
     val studentRepository = remember {
         val entryPoint = EntryPointAccessors.fromApplication(
             context.applicationContext,
-            ApiServiceEntryPoint::class.java
+            ApiServiceEntryPoint::class.java,
         )
         val apiService = entryPoint.apiService()
         StudentRepository(apiService)
@@ -141,102 +142,110 @@ fun TeacherStudentsScreen(
     val classRepository = remember {
         val entryPoint = EntryPointAccessors.fromApplication(
             context.applicationContext,
-            ApiServiceEntryPoint::class.java
+            ApiServiceEntryPoint::class.java,
         )
         val apiService = entryPoint.apiService()
         com.example.voicetutor.data.repository.ClassRepository(apiService)
     }
-    
-    // 바텀시트 열 때 전체 학생 목록을 별도로 로드 (viewModel.students와 완전히 독립)
+
     LaunchedEffect(showEnrollSheet) {
         if (showEnrollSheet) {
             isLoadingAllStudents = true
+            enrollNetworkError = null
             try {
-                // teacherId = null로 전체 학생 계정 가져오기
                 val result = studentRepository.getAllStudents(teacherId = null, classId = null)
                 result.onSuccess { allStudents ->
                     withContext(Dispatchers.Main) {
                         allStudentsForEnroll.clear()
                         allStudentsForEnroll.addAll(allStudents)
                         isLoadingAllStudents = false
+                        enrollNetworkError = null
                     }
-                }.onFailure {
+                }.onFailure { exception ->
                     withContext(Dispatchers.Main) {
                         isLoadingAllStudents = false
+                        val errorMessage = ErrorMessageMapper.getErrorMessage(exception)
+                        enrollNetworkError = if (ErrorMessageMapper.isNetworkError(errorMessage)) {
+                            errorMessage
+                        } else {
+                            null
+                        }
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     isLoadingAllStudents = false
-                    println("Error loading all students for enrollment: ${e.message}")
+                    val errorMessage = ErrorMessageMapper.getErrorMessage(e)
+                    enrollNetworkError = if (ErrorMessageMapper.isNetworkError(errorMessage)) {
+                        errorMessage
+                    } else {
+                        null
+                    }
                 }
             }
         } else {
-            // 바텀시트가 닫히면 바텀시트용 목록만 클리어 (viewModel.students는 건드리지 않음)
             allStudentsForEnroll.clear()
             selectedToEnroll.clear()
             enrollSearchQuery = ""
+            enrollNetworkError = null
         }
     }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Class info header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryIndigo.copy(alpha = 0.08f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    color = PrimaryIndigo.copy(alpha = HEADER_ALPHA),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(HEADER_CORNER_RADIUS.dp),
                 )
-                .padding(20.dp)
+                .padding(20.dp),
         ) {
             Column {
-                    Text(
-                        text = className,
-                        style = MaterialTheme.typography.titleLarge,
+                Text(
+                    text = className,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "$subjectName - $description",
-                        style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
+                    color = Gray800,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "$subjectName - $description",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600,
                 )
             }
         }
-        
-        // Class statistics
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             VTStatsCard(
                 title = "과제 제출률",
                 value = if (isLoadingStatistics) "-" else "${overallCompletionRate.toInt()}%",
                 icon = Icons.Filled.Done,
                 iconColor = PrimaryIndigo,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
-            
+
             VTStatsCard(
                 title = "학생",
                 value = students.size.toString(),
                 icon = Icons.Filled.Person,
                 iconColor = PrimaryIndigo,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         }
-        
-        // Action buttons
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             VTButton(
                 text = "학생 등록",
@@ -250,10 +259,10 @@ fun TeacherStudentsScreen(
                         imageVector = Icons.Filled.PersonAdd,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             VTButton(
                 text = "학생 삭제",
@@ -266,59 +275,65 @@ fun TeacherStudentsScreen(
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         }
-        
-        // Students list
+
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "학생 목록",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Gray800
+                    color = Gray800,
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
-            // Loading indicator
+
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        color = PrimaryIndigo
+                        color = PrimaryIndigo,
                     )
                 }
             } else if (students.isEmpty()) {
+                // students.isEmpty()일 때 네트워크 에러인지 확인
+                val isNetworkErrorState = error != null && ErrorMessageMapper.isNetworkError(error)
+                val emptyStateMessage = if (isNetworkErrorState) {
+                    "네트워크가 불안정합니다"
+                } else {
+                    "학생이 없습니다"
+                }
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Person,
                             contentDescription = null,
                             tint = Gray400,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(EMPTY_STATE_ICON_SIZE.dp),
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "학생이 없습니다",
+                            text = emptyStateMessage,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
@@ -332,16 +347,15 @@ fun TeacherStudentsScreen(
                         totalAssignments = stats?.totalAssignments ?: 0,
                         completedAssignments = stats?.completedAssignments ?: 0,
                         isLoadingStats = isLoadingStatistics,
-                        isLastItem = index == students.lastIndex
+                        isLastItem = index == students.lastIndex,
                     )
                 }
             }
         }
     }
-    
-    // 학생 등록 바텀시트
+
     if (showEnrollSheet) {
-        ModalBottomSheet(onDismissRequest = { 
+        ModalBottomSheet(onDismissRequest = {
             showEnrollSheet = false
             enrollSearchQuery = ""
         }) {
@@ -349,16 +363,15 @@ fun TeacherStudentsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 Text(
-                    "학생 등록", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.SemiBold
+                    "학생 등록",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(12.dp))
-                
-                // 검색 입력 필드
+
                 OutlinedTextField(
                     value = enrollSearchQuery,
                     onValueChange = { enrollSearchQuery = it },
@@ -366,19 +379,19 @@ fun TeacherStudentsScreen(
                         .fillMaxWidth()
                         .height(48.dp),
                     textStyle = MaterialTheme.typography.bodyMedium,
-                    placeholder = { 
+                    placeholder = {
                         Text(
-                            "이름 또는 이메일로 검색", 
+                            "이름 또는 이메일로 검색",
                             color = Gray500,
-                            style = MaterialTheme.typography.bodyMedium
-                        ) 
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Search,
                             contentDescription = "검색",
                             tint = Gray600,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                     },
                     trailingIcon = {
@@ -388,7 +401,7 @@ fun TeacherStudentsScreen(
                                     imageVector = Icons.Filled.Clear,
                                     contentDescription = "검색어 지우기",
                                     tint = Gray600,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
                         }
@@ -397,59 +410,58 @@ fun TeacherStudentsScreen(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PrimaryIndigo,
-                        unfocusedBorderColor = Gray300
-                    )
+                        unfocusedBorderColor = Gray300,
+                    ),
                 )
                 Spacer(Modifier.height(12.dp))
 
-                // 로딩 중일 때
                 if (isLoadingAllStudents) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator(color = PrimaryIndigo)
                     }
                 } else {
-                    // 이미 등록된 학생 제외 목록
                     val enrolledIds = classStudents.map { it.id }.toSet()
                     val allCandidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
-                    
-                    // 검색어로 필터링 (이름 또는 이메일)
+
                     val searchQueryLower = enrollSearchQuery.lowercase()
                     val candidates = if (searchQueryLower.isBlank()) {
                         allCandidates
                     } else {
                         allCandidates.filter { student ->
                             val name = student.name?.lowercase() ?: ""
-                            val email = student.email?.lowercase() ?: ""
+                            val email = student.email.lowercase()
                             name.contains(searchQueryLower) || email.contains(searchQueryLower)
                         }
                     }
 
-                    if (allCandidates.isEmpty()) {
+                    if (enrollNetworkError != null) {
+                        Text("네트워크가 불안정합니다", color = Gray600)
+                    } else if (allCandidates.isEmpty()) {
                         Text("등록 가능한 학생이 없습니다.", color = Gray600)
                     } else if (candidates.isEmpty()) {
                         Text("검색 결과가 없습니다.", color = Gray600)
                     } else {
                         candidates.forEach { student ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
-                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                    Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                                }
+                                val checked = selectedToEnroll.contains(student.id)
+                                Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                    if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
+                                })
                             }
-                            val checked = selectedToEnroll.contains(student.id)
-                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
-                                if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
-                            })
                         }
-                    }
                     }
                 }
 
@@ -459,20 +471,17 @@ fun TeacherStudentsScreen(
                         text = "취소",
                         onClick = { showEnrollSheet = false },
                         variant = ButtonVariant.Outline,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     VTButton(
                         text = "등록",
                         onClick = {
                             classId?.let { id ->
                                 coroutineScope.launch {
-                                    // 모든 학생 등록 API 호출
                                     selectedToEnroll.forEach { sid ->
                                         classViewModel.enrollStudentToClass(classId = id, studentId = sid)
                                     }
-                                    // 등록 완료를 위해 잠시 대기 (API 처리 시간)
-                                    delay(500)
-                                    // 완료 후 갱신
+                                    delay(DELAY_AFTER_ENROLL)
                                     classViewModel.loadClassStudents(id)
                                     val actualTeacherId = teacherId ?: currentUser?.id?.toString()
                                     actualTeacherId?.let {
@@ -483,17 +492,17 @@ fun TeacherStudentsScreen(
                             showEnrollSheet = false
                         },
                         variant = ButtonVariant.Primary,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        enabled = selectedToEnroll.isNotEmpty(),
                     )
                 }
                 Spacer(Modifier.height(8.dp))
             }
         }
     }
-    
-    // 학생 삭제 바텀시트
+
     if (showDeleteSheet) {
-        ModalBottomSheet(onDismissRequest = { 
+        ModalBottomSheet(onDismissRequest = {
             showDeleteSheet = false
             deleteSearchQuery = ""
         }) {
@@ -501,16 +510,15 @@ fun TeacherStudentsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 Text(
-                    "학생 삭제", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.SemiBold
+                    "학생 삭제",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(12.dp))
-                
-                // 검색 입력 필드
+
                 OutlinedTextField(
                     value = deleteSearchQuery,
                     onValueChange = { deleteSearchQuery = it },
@@ -518,19 +526,19 @@ fun TeacherStudentsScreen(
                         .fillMaxWidth()
                         .height(48.dp),
                     textStyle = MaterialTheme.typography.bodyMedium,
-                    placeholder = { 
+                    placeholder = {
                         Text(
-                            "이름 또는 이메일로 검색", 
+                            "이름 또는 이메일로 검색",
                             color = Gray500,
-                            style = MaterialTheme.typography.bodyMedium
-                        ) 
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Search,
                             contentDescription = "검색",
                             tint = Gray600,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                     },
                     trailingIcon = {
@@ -540,7 +548,7 @@ fun TeacherStudentsScreen(
                                     imageVector = Icons.Filled.Clear,
                                     contentDescription = "검색어 지우기",
                                     tint = Gray600,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
                         }
@@ -549,27 +557,27 @@ fun TeacherStudentsScreen(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PrimaryIndigo,
-                        unfocusedBorderColor = Gray300
-                    )
+                        unfocusedBorderColor = Gray300,
+                    ),
                 )
                 Spacer(Modifier.height(12.dp))
 
-                // 이미 등록된 학생 목록
                 val enrolledStudents = classStudents
-                
-                // 검색어로 필터링 (이름 또는 이메일)
                 val searchQueryLower = deleteSearchQuery.lowercase()
                 val filteredStudents = if (searchQueryLower.isBlank()) {
                     enrolledStudents
                 } else {
                     enrolledStudents.filter { student ->
                         val name = student.name?.lowercase() ?: ""
-                        val email = student.email?.lowercase() ?: ""
+                        val email = student.email.lowercase()
                         name.contains(searchQueryLower) || email.contains(searchQueryLower)
                     }
                 }
 
-                if (enrolledStudents.isEmpty()) {
+                val isDeleteNetworkError = !classIsLoading && enrolledStudents.isEmpty() && classError != null && ErrorMessageMapper.isNetworkError(classError)
+                if (isDeleteNetworkError) {
+                    Text("네트워크가 불안정합니다", color = Gray600)
+                } else if (enrolledStudents.isEmpty()) {
                     Text("삭제할 학생이 없습니다.", color = Gray600)
                 } else if (filteredStudents.isEmpty()) {
                     Text("검색 결과가 없습니다.", color = Gray600)
@@ -578,7 +586,7 @@ fun TeacherStudentsScreen(
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
@@ -598,7 +606,7 @@ fun TeacherStudentsScreen(
                         text = "취소",
                         onClick = { showDeleteSheet = false },
                         variant = ButtonVariant.Outline,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     VTButton(
                         text = "삭제",
@@ -609,15 +617,14 @@ fun TeacherStudentsScreen(
                         },
                         variant = ButtonVariant.Primary,
                         modifier = Modifier.weight(1f),
-                        enabled = selectedToDelete.isNotEmpty()
+                        enabled = selectedToDelete.isNotEmpty(),
                     )
                 }
                 Spacer(Modifier.height(8.dp))
             }
         }
     }
-    
-    // 학생 삭제 재확인 다이얼로그
+
     if (showDeleteConfirmDialog && selectedToDelete.isNotEmpty()) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
@@ -625,20 +632,20 @@ fun TeacherStudentsScreen(
                 Text(
                     text = "학생 제거",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             },
             text = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Text(
                         text = "선택한 ${selectedToDelete.size}명의 학생을 이 반에서 제거하시겠습니까?\n제거된 학생의 과제, 질문, 답변이 모두 삭제됩니다.",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         VTButton(
                             text = "취소",
@@ -647,7 +654,7 @@ fun TeacherStudentsScreen(
                             },
                             variant = ButtonVariant.Outline,
                             size = ButtonSize.Medium,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         VTButton(
                             text = "제거",
@@ -655,36 +662,22 @@ fun TeacherStudentsScreen(
                                 classId?.let { id ->
                                     coroutineScope.launch {
                                         try {
-                                            println("[DELETE] Starting to remove ${selectedToDelete.size} students from class $id")
-                                            // 각 학생을 순차적으로 삭제
                                             withContext(Dispatchers.IO) {
                                                 for (studentId in selectedToDelete) {
-                                                    println("[DELETE] Removing student $studentId from class $id")
-                                                    val result = classRepository.removeStudentFromClass(id, studentId)
-                                                    result.onSuccess {
-                                                        println("[DELETE] Successfully removed student $studentId")
-                                                    }.onFailure { e ->
-                                                        println("[DELETE] Failed to remove student $studentId: ${e.message}")
-                                                        e.printStackTrace()
-                                                    }
+                                                    classRepository.removeStudentFromClass(id, studentId)
                                                 }
                                             }
-                                            println("[DELETE] All deletions completed. Refreshing lists...")
-                                            // 완료 후 갱신
                                             withContext(Dispatchers.Main) {
                                                 classViewModel.loadClassStudents(id)
                                                 val actualTeacherId = teacherId ?: currentUser?.id?.toString()
                                                 actualTeacherId?.let {
                                                     viewModel.loadAllStudents(teacherId = it, classId = id.toString())
                                                 }
-                                                // 다이얼로그와 시트 닫기
                                                 showDeleteConfirmDialog = false
                                                 showDeleteSheet = false
                                                 selectedToDelete.clear()
                                             }
                                         } catch (e: Exception) {
-                                            println("[DELETE] Error removing students: ${e.message}")
-                                            e.printStackTrace()
                                             withContext(Dispatchers.Main) {
                                                 showDeleteConfirmDialog = false
                                                 showDeleteSheet = false
@@ -696,13 +689,13 @@ fun TeacherStudentsScreen(
                             },
                             variant = ButtonVariant.Primary,
                             size = ButtonSize.Medium,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
             },
             confirmButton = {},
-            dismissButton = {}
+            dismissButton = {},
         )
     }
 }
@@ -715,7 +708,7 @@ fun StudentListItem(
     totalAssignments: Int,
     completedAssignments: Int,
     isLoadingStats: Boolean,
-    isLastItem: Boolean
+    isLastItem: Boolean,
 ) {
     androidx.compose.material3.Surface(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
@@ -725,61 +718,60 @@ fun StudentListItem(
         border = androidx.compose.foundation.BorderStroke(1.dp, Gray200.copy(alpha = 0.6f)),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
+            .padding(horizontal = 4.dp, vertical = 4.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(AVATAR_SIZE.dp)
                             .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(PrimaryIndigo.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
+                            .background(PrimaryIndigo.copy(alpha = AVATAR_BACKGROUND_ALPHA)),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = student.name?.takeIf { it.isNotBlank() }?.firstOrNull()?.toString() ?: "?",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = PrimaryIndigo
+                            color = PrimaryIndigo,
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.width(12.dp))
-                    
+
                     Column {
-                            Text(
-                                text = student.name ?: "이름 없음",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Gray800
-                            )
+                        Text(
+                            text = student.name ?: "이름 없음",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Gray800,
+                        )
                         Text(
                             text = run {
-                                val email = student.email ?: "이메일 없음"
-                                if (email.length > 24) email.take(24) + "..." else email
+                                val email = student.email
+                                if (email.length > EMAIL_MAX_LENGTH) email.take(EMAIL_MAX_LENGTH) + "..." else email
                             },
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray600
+                            color = Gray600,
                         )
                     }
                 }
-                
+
                 Column(
                     horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-
                     val scoreLabelText = if (isLoadingStats) "평균 점수: 로딩 중" else "평균 점수: ${averageScore.toInt()}점"
 
                     val scoreColor = PrimaryIndigo
@@ -788,77 +780,78 @@ fun StudentListItem(
                         modifier = Modifier
                             .padding(top = 2.dp)
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                            .background(PrimaryIndigo.copy(alpha = 0.08f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .background(PrimaryIndigo.copy(alpha = SCORE_BADGE_ALPHA))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
                     ) {
                         Text(
                             text = scoreLabelText,
                             style = MaterialTheme.typography.bodySmall,
                             color = scoreColor,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val completionText = if (isLoadingStats) "과제 완료: 로딩 중" else {
-                if (totalAssignments > 0) "과제 완료: $completedAssignments/$totalAssignments" else "과제 완료: -"
-            }
-            val completionRateValue = (completionRate).toInt()
-            val completionRateText = if (isLoadingStats) "완료율: 로딩 중" else "완료율: ${completionRateValue}%"
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val completionText = if (isLoadingStats) {
+                    "과제 완료: 로딩 중"
+                } else {
+                    if (totalAssignments > 0) "과제 완료: $completedAssignments/$totalAssignments" else "과제 완료: -"
+                }
+                val completionRateValue = (completionRate).toInt()
+                val completionRateText = if (isLoadingStats) "완료율: 로딩 중" else "완료율: $completionRateValue%"
 
-            val completionColor = Gray600
+                val completionColor = Gray600
+                val progressColor = PrimaryIndigo
+
+                Text(
+                    text = completionText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = completionColor,
+                    fontWeight = FontWeight.Medium,
+                )
+
+                Text(
+                    text = completionRateText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = progressColor,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             val progressColor = PrimaryIndigo
 
-        Text(
-                text = completionText,
-                style = MaterialTheme.typography.bodySmall,
-                color = completionColor,
-                fontWeight = FontWeight.Medium
-            )
-
-        Text(
-                text = completionRateText,
-            style = MaterialTheme.typography.bodySmall,
+            VTProgressBar(
+                progress = if (totalAssignments > 0) (completionRate / 100) else 0f,
+                showPercentage = false,
                 color = progressColor,
-                fontWeight = FontWeight.Bold
+                height = PROGRESS_BAR_HEIGHT,
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val progressColor = PrimaryIndigo
-
-        VTProgressBar(
-            progress = if (totalAssignments > 0) (completionRate/100) else 0f,
-            showPercentage = false,
-            color = progressColor,
-            height = 6
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
     }
-}
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp)
+            .padding(horizontal = 4.dp),
     ) {
         if (!isLastItem) {
-        Spacer(modifier = Modifier.height(4.dp))
-            Divider(
+            Spacer(modifier = Modifier.height(4.dp))
+            HorizontalDivider(
                 modifier = Modifier.fillMaxWidth(),
                 color = Gray200,
-                thickness = 0.5.dp
+                thickness = 0.5.dp,
             )
         }
     }

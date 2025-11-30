@@ -1,15 +1,10 @@
 package com.example.voicetutor.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.AssignmentData
@@ -17,7 +12,6 @@ import com.example.voicetutor.data.models.ClassData
 import com.example.voicetutor.data.models.CourseClass
 import com.example.voicetutor.data.models.Material
 import com.example.voicetutor.data.models.Subject
-import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.di.NetworkModule
@@ -25,11 +19,11 @@ import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -62,10 +56,9 @@ class EditAssignmentScreenTest {
             description = "심화 수학",
             subject = subject,
             teacherName = "김선생",
-            
-            
+
             studentCount = 25,
-            createdAt = "2024-01-01T00:00:00Z"
+            createdAt = "2024-01-01T00:00:00Z",
         )
 
         val assignment = AssignmentData(
@@ -74,7 +67,7 @@ class EditAssignmentScreenTest {
             description = "기초 개념을 복습하는 과제입니다.",
             totalQuestions = 10,
             createdAt = "2024-01-01T09:00:00Z",
-            
+
             dueAt = "2024-02-01T23:59:59Z",
             courseClass = courseClass,
             materials = listOf(
@@ -83,10 +76,10 @@ class EditAssignmentScreenTest {
                     kind = "PDF",
                     s3Key = "assignments/1/material.pdf",
                     bytes = 1024,
-                    createdAt = "2024-01-01T09:00:00Z"
-                )
+                    createdAt = "2024-01-01T09:00:00Z",
+                ),
             ),
-            grade = "중학교 1학년"
+            grade = "중학교 1학년",
         )
 
         val classes = listOf(
@@ -100,9 +93,8 @@ class EditAssignmentScreenTest {
                 studentCount = 25,
                 studentCountAlt = 25,
                 createdAt = "2024-01-01T00:00:00Z",
-                
-                
-            )
+
+            ),
         )
 
         fakeApi.apply {
@@ -131,10 +123,8 @@ class EditAssignmentScreenTest {
             }
         }
 
-        waitForText("과제 정보")
-        composeRule.onNodeWithText("과제 정보", useUnmergedTree = true).assertIsDisplayed()
-        waitForText("과제의 기본 정보를 수정할 수 있습니다")
-        composeRule.onNodeWithText("과제의 기본 정보를 수정할 수 있습니다", useUnmergedTree = true).assertIsDisplayed()
+        waitForText("기본 정보")
+        composeRule.onNodeWithText("기본 정보", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -147,12 +137,9 @@ class EditAssignmentScreenTest {
 
         waitForText("과제 제목")
         composeRule.onAllNodesWithText("과제 제목", useUnmergedTree = true).onFirst().assertIsDisplayed()
-        waitForText("과제 설명")
-        composeRule.onAllNodesWithText("과제 설명", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        waitForText("설명")
+        composeRule.onAllNodesWithText("설명", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
-
-
-
 
     @Test
     fun editAssignmentScreen_displaysDueDateField() {
@@ -166,10 +153,6 @@ class EditAssignmentScreenTest {
         composeRule.onAllNodesWithText("마감일", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
-
-
-
-
     @Test
     fun editAssignmentScreen_showsLoadingIndicator() {
         fakeApi.shouldFailGetAssignmentById = false
@@ -180,7 +163,6 @@ class EditAssignmentScreenTest {
             }
         }
 
-        // Loading indicator might appear briefly
         composeRule.waitForIdle()
     }
 
@@ -207,10 +189,8 @@ class EditAssignmentScreenTest {
             }
         }
 
-        // Error should be handled gracefully
         composeRule.waitForIdle()
     }
-
 
     @Test
     fun editAssignmentScreen_displaysClassDropdown() {
@@ -232,7 +212,6 @@ class EditAssignmentScreenTest {
             }
         }
 
-        // Should handle null/zero assignmentId gracefully
         composeRule.waitForIdle()
     }
 
@@ -244,10 +223,8 @@ class EditAssignmentScreenTest {
             }
         }
 
-        // Should handle null teacherId gracefully
         composeRule.waitForIdle()
     }
-
 
     @Test
     fun editAssignmentScreen_displaysDateFormats() {
@@ -258,7 +235,7 @@ class EditAssignmentScreenTest {
         }
 
         waitForText("마감일")
-        // Date fields should be displayed
+
         composeRule.waitForIdle()
     }
 
@@ -273,10 +250,8 @@ class EditAssignmentScreenTest {
             }
         }
 
-        // Should handle class loading error gracefully
         composeRule.waitForIdle()
     }
-
 
     @Test
     fun editAssignmentScreen_displaysCurrentAssignmentData() {
@@ -291,22 +266,14 @@ class EditAssignmentScreenTest {
         composeRule.onNodeWithText("1단원 복습 과제", useUnmergedTree = true).assertIsDisplayed()
     }
 
-
-
-
-
-
     @Test
     fun editAssignmentScreen_displaysLoadingState() {
-        // Simulate loading delay
-
         composeRule.setContent {
             VoiceTutorTheme {
                 EditAssignmentScreen(assignmentId = 1, teacherId = "2")
             }
         }
 
-        // Loading state should be displayed
         composeRule.waitForIdle()
     }
 
@@ -320,7 +287,6 @@ class EditAssignmentScreenTest {
             }
         }
 
-        // Should handle empty assignment data gracefully
         composeRule.waitForIdle()
     }
 
@@ -332,13 +298,8 @@ class EditAssignmentScreenTest {
             }
         }
 
-        // Material info might be displayed
         composeRule.waitForIdle()
     }
-
-
-
-
 
     @Test
     fun editAssignmentScreen_displaysDeleteWarningMessage() {
@@ -352,13 +313,12 @@ class EditAssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("과제를 삭제하면", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
         composeRule.waitForIdle()
     }
-
 
     @Test
     fun editAssignmentScreen_displaysDueDateFieldSecond() {
@@ -372,14 +332,13 @@ class EditAssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("마감일", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
         composeRule.waitForIdle()
         composeRule.onAllNodesWithText("마감일", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
-
 
     @Test
     fun editAssignmentScreen_displaysAssignmentDescriptionField() {
@@ -393,7 +352,7 @@ class EditAssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("설명", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
@@ -413,7 +372,7 @@ class EditAssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("과제 제목", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
@@ -421,4 +380,3 @@ class EditAssignmentScreenTest {
         composeRule.onAllNodesWithText("과제 제목", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 }
-

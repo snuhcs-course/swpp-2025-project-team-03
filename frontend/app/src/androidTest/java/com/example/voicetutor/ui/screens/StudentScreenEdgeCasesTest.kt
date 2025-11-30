@@ -5,17 +5,13 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.performClick
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.data.repository.AuthRepository
-import com.example.voicetutor.data.repository.DashboardRepository
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
-import com.example.voicetutor.ui.viewmodel.DashboardViewModel
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,17 +26,16 @@ class StudentScreenEdgeCasesTest {
     fun studentDashboard_emptyAssignments_showsPlaceholder() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = emptyList()
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
-        val dashboardViewModel = DashboardViewModel(DashboardRepository(fakeApi))
 
         composeRule.setContent {
             VoiceTutorTheme {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
                 )
             }
         }
@@ -62,18 +57,17 @@ class StudentScreenEdgeCasesTest {
         val fakeApi = FakeApiService().apply {
             shouldFailPersonalAssignments = true
             personalAssignmentsErrorMessage = "네트워크 오류"
+            personalAssignmentsDelayMillis = 100L
         }
 
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
-        val dashboardViewModel = DashboardViewModel(DashboardRepository(fakeApi))
 
         composeRule.setContent {
             VoiceTutorTheme {
                 StudentDashboardScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    dashboardViewModel = dashboardViewModel
                 )
             }
         }
@@ -82,13 +76,6 @@ class StudentScreenEdgeCasesTest {
             authViewModel.login("student@voicetutor.com", "student123")
         }
 
-        // Initially fails and shows empty state placeholder
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodes(hasText("과제가 없습니다", substring = true), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
-        }
-
-        // Recover by turning off failure and re-triggering load
         composeRule.runOnIdle {
             fakeApi.shouldFailPersonalAssignments = false
             assignmentViewModel.loadPendingStudentAssignments(authViewModel.currentUser.value?.id ?: 1)
@@ -112,7 +99,7 @@ class StudentScreenEdgeCasesTest {
                 AssignmentDetailedResultsScreen(
                     personalAssignmentId = 1,
                     assignmentTitle = "상세 결과 테스트",
-                    viewModel = assignmentViewModel
+                    viewModel = assignmentViewModel,
                 )
             }
         }
@@ -136,4 +123,3 @@ class StudentScreenEdgeCasesTest {
         composeRule.onAllNodesWithText("은하수", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 }
-

@@ -1,9 +1,8 @@
 package com.example.voicetutor.ui.screens
 
-import androidx.compose.ui.graphics.Color
 import com.example.voicetutor.ui.theme.*
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Unit tests for data classes used in UI screens.
@@ -20,7 +19,7 @@ class ScreenDataClassesTest {
             studentCount = 30,
             assignmentCount = 5,
             completionRate = 0.8f,
-            color = PrimaryIndigo
+            color = PrimaryIndigo,
         )
 
         assertEquals(1, classRoom.id)
@@ -43,7 +42,7 @@ class ScreenDataClassesTest {
             studentCount = 30,
             assignmentCount = 5,
             completionRate = 0.8f,
-            color = PrimaryIndigo
+            color = PrimaryIndigo,
         )
         val copy = original.copy(name = "수학 B반", studentCount = 25)
 
@@ -96,7 +95,7 @@ class ScreenDataClassesTest {
             completionRate = 0.75f,
             totalStudents = 30,
             completedStudents = 22,
-            averageScore = 85
+            averageScore = 85,
         )
 
         assertEquals(1, assignment.id)
@@ -145,51 +144,6 @@ class ScreenDataClassesTest {
     }
 
     @Test
-    fun quizQuestionData_creation_withAllFields_createsCorrectInstance() {
-        val question = QuizQuestionData(
-            questionNumber = 1,
-            question = "질문",
-            hint = "힌트",
-            modelAnswer = "정답"
-        )
-
-        assertEquals(1, question.questionNumber)
-        assertEquals("질문", question.question)
-        assertEquals("힌트", question.hint)
-        assertEquals("정답", question.modelAnswer)
-    }
-
-    @Test
-    fun quizQuestionData_copy_createsNewInstance() {
-        val original = QuizQuestionData(1, "질문", "힌트", "정답")
-        val copy = original.copy(question = "새 질문")
-
-        assertEquals("새 질문", copy.question)
-        assertEquals("질문", original.question)
-    }
-
-    @Test
-    fun quizQuestionData_equality_worksCorrectly() {
-        val question1 = QuizQuestionData(1, "질문", "힌트", "정답")
-        val question2 = QuizQuestionData(1, "질문", "힌트", "정답")
-        val question3 = QuizQuestionData(2, "질문", "힌트", "정답")
-
-        assertEquals(question1, question2)
-        assertNotEquals(question1, question3)
-    }
-
-    @Test
-    fun quizQuestionData_componentAccess_worksCorrectly() {
-        val question = QuizQuestionData(1, "질문", "힌트", "정답")
-        val (number, q, hint, answer) = question
-
-        assertEquals(1, number)
-        assertEquals("질문", q)
-        assertEquals("힌트", hint)
-        assertEquals("정답", answer)
-    }
-
-    @Test
     fun assignmentDetail_creation_withAllFields_createsCorrectInstance() {
         val detail = AssignmentDetail(
             title = "과제 1",
@@ -203,7 +157,7 @@ class ScreenDataClassesTest {
             totalStudents = 30,
             submittedStudents = 22,
             averageScore = 85,
-            completionRate = 73
+            completionRate = 73,
         )
 
         assertEquals("과제 1", detail.title)
@@ -224,7 +178,7 @@ class ScreenDataClassesTest {
     fun assignmentDetail_copy_createsNewInstance() {
         val original = AssignmentDetail(
             "과제 1", "수학", "수학 A반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 22, 85, 73
+            "진행중", "퀴즈", "설명", 30, 22, 85, 73,
         )
         val copy = original.copy(title = "과제 2", averageScore = 90)
 
@@ -238,15 +192,15 @@ class ScreenDataClassesTest {
     fun assignmentDetail_equality_worksCorrectly() {
         val detail1 = AssignmentDetail(
             "과제 1", "수학", "수학 A반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 22, 85, 73
+            "진행중", "퀴즈", "설명", 30, 22, 85, 73,
         )
         val detail2 = AssignmentDetail(
             "과제 1", "수학", "수학 A반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 22, 85, 73
+            "진행중", "퀴즈", "설명", 30, 22, 85, 73,
         )
         val detail3 = AssignmentDetail(
             "과제 2", "수학", "수학 A반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 22, 85, 73
+            "진행중", "퀴즈", "설명", 30, 22, 85, 73,
         )
 
         assertEquals(detail1, detail2)
@@ -260,7 +214,7 @@ class ScreenDataClassesTest {
             studentId = "2024001",
             submittedAt = "2024-12-30",
             score = 85,
-            status = "제출완료"
+            status = "제출완료",
         )
 
         assertEquals("홍길동", submission.name)
@@ -315,7 +269,7 @@ class ScreenDataClassesTest {
                 studentCount = 30,
                 assignmentCount = 5,
                 completionRate = 0.8f,
-                color = color
+                color = color,
             )
             assertEquals(color, room.color)
         }
@@ -337,16 +291,10 @@ class ScreenDataClassesTest {
     }
 
     @Test
-    fun quizQuestionData_withLargeQuestionNumber_handlesCorrectly() {
-        val question = QuizQuestionData(Int.MAX_VALUE, "질문", "힌트", "정답")
-        assertEquals(Int.MAX_VALUE, question.questionNumber)
-    }
-
-    @Test
     fun assignmentDetail_withZeroCompletionRate_handlesCorrectly() {
         val detail = AssignmentDetail(
             "과제", "과목", "반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 0, 0, 0
+            "진행중", "퀴즈", "설명", 30, 0, 0, 0,
         )
         assertEquals(0, detail.completionRate)
         assertEquals(0, detail.submittedStudents)
@@ -375,17 +323,10 @@ class ScreenDataClassesTest {
     }
 
     @Test
-    fun quizQuestionData_toString_containsFields() {
-        val question = QuizQuestionData(1, "질문", "힌트", "정답")
-        val string = question.toString()
-        assertTrue(string.contains("질문") || string.contains("1"))
-    }
-
-    @Test
     fun assignmentDetail_toString_containsFields() {
         val detail = AssignmentDetail(
             "과제 1", "수학", "수학 A반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 22, 85, 73
+            "진행중", "퀴즈", "설명", 30, 22, 85, 73,
         )
         val string = detail.toString()
         assertTrue(string.contains("과제 1") || string.contains("수학"))
@@ -407,22 +348,14 @@ class ScreenDataClassesTest {
     }
 
     @Test
-    fun quizQuestionData_hashCode_isConsistent() {
-        val question1 = QuizQuestionData(1, "질문", "힌트", "정답")
-        val question2 = QuizQuestionData(1, "질문", "힌트", "정답")
-
-        assertEquals(question1.hashCode(), question2.hashCode())
-    }
-
-    @Test
     fun assignmentDetail_hashCode_isConsistent() {
         val detail1 = AssignmentDetail(
             "과제 1", "수학", "수학 A반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 22, 85, 73
+            "진행중", "퀴즈", "설명", 30, 22, 85, 73,
         )
         val detail2 = AssignmentDetail(
             "과제 1", "수학", "수학 A반", "2024-12-31", "2024-01-01",
-            "진행중", "퀴즈", "설명", 30, 22, 85, 73
+            "진행중", "퀴즈", "설명", 30, 22, 85, 73,
         )
 
         assertEquals(detail1.hashCode(), detail2.hashCode())
@@ -436,4 +369,3 @@ class ScreenDataClassesTest {
         assertEquals(submission1.hashCode(), submission2.hashCode())
     }
 }
-

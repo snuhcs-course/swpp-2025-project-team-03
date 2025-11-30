@@ -1,17 +1,10 @@
 package com.example.voicetutor.ui.screens
 
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.data.models.AssignmentData
 import com.example.voicetutor.data.models.AssignmentResultData
@@ -27,10 +20,10 @@ import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import java.util.Locale
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class TeacherAssignmentResultsScreenTest {
@@ -52,8 +45,9 @@ class TeacherAssignmentResultsScreenTest {
                 submittedStudents = 0,
                 totalStudents = 0,
                 averageScore = 0.0,
-                completionRate = 0.0
+                completionRate = 0.0,
             )
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -79,6 +73,7 @@ class TeacherAssignmentResultsScreenTest {
             assignmentsResponse = listOf(assignmentData)
             shouldFailPersonalAssignments = true
             personalAssignmentsErrorMessage = "네트워크 오류"
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -86,10 +81,10 @@ class TeacherAssignmentResultsScreenTest {
         setScreenContent(viewModel, assignmentId)
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule.onAllNodes(hasText("제출된 과제가 없습니다", substring = true), useUnmergedTree = true)
+            composeTestRule.onAllNodes(hasText("네트워크가 불안정합니다", substring = true), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onAllNodesWithText("제출된 과제가 없습니다", useUnmergedTree = true)
+        composeTestRule.onAllNodesWithText("네트워크가 불안정합니다", useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
     }
@@ -105,7 +100,7 @@ class TeacherAssignmentResultsScreenTest {
             status = PersonalAssignmentStatus.SUBMITTED,
             studentName = "김제출",
             startedAt = "2024-01-03T09:00:00Z",
-            submittedAt = "2024-01-03T10:00:00Z"
+            submittedAt = "2024-01-03T10:00:00Z",
         )
         val inProgress = createPersonalAssignmentData(
             id = 402,
@@ -113,7 +108,7 @@ class TeacherAssignmentResultsScreenTest {
             status = PersonalAssignmentStatus.IN_PROGRESS,
             studentName = "박진행",
             startedAt = "2024-01-04T09:00:00Z",
-            submittedAt = null
+            submittedAt = null,
         )
         val notStarted = createPersonalAssignmentData(
             id = 403,
@@ -121,7 +116,7 @@ class TeacherAssignmentResultsScreenTest {
             status = PersonalAssignmentStatus.NOT_STARTED,
             studentName = "최미시작",
             startedAt = null,
-            submittedAt = null
+            submittedAt = null,
         )
 
         val fakeApi = FakeApiService().apply {
@@ -130,14 +125,15 @@ class TeacherAssignmentResultsScreenTest {
             personalAssignmentsResponse = listOf(submitted, inProgress, notStarted)
             personalAssignmentStatisticsResponses = mutableMapOf(
                 submitted.id to createStatistics(averageScore = 88f, accuracy = 0.88f),
-                inProgress.id to createStatistics(averageScore = 55f, accuracy = 0.55f)
+                inProgress.id to createStatistics(averageScore = 55f, accuracy = 0.55f),
             )
             assignmentResultResponse = AssignmentResultData(
                 submittedStudents = 1,
                 totalStudents = 3,
                 averageScore = 88.0,
-                completionRate = 0.33
+                completionRate = 0.33,
             )
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -164,7 +160,7 @@ class TeacherAssignmentResultsScreenTest {
             status = PersonalAssignmentStatus.IN_PROGRESS,
             studentName = "진행중 학생",
             startedAt = "2024-01-06T09:00:00Z",
-            submittedAt = null
+            submittedAt = null,
         )
         val notStarted = createPersonalAssignmentData(
             id = 602,
@@ -172,7 +168,7 @@ class TeacherAssignmentResultsScreenTest {
             status = PersonalAssignmentStatus.NOT_STARTED,
             studentName = "미시작 학생",
             startedAt = null,
-            submittedAt = null
+            submittedAt = null,
         )
 
         val fakeApi = FakeApiService().apply {
@@ -184,8 +180,9 @@ class TeacherAssignmentResultsScreenTest {
                 submittedStudents = 0,
                 totalStudents = 2,
                 averageScore = 0.0,
-                completionRate = 0.0
+                completionRate = 0.0,
             )
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -200,13 +197,13 @@ class TeacherAssignmentResultsScreenTest {
 
     private fun setScreenContent(
         viewModel: AssignmentViewModel,
-        assignmentId: Int
+        assignmentId: Int,
     ) {
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherAssignmentResultsScreen(
                     assignmentViewModel = viewModel,
-                    assignmentId = assignmentId
+                    assignmentId = assignmentId,
                 )
             }
         }
@@ -220,7 +217,7 @@ class TeacherAssignmentResultsScreenTest {
 
     private fun createAssignmentData(
         id: Int,
-        title: String
+        title: String,
     ): AssignmentData {
         val subject = Subject(id = 10, name = "국어", code = "KOR")
         val courseClass = CourseClass(
@@ -229,10 +226,9 @@ class TeacherAssignmentResultsScreenTest {
             description = "테스트 반",
             subject = subject,
             teacherName = "이선생",
-            
-            
+
             studentCount = 30,
-            createdAt = "2024-01-01T00:00:00Z"
+            createdAt = "2024-01-01T00:00:00Z",
         )
         return AssignmentData(
             id = id,
@@ -240,7 +236,7 @@ class TeacherAssignmentResultsScreenTest {
             description = "상세 설명",
             totalQuestions = 10,
             createdAt = "2024-01-01T09:00:00Z",
-            
+
             dueAt = "2024-02-01T23:59:59Z",
             courseClass = courseClass,
             materials = listOf(
@@ -249,10 +245,10 @@ class TeacherAssignmentResultsScreenTest {
                     kind = "PDF",
                     s3Key = "assignments/$id/material.pdf",
                     bytes = 1024,
-                    createdAt = "2024-01-01T09:00:00Z"
-                )
+                    createdAt = "2024-01-01T09:00:00Z",
+                ),
             ),
-            grade = "중학교 2학년"
+            grade = "중학교 2학년",
         )
     }
 
@@ -262,7 +258,7 @@ class TeacherAssignmentResultsScreenTest {
         status: PersonalAssignmentStatus,
         studentName: String,
         startedAt: String?,
-        submittedAt: String?
+        submittedAt: String?,
     ): PersonalAssignmentData {
         val displayName = studentName
         val email = "${studentName.lowercase(Locale.getDefault())}@school.com"
@@ -272,27 +268,27 @@ class TeacherAssignmentResultsScreenTest {
             student = StudentInfo(
                 id = id,
                 displayName = displayName,
-                email = email
+                email = email,
             ),
             assignment = PersonalAssignmentInfo(
                 id = assignmentId,
                 title = "듣기 평가 과제",
                 description = "과제 설명",
                 totalQuestions = 10,
-                
+
                 dueAt = "2024-02-01T23:59:59Z",
-                grade = "중학교 2학년"
+                grade = "중학교 2학년",
             ),
             status = status,
             solvedNum = if (status == PersonalAssignmentStatus.SUBMITTED) 10 else 4,
             startedAt = startedAt,
-            submittedAt = submittedAt
+            submittedAt = submittedAt,
         )
     }
 
     private fun createStatistics(
         averageScore: Float,
-        accuracy: Float
+        accuracy: Float,
     ): PersonalAssignmentStatistics =
         PersonalAssignmentStatistics(
             totalQuestions = 10,
@@ -302,7 +298,6 @@ class TeacherAssignmentResultsScreenTest {
             totalProblem = 10,
             solvedProblem = (accuracy * 10).toInt(),
             progress = accuracy,
-            averageScore = averageScore
+            averageScore = averageScore,
         )
 }
-

@@ -2,15 +2,12 @@ package com.example.voicetutor.data.network
 
 import com.example.voicetutor.data.models.*
 import kotlinx.coroutines.delay
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Response
 
-/**
- * Simple in-memory ApiService implementation used in instrumentation tests.
- *
- * The goal is to return deterministic data without performing any network calls so that
- * Compose screens depending on ViewModels/Repositories can render normally.
- */
 class FakeApiService : ApiService {
 
     private val subject = Subject(id = 1, name = "수학", code = "MATH")
@@ -21,10 +18,9 @@ class FakeApiService : ApiService {
         description = "기초 수학 수업",
         subject = subject,
         teacherName = "김선생님",
-        
-        
+
         studentCount = 25,
-        createdAt = "2024-01-01T00:00:00Z"
+        createdAt = "2024-01-01T00:00:00Z",
     )
 
     private val classData = ClassData(
@@ -37,8 +33,7 @@ class FakeApiService : ApiService {
         studentCount = 25,
         studentCountAlt = 25,
         createdAt = "2024-01-01T00:00:00Z",
-        
-        
+
     )
 
     private val assignmentData = AssignmentData(
@@ -47,7 +42,7 @@ class FakeApiService : ApiService {
         description = "기초 개념을 복습하는 과제입니다.",
         totalQuestions = 10,
         createdAt = "2024-01-01T09:00:00Z",
-        
+
         dueAt = "2024-02-01T23:59:59Z",
         courseClass = courseClass,
         materials = listOf(
@@ -56,32 +51,10 @@ class FakeApiService : ApiService {
                 kind = "PDF",
                 s3Key = "assignments/1/material.pdf",
                 bytes = 1024,
-                createdAt = "2024-01-01T09:00:00Z"
-            )
+                createdAt = "2024-01-01T09:00:00Z",
+            ),
         ),
-        grade = "중학교 1학년"
-    )
-
-    private val studentResult = StudentResult(
-        studentId = "S1",
-        name = "홍길동",
-        score = 85,
-        confidenceScore = 80,
-        status = "완료",
-        startedAt = "2024-01-02T09:00:00Z",
-        submittedAt = "2024-01-02T10:00:00Z",
-        answers = listOf("A", "B", "C"),
-        detailedAnswers = listOf(
-            DetailedAnswer(
-                questionNumber = 1,
-                question = "1번 문제",
-                studentAnswer = "A",
-                correctAnswer = "A",
-                isCorrect = true,
-                confidenceScore = 90,
-                responseTime = "15s"
-            )
-        )
+        grade = "중학교 1학년",
     )
 
     private val personalAssignmentQuestion = PersonalAssignmentQuestion(
@@ -90,7 +63,7 @@ class FakeApiService : ApiService {
         question = "지구는 몇 개의 위성을 가지고 있나요?",
         answer = "1개",
         explanation = "지구의 유일한 자연 위성은 달입니다.",
-        difficulty = "EASY"
+        difficulty = "EASY",
     )
 
     var personalAssignmentQuestionsResponses: List<PersonalAssignmentQuestion> = listOf(personalAssignmentQuestion)
@@ -109,7 +82,7 @@ class FakeApiService : ApiService {
         totalProblem = 10,
         solvedProblem = 5,
         progress = 0.5f,
-        averageScore = 85f
+        averageScore = 85f,
     )
 
     val personalAssignmentData = PersonalAssignmentData(
@@ -117,7 +90,7 @@ class FakeApiService : ApiService {
         student = StudentInfo(
             id = 1,
             displayName = "홍길동",
-            email = "student1@school.com"
+            email = "student1@school.com",
         ),
         assignment = PersonalAssignmentInfo(
             id = assignmentData.id,
@@ -125,26 +98,19 @@ class FakeApiService : ApiService {
             description = assignmentData.description ?: "",
             totalQuestions = assignmentData.totalQuestions,
             dueAt = assignmentData.dueAt,
-            grade = assignmentData.grade ?: "중학교 1학년"
+            grade = assignmentData.grade ?: "중학교 1학년",
         ),
         status = PersonalAssignmentStatus.IN_PROGRESS,
         solvedNum = 5,
         startedAt = "2024-01-02T09:00:00Z",
-        submittedAt = null
+        submittedAt = null,
     )
 
     private val student = Student(
         id = 1,
         name = "홍길동",
         email = "student1@school.com",
-        role = UserRole.STUDENT
-    )
-
-    private val allStudentsStudent = AllStudentsStudent(
-        id = 1,
-        name = "홍길동",
-        email = "student1@school.com",
-        role = UserRole.STUDENT
+        role = UserRole.STUDENT,
     )
 
     private val studentProgress = StudentProgress(
@@ -154,19 +120,19 @@ class FakeApiService : ApiService {
         averageScore = 88.5,
         weeklyProgress = listOf(
             WeeklyProgress(week = "2024-W01", assignmentsCompleted = 2, averageScore = 90.0),
-            WeeklyProgress(week = "2024-W02", assignmentsCompleted = 3, averageScore = 85.0)
+            WeeklyProgress(week = "2024-W02", assignmentsCompleted = 3, averageScore = 85.0),
         ),
         subjectBreakdown = listOf(
             SubjectProgress(subject = "수학", completedAssignments = 4, totalAssignments = 5, averageScore = 90.0),
-            SubjectProgress(subject = "과학", completedAssignments = 3, totalAssignments = 5, averageScore = 86.0)
-        )
+            SubjectProgress(subject = "과학", completedAssignments = 3, totalAssignments = 5, averageScore = 86.0),
+        ),
     )
 
     private val assignmentStatistics = AssignmentResultData(
         submittedStudents = 18,
         totalStudents = 25,
         averageScore = 82.0,
-        completionRate = 0.72
+        completionRate = 0.72,
     )
 
     private val dashboardStats = DashboardStats(
@@ -174,7 +140,7 @@ class FakeApiService : ApiService {
         totalStudents = 25,
         totalClasses = 3,
         completedAssignments = 5,
-        inProgressAssignments = 3
+        inProgressAssignments = 3,
     )
 
     private val assignmentCorrectness = listOf(
@@ -185,21 +151,13 @@ class FakeApiService : ApiService {
             isCorrect = true,
             answeredAt = "2024-01-02T10:00:00Z",
             questionNum = "1",
-            explanation = "태양계는 은하수 은하에 속해 있습니다."
-        )
-    )
-
-    private val assignmentSubmissionResult = AssignmentSubmissionResult(
-        submissionId = 100,
-        score = 85,
-        totalQuestions = 10,
-        correctAnswers = 8,
-        feedback = emptyList()
+            explanation = "태양계는 은하수 은하에 속해 있습니다.",
+        ),
     )
 
     var studentClassesResponse: List<ClassInfo> = listOf(
         ClassInfo(id = 1, name = "수학 A반"),
-        ClassInfo(id = 2, name = "과학 B반")
+        ClassInfo(id = 2, name = "과학 B반"),
     )
 
     var assignmentsResponse: List<AssignmentData> = listOf(assignmentData)
@@ -241,7 +199,6 @@ class FakeApiService : ApiService {
     private fun <T> failure(message: String): Response<ApiResponse<T>> =
         Response.success(ApiResponse(success = false, data = null, message = message, error = message))
 
-    // region Auth APIs
     override suspend fun login(request: LoginRequest): Response<LoginResponse> {
         val user = if (request.email.contains("teacher")) {
             User(
@@ -252,7 +209,7 @@ class FakeApiService : ApiService {
                 isStudent = false,
                 totalStudents = 25,
                 totalClasses = 3,
-                assignments = listOf(assignmentData)
+                assignments = listOf(assignmentData),
             )
         } else {
             User(
@@ -264,7 +221,7 @@ class FakeApiService : ApiService {
                 totalAssignments = 10,
                 completedAssignments = 7,
                 inProgressAssignments = 3,
-                assignments = listOf(assignmentData)
+                assignments = listOf(assignmentData),
             )
         }
         return Response.success(LoginResponse(success = true, user = user, token = "fake-token", message = null, error = null))
@@ -275,13 +232,11 @@ class FakeApiService : ApiService {
 
     override suspend fun logout(): Response<ApiResponse<Unit>> = success(Unit)
     override suspend fun deleteAccount(): Response<ApiResponse<Unit>> = success(Unit)
-    // endregion
 
-    // region Assignment APIs
     override suspend fun getAllAssignments(
         teacherId: String?,
         classId: String?,
-        status: String?
+        status: String?,
     ): Response<ApiResponse<List<AssignmentData>>> =
         if (shouldFailGetAllAssignments) {
             failure(getAllAssignmentsErrorMessage)
@@ -305,8 +260,8 @@ class FakeApiService : ApiService {
                     assignment_id = 99,
                     material_id = 501,
                     s3_key = "assignments/99/material.pdf",
-                    upload_url = "https://example.com/upload"
-                )
+                    upload_url = "https://example.com/upload",
+                ),
             )
         }
 
@@ -322,11 +277,6 @@ class FakeApiService : ApiService {
             success(assignmentResultResponse)
         }
 
-    override suspend fun submitAssignment(
-        id: Int,
-        submission: AssignmentSubmissionRequest
-    ): Response<ApiResponse<AssignmentSubmissionResult>> = success(assignmentSubmissionResult)
-
     override suspend fun checkS3Upload(assignmentId: Int): Response<ApiResponse<S3UploadStatus>> =
         success(
             S3UploadStatus(
@@ -337,14 +287,17 @@ class FakeApiService : ApiService {
                 file_size = 1024,
                 content_type = "application/pdf",
                 last_modified = "2024-01-01T09:00:00Z",
-                bucket = "fake-bucket"
-            )
+                bucket = "fake-bucket",
+            ),
         )
 
-    override suspend fun createQuestions(request: QuestionCreateRequest): Response<ApiResponse<Unit>> = success(Unit)
-    // endregion
+    override suspend fun createQuestions(request: QuestionCreateRequest): Response<ResponseBody> {
+        val content = """{"assignment_id":${request.assignment_id},"material_id":${request.material_id},"summary_preview":"","questions":[]}"""
+        val contentType = "application/json".toMediaType()
+        val responseBody = content.toResponseBody(contentType)
+        return Response.success(200, responseBody)
+    }
 
-    // region Student APIs
     var allStudentsResponse: List<Student> = listOf(student)
     var shouldFailAllStudents: Boolean = false
     var allStudentsErrorMessage: String = "Failed to load students"
@@ -360,12 +313,10 @@ class FakeApiService : ApiService {
 
     override suspend fun getStudentAssignments(id: Int): Response<ApiResponse<List<AssignmentData>>> =
         success(assignmentsResponse)
-    // endregion
 
-    // region Personal Assignment APIs
     override suspend fun getPersonalAssignments(
         studentId: Int?,
-        assignmentId: Int?
+        assignmentId: Int?,
     ): Response<ApiResponse<List<PersonalAssignmentData>>> {
         if (shouldFailPersonalAssignments) {
             return failure(personalAssignmentsErrorMessage)
@@ -394,7 +345,7 @@ class FakeApiService : ApiService {
         personalAssignmentId: Int,
         studentId: MultipartBody.Part,
         questionId: MultipartBody.Part,
-        audioFile: MultipartBody.Part
+        audioFile: MultipartBody.Part,
     ): Response<ApiResponse<AnswerSubmissionResponse>> {
         val response = answerSubmissionResponseQueue?.let { queue ->
             if (queue.isNotEmpty()) queue.removeAt(0) else null
@@ -422,7 +373,6 @@ class FakeApiService : ApiService {
         } else {
             success(assignmentCorrectnessResponses)
         }
-    // endregion
 
     override suspend fun getStudentProgress(id: Int): Response<ApiResponse<StudentProgress>> =
         if (shouldFailStudentProgress) {
@@ -431,7 +381,6 @@ class FakeApiService : ApiService {
             success(studentProgress)
         }
 
-    // region Class APIs
     var classesResponse: List<ClassData> = listOf(classData)
     var shouldFailClasses: Boolean = false
     var classesErrorMessage: String = "Failed to load classes"
@@ -452,6 +401,8 @@ class FakeApiService : ApiService {
 
     override suspend fun getClassById(id: Int): Response<ApiResponse<ClassData>> =
         success(classData.copy(id = id))
+
+    override suspend fun removeClassById(id: Int): Response<ApiResponse<Unit>> = success(Unit)
 
     var classStudentsResponse: List<Student> = listOf(student)
     var shouldFailClassStudents: Boolean = false
@@ -476,8 +427,8 @@ class FakeApiService : ApiService {
             EnrollmentData(
                 student = student.copy(id = studentId),
                 courseClass = classData.copy(id = id),
-                status = "ENROLLED"
-            )
+                status = "ENROLLED",
+            ),
         )
 
     override suspend fun removeStudentFromClass(id: Int, student_id: Int): Response<ApiResponse<Unit>> =
@@ -491,9 +442,9 @@ class FakeApiService : ApiService {
                 averageScore = 88.0f,
                 completionRate = 0.9f,
                 totalAssignments = 10,
-                completedAssignments = 9
-            )
-        )
+                completedAssignments = 9,
+            ),
+        ),
     )
     var shouldFailClassStudentsStatistics: Boolean = false
     var classStudentsStatisticsErrorMessage: String = "Failed to load class statistics"
@@ -504,13 +455,11 @@ class FakeApiService : ApiService {
         } else {
             success(classStudentsStatisticsResponse)
         }
-    // endregion
 
-    // region Reports & Dashboard
     override suspend fun getProgressReport(
         teacherId: String,
         classId: String?,
-        period: String
+        period: String,
     ): Response<ApiResponse<ProgressReportData>> =
         if (shouldFailCurriculumReport) {
             failure(curriculumReportErrorMessage)
@@ -527,16 +476,16 @@ class FakeApiService : ApiService {
                             className = classData.name,
                             studentCount = 25,
                             completedAssignments = 9,
-                            totalAssignments = 12
-                        )
-                    )
-                )
+                            totalAssignments = 12,
+                        ),
+                    ),
+                ),
             )
         }
 
     override suspend fun getCurriculumReport(
         classId: Int,
-        studentId: Int
+        studentId: Int,
     ): Response<ApiResponse<CurriculumReportData>> =
         if (shouldFailCurriculumReport) {
             failure(curriculumReportErrorMessage)
@@ -551,10 +500,10 @@ class FakeApiService : ApiService {
                             totalQuestions = 20,
                             correctQuestions = 16,
                             accuracy = 0.8,
-                            content = "수와 연산"
-                        )
-                    )
-                )
+                            content = "수와 연산",
+                        ),
+                    ),
+                ),
             )
         }
 
@@ -564,9 +513,7 @@ class FakeApiService : ApiService {
         } else {
             success(dashboardStats)
         }
-    // endregion
 
     override suspend fun healthCheck(): Response<ApiResponse<String>> =
         success("ok")
 }
-

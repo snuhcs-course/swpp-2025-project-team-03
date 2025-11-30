@@ -1,18 +1,17 @@
-package com.example.voicetutor.data.models
+﻿package com.example.voicetutor.data.models
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertNotEquals
 
 @RunWith(JUnit4::class)
 class ClassModelsTest {
 
     @Test
     fun classData_withAllFields_containsCorrectValues() {
-        // Arrange
         val subject = Subject(id = 1, name = "Math", code = "MATH")
         val classData = ClassData(
             id = 1,
@@ -20,13 +19,10 @@ class ClassModelsTest {
             subject = subject,
             description = "Description",
             teacherId = 1,
-            
-            
-            studentCount = 10,
-            createdAt = "2025-01-01"
-        )
 
-        // Assert
+            studentCount = 10,
+            createdAt = "2025-01-01",
+        )
         assertEquals(1, classData.id)
         assertEquals("Class1", classData.name)
         assertEquals("Math", classData.subject.name)
@@ -36,7 +32,6 @@ class ClassModelsTest {
 
     @Test
     fun classData_withEmptyDescription_handlesEmptyString() {
-        // Arrange
         val subject = Subject(id = 1, name = "Math")
         val classData = ClassData(
             id = 1,
@@ -44,19 +39,15 @@ class ClassModelsTest {
             subject = subject,
             description = "",
             teacherId = 1,
-            
-            
-            studentCount = 0,
-            createdAt = "2025-01-01"
-        )
 
-        // Assert
+            studentCount = 0,
+            createdAt = "2025-01-01",
+        )
         assertEquals("", classData.description)
     }
 
     @Test
     fun enrollmentData_withAllFields_containsCorrectValues() {
-        // Arrange
         val student = Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT)
         val subject = Subject(id = 1, name = "Math")
         val courseClass = ClassData(
@@ -65,18 +56,15 @@ class ClassModelsTest {
             subject = subject,
             description = "",
             teacherId = 1,
-            
-            
+
             studentCount = 0,
-            createdAt = "2025-01-01"
+            createdAt = "2025-01-01",
         )
         val enrollment = EnrollmentData(
             student = student,
             courseClass = courseClass,
-            status = "ENROLLED"
+            status = "ENROLLED",
         )
-
-        // Assert
         assertEquals(1, enrollment.student.id)
         assertEquals(1, enrollment.courseClass?.id)
         assertEquals("ENROLLED", enrollment.status)
@@ -84,15 +72,12 @@ class ClassModelsTest {
 
     @Test
     fun enrollmentData_withNullCourseClass_handlesNull() {
-        // Arrange
         val student = Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT)
         val enrollment = EnrollmentData(
             student = student,
             courseClass = null,
-            status = "PENDING"
+            status = "PENDING",
         )
-
-        // Assert
         assertEquals(1, enrollment.student.id)
         assertNull(enrollment.courseClass)
         assertEquals("PENDING", enrollment.status)
@@ -108,9 +93,9 @@ class ClassModelsTest {
             description = "Description",
             teacherId = 1,
             studentCount = 10,
-            studentCountAlt = 15
+            studentCountAlt = 15,
         )
-        
+
         assertEquals(15, classData.actualStudentCount)
     }
 
@@ -124,9 +109,9 @@ class ClassModelsTest {
             description = "Description",
             teacherId = 1,
             studentCount = 10,
-            studentCountAlt = null
+            studentCountAlt = null,
         )
-        
+
         assertEquals(10, classData.actualStudentCount)
     }
 
@@ -139,11 +124,11 @@ class ClassModelsTest {
             subject = subject,
             description = "Description",
             teacherId = 1,
-            studentCount = 10
+            studentCount = 10,
         )
-        
+
         val copy = original.copy(name = "Class2", studentCount = 20)
-        
+
         assertEquals("Class2", copy.name)
         assertEquals(20, copy.studentCount)
         assertEquals(original.id, copy.id)
@@ -158,7 +143,7 @@ class ClassModelsTest {
             subject = subject,
             description = "Description",
             teacherId = 1,
-            studentCount = 10
+            studentCount = 10,
         )
         val class2 = ClassData(
             id = 1,
@@ -166,7 +151,7 @@ class ClassModelsTest {
             subject = subject,
             description = "Description",
             teacherId = 1,
-            studentCount = 10
+            studentCount = 10,
         )
         val class3 = ClassData(
             id = 2,
@@ -174,9 +159,9 @@ class ClassModelsTest {
             subject = subject,
             description = "Description",
             teacherId = 1,
-            studentCount = 10
+            studentCount = 10,
         )
-        
+
         assertEquals(class1, class2)
         assertNotEquals(class1, class3)
     }
@@ -185,9 +170,9 @@ class ClassModelsTest {
     fun enrollmentData_copy_createsNewInstance() {
         val student = Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT)
         val original = EnrollmentData(student = student, courseClass = null, status = "PENDING")
-        
+
         val copy = original.copy(status = "ENROLLED")
-        
+
         assertEquals("ENROLLED", copy.status)
         assertEquals(original.student, copy.student)
     }
@@ -198,7 +183,7 @@ class ClassModelsTest {
         val enrollment1 = EnrollmentData(student = student, courseClass = null, status = "PENDING")
         val enrollment2 = EnrollmentData(student = student, courseClass = null, status = "PENDING")
         val enrollment3 = EnrollmentData(student = student, courseClass = null, status = "ENROLLED")
-        
+
         assertEquals(enrollment1, enrollment2)
         assertNotEquals(enrollment1, enrollment3)
     }
@@ -212,9 +197,9 @@ class ClassModelsTest {
             teacherId = 1,
             teacherName = "Teacher1",
             classId = 1,
-            sentAt = "2025-01-01T00:00:00Z"
+            sentAt = "2025-01-01T00:00:00Z",
         )
-        
+
         assertEquals(1, message.id)
         assertEquals("Test Message", message.title)
         assertEquals("Test Content", message.content)
@@ -228,9 +213,9 @@ class ClassModelsTest {
     fun studentClassStatistics_withAllFields_containsCorrectValues() {
         val stats = StudentClassStatistics(
             averageScore = 85.5f,
-            completionRate = 0.75f
+            completionRate = 0.75f,
         )
-        
+
         assertEquals(85.5f, stats.averageScore)
         assertEquals(0.75f, stats.completionRate)
     }
@@ -242,9 +227,9 @@ class ClassModelsTest {
             averageScore = 85.5f,
             completionRate = 0.75f,
             totalAssignments = 10,
-            completedAssignments = 7
+            completedAssignments = 7,
         )
-        
+
         assertEquals(1, item.studentId)
         assertEquals(85.5f, item.averageScore)
         assertEquals(0.75f, item.completionRate)
@@ -256,13 +241,13 @@ class ClassModelsTest {
     fun classStudentsStatistics_withAllFields_containsCorrectValues() {
         val students = listOf(
             StudentStatisticsItem(1, 85.5f, 0.75f, 10, 7),
-            StudentStatisticsItem(2, 90.0f, 0.8f, 10, 8)
+            StudentStatisticsItem(2, 90.0f, 0.8f, 10, 8),
         )
         val stats = ClassStudentsStatistics(
             overallCompletionRate = 0.775f,
-            students = students
+            students = students,
         )
-        
+
         assertEquals(0.775f, stats.overallCompletionRate)
         assertEquals(2, stats.students.size)
     }
@@ -270,14 +255,14 @@ class ClassModelsTest {
     @Test
     fun classCompletionRate_withAllFields_containsCorrectValues() {
         val rate = ClassCompletionRate(completionRate = 0.75f)
-        
+
         assertEquals(0.75f, rate.completionRate)
     }
 
     @Test
     fun classInfo_withAllFields_containsCorrectValues() {
         val info = ClassInfo(id = 1, name = "Class1")
-        
+
         assertEquals(1, info.id)
         assertEquals("Class1", info.name)
     }
@@ -287,7 +272,7 @@ class ClassModelsTest {
         val subject = Subject(id = 1, name = "Math")
         val class1 = ClassData(1, "Class1", subject, "Description", 1, null, 10)
         val class2 = ClassData(1, "Class1", subject, "Description", 1, null, 10)
-        
+
         assertEquals(class1.hashCode(), class2.hashCode())
     }
 
@@ -296,8 +281,7 @@ class ClassModelsTest {
         val student = Student(id = 1, name = "Student1", email = "s1@test.com", role = UserRole.STUDENT)
         val enrollment1 = EnrollmentData(student, null, "PENDING")
         val enrollment2 = EnrollmentData(student, null, "PENDING")
-        
+
         assertEquals(enrollment1.hashCode(), enrollment2.hashCode())
     }
 }
-

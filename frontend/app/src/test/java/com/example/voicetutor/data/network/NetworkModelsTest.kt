@@ -1,37 +1,19 @@
-package com.example.voicetutor.data.network
+﻿package com.example.voicetutor.data.network
 
-import com.example.voicetutor.data.models.AssignmentData
-import com.example.voicetutor.data.models.CourseClass
-import com.example.voicetutor.data.models.QuestionData
-import com.example.voicetutor.data.models.Subject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 
 @RunWith(JUnit4::class)
 class NetworkModelsTest {
-
-    private fun buildSubject() = Subject(id = 1, name = "Math")
-    private fun buildCourseClass() = CourseClass(
-        id = 1,
-        name = "Class1",
-        description = null,
-        subject = buildSubject(),
-        teacherName = "Teacher1",
-        
-        
-        studentCount = 10,
-        createdAt = "2025-01-01"
-    )
 
     @Test
     fun recentAnswerData_containsCorrectValues() {
         // Arrange
         val data = RecentAnswerData(
-            personalAssignmentId = 100
+            personalAssignmentId = 100,
         )
 
         // Assert
@@ -45,7 +27,7 @@ class NetworkModelsTest {
             success = true,
             data = "test data",
             message = "Success",
-            error = null
+            error = null,
         )
 
         // Assert
@@ -62,7 +44,7 @@ class NetworkModelsTest {
             success = false,
             data = null,
             message = null,
-            error = "Error occurred"
+            error = "Error occurred",
         )
 
         // Assert
@@ -74,19 +56,14 @@ class NetworkModelsTest {
     @Test
     fun createAssignmentRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val questions = listOf(
-            QuestionData(id = 1, question = "Q1", type = "SHORT_ANSWER", options = null, correctAnswer = "A1")
-        )
-        val request = CreateAssignmentRequest(
-            title = "Assignment1",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            type = "QUIZ",
-            description = "Description",
-            questions = questions
-        )
+        val request = CreateAssignmentRequest.builder()
+            .title("Assignment1")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description("Description")
+            .build()
 
         // Assert
         assertEquals("Assignment1", request.title)
@@ -94,28 +71,23 @@ class NetworkModelsTest {
         assertEquals(1, request.class_id)
         assertEquals("2025-12-31", request.due_at)
         assertEquals("1", request.grade)
-        assertEquals("QUIZ", request.type)
         assertEquals("Description", request.description)
-        assertEquals(1, request.questions?.size)
     }
 
     @Test
     fun createAssignmentRequest_withNullOptionalFields_handlesNulls() {
         // Arrange
-        val request = CreateAssignmentRequest(
-            title = "Assignment1",
-            subject = "Math",
-            class_id = 1,
-            due_at = "2025-12-31",
-            grade = "1",
-            type = "QUIZ",
-            description = null,
-            questions = null
-        )
+        val request = CreateAssignmentRequest.builder()
+            .title("Assignment1")
+            .subject("Math")
+            .classId(1)
+            .dueAt("2025-12-31")
+            .grade("1")
+            .description(null)
+            .build()
 
         // Assert
         assertNull(request.description)
-        assertNull(request.questions)
     }
 
     @Test
@@ -125,7 +97,7 @@ class NetworkModelsTest {
             assignment_id = 50,
             material_id = 20,
             s3_key = "key123",
-            upload_url = "https://s3.amazonaws.com/upload"
+            upload_url = "https://s3.amazonaws.com/upload",
         )
 
         // Assert
@@ -146,7 +118,7 @@ class NetworkModelsTest {
             file_size = 1024L,
             content_type = "application/pdf",
             last_modified = "2025-01-01",
-            bucket = "my-bucket"
+            bucket = "my-bucket",
         )
 
         // Assert
@@ -170,7 +142,7 @@ class NetworkModelsTest {
             file_size = null,
             content_type = null,
             last_modified = null,
-            bucket = "my-bucket"
+            bucket = "my-bucket",
         )
 
         // Assert
@@ -186,7 +158,7 @@ class NetworkModelsTest {
         val request = QuestionCreateRequest(
             assignment_id = 1,
             material_id = 10,
-            total_number = 5
+            total_number = 5,
         )
 
         // Assert
@@ -198,12 +170,12 @@ class NetworkModelsTest {
     @Test
     fun createClassRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val request = CreateClassRequest(
-            name = "Class1",
-            description = "Description",
-            subject_name = "Math",
-            teacher_id = 1,
-        )
+        val request = CreateClassRequest.builder()
+            .name("Class1")
+            .description("Description")
+            .subjectName("Math")
+            .teacherId(1)
+            .build()
 
         // Assert
         assertEquals("Class1", request.name)
@@ -215,12 +187,12 @@ class NetworkModelsTest {
     @Test
     fun createClassRequest_withNullDescription_handlesNull() {
         // Arrange
-        val request = CreateClassRequest(
-            name = "Class1",
-            description = null,
-            subject_name = "Math",
-            teacher_id = 1,
-        )
+        val request = CreateClassRequest.builder()
+            .name("Class1")
+            .description(null)
+            .subjectName("Math")
+            .teacherId(1)
+            .build()
 
         // Assert
         assertNull(request.description)
@@ -229,14 +201,14 @@ class NetworkModelsTest {
     @Test
     fun updateAssignmentRequest_withAllFields_containsCorrectValues() {
         // Arrange
-        val request = UpdateAssignmentRequest(
-            title = "Updated",
-            description = "New description",
-            totalQuestions = 10,
-            dueAt = "2025-12-31T00:00:00Z",
-            grade = "A",
-            subject = SubjectUpdateRequest(id = 2, name = "Math", code = "MATH")
-        )
+        val request = UpdateAssignmentRequest.builder()
+            .title("Updated")
+            .description("New description")
+            .totalQuestions(10)
+            .dueAt("2025-12-31T00:00:00Z")
+            .grade("A")
+            .subject(SubjectUpdateRequest(id = 2, name = "Math", code = "MATH"))
+            .build()
 
         // Assert
         assertEquals("Updated", request.title)
@@ -249,143 +221,17 @@ class NetworkModelsTest {
 
     @Test
     fun updateAssignmentRequest_withNullFields_handlesNulls() {
-        // Arrange
-        val request = UpdateAssignmentRequest(
-            title = null,
-            description = null,
-            totalQuestions = null,
-            dueAt = null,
-            grade = null,
-            subject = null
-        )
+        // Arrange - Builder requires at least one field, so we use a minimal field
+        val request = UpdateAssignmentRequest.builder()
+            .title("Minimal")
+            .build()
 
         // Assert
-        assertNull(request.title)
+        assertEquals("Minimal", request.title)
         assertNull(request.description)
         assertNull(request.totalQuestions)
         assertNull(request.dueAt)
         assertNull(request.grade)
         assertNull(request.subject)
     }
-
-    @Test
-    fun assignmentSubmissionRequest_withAllFields_containsCorrectValues() {
-        // Arrange
-        val answers = listOf(
-            AnswerSubmission(questionId = 1, answer = "A1", audioFile = "file1.wav", confidence = 0.9f),
-            AnswerSubmission(questionId = 2, answer = "A2", audioFile = null, confidence = null)
-        )
-        val request = AssignmentSubmissionRequest(
-            studentId = 1,
-            answers = answers
-        )
-
-        // Assert
-        assertEquals(1, request.studentId)
-        assertEquals(2, request.answers.size)
-        assertEquals(1, request.answers[0].questionId)
-        assertNull(request.answers[1].audioFile)
-    }
-
-    @Test
-    fun answerSubmission_withAllFields_containsCorrectValues() {
-        // Arrange
-        val submission = AnswerSubmission(
-            questionId = 1,
-            answer = "Answer",
-            audioFile = "audio.wav",
-            confidence = 0.95f
-        )
-
-        // Assert
-        assertEquals(1, submission.questionId)
-        assertEquals("Answer", submission.answer)
-        assertEquals("audio.wav", submission.audioFile)
-        assertEquals(0.95f, submission.confidence ?: 0f, 0.01f)
-    }
-
-    @Test
-    fun answerSubmission_withNullOptionalFields_handlesNulls() {
-        // Arrange
-        val submission = AnswerSubmission(
-            questionId = 1,
-            answer = "Answer",
-            audioFile = null,
-            confidence = null
-        )
-
-        // Assert
-        assertNull(submission.audioFile)
-        assertNull(submission.confidence)
-    }
-
-    @Test
-    fun assignmentSubmissionResult_withAllFields_containsCorrectValues() {
-        // Arrange
-        val feedback = listOf(
-            QuestionFeedback(
-                questionId = 1,
-                isCorrect = true,
-                studentAnswer = "A1",
-                correctAnswer = "A1",
-                explanation = "Correct",
-                confidence = 0.9f,
-                pronunciationScore = 0.8f
-            )
-        )
-        val result = AssignmentSubmissionResult(
-            submissionId = 1,
-            score = 85,
-            totalQuestions = 10,
-            correctAnswers = 8,
-            feedback = feedback
-        )
-
-        // Assert
-        assertEquals(1, result.submissionId)
-        assertEquals(85, result.score)
-        assertEquals(10, result.totalQuestions)
-        assertEquals(8, result.correctAnswers)
-        assertEquals(1, result.feedback.size)
-    }
-
-    @Test
-    fun questionFeedback_withAllFields_containsCorrectValues() {
-        // Arrange
-        val feedback = QuestionFeedback(
-            questionId = 1,
-            isCorrect = true,
-            studentAnswer = "A1",
-            correctAnswer = "A1",
-            explanation = "Correct answer",
-            confidence = 0.95f,
-            pronunciationScore = 0.9f
-        )
-
-        // Assert
-        assertEquals(1, feedback.questionId)
-        assertEquals(true, feedback.isCorrect)
-        assertEquals("A1", feedback.studentAnswer)
-        assertEquals(0.95f, feedback.confidence, 0.01f)
-        assertEquals(0.9f, feedback.pronunciationScore ?: 0f, 0.01f)
-    }
-
-    @Test
-    fun questionFeedback_withNullOptionalFields_handlesNulls() {
-        // Arrange
-        val feedback = QuestionFeedback(
-            questionId = 1,
-            isCorrect = false,
-            studentAnswer = "Wrong",
-            correctAnswer = "Correct",
-            explanation = null,
-            confidence = 0.3f,
-            pronunciationScore = null
-        )
-
-        // Assert
-        assertNull(feedback.explanation)
-        assertNull(feedback.pronunciationScore)
-    }
 }
-

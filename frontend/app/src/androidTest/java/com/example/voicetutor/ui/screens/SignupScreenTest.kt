@@ -3,25 +3,14 @@ package com.example.voicetutor.ui.screens
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.voicetutor.data.models.User
-import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AuthRepository
-import com.example.voicetutor.data.repository.SignupException
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
-import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,21 +29,6 @@ class SignupScreenTest {
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
-    }
-
-    private fun signupButton(): SemanticsNodeInteraction {
-        composeRule.waitUntil(timeoutMillis = 15_000) {
-            try {
-                composeRule.onAllNodesWithText("계정 만들기", substring = true, useUnmergedTree = true)
-                    .filter(hasClickAction())
-                    .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
-                false
-            }
-        }
-        return composeRule.onAllNodesWithText("계정 만들기", substring = true, useUnmergedTree = true)
-            .filter(hasClickAction())
-            .onFirst()
     }
 
     @Test
@@ -103,9 +77,6 @@ class SignupScreenTest {
             }
         }
 
-        // Password requirements might be displayed
         composeRule.waitForIdle()
     }
-
 }
-

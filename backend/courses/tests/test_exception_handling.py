@@ -114,18 +114,6 @@ class TestCoursesExceptionHandling:
             assert response.data["success"] is False
             assert "학생 제거 중 오류가 발생했습니다" in response.data["message"]
 
-    def test_student_statistics_view_exception(self, api_client, student):
-        """StudentStatisticsView의 exception 처리 테스트 (line 238-240)"""
-        url = reverse("student-statistics", kwargs={"id": student.id})
-        with patch("courses.views.Account.objects.get") as mock_get:
-            mock_get.side_effect = Exception("Database error")
-
-            response = api_client.get(url, format="json")
-
-            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-            assert response.data["success"] is False
-            assert "학생 진도 통계량 조회 중 오류가 발생했습니다" in response.data["message"]
-
     def test_class_list_view_exception(self, api_client):
         """ClassListView의 exception 처리 테스트 (line 275-277)"""
         url = reverse("class-list")

@@ -9,9 +9,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * 간단한 Compose UI 테스트 - MockK 없이 UI 요소만 확인
- */
 @Ignore("LoginScreen requires ViewModel setup")
 @RunWith(AndroidJUnit4::class)
 class SimpleLoginScreenTest {
@@ -27,7 +24,6 @@ class SimpleLoginScreenTest {
             }
         }
 
-        // "로그인" 텍스트가 있는지 확인
         composeTestRule.onNodeWithText("로그인", useUnmergedTree = true).assertExists()
     }
 
@@ -39,7 +35,6 @@ class SimpleLoginScreenTest {
             }
         }
 
-        // 이메일 입력 필드가 있는지 확인
         composeTestRule.onNodeWithText("이메일", useUnmergedTree = true).assertExists()
     }
 
@@ -51,8 +46,6 @@ class SimpleLoginScreenTest {
             }
         }
 
-        // 비밀번호 입력 필드가 있는지 확인
         composeTestRule.onNodeWithText("비밀번호", useUnmergedTree = true).assertExists()
     }
 }
-

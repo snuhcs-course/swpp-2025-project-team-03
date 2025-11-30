@@ -1,7 +1,7 @@
 package com.example.voicetutor.di
 
-import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.ApiConfig
+import com.example.voicetutor.data.network.ApiService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -21,7 +21,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    
+
     @Provides
     @Singleton
     fun provideGson(): Gson {
@@ -29,7 +29,7 @@ object NetworkModule {
             .setLenient()
             .create()
     }
-    
+
     @Provides
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
@@ -37,28 +37,28 @@ object NetworkModule {
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
-    
+
     @Provides
     @Singleton
     fun provideCookieJar(): CookieJar {
         return object : CookieJar {
             private val cookieStore = mutableMapOf<String, List<Cookie>>()
-            
+
             override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
                 cookieStore[url.host] = cookies
             }
-            
+
             override fun loadForRequest(url: HttpUrl): List<Cookie> {
                 return cookieStore[url.host] ?: emptyList()
             }
         }
     }
-    
+
     @Provides
     @Singleton
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
-        cookieJar: CookieJar
+        cookieJar: CookieJar,
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .cookieJar(cookieJar)
@@ -68,13 +68,13 @@ object NetworkModule {
             .writeTimeout(60, TimeUnit.SECONDS)
             .build()
     }
-    
+
     @Provides
     @Singleton
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
         gson: Gson,
-        apiConfig: ApiConfig
+        apiConfig: ApiConfig,
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(apiConfig.getBaseUrl())
@@ -82,7 +82,7 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
-    
+
     @Provides
     @Singleton
     fun provideApiService(retrofit: Retrofit): ApiService {

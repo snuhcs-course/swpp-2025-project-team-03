@@ -286,5 +286,10 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "reports": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }

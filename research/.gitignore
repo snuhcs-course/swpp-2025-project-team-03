@@ -221,3 +221,17 @@ __marimo__/
 data/
 train/
 valid/
+
+# test files
+*.pdf
+*.wav
+compare_audio.py
+*.csv
+*.joblib
+*/chain_runner.py
+*.txt
+tmp.py
+test_local_standalone.py
+Achievements/model/model.pt
+Achievements/test_achievement_inference.py
+

@@ -9,13 +9,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Tests that call actual Screen Preview composables.
- * This ensures the actual Screen code is executed, increasing coverage.
- * 
- * Note: Most Preview tests are ignored because they require ViewModel setup.
- * Only tests for screens without ViewModel dependencies are enabled.
- */
 @RunWith(AndroidJUnit4::class)
 class ScreenPreviewTests {
 
@@ -211,17 +204,6 @@ class ScreenPreviewTests {
 
     @Test
     @Ignore("Requires ViewModel setup")
-    fun assignmentQuizScreen_preview_renders() {
-        composeTestRule.setContent {
-            VoiceTutorTheme {
-                AssignmentQuizScreenPreview()
-            }
-        }
-        composeTestRule.waitForIdle()
-    }
-
-    @Test
-    @Ignore("Requires ViewModel setup")
     fun reportScreen_preview_renders() {
         composeTestRule.setContent {
             VoiceTutorTheme {
@@ -264,4 +246,3 @@ class ScreenPreviewTests {
         composeTestRule.waitForIdle()
     }
 }
-

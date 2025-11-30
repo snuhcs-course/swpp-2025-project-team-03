@@ -201,7 +201,7 @@ def main():
     quizzes = generate_quizzes(material, args.n)
     end_time = time.time()
 
-    print(f"\n✅ Generated {len(quizzes)} quizzes in {end_time - start_time} seconds:\n")
+    print(f"\n Generated {len(quizzes)} quizzes in {end_time - start_time} seconds:\n")
     for i, q in enumerate(quizzes, 1):
         print(f"[{i}] Topic: {q.topic}")
         print(f"Q: {q.question}")

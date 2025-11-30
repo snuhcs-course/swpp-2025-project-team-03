@@ -1,11 +1,11 @@
-package com.example.voicetutor.data.repository
+﻿package com.example.voicetutor.data.repository
 
 import com.example.voicetutor.data.models.DashboardStats
-import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.ApiResponse
+import com.example.voicetutor.data.network.ApiService
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
@@ -24,7 +24,7 @@ class DashboardRepositoryTest {
         totalStudents = 50,
         totalClasses = 5,
         completedAssignments = 15,
-        inProgressAssignments = 5
+        inProgressAssignments = 5,
     )
 
     @Test
@@ -36,7 +36,7 @@ class DashboardRepositoryTest {
             success = true,
             data = stats,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
 
@@ -58,7 +58,7 @@ class DashboardRepositoryTest {
             success = true,
             data = null,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
 
@@ -74,7 +74,7 @@ class DashboardRepositoryTest {
     fun getDashboardStats_apiFailure_returnsFailure() = runTest {
         // Arrange
         val repo = DashboardRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{"error":"Failed"}""")
+        val errorBody = """{"error":"Failed"}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.error(500, errorBody))
 
         // Act
@@ -90,7 +90,7 @@ class DashboardRepositoryTest {
     fun getDashboardStats_apiFailure_noErrorBody_returnsDefaultError() = runTest {
         // Arrange
         val repo = DashboardRepository(apiService)
-        val errorBody = ResponseBody.create("application/json".toMediaType(), """{}""")
+        val errorBody = """{}""".toResponseBody("application/json".toMediaType())
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.error(500, errorBody))
 
         // Act
@@ -124,13 +124,13 @@ class DashboardRepositoryTest {
             totalStudents = 0,
             totalClasses = 0,
             completedAssignments = 0,
-            inProgressAssignments = 0
+            inProgressAssignments = 0,
         )
         val apiResponse = ApiResponse(
             success = true,
             data = stats,
             message = "Success",
-            error = null
+            error = null,
         )
         whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
 
@@ -142,5 +142,44 @@ class DashboardRepositoryTest {
         assert(result.getOrNull()?.totalAssignments == 0)
         assert(result.getOrNull()?.totalStudents == 0)
     }
-}
 
+    @Test
+    fun getDashboardStats_successFalse_returnsFailure() = runTest {
+        // Arrange
+        val repo = DashboardRepository(apiService)
+        val apiResponse = ApiResponse<DashboardStats>(
+            success = false,
+            data = null,
+            message = null,
+            error = "Failed to load stats",
+        )
+        whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getDashboardStats("1")
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("Failed to load stats") == true)
+    }
+
+    @Test
+    fun getDashboardStats_successFalse_noError_returnsDefaultMessage() = runTest {
+        // Arrange
+        val repo = DashboardRepository(apiService)
+        val apiResponse = ApiResponse<DashboardStats>(
+            success = false,
+            data = null,
+            message = null,
+            error = null,
+        )
+        whenever(apiService.getDashboardStats("1")).thenReturn(Response.success(apiResponse))
+
+        // Act
+        val result = repo.getDashboardStats("1")
+
+        // Assert
+        assert(result.isFailure)
+        assert(result.exceptionOrNull()?.message?.contains("통계 데이터를 가져오는데 실패했습니다") == true)
+    }
+}

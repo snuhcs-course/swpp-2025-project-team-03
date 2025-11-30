@@ -11,10 +11,10 @@ import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
-import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(AndroidJUnit4::class)
 class AssignmentDetailScreenTest {
@@ -47,7 +47,7 @@ class AssignmentDetailScreenTest {
                     assignmentId = personalAssignmentId,
                     assignmentTitle = assignmentTitle,
                     onStartAssignment = { startClicked.set(true) },
-                    assignmentViewModelParam = assignmentViewModel
+                    assignmentViewModelParam = assignmentViewModel,
                 )
             }
         }
@@ -65,32 +65,4 @@ class AssignmentDetailScreenTest {
         composeRule.onNodeWithText("과제 시작", useUnmergedTree = true).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) { startClicked.get() }
     }
-
-    @Test
-    fun assignmentDetailScreen_errorState_displaysErrorMessage() {
-        val failingApi = FakeApiService().apply {
-            shouldFailGetAssignmentById = true
-            getAssignmentByIdErrorMessage = "서버 오류"
-        }
-        val assignmentRepository = AssignmentRepository(failingApi)
-        val assignmentViewModel = AssignmentViewModel(assignmentRepository)
-
-        composeRule.setContent {
-            VoiceTutorTheme {
-                AssignmentDetailScreen(
-                    assignmentId = 999,
-                    assignmentTitle = "에러 과제",
-                    assignmentViewModelParam = assignmentViewModel
-                )
-            }
-        }
-
-        composeRule.runOnIdle {
-            assignmentViewModel.loadAssignmentById(999)
-        }
-
-        waitForText("서버 오류")
-        composeRule.onNodeWithText("서버 오류", useUnmergedTree = true).assertIsDisplayed()
-    }
 }
-

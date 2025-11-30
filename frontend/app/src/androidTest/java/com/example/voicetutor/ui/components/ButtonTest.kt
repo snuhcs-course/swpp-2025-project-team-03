@@ -1,12 +1,12 @@
 package com.example.voicetutor.ui.components
 
-import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import org.junit.Rule
@@ -25,7 +25,7 @@ class ButtonTest {
             VoiceTutorTheme {
                 VTButton(
                     text = "클릭하세요",
-                    onClick = {}
+                    onClick = {},
                 )
             }
         }
@@ -36,12 +36,12 @@ class ButtonTest {
     @Test
     fun button_callsOnClick_whenClicked() {
         var clicked = false
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTButton(
                     text = "클릭하세요",
-                    onClick = { clicked = true }
+                    onClick = { clicked = true },
                 )
             }
         }
@@ -53,13 +53,13 @@ class ButtonTest {
     @Test
     fun button_doesNotCallOnClick_whenDisabled() {
         var clicked = false
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTButton(
                     text = "비활성화",
                     onClick = { clicked = true },
-                    enabled = false
+                    enabled = false,
                 )
             }
         }
@@ -67,6 +67,10 @@ class ButtonTest {
         composeTestRule.onNodeWithText("비활성화")
             .assertIsNotEnabled()
             .assertExists()
+
+        // Verify that onClick was not called even if button is clicked
+        composeTestRule.onNodeWithText("비활성화").performClick()
+        assert(!clicked)
     }
 
     @Test
@@ -76,7 +80,7 @@ class ButtonTest {
                 VTButton(
                     text = "Primary",
                     onClick = {},
-                    variant = ButtonVariant.Primary
+                    variant = ButtonVariant.Primary,
                 )
             }
         }
@@ -91,7 +95,7 @@ class ButtonTest {
                 VTButton(
                     text = "Secondary",
                     onClick = {},
-                    variant = ButtonVariant.Secondary
+                    variant = ButtonVariant.Secondary,
                 )
             }
         }
@@ -106,7 +110,7 @@ class ButtonTest {
                 VTButton(
                     text = "Outline",
                     onClick = {},
-                    variant = ButtonVariant.Outline
+                    variant = ButtonVariant.Outline,
                 )
             }
         }
@@ -121,7 +125,7 @@ class ButtonTest {
                 VTButton(
                     text = "Outlined",
                     onClick = {},
-                    variant = ButtonVariant.Outlined
+                    variant = ButtonVariant.Outlined,
                 )
             }
         }
@@ -136,7 +140,7 @@ class ButtonTest {
                 VTButton(
                     text = "Ghost",
                     onClick = {},
-                    variant = ButtonVariant.Ghost
+                    variant = ButtonVariant.Ghost,
                 )
             }
         }
@@ -151,7 +155,7 @@ class ButtonTest {
                 VTButton(
                     text = "Gradient",
                     onClick = {},
-                    variant = ButtonVariant.Gradient
+                    variant = ButtonVariant.Gradient,
                 )
             }
         }
@@ -166,7 +170,7 @@ class ButtonTest {
                 VTButton(
                     text = "Danger",
                     onClick = {},
-                    variant = ButtonVariant.Danger
+                    variant = ButtonVariant.Danger,
                 )
             }
         }
@@ -181,7 +185,7 @@ class ButtonTest {
                 VTButton(
                     text = "Small",
                     onClick = {},
-                    size = ButtonSize.Small
+                    size = ButtonSize.Small,
                 )
             }
         }
@@ -196,7 +200,7 @@ class ButtonTest {
                 VTButton(
                     text = "Medium",
                     onClick = {},
-                    size = ButtonSize.Medium
+                    size = ButtonSize.Medium,
                 )
             }
         }
@@ -211,7 +215,7 @@ class ButtonTest {
                 VTButton(
                     text = "Large",
                     onClick = {},
-                    size = ButtonSize.Large
+                    size = ButtonSize.Large,
                 )
             }
         }
@@ -229,9 +233,9 @@ class ButtonTest {
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Add,
-                            contentDescription = null
+                            contentDescription = null,
                         )
-                    }
+                    },
                 )
             }
         }
@@ -249,9 +253,9 @@ class ButtonTest {
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Delete,
-                            contentDescription = null
+                            contentDescription = null,
                         )
-                    }
+                    },
                 )
             }
         }
@@ -262,12 +266,12 @@ class ButtonTest {
     @Test
     fun button_handlesMultipleClicks() {
         var clickCount = 0
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTButton(
                     text = "여러 번 클릭",
-                    onClick = { clickCount++ }
+                    onClick = { clickCount++ },
                 )
             }
         }
@@ -283,12 +287,12 @@ class ButtonTest {
     @Test
     fun button_handlesLongText() {
         val longText = "이것은 매우 긴 버튼 텍스트입니다. " + "반복 ".repeat(20)
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTButton(
                     text = longText,
-                    onClick = {}
+                    onClick = {},
                 )
             }
         }
@@ -306,26 +310,25 @@ class ButtonTest {
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Info,
-                            contentDescription = "Info"
+                            contentDescription = "Info",
                         )
-                    }
+                    },
                 )
             }
         }
 
-        // Button should still exist even with empty text (with icon)
         composeTestRule.onNodeWithContentDescription("Info").assertExists()
     }
 
     @Test
     fun button_handlesSpecialCharacters() {
         val specialText = "특수문자: !@#$%^&*()"
-        
+
         composeTestRule.setContent {
             VoiceTutorTheme {
                 VTButton(
                     text = specialText,
-                    onClick = {}
+                    onClick = {},
                 )
             }
         }
@@ -333,4 +336,3 @@ class ButtonTest {
         composeTestRule.onNodeWithText(specialText).assertExists()
     }
 }
-

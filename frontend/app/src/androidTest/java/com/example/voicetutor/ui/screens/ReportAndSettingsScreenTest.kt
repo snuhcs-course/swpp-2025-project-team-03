@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.models.PersonalAssignmentStatus
-import com.example.voicetutor.data.models.UserRole
 import com.example.voicetutor.data.network.ApiService
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.di.NetworkModule
@@ -17,11 +16,11 @@ import com.example.voicetutor.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -50,7 +49,7 @@ class ReportAndSettingsScreenTest {
             composeRule.onAllNodesWithText(
                 text = text,
                 substring = substring,
-                useUnmergedTree = true
+                useUnmergedTree = true,
             ).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -60,8 +59,8 @@ class ReportAndSettingsScreenTest {
         fakeApi.personalAssignmentsResponse = listOf(
             fakeApi.personalAssignmentData.copy(
                 status = PersonalAssignmentStatus.SUBMITTED,
-                submittedAt = "2024-01-02T10:00:00Z"
-            )
+                submittedAt = "2024-01-02T10:00:00Z",
+            ),
         )
 
         composeRule.setContent {
@@ -93,7 +92,7 @@ class ReportAndSettingsScreenTest {
     fun settingsScreen_teacherRole_showsTeacherBadge() {
         composeRule.setContent {
             VoiceTutorTheme {
-                SettingsScreen(userRole = UserRole.TEACHER)
+                SettingsScreen()
             }
         }
 
@@ -111,8 +110,7 @@ class ReportAndSettingsScreenTest {
         composeRule.setContent {
             VoiceTutorTheme {
                 SettingsScreen(
-                    userRole = UserRole.TEACHER,
-                    studentId = 1
+                    studentId = 1,
                 )
             }
         }
@@ -127,6 +125,3 @@ class ReportAndSettingsScreenTest {
         composeRule.onNodeWithText("학생", useUnmergedTree = true).assertIsDisplayed()
     }
 }
-
-
-

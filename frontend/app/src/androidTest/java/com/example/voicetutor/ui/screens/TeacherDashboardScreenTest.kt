@@ -14,11 +14,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Espresso/Compose UI tests for TeacherDashboardScreen.
- * 
- * NOTE: Disabled due to MockK incompatibility with Android Instrumentation tests.
- */
 @Ignore("MockK incompatible with Android tests - use Hilt-based tests instead")
 @RunWith(AndroidJUnit4::class)
 class TeacherDashboardScreenTest {
@@ -40,8 +35,8 @@ class TeacherDashboardScreenTest {
                     name = "선생님",
                     email = "teacher@test.com",
                     role = UserRole.TEACHER,
-                    isStudent = false
-                )
+                    isStudent = false,
+                ),
             )
         }
         mockAssignmentViewModel = mockk(relaxed = true) {
@@ -63,7 +58,7 @@ class TeacherDashboardScreenTest {
             VoiceTutorTheme {
                 TeacherDashboardScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -78,12 +73,11 @@ class TeacherDashboardScreenTest {
             VoiceTutorTheme {
                 TeacherDashboardScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
 
-        // Check for navigation buttons
         composeTestRule.onNodeWithText("과제", substring = true)
             .assertExists()
         composeTestRule.onNodeWithText("학생", substring = true)
@@ -98,12 +92,11 @@ class TeacherDashboardScreenTest {
             VoiceTutorTheme {
                 TeacherDashboardScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
 
-        // Should show empty state or assignment count
         composeTestRule.onNodeWithText("0", substring = true)
             .assertExists()
     }
@@ -117,10 +110,9 @@ class TeacherDashboardScreenTest {
             description = null,
             subject = testSubject,
             teacherName = "선생님",
-            
-            
+
             studentCount = 10,
-            createdAt = "2025-01-01"
+            createdAt = "2025-01-01",
         )
 
         val testAssignments = listOf(
@@ -130,12 +122,12 @@ class TeacherDashboardScreenTest {
                 description = "설명",
                 totalQuestions = 5,
                 createdAt = "2025-01-01",
-                
+
                 dueAt = "2025-01-15",
                 courseClass = testClass,
                 materials = null,
-                grade = "중1"
-            )
+                grade = "중1",
+            ),
         )
 
         every { mockAssignmentViewModel.assignments } returns MutableStateFlow(testAssignments)
@@ -144,7 +136,7 @@ class TeacherDashboardScreenTest {
             VoiceTutorTheme {
                 TeacherDashboardScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
@@ -161,12 +153,11 @@ class TeacherDashboardScreenTest {
             VoiceTutorTheme {
                 TeacherDashboardScreen(
                     authViewModel = mockAuthViewModel,
-                    assignmentViewModel = mockAssignmentViewModel
+                    assignmentViewModel = mockAssignmentViewModel,
                 )
             }
         }
 
-        // Loading indicator should be visible
         composeTestRule.onAllNodesWithContentDescription("Loading")
             .onFirst()
             .assertExists()
@@ -175,25 +166,19 @@ class TeacherDashboardScreenTest {
     @Test
     fun navigationButtonsAreClickable() {
         var assignmentsClicked = false
-        var studentsClicked = false
-        var classesClicked = false
 
         composeTestRule.setContent {
             VoiceTutorTheme {
                 TeacherDashboardScreen(
                     authViewModel = mockAuthViewModel,
                     assignmentViewModel = mockAssignmentViewModel,
-                    onNavigateToAllAssignments = { assignmentsClicked = true },
-                    onNavigateToAllStudents = { studentsClicked = true },
-                    onNavigateToCreateClass = { classesClicked = true }
+                    onNavigateToCreateClass = {},
                 )
             }
         }
 
-        // Test navigation button clicks
         composeTestRule.onNodeWithText("과제", substring = true)
             .performClick()
         assert(assignmentsClicked)
     }
 }
-

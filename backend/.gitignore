@@ -183,3 +183,4 @@ submissions/utils/KR_SBERT_local/
 submissions/json/stt-tutor-474416-e99142c7677c.json
 staticfiles/
 nohup.out
+reports/utils/models/model.pt

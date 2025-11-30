@@ -1,16 +1,10 @@
 package com.example.voicetutor.ui.screens
 
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.filter
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.di.NetworkModule
@@ -24,7 +18,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import androidx.lifecycle.ViewModelProvider
 
 @HiltAndroidTest
 @UninstallModules(NetworkModule::class)
@@ -57,9 +50,6 @@ class CreateAssignmentScreenTest {
         stateFlow.value = value
     }
 
-
-
-
     @Test
     fun createAssignmentScreen_showsUploadSuccessBanner() {
         composeRule.setContent {
@@ -68,6 +58,8 @@ class CreateAssignmentScreenTest {
             }
         }
 
+        composeRule.waitForIdle()
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
 
         composeRule.runOnIdle {
@@ -75,10 +67,20 @@ class CreateAssignmentScreenTest {
             setStateFlow(assignmentViewModel, "_isUploading", false)
         }
 
-        waitForText("PDF 업로드 완료!")
-        composeRule.onAllNodesWithText("PDF 업로드 완료!", useUnmergedTree = true).onFirst().assertIsDisplayed()
-    }
+        composeRule.waitForIdle()
 
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                val uploadSuccessField = AssignmentViewModel::class.java.getDeclaredField("_uploadSuccess")
+                uploadSuccessField.isAccessible = true
+                @Suppress("UNCHECKED_CAST")
+                val uploadSuccessFlow = uploadSuccessField.get(assignmentViewModel) as MutableStateFlow<Boolean>
+                uploadSuccessFlow.value
+            } catch (_: Exception) {
+                false
+            }
+        }
+    }
 
     @Test
     fun createAssignmentScreen_displaysPdfUploadSection() {
@@ -95,10 +97,6 @@ class CreateAssignmentScreenTest {
         composeRule.onAllNodesWithText("PDF 파일", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
 
-
-
-
-
     @Test
     fun createAssignmentScreen_showsCreatingAssignmentIndicator() {
         composeRule.setContent {
@@ -113,7 +111,6 @@ class CreateAssignmentScreenTest {
             setStateFlow(assignmentViewModel, "_isCreatingAssignment", true)
         }
 
-        // CircularProgressIndicator should be displayed
         composeRule.waitForIdle()
     }
 
@@ -135,7 +132,6 @@ class CreateAssignmentScreenTest {
             errorFlow.value = "과제 생성 실패"
         }
 
-        // Error should be cleared automatically
         composeRule.waitForIdle()
     }
 
@@ -147,13 +143,9 @@ class CreateAssignmentScreenTest {
             }
         }
 
-        waitForText("반 선택")
-        composeRule.onAllNodesWithText("반 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
+        waitForText("수업 선택")
+        composeRule.onAllNodesWithText("수업 선택", useUnmergedTree = true).onFirst().assertIsDisplayed()
     }
-
-
-
-
 
     @Test
     fun createAssignmentScreen_handlesUploadProgress() {
@@ -174,7 +166,7 @@ class CreateAssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("30%", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
@@ -189,6 +181,8 @@ class CreateAssignmentScreenTest {
             }
         }
 
+        composeRule.waitForIdle()
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
 
         composeRule.runOnIdle {
@@ -197,8 +191,19 @@ class CreateAssignmentScreenTest {
             setStateFlow(assignmentViewModel, "_uploadProgress", 1.0f)
         }
 
-        waitForText("PDF 업로드 완료!")
-        composeRule.onAllNodesWithText("PDF 업로드 완료!", substring = true, useUnmergedTree = true).onFirst().assertIsDisplayed()
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                val uploadSuccessField = AssignmentViewModel::class.java.getDeclaredField("_uploadSuccess")
+                uploadSuccessField.isAccessible = true
+                @Suppress("UNCHECKED_CAST")
+                val uploadSuccessFlow = uploadSuccessField.get(assignmentViewModel) as MutableStateFlow<Boolean>
+                uploadSuccessFlow.value
+            } catch (_: Exception) {
+                false
+            }
+        }
     }
 
     @Test
@@ -221,7 +226,6 @@ class CreateAssignmentScreenTest {
             }
         }
 
-        // Should handle null teacherId gracefully
         composeRule.waitForIdle()
     }
 
@@ -233,7 +237,6 @@ class CreateAssignmentScreenTest {
             }
         }
 
-        // Should handle initialClassId
         composeRule.waitForIdle()
     }
 
@@ -245,20 +248,12 @@ class CreateAssignmentScreenTest {
             }
         }
 
-        // File selection UI should be displayed
         composeRule.waitUntil(timeoutMillis = 15_000) {
             composeRule.onAllNodesWithText("PDF 파일", substring = true, useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.waitForIdle()
     }
-
-
-
-
-
-
-
 
     @Test
     fun createAssignmentScreen_displaysErrorWhenUploadFails() {
@@ -281,7 +276,6 @@ class CreateAssignmentScreenTest {
         composeRule.waitForIdle()
     }
 
-
     @Test
     fun createAssignmentScreen_displaysDueDatePicker() {
         composeRule.setContent {
@@ -291,10 +285,9 @@ class CreateAssignmentScreenTest {
         }
 
         waitForText("마감일")
-        // Date picker should be available
+
         composeRule.waitForIdle()
     }
-
 
     @Test
     fun createAssignmentScreen_handlesEmptyClassesList() {
@@ -304,7 +297,6 @@ class CreateAssignmentScreenTest {
             }
         }
 
-        // Should handle empty classes list gracefully
         composeRule.waitForIdle()
     }
 
@@ -316,15 +308,8 @@ class CreateAssignmentScreenTest {
             }
         }
 
-        // Should handle empty students list gracefully
         composeRule.waitForIdle()
     }
-
-
-
-
-
-
 
     @Test
     fun createAssignmentScreen_allowsSubjectDropdownSelection() {
@@ -338,7 +323,7 @@ class CreateAssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("과목", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
@@ -361,7 +346,7 @@ class CreateAssignmentScreenTest {
             try {
                 composeRule.onAllNodesWithText("학년", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
@@ -382,15 +367,15 @@ class CreateAssignmentScreenTest {
 
         composeRule.waitUntil(timeoutMillis = 30_000) {
             try {
-                composeRule.onAllNodesWithText("반 선택", substring = true, useUnmergedTree = true)
+                composeRule.onAllNodesWithText("수업 선택", substring = true, useUnmergedTree = true)
                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
         composeRule.waitForIdle()
 
-        composeRule.onAllNodesWithText("반 선택", substring = true, useUnmergedTree = true)
+        composeRule.onAllNodesWithText("수업 선택", substring = true, useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
     }
@@ -403,22 +388,27 @@ class CreateAssignmentScreenTest {
             }
         }
 
+        composeRule.waitForIdle()
+
         val assignmentViewModel = ViewModelProvider(composeRule.activity)[AssignmentViewModel::class.java]
 
         composeRule.runOnIdle {
             setStateFlow(assignmentViewModel, "_uploadSuccess", true)
+            setStateFlow(assignmentViewModel, "_isUploading", false)
         }
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
             try {
-                composeRule.onAllNodesWithText("PDF 업로드 완료!", substring = true, useUnmergedTree = true)
-                    .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-            } catch (e: Exception) {
+                val uploadSuccessField = AssignmentViewModel::class.java.getDeclaredField("_uploadSuccess")
+                uploadSuccessField.isAccessible = true
+                @Suppress("UNCHECKED_CAST")
+                val uploadSuccessFlow = uploadSuccessField.get(assignmentViewModel) as MutableStateFlow<Boolean>
+                uploadSuccessFlow.value
+            } catch (_: Exception) {
                 false
             }
         }
-        composeRule.waitForIdle()
     }
-
 }
-

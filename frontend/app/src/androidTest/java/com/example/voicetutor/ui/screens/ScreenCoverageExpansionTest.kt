@@ -10,12 +10,10 @@ import com.example.voicetutor.HiltComponentActivity
 import com.example.voicetutor.data.network.FakeApiService
 import com.example.voicetutor.data.repository.AssignmentRepository
 import com.example.voicetutor.data.repository.AuthRepository
-import com.example.voicetutor.data.repository.DashboardRepository
 import com.example.voicetutor.di.NetworkModule
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
-import com.example.voicetutor.ui.viewmodel.DashboardViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
@@ -69,7 +67,7 @@ class ScreenCoverageExpansionTest {
                     TeacherStudentReportScreen(
                         classId = 1,
                         studentId = 1,
-                        studentName = "홍길동"
+                        studentName = "홍길동",
                     )
                 }
             }
@@ -85,7 +83,6 @@ class ScreenCoverageExpansionTest {
         val apiService = FakeApiService()
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(apiService))
         val authViewModel = AuthViewModel(AuthRepository(apiService))
-        val dashboardViewModel = DashboardViewModel(DashboardRepository(apiService))
 
         composeRule.setContent {
             VoiceTutorTheme {
@@ -93,12 +90,11 @@ class ScreenCoverageExpansionTest {
                     StudentDashboardScreen(
                         authViewModel = authViewModel,
                         assignmentViewModel = assignmentViewModel,
-                        dashboardViewModel = dashboardViewModel
                     )
                     AssignmentDetailedResultsScreen(
                         personalAssignmentId = 1,
                         assignmentTitle = "테스트 과제",
-                        viewModel = assignmentViewModel
+                        viewModel = assignmentViewModel,
                     )
                     AppInfoScreen()
                 }
@@ -115,4 +111,3 @@ class ScreenCoverageExpansionTest {
         waitForText("앱 정보")
     }
 }
-
