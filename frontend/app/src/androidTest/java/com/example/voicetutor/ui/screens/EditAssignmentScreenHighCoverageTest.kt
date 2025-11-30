@@ -102,17 +102,11 @@ class EditAssignmentScreenHighCoverageTest {
 
         waitForText("기존 과제")
 
-        composeRule.onNodeWithText("수업 선택").performClick()
-        composeRule.waitForIdle()
-
-        waitForText("수학 A반")
-
-        composeRule.onAllNodesWithText("수학 A반", useUnmergedTree = true)
-            .onLast()
-            .assertIsDisplayed()
-            .performClick()
-
-        composeRule.waitForIdle()
+        composeRule.onNodeWithText("수업 선택 (변경 불가)").assertIsDisplayed()
+        composeRule.onNodeWithText("과목 (변경 불가)").assertIsDisplayed()
+        composeRule.onNodeWithText("설명").assertIsDisplayed()
+        composeRule.onNodeWithText("마감일").assertIsDisplayed()
+        composeRule.onNodeWithText("과제 진행 현황").assertIsDisplayed()
     }
 
     @Test
