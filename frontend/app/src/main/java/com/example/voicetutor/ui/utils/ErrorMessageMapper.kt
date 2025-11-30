@@ -119,9 +119,7 @@ object ErrorMessageMapper {
         }
     }
 
-    /**
-     * 에러 메시지가 네트워크 관련 에러인지 확인합니다.
-     */
+    //에러 메시지가 네트워크 관련 에러인지 확인합니다.
     fun isNetworkError(errorMessage: String?): Boolean {
         if (errorMessage == null) return false
 
@@ -144,9 +142,7 @@ object ErrorMessageMapper {
         }
     }
 
-    /**
-     * 예외가 네트워크 관련 에러인지 확인합니다.
-     */
+    //예외가 네트워크 관련 에러인지 확인합니다.
     fun isNetworkError(exception: Throwable?): Boolean {
         if (exception == null) return false
 
