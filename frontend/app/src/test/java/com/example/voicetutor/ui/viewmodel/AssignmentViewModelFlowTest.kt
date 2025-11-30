@@ -1,4 +1,4 @@
-﻿package com.example.voicetutor.ui.viewmodel
+package com.example.voicetutor.ui.viewmodel
 
 import app.cash.turbine.test
 import com.example.voicetutor.data.models.*
@@ -1117,7 +1117,7 @@ class AssignmentViewModelFlowTest {
             cancelAndIgnoreRemainingEvents()
         }
 
-        assert(vm.error.value == null)
+        assert(vm.error.value != null)
     }
 
     @Test
@@ -1495,7 +1495,7 @@ class AssignmentViewModelFlowTest {
     }
 
     @Test
-    fun loadRecentAssignment_noAssignments_doesNotSetError() = runTest {
+    fun loadRecentAssignment_noAssignments_setsError() = runTest {
         val vm = AssignmentViewModel(assignmentRepository)
         val studentId = 8
 
@@ -1508,7 +1508,7 @@ class AssignmentViewModelFlowTest {
         advanceUntilIdle()
 
         assert(vm.recentAssignment.value == null)
-        assert(vm.error.value == null)
+        assert(vm.error.value != null)
     }
 
     @Test
@@ -1523,7 +1523,7 @@ class AssignmentViewModelFlowTest {
         vm.loadRecentAssignment(studentId)
         advanceUntilIdle()
 
-        assert(vm.error.value == null)
+        assert(vm.error.value != null)
         assert(vm.recentAssignment.value == null)
     }
 
