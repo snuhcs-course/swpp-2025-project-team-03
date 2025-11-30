@@ -77,7 +77,7 @@ fun AllAssignmentsScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            viewModel.clearError()
+                viewModel.clearError()
             }
         }
     }
@@ -161,7 +161,7 @@ fun AllAssignmentsScreen(
                 } else {
                     "과제가 없습니다"
                 }
-                
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,

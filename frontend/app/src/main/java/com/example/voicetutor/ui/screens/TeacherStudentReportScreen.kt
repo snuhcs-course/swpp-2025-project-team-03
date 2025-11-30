@@ -97,7 +97,7 @@ fun TeacherStudentReportScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            reportViewModel.clearError()
+                reportViewModel.clearError()
             }
         }
     }
@@ -390,7 +390,7 @@ fun TeacherStudentReportScreen(
             } else {
                 "리포트 데이터가 없습니다"
             }
-            
+
             item {
                 VTCard(
                     variant = CardVariant.Elevated,

@@ -67,7 +67,7 @@ class AssignmentViewModel @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
-    
+
     private val _errorException = MutableStateFlow<Throwable?>(null)
     val errorException: StateFlow<Throwable?> = _errorException.asStateFlow()
 
@@ -1052,7 +1052,7 @@ class AssignmentViewModel @Inject constructor(
         _error.value = null
         _errorException.value = null
     }
-    
+
     private fun setError(exception: Throwable) {
         _error.value = ErrorMessageMapper.getErrorMessage(exception)
         _errorException.value = exception

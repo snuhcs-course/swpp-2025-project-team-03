@@ -343,13 +343,13 @@ fun CreateAssignmentScreen(
                                     onValueChange = {},
                                     readOnly = true,
                                     label = { Text("수업 선택") },
-                                    placeholder = { 
+                                    placeholder = {
                                         Text(
                                             if (isNetworkErrorState) {
                                                 "네트워크가 불안정합니다"
                                             } else {
                                                 "과제를 배정할 수업을 선택하세요"
-                                            }
+                                            },
                                         )
                                     },
                                     trailingIcon = {
@@ -735,13 +735,13 @@ fun CreateAssignmentScreen(
                             onValueChange = { newValue ->
                                 // 숫자만 허용
                                 val filtered = newValue.filter { it.isDigit() }
-                                
+
                                 if (filtered != newValue) {
                                     questionCount = filtered
                                 } else {
                                     questionCount = newValue
                                 }
-                                
+
                                 // 검증 로직
                                 if (filtered.isBlank()) {
                                     questionCountError = null // 빈 값일 때는 에러 표시 안 함 (사용자가 입력 중일 수 있음)
@@ -931,7 +931,7 @@ fun CreateAssignmentScreen(
 
                 VTButton(
                     text = "과제 생성",
-                            onClick = {
+                    onClick = {
                         if (isFormValid && selectedClassId != null) {
                             // 최종 검증 (빈 값이거나 0 이하인 경우 방지)
                             val questionCountInt = questionCount.toIntOrNull()

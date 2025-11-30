@@ -77,7 +77,7 @@ fun TeacherClassesScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            classViewModel.clearError()
+                classViewModel.clearError()
             }
         }
     }
@@ -196,7 +196,7 @@ fun TeacherClassesScreen(
                 } else {
                     "반이 없습니다"
                 }
-                
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,

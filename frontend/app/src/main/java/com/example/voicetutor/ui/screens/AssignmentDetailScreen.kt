@@ -125,17 +125,17 @@ fun AssignmentDetailScreen(
             // 네트워크 에러가 아닌 경우에만 표시
             val isNetworkError = ErrorMessageMapper.isNetworkError(error)
             if (!isNetworkError) {
-            VTCard(
-                variant = CardVariant.Outlined,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = ErrorMessageMapper.getErrorMessage(error),
-                    color = Error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
+                VTCard(
+                    variant = CardVariant.Outlined,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = ErrorMessageMapper.getErrorMessage(error),
+                        color = Error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(16.dp),
-                )
+                    )
                 }
             }
         }

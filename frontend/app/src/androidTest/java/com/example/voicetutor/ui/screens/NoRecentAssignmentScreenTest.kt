@@ -32,7 +32,7 @@ class NoRecentAssignmentScreenTest {
             VoiceTutorTheme {
                 NoRecentAssignmentScreen(
                     viewModel = assignmentViewModel,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
                 )
             }
         }
@@ -46,7 +46,7 @@ class NoRecentAssignmentScreenTest {
             VoiceTutorTheme {
                 NoRecentAssignmentScreen(
                     viewModel = assignmentViewModel,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
                 )
             }
         }
@@ -61,7 +61,7 @@ class NoRecentAssignmentScreenTest {
             VoiceTutorTheme {
                 NoRecentAssignmentScreen(
                     viewModel = assignmentViewModel,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
                 )
             }
         }
@@ -75,7 +75,7 @@ class NoRecentAssignmentScreenTest {
             VoiceTutorTheme {
                 NoRecentAssignmentScreen(
                     viewModel = assignmentViewModel,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
                 )
             }
         }
@@ -89,7 +89,7 @@ class NoRecentAssignmentScreenTest {
             VoiceTutorTheme {
                 NoRecentAssignmentScreen(
                     viewModel = assignmentViewModel,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
                 )
             }
         }

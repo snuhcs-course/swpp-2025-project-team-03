@@ -163,7 +163,7 @@ fun StudentDashboardScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            viewModelAssignment.clearError()
+                viewModelAssignment.clearError()
             }
         }
     }
@@ -340,7 +340,7 @@ fun StudentDashboardScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 로딩 중이거나, 아직 로딩 시작 전이거나, 
+            // 로딩 중이거나, 아직 로딩 시작 전이거나,
             // 데이터가 없는데 에러도 없고, 아직 "없음" 상태가 확정되지 않은 경우 (잠깐의 딜레이)
             if (isLoading || !hasSeenLoadingTrue || (validAssignments.isEmpty() && error == null && !isListEmptyConfirmed)) {
                 Box(
@@ -530,7 +530,7 @@ fun StudentAssignmentCard(
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(0.dp)) 
+                        Spacer(modifier = Modifier.width(0.dp))
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))

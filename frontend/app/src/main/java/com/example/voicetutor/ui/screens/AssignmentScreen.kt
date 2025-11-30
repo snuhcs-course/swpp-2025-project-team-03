@@ -98,10 +98,10 @@ fun AssignmentScreen(
 
     // 네트워크 오류 시 Toast 표시
     LaunchedEffect(error, errorException) {
-        val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) } 
-            ?: error?.let { ErrorMessageMapper.isNetworkError(it) } 
+        val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) }
+            ?: error?.let { ErrorMessageMapper.isNetworkError(it) }
             ?: false
-        
+
         if (isNetworkError) {
             Toast.makeText(context, "네트워크가 불안정합니다.", Toast.LENGTH_SHORT).show()
         }
@@ -110,10 +110,10 @@ fun AssignmentScreen(
     // 네트워크 에러가 아닌 경우에만 에러를 클리어합니다.
     // 네트워크 에러는 화면에 표시하기 위해 유지합니다.
     LaunchedEffect(error, errorException) {
-        val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) } 
-            ?: error?.let { ErrorMessageMapper.isNetworkError(it) } 
+        val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) }
+            ?: error?.let { ErrorMessageMapper.isNetworkError(it) }
             ?: false
-        
+
         if (!isNetworkError && error != null) {
             viewModel.clearError()
         }
@@ -299,8 +299,8 @@ fun AssignmentScreen(
             } else if (personalAssignmentQuestions.isEmpty() || currentQuestion == null) {
                 // 질문이 없는 경우: 네트워크 오류인지 확인
                 val errorMessage = error
-                val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) } 
-                    ?: errorMessage?.let { ErrorMessageMapper.isNetworkError(it) } 
+                val isNetworkError = errorException?.let { ErrorMessageMapper.isNetworkError(it) }
+                    ?: errorMessage?.let { ErrorMessageMapper.isNetworkError(it) }
                     ?: false
                 Box(
                     modifier = Modifier
