@@ -239,7 +239,7 @@ def generate_base_quizzes(material_text: str, n: int = 3, achievement_codes: Opt
             if "interpreter shutdown" in error_msg or "cannot schedule" in error_msg:
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
-                    retry_delay *= 2  # 지수 백오프
+                    retry_delay *= 2
                     continue
                 else:
                     raise RuntimeError(f"Quiz generation interrupted after {max_retries} attempts: {e}")
@@ -256,5 +256,5 @@ def generate_base_quizzes(material_text: str, n: int = 3, achievement_codes: Opt
             else:
                 raise
 
-    # 이 지점에 도달하면 안 됨
+    # 모든 재시도 실패 시 예외 발생
     raise RuntimeError("Failed to generate quizzes after all retries")
