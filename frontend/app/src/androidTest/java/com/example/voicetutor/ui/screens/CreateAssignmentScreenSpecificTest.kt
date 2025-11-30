@@ -107,7 +107,7 @@ class CreateAssignmentScreenSpecificTest {
     }
 
     @Test
-    fun createAssignmentScreen_largeFileSelection_showsError() { // Covers lines 582-606
+    fun createAssignmentScreen_largeFileSelection_showsError() {
         // Create 11MB file
         val largeFile = createTempFile(11 * 1024 * 1024L)
         stubFilePickerResult(largeFile)
@@ -136,7 +136,7 @@ class CreateAssignmentScreenSpecificTest {
     }
 
     @Test
-    fun createAssignmentScreen_uploadSuccess_showsMessageAndList() { // Covers lines 635-718
+    fun createAssignmentScreen_uploadSuccess_showsMessageAndList() {
         // Create small file
         val smallFile = createTempFile(1 * 1024 * 1024L)
         stubFilePickerResult(smallFile)
@@ -179,7 +179,7 @@ class CreateAssignmentScreenSpecificTest {
     }
 
     @Test
-    fun createAssignmentScreen_createButton_validatesAndCallsViewModel() { // Covers lines 936-962
+    fun createAssignmentScreen_createButton_validatesAndCallsViewModel() {
         val smallFile = createTempFile(1024)
         stubFilePickerResult(smallFile)
 
