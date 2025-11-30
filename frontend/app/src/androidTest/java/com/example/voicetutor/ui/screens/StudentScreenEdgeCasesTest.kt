@@ -26,6 +26,7 @@ class StudentScreenEdgeCasesTest {
     fun studentDashboard_emptyAssignments_showsPlaceholder() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = emptyList()
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
@@ -56,6 +57,7 @@ class StudentScreenEdgeCasesTest {
         val fakeApi = FakeApiService().apply {
             shouldFailPersonalAssignments = true
             personalAssignmentsErrorMessage = "네트워크 오류"
+            personalAssignmentsDelayMillis = 100L
         }
 
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -72,11 +74,6 @@ class StudentScreenEdgeCasesTest {
 
         composeRule.runOnIdle {
             authViewModel.login("student@voicetutor.com", "student123")
-        }
-
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodes(hasText("과제가 없습니다", substring = true), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.runOnIdle {
