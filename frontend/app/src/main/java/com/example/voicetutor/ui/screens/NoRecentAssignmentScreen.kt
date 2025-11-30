@@ -22,9 +22,11 @@ import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
 import com.example.voicetutor.ui.viewmodel.AuthViewModel
 
 @Composable
-fun NoRecentAssignmentScreen() {
-    val viewModel: AssignmentViewModel = hiltViewModel()
-    val authViewModel: AuthViewModel = hiltViewModel()
+fun NoRecentAssignmentScreen(
+    viewModel: AssignmentViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
+) {
+    val context = LocalContext.current
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
