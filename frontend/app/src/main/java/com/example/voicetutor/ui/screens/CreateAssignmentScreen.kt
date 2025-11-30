@@ -82,7 +82,7 @@ fun CreateAssignmentScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // PDF 파일 크기 제한: 10MB
-    val MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024L // 10MB in bytes
+    val maxPdfSizeBytes = 10 * 1024 * 1024L // 10MB in bytes
 
     var assignmentCreated by remember { mutableStateOf(false) }
 
@@ -116,7 +116,7 @@ fun CreateAssignmentScreen(
                 }
 
                 // 파일 크기를 가져올 수 있는 경우 미리 검증
-                if (fileSize != null && fileSize > MAX_PDF_SIZE_BYTES) {
+                if (fileSize != null && fileSize > maxPdfSizeBytes) {
                     // 파일이 너무 크면 선택하지 않고 에러 메시지 표시
                     pdfFileSizeError = "파일 용량이 너무 큽니다. 최대 10MB까지 업로드 가능합니다."
                 } else {
@@ -124,7 +124,7 @@ fun CreateAssignmentScreen(
                     fileManager.saveFile(uri, fileType = FileType.DOCUMENT)
                         .onSuccess { fileInfo ->
                             // 저장 후 실제 파일 크기로 다시 검증
-                            if (fileInfo.size > MAX_PDF_SIZE_BYTES) {
+                            if (fileInfo.size > maxPdfSizeBytes) {
                                 // 파일이 너무 크면 선택하지 않고 에러 메시지 표시
                                 pdfFileSizeError = "파일 용량이 너무 큽니다. 최대 10MB까지 업로드 가능합니다."
                                 // 임시로 저장된 파일 삭제
@@ -343,13 +343,13 @@ fun CreateAssignmentScreen(
                                     onValueChange = {},
                                     readOnly = true,
                                     label = { Text("수업 선택") },
-                                    placeholder = { 
+                                    placeholder = {
                                         Text(
                                             if (isNetworkErrorState) {
                                                 "네트워크가 불안정합니다"
                                             } else {
                                                 "과제를 배정할 수업을 선택하세요"
-                                            }
+                                            },
                                         )
                                     },
                                     trailingIcon = {
@@ -733,16 +733,15 @@ fun CreateAssignmentScreen(
                         OutlinedTextField(
                             value = questionCount,
                             onValueChange = { newValue ->
-                                // 비숫자 문자 필터링 (숫자만 허용)
+                                // 숫자만 허용
                                 val filtered = newValue.filter { it.isDigit() }
-                                
-                                // 필터링된 값이 원래 값과 다르면 (비숫자 문자가 제거됨)
+
                                 if (filtered != newValue) {
                                     questionCount = filtered
                                 } else {
                                     questionCount = newValue
                                 }
-                                
+
                                 // 검증 로직
                                 if (filtered.isBlank()) {
                                     questionCountError = null // 빈 값일 때는 에러 표시 안 함 (사용자가 입력 중일 수 있음)
@@ -932,7 +931,7 @@ fun CreateAssignmentScreen(
 
                 VTButton(
                     text = "과제 생성",
-                            onClick = {
+                    onClick = {
                         if (isFormValid && selectedClassId != null) {
                             // 최종 검증 (빈 값이거나 0 이하인 경우 방지)
                             val questionCountInt = questionCount.toIntOrNull()

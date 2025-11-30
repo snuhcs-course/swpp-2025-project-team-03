@@ -194,7 +194,7 @@ fun TeacherClassesScreen(
                 } else {
                     "반이 없습니다"
                 }
-                
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,

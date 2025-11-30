@@ -79,7 +79,6 @@ fun StudentDashboardScreen(
 
     var selectedFilter by remember { mutableStateOf(PersonalAssignmentFilter.ALL) }
 
-    // isLoading이 한 번이라도 true가 된 적이 있는지 추적
     var hasSeenLoadingTrue by remember { mutableStateOf(false) }
 
     LaunchedEffect(isLoading) {
@@ -107,7 +106,7 @@ fun StudentDashboardScreen(
         }
     }
 
-    // 로딩이 끝났고 데이터가 비어있는 상태가 확정적인지 확인 (깜빡임 방지)
+    // 로딩이 끝났고 데이터가 비어있는 상태가 확정적인지 확인
     var isListEmptyConfirmed by remember { mutableStateOf(false) }
     val isEmptyAndNotLoading = validAssignments.isEmpty() && !isLoading && hasSeenLoadingTrue && error == null
 
@@ -164,7 +163,7 @@ fun StudentDashboardScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            viewModelAssignment.clearError()
+                viewModelAssignment.clearError()
             }
         }
     }
@@ -191,7 +190,6 @@ fun StudentDashboardScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Welcome section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -235,7 +233,6 @@ fun StudentDashboardScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Filter tabs
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -343,8 +340,7 @@ fun StudentDashboardScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Student assignments from API
-            // 로딩 중이거나, 아직 로딩 시작 전이거나, 
+            // 로딩 중이거나, 아직 로딩 시작 전이거나,
             // 데이터가 없는데 에러도 없고, 아직 "없음" 상태가 확정되지 않은 경우 (잠깐의 딜레이)
             if (isLoading || !hasSeenLoadingTrue || (validAssignments.isEmpty() && error == null && !isListEmptyConfirmed)) {
                 Box(
@@ -419,7 +415,6 @@ fun StudentDashboardScreen(
                         totalQuestions = assignment.totalQuestions,
                         status = assignment.personalAssignmentStatus,
                         onClick = {
-                            // assignment.id와 personalAssignmentId 모두 저장
                             viewModelAssignment.setSelectedAssignmentIds(
                                 assignmentId = assignment.id,
                                 personalAssignmentId = assignment.personalAssignmentId,
@@ -462,13 +457,11 @@ fun StudentAssignmentCard(
                 Column(
                     modifier = Modifier.weight(1f),
                 ) {
-                    // Subject and Status Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        // Subject badge
                         if (subject.isNotEmpty()) {
                             Box(
                                 modifier = Modifier
@@ -487,7 +480,6 @@ fun StudentAssignmentCard(
                             }
                         }
 
-                        // Class name badge
                         if (className.isNotEmpty()) {
                             Box(
                                 modifier = Modifier
@@ -506,7 +498,6 @@ fun StudentAssignmentCard(
                             }
                         }
 
-                        // Status badge
                         if (status != null) {
                             Box(
                                 modifier = Modifier
@@ -539,7 +530,7 @@ fun StudentAssignmentCard(
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(0.dp)) // ← 우측 "문제수" 텍스트 보호
+                        Spacer(modifier = Modifier.width(0.dp))
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))

@@ -43,7 +43,7 @@ fun ReportScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            viewModel.clearError()
+                viewModel.clearError()
             }
         }
     }
@@ -141,7 +141,7 @@ fun ReportScreen(
                 } else {
                     "완료한 과제가 없습니다"
                 }
-                
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,

@@ -14,8 +14,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.voicetutor.ui.components.VTCard
-import com.example.voicetutor.ui.components.CardVariant
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
@@ -29,7 +27,7 @@ fun NoRecentAssignmentScreen(
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    
+
     // 네트워크 에러가 아닌 경우에만 에러를 클리어합니다.
     // 네트워크 에러는 화면에 표시하기 위해 유지합니다.
     error?.let { errorMessage ->
@@ -39,17 +37,17 @@ fun NoRecentAssignmentScreen(
             }
         }
     }
-    
+
     // 네트워크 오류 확인 (화면 표시용)
     val isNetworkError = error != null && ErrorMessageMapper.isNetworkError(error)
-    
+
     // 화면이 표시될 때 loadRecentAssignment를 다시 호출하여 최신 상태 확인
     LaunchedEffect(Unit) {
         currentUser?.id?.let { userId ->
             viewModel.loadRecentAssignment(userId)
         }
     }
-    
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,

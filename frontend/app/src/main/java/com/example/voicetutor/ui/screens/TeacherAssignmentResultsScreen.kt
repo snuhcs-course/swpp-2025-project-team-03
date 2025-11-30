@@ -70,7 +70,7 @@ fun TeacherAssignmentResultsScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            viewModel.clearError()
+                viewModel.clearError()
             }
         }
     }

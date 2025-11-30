@@ -223,7 +223,7 @@ fun TeacherStudentAssignmentDetailScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            viewModel.clearError()
+                viewModel.clearError()
             }
         }
     }
@@ -295,7 +295,7 @@ fun TeacherStudentAssignmentDetailScreen(
             } else {
                 "학생 결과를 찾을 수 없습니다"
             }
-            
+
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center,

@@ -92,31 +92,31 @@ fun AssignmentDetailedResultsScreen(
         // 네트워크 에러가 아닌 경우에만 표시
         val isNetworkError = ErrorMessageMapper.isNetworkError(error)
         if (!isNetworkError) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
             ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     Icon(
                         imageVector = Icons.Filled.Error,
                         contentDescription = null,
                         tint = Error,
                         modifier = Modifier.size(48.dp),
                     )
-                Text(
-                    text = "오류가 발생했습니다",
-                    color = Error,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = ErrorMessageMapper.getErrorMessage(error),
-                    color = Gray600,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                    Text(
+                        text = "오류가 발생했습니다",
+                        color = Error,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = ErrorMessageMapper.getErrorMessage(error),
+                        color = Gray600,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             }
         }

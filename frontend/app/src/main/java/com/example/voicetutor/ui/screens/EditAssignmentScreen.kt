@@ -714,40 +714,40 @@ fun EditAssignmentScreen(
             )
         }
 
-    LaunchedEffect(isUpdatingAssignment, isLoading, error) {
-        if (isUpdatingAssignment && !isLoading) {
-            if (error == null) {
-                Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
-                onSaveAssignment()
-            } else {
-                Toast.makeText(context, "과제 수정에 실패했습니다. 인터넷 연결을 확인하세요.", Toast.LENGTH_SHORT).show()
-            }
-            isUpdatingAssignment = false
-            viewModel.clearError()
-        }
-    }
-
-    LaunchedEffect(isDeletingAssignment, isLoading, error) {
-        if (isDeletingAssignment && !isLoading) {
-            if (error == null) {
-                Toast.makeText(context, "과제가 성공적으로 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                onDeleteAssignment()
-            } else {
-                Toast.makeText(context, "과제 삭제에 실패했습니다. 인터넷 연결을 확인하세요.", Toast.LENGTH_SHORT).show()
-            }
-            isDeletingAssignment = false
-            viewModel.clearError()
-        }
-    }
-
-    LaunchedEffect(error) {
-        if (!isUpdatingAssignment && !isDeletingAssignment) {
-            error?.let {
-                Toast.makeText(context, "네트워크가 불안정합니다.", Toast.LENGTH_SHORT).show()
+        LaunchedEffect(isUpdatingAssignment, isLoading, error) {
+            if (isUpdatingAssignment && !isLoading) {
+                if (error == null) {
+                    Toast.makeText(context, "과제가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
+                    onSaveAssignment()
+                } else {
+                    Toast.makeText(context, "과제 수정에 실패했습니다. 인터넷 연결을 확인하세요.", Toast.LENGTH_SHORT).show()
+                }
+                isUpdatingAssignment = false
                 viewModel.clearError()
             }
         }
-    }
+
+        LaunchedEffect(isDeletingAssignment, isLoading, error) {
+            if (isDeletingAssignment && !isLoading) {
+                if (error == null) {
+                    Toast.makeText(context, "과제가 성공적으로 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                    onDeleteAssignment()
+                } else {
+                    Toast.makeText(context, "과제 삭제에 실패했습니다. 인터넷 연결을 확인하세요.", Toast.LENGTH_SHORT).show()
+                }
+                isDeletingAssignment = false
+                viewModel.clearError()
+            }
+        }
+
+        LaunchedEffect(error) {
+            if (!isUpdatingAssignment && !isDeletingAssignment) {
+                error?.let {
+                    Toast.makeText(context, "네트워크가 불안정합니다.", Toast.LENGTH_SHORT).show()
+                    viewModel.clearError()
+                }
+            }
+        }
     }
 }
 

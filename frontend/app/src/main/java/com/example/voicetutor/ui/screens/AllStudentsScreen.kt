@@ -77,7 +77,7 @@ fun AllStudentsScreen(
         LaunchedEffect(errorMessage, isLoading, selectedClassId) {
             // 로딩이 완료되고, selectedClassId가 설정되어 있고, 네트워크 에러가 아닌 경우에만 클리어
             if (!isLoading && selectedClassId != null && !ErrorMessageMapper.isNetworkError(errorMessage)) {
-            studentViewModel.clearError()
+                studentViewModel.clearError()
             }
         }
     }
@@ -243,7 +243,7 @@ fun AllStudentsScreen(
         // classViewModel 또는 studentViewModel이 로딩 중이면 로딩 인디케이터 표시
         val isAnyLoading = classIsLoading || isLoading
         val shouldShowEmptyState = !isAnyLoading && (allStudents.isEmpty() || (selectedClassId == null && classes.isEmpty()))
-        
+
         if (isAnyLoading) {
             item {
                 Box(
@@ -262,17 +262,17 @@ fun AllStudentsScreen(
                 // 2. classViewModel에서 로딩을 시도했고 네트워크 에러가 발생하여 classes가 비어있는 경우
                 val hasAttemptedStudentLoad = selectedClassId != null && !isLoading
                 val isStudentNetworkError = hasAttemptedStudentLoad && error != null && ErrorMessageMapper.isNetworkError(error)
-                
+
                 val hasAttemptedClassLoad = !classIsLoading
                 val isClassNetworkError = hasAttemptedClassLoad && classes.isEmpty() && classError != null && ErrorMessageMapper.isNetworkError(classError)
-                
+
                 val isNetworkErrorState = isStudentNetworkError || isClassNetworkError
                 val emptyStateMessage = if (isNetworkErrorState) {
                     "네트워크가 불안정합니다"
                 } else {
                     "학생이 없습니다"
                 }
-                
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,

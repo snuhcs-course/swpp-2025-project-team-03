@@ -157,7 +157,7 @@ fun TeacherDashboardScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            actualAssignmentViewModel.clearError()
+                actualAssignmentViewModel.clearError()
             }
         }
     }
@@ -343,7 +343,7 @@ fun TeacherDashboardScreen(
                 } else {
                     "과제가 없습니다"
                 }
-                
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,
