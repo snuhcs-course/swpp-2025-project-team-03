@@ -733,10 +733,9 @@ fun CreateAssignmentScreen(
                         OutlinedTextField(
                             value = questionCount,
                             onValueChange = { newValue ->
-                                // 비숫자 문자 필터링 (숫자만 허용)
+                                // 숫자만 허용
                                 val filtered = newValue.filter { it.isDigit() }
                                 
-                                // 필터링된 값이 원래 값과 다르면 (비숫자 문자가 제거됨)
                                 if (filtered != newValue) {
                                     questionCount = filtered
                                 } else {
