@@ -145,6 +145,7 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1")
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     // MockK for ViewModel mocking in UI tests
@@ -475,6 +476,7 @@ val testClassGroup5 =
         "com.example.voicetutor.ui.navigation.VoiceTutorNavigationCoverageTest",
         "com.example.voicetutor.ui.navigation.MainLayoutCoverageTest",
         "com.example.voicetutor.ui.screens.AllAssignmentsScreenCoverageTest",
+        "com.example.voicetutor.ui.screens.CreateAssignmentScreenSpecificTest",
     )
 
 tasks.register("connectedDebug1", Exec::class) {

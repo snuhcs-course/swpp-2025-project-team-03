@@ -47,6 +47,7 @@ class TeacherAssignmentResultsScreenTest {
                 averageScore = 0.0,
                 completionRate = 0.0,
             )
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -72,6 +73,7 @@ class TeacherAssignmentResultsScreenTest {
             assignmentsResponse = listOf(assignmentData)
             shouldFailPersonalAssignments = true
             personalAssignmentsErrorMessage = "네트워크 오류"
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -79,10 +81,10 @@ class TeacherAssignmentResultsScreenTest {
         setScreenContent(viewModel, assignmentId)
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule.onAllNodes(hasText("제출된 과제가 없습니다", substring = true), useUnmergedTree = true)
+            composeTestRule.onAllNodes(hasText("네트워크가 불안정합니다", substring = true), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onAllNodesWithText("제출된 과제가 없습니다", useUnmergedTree = true)
+        composeTestRule.onAllNodesWithText("네트워크가 불안정합니다", useUnmergedTree = true)
             .onFirst()
             .assertIsDisplayed()
     }
@@ -131,6 +133,7 @@ class TeacherAssignmentResultsScreenTest {
                 averageScore = 88.0,
                 completionRate = 0.33,
             )
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
@@ -179,6 +182,7 @@ class TeacherAssignmentResultsScreenTest {
                 averageScore = 0.0,
                 completionRate = 0.0,
             )
+            personalAssignmentsDelayMillis = 100L
         }
 
         val viewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
