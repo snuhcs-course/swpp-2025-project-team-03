@@ -26,7 +26,6 @@ fun NoRecentAssignmentScreen(
     viewModel: AssignmentViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
