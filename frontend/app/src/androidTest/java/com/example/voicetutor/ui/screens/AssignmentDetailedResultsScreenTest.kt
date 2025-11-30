@@ -184,31 +184,4 @@ class AssignmentDetailedResultsScreenTest {
         }
         composeRule.waitForIdle()
     }
-
-//    @Test
-//    fun assignmentDetailedResultsScreen_displaysErrorState() {
-//        val failingApi = FakeApiService().apply {
-//            shouldFailAssignmentCorrectness = true
-//            assignmentCorrectnessErrorMessage = "네트워크 오류"
-//            shouldFailPersonalAssignmentStatistics = true
-//            personalAssignmentStatisticsErrorMessage = "통계 로드 실패"
-//        }
-//        val viewModel = AssignmentViewModel(AssignmentRepository(failingApi))
-//
-//        composeRule.setContent {
-//            VoiceTutorTheme {
-//                AssignmentDetailedResultsScreen(
-//                    personalAssignmentId = failingApi.personalAssignmentData.id,
-//                    assignmentTitle = "에러 리포트",
-//                    viewModel = viewModel,
-//                )
-//            }
-//        }
-//
-//        composeRule.waitUntil(timeoutMillis = 10_000) {
-//            composeRule.onAllNodesWithText("네트워크가 불안정합니다", substring = true)
-//                .fetchSemanticsNodes().isNotEmpty()
-//        }
-//        composeRule.onNodeWithText("네트워크가 불안정합니다", substring = true).assertIsDisplayed()
-//    }
 }
