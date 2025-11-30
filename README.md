@@ -108,7 +108,11 @@ It is designed for elementary or middle school students, teachers, and parents w
    python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('snunlp/KR-SBERT-V40K-klueNLI-augSTS'); model.save('submissions/utils/KR_SBERT_local')"
    ```
 
-9. **Run Django Server**
+9. **RoBERTa Model Setup**
+
+   Download model from [LINK](https://drive.google.com/file/d/15e_AVzvDLGpWCS_HGuTOJqHdPVVuX2xA/view?usp=sharing), unzip and place at `backend/reports/utils/models` directory
+
+11. **Run Django Server**
 
    ```bash
    # Run database migrations
