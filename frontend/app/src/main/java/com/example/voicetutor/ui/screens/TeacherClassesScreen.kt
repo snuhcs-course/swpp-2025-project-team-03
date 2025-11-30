@@ -47,21 +47,22 @@ private const val EMPTY_STATE_ICON_SIZE = 48
 fun TeacherClassesScreen(
     authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel? = null,
     assignmentViewModel: AssignmentViewModel? = null,
+    classViewModel: ClassViewModel? = null,
     teacherId: String? = null,
-    showCreatedToast: Boolean = false,
     onNavigateToClassDetail: (String, Int) -> Unit = { _, _ -> },
     onNavigateToCreateClass: () -> Unit = {},
     onNavigateToCreateAssignment: (Int?) -> Unit = { _ -> },
     onNavigateToStudents: (Int) -> Unit = {},
 ) {
-    val classViewModel: ClassViewModel = hiltViewModel()
+    val actualClassViewModel: ClassViewModel = classViewModel ?: hiltViewModel()
     val actualAssignmentViewModel: AssignmentViewModel = assignmentViewModel ?: hiltViewModel()
     val actualAuthViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = authViewModel ?: hiltViewModel()
 
-    val classes by classViewModel.classes.collectAsStateWithLifecycle()
+    val classes by actualClassViewModel.classes.collectAsStateWithLifecycle()
     val assignments by actualAssignmentViewModel.assignments.collectAsStateWithLifecycle()
-    val isLoading by classViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by classViewModel.error.collectAsStateWithLifecycle()
+    val isLoading by actualClassViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by actualClassViewModel.error.collectAsStateWithLifecycle()
+    val classCreatedEvent by actualClassViewModel.classCreatedEvent.collectAsStateWithLifecycle()
     val currentUser by actualAuthViewModel.currentUser.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -69,26 +70,23 @@ fun TeacherClassesScreen(
         val actualTeacherId = teacherId ?: currentUser?.id?.toString()
         if (actualTeacherId == null) return@LaunchedEffect
         actualAssignmentViewModel.loadAllAssignments(teacherId = actualTeacherId)
-        classViewModel.loadClasses(actualTeacherId)
+        actualClassViewModel.loadClasses(actualTeacherId)
     }
 
-    // 네트워크 에러가 아닌 경우에만 에러를 클리어합니다.
-    // 네트워크 에러는 classRooms.isEmpty()일 때 구분하기 위해 유지합니다.
+    // 네트워크 에러가 아닌 경우에만 에러를 클리어
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             if (!ErrorMessageMapper.isNetworkError(errorMessage)) {
-            classViewModel.clearError()
+                actualClassViewModel.clearError()
             }
         }
     }
 
-    LaunchedEffect(showCreatedToast, currentUser?.id) {
-        if (showCreatedToast && currentUser?.id != null) {
-            val actualTeacherId = teacherId ?: currentUser?.id?.toString()
-            if (actualTeacherId != null) {
-                Toast.makeText(context, "수업이 생성되었습니다.", Toast.LENGTH_SHORT).show()
-                classViewModel.loadClasses(actualTeacherId)
-            }
+    // 수업 생성 이벤트 처리
+    LaunchedEffect(classCreatedEvent) {
+        if (classCreatedEvent) {
+            Toast.makeText(context, "수업이 생성되었습니다.", Toast.LENGTH_SHORT).show()
+            actualClassViewModel.clearClassCreatedEvent()
         }
     }
 
@@ -226,7 +224,7 @@ fun TeacherClassesScreen(
                         onCreateAssignment = { classId -> onNavigateToCreateAssignment(classId) },
                         onViewStudents = { onNavigateToStudents(classRoom.id) },
                         onDeleteClass = { room, resultCallback ->
-                            classViewModel.deleteClass(room.id) { success ->
+                            actualClassViewModel.deleteClass(room.id) { success ->
                                 resultCallback(success)
                                 val message = if (success) {
                                     "${room.name} 수업이 삭제되었어요"

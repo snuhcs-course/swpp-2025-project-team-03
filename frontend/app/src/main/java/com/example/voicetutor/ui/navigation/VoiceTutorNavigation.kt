@@ -281,20 +281,14 @@ fun VoiceTutorNavigation(
         }
 
         composable(
-            route = "${VoiceTutorScreens.TeacherClasses.route}?created={created}",
-            arguments = listOf(
-                navArgument("created") {
-                    type = NavType.BoolType
-                    defaultValue = false
-                },
-            ),
-        ) { backStackEntry ->
-            val created = backStackEntry.arguments?.getBoolean("created") ?: false
+            route = VoiceTutorScreens.TeacherClasses.route,
+        ) {
             val graphBackStackEntry = remember(navController) {
                 navController.getBackStackEntry(navController.graph.id)
             }
             val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(graphBackStackEntry)
             val assignmentViewModel: com.example.voicetutor.ui.viewmodel.AssignmentViewModel = hiltViewModel(graphBackStackEntry)
+            val classViewModel: com.example.voicetutor.ui.viewmodel.ClassViewModel = hiltViewModel(graphBackStackEntry)
 
             MainLayout(
                 navController = navController,
@@ -303,7 +297,7 @@ fun VoiceTutorNavigation(
                 TeacherClassesScreen(
                     authViewModel = authViewModel,
                     assignmentViewModel = assignmentViewModel,
-                    showCreatedToast = created,
+                    classViewModel = classViewModel,
                     onNavigateToClassDetail = { className, classId ->
                         navController.navigate(VoiceTutorScreens.TeacherClassDetail.createRoute(className, classId))
                     },
@@ -662,6 +656,7 @@ fun VoiceTutorNavigation(
                 navController.getBackStackEntry(navController.graph.id)
             }
             val authViewModel: com.example.voicetutor.ui.viewmodel.AuthViewModel = hiltViewModel(graphBackStackEntry)
+            val classViewModel: com.example.voicetutor.ui.viewmodel.ClassViewModel = hiltViewModel(graphBackStackEntry)
             val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
 
             MainLayout(
@@ -670,8 +665,9 @@ fun VoiceTutorNavigation(
             ) {
                 CreateClassScreen(
                     teacherId = currentUser?.id?.toString(),
+                    classViewModel = classViewModel,
                     onClassCreated = {
-                        navController.navigate("${VoiceTutorScreens.TeacherClasses.route}?created=true") {
+                        navController.navigate(VoiceTutorScreens.TeacherClasses.route) {
                             popUpTo(VoiceTutorScreens.TeacherClasses.route) { inclusive = false }
                             launchSingleTop = true
                         }

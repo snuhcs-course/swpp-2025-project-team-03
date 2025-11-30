@@ -33,6 +33,9 @@ class ClassViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _classCreatedEvent = MutableStateFlow(false)
+    val classCreatedEvent: StateFlow<Boolean> = _classCreatedEvent.asStateFlow()
+
     fun loadClasses(teacherId: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -84,7 +87,7 @@ class ClassViewModel @Inject constructor(
         }
     }
 
-    fun createClass(createClassRequest: CreateClassRequest) {
+    fun createClass(createClassRequest: CreateClassRequest, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -92,13 +95,20 @@ class ClassViewModel @Inject constructor(
             classRepository.createClass(createClassRequest)
                 .onSuccess { classData ->
                     _classes.value = _classes.value + classData
+                    _classCreatedEvent.value = true
+                    onResult(true)
                 }
                 .onFailure { exception ->
                     _error.value = ErrorMessageMapper.getErrorMessage(exception)
+                    onResult(false)
                 }
 
             _isLoading.value = false
         }
+    }
+
+    fun clearClassCreatedEvent() {
+        _classCreatedEvent.value = false
     }
 
     fun enrollStudentToClass(classId: Int, studentId: Int) {
