@@ -33,6 +33,7 @@ class StudentDashboardScreenTest {
     fun studentDashboardScreen_noAssignments_showsEmptyState() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = emptyList()
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
@@ -58,6 +59,7 @@ class StudentDashboardScreenTest {
     fun studentDashboardScreen_withAssignments_displaysCard() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = listOf(personalAssignmentData)
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
@@ -83,7 +85,9 @@ class StudentDashboardScreenTest {
 
     @Test
     fun studentDashboardScreen_displaysWelcomeMessage() {
-        val fakeApi = FakeApiService()
+        val fakeApi = FakeApiService().apply {
+            personalAssignmentsDelayMillis = 100L
+        }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
 
@@ -108,6 +112,7 @@ class StudentDashboardScreenTest {
     fun studentDashboardScreen_displaysStatistics() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = listOf(personalAssignmentData)
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
@@ -133,6 +138,7 @@ class StudentDashboardScreenTest {
     fun studentDashboardScreen_displaysAssignmentCards() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = listOf(personalAssignmentData)
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
@@ -158,6 +164,7 @@ class StudentDashboardScreenTest {
     fun studentDashboardScreen_displaysAssignmentStatus() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = listOf(personalAssignmentData)
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
@@ -183,6 +190,7 @@ class StudentDashboardScreenTest {
     fun studentDashboardScreen_displaysProgress() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = listOf(personalAssignmentData)
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
@@ -206,7 +214,9 @@ class StudentDashboardScreenTest {
 
     @Test
     fun studentDashboardScreen_handlesLoadingState() {
-        val fakeApi = FakeApiService()
+        val fakeApi = FakeApiService().apply {
+            personalAssignmentsDelayMillis = 100L
+        }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
 
@@ -224,7 +234,9 @@ class StudentDashboardScreenTest {
 
     @Test
     fun studentDashboardScreen_displaysNavigationButtons() {
-        val fakeApi = FakeApiService()
+        val fakeApi = FakeApiService().apply {
+            personalAssignmentsDelayMillis = 100L
+        }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
 
@@ -249,6 +261,7 @@ class StudentDashboardScreenTest {
     fun studentDashboardScreen_displaysAssignmentCount() {
         val fakeApi = FakeApiService().apply {
             personalAssignmentsResponse = listOf(personalAssignmentData)
+            personalAssignmentsDelayMillis = 100L
         }
         val assignmentViewModel = AssignmentViewModel(AssignmentRepository(fakeApi))
         val authViewModel = AuthViewModel(AuthRepository(fakeApi))
