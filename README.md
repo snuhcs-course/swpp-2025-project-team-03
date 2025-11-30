@@ -33,6 +33,7 @@ The platform integrates with Korean national curriculum standards, using a two-s
 
 ### Documentation
 
+- [Setup Guide](<https://github.com/snuhcs-course/swpp-2025-project-team-03/wiki/9)-Setup-Guide>)
 - [Design Documentation](<https://github.com/snuhcs-course/swpp-2025-project-team-03/wiki/2)-Design-Documentation>)
 - [Requirements & Specifications](<https://github.com/snuhcs-course/swpp-2025-project-team-03/wiki/1)-Requirements-&-Specifications>)
 
