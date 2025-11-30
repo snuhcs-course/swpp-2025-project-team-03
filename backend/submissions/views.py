@@ -91,7 +91,7 @@ def collect_student_context(question, student, personal_assignment):
     total_answered = all_answers.count()
     correct_count = all_answers.filter(state=Answer.State.CORRECT).count()
 
-    # 평균 자신감 계산 (eval_grade가 있는 것만)
+    # 평균 confidence score 계산 (eval_grade가 있는 것만)
     avg_result = all_answers.exclude(eval_grade__isnull=True).aggregate(avg=Avg("eval_grade"))
     avg_confidence = avg_result["avg"] or 0.0
 
@@ -311,7 +311,7 @@ class AnswerSubmitView(APIView):
                 Answer.objects.filter(
                     question__in=questions,
                     student=personal_assignment.student,
-                    state=Answer.State.PROCESSING,  # 새로 추가한 state
+                    state=Answer.State.PROCESSING,
                 )
                 .select_related("question")
                 .first()
@@ -332,7 +332,6 @@ class AnswerSubmitView(APIView):
                     "answer": q.model_answer,
                     "explanation": q.explanation,
                     "difficulty": q.difficulty,
-                    # [추가 포인트] 프론트가 인지할 수 있는 플래그
                     "is_processing": True,
                 }
 
@@ -966,11 +965,11 @@ class PersonalAssignmentStatisticsView(APIView):
 
             # 각 question_number별로 점수 계산
             for question_number, questions in questions_by_number.items():
-                # recalled_num 순으로 정렬되어 있음 (이미 order_by 적용됨)
+                # recalled_num 순으로 정렬되어 있음
                 question_score = 0
 
                 for question in questions:
-                    # 딕셔너리에서 답변 조회 (O(1))
+                    # 딕셔너리에서 답변 조회
                     answer = answers_by_question_id.get(question.id)
 
                     if answer is None:
