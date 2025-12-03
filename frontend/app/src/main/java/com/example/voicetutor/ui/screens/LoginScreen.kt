@@ -242,6 +242,7 @@ fun LoginScreen(
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                             isError = emailErrorMessage != null,
                             colors = loginTextFieldColors(),
                             supportingText = {
@@ -292,6 +293,7 @@ fun LoginScreen(
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                             isError = passwordErrorMessage != null,
                             colors = loginTextFieldColors(),
                             supportingText = {
