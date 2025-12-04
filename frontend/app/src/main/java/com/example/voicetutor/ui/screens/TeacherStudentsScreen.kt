@@ -361,105 +361,110 @@ fun TeacherStudentsScreen(
         }) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .fillMaxSize()
                     .padding(16.dp),
             ) {
-                Text(
-                    "학생 등록",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = enrollSearchQuery,
-                    onValueChange = { enrollSearchQuery = it },
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                    placeholder = {
-                        Text(
-                            "이름 또는 이메일로 검색",
-                            color = Gray500,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = "검색",
-                            tint = Gray600,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    },
-                    trailingIcon = {
-                        if (enrollSearchQuery.isNotEmpty()) {
-                            IconButton(onClick = { enrollSearchQuery = "" }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Clear,
-                                    contentDescription = "검색어 지우기",
-                                    tint = Gray600,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryIndigo,
-                        unfocusedBorderColor = Gray300,
-                    ),
-                )
-                Spacer(Modifier.height(12.dp))
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    Text(
+                        "학생 등록",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.height(12.dp))
 
-                if (isLoadingAllStudents) {
-                    Box(
+                    OutlinedTextField(
+                        value = enrollSearchQuery,
+                        onValueChange = { enrollSearchQuery = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(color = PrimaryIndigo)
-                    }
-                } else {
-                    val enrolledIds = classStudents.map { it.id }.toSet()
-                    val allCandidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
-
-                    val searchQueryLower = enrollSearchQuery.lowercase()
-                    val candidates = if (searchQueryLower.isBlank()) {
-                        allCandidates
-                    } else {
-                        allCandidates.filter { student ->
-                            val name = student.name?.lowercase() ?: ""
-                            val email = student.email.lowercase()
-                            name.contains(searchQueryLower) || email.contains(searchQueryLower)
-                        }
-                    }
-
-                    if (enrollNetworkError != null) {
-                        Text("네트워크가 불안정합니다", color = Gray600)
-                    } else if (allCandidates.isEmpty()) {
-                        Text("등록 가능한 학생이 없습니다.", color = Gray600)
-                    } else if (candidates.isEmpty()) {
-                        Text("검색 결과가 없습니다.", color = Gray600)
-                    } else {
-                        candidates.forEach { student ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
-                                    Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                            .height(48.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        placeholder = {
+                            Text(
+                                "이름 또는 이메일로 검색",
+                                color = Gray500,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "검색",
+                                tint = Gray600,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        },
+                        trailingIcon = {
+                            if (enrollSearchQuery.isNotEmpty()) {
+                                IconButton(onClick = { enrollSearchQuery = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Clear,
+                                        contentDescription = "검색어 지우기",
+                                        tint = Gray600,
+                                        modifier = Modifier.size(18.dp),
+                                    )
                                 }
-                                val checked = selectedToEnroll.contains(student.id)
-                                Checkbox(checked = checked, onCheckedChange = { isChecked ->
-                                    if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
-                                })
+                            }
+                        },
+                        singleLine = true,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryIndigo,
+                            unfocusedBorderColor = Gray300,
+                        ),
+                    )
+                    Spacer(Modifier.height(12.dp))
+
+                    if (isLoadingAllStudents) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(color = PrimaryIndigo)
+                        }
+                    } else {
+                        val enrolledIds = classStudents.map { it.id }.toSet()
+                        val allCandidates = allStudentsForEnroll.filter { it.id !in enrolledIds }
+
+                        val searchQueryLower = enrollSearchQuery.lowercase()
+                        val candidates = if (searchQueryLower.isBlank()) {
+                            allCandidates
+                        } else {
+                            allCandidates.filter { student ->
+                                val name = student.name?.lowercase() ?: ""
+                                val email = student.email.lowercase()
+                                name.contains(searchQueryLower) || email.contains(searchQueryLower)
+                            }
+                        }
+
+                        if (enrollNetworkError != null) {
+                            Text("네트워크가 불안정합니다", color = Gray600)
+                        } else if (allCandidates.isEmpty()) {
+                            Text("등록 가능한 학생이 없습니다.", color = Gray600)
+                        } else if (candidates.isEmpty()) {
+                            Text("검색 결과가 없습니다.", color = Gray600)
+                        } else {
+                            candidates.forEach { student ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                        Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                                    }
+                                    val checked = selectedToEnroll.contains(student.id)
+                                    Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                        if (isChecked) selectedToEnroll.add(student.id) else selectedToEnroll.remove(student.id)
+                                    })
+                                }
                             }
                         }
                     }
@@ -508,94 +513,99 @@ fun TeacherStudentsScreen(
         }) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .fillMaxSize()
                     .padding(16.dp),
             ) {
-                Text(
-                    "학생 삭제",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = deleteSearchQuery,
-                    onValueChange = { deleteSearchQuery = it },
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                    placeholder = {
-                        Text(
-                            "이름 또는 이메일로 검색",
-                            color = Gray500,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = "검색",
-                            tint = Gray600,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    },
-                    trailingIcon = {
-                        if (deleteSearchQuery.isNotEmpty()) {
-                            IconButton(onClick = { deleteSearchQuery = "" }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Clear,
-                                    contentDescription = "검색어 지우기",
-                                    tint = Gray600,
-                                    modifier = Modifier.size(18.dp),
-                                )
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    Text(
+                        "학생 삭제",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = deleteSearchQuery,
+                        onValueChange = { deleteSearchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        placeholder = {
+                            Text(
+                                "이름 또는 이메일로 검색",
+                                color = Gray500,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "검색",
+                                tint = Gray600,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        },
+                        trailingIcon = {
+                            if (deleteSearchQuery.isNotEmpty()) {
+                                IconButton(onClick = { deleteSearchQuery = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Clear,
+                                        contentDescription = "검색어 지우기",
+                                        tint = Gray600,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
                             }
+                        },
+                        singleLine = true,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryIndigo,
+                            unfocusedBorderColor = Gray300,
+                        ),
+                    )
+                    Spacer(Modifier.height(12.dp))
+
+                    val enrolledStudents = classStudents
+                    val searchQueryLower = deleteSearchQuery.lowercase()
+                    val filteredStudents = if (searchQueryLower.isBlank()) {
+                        enrolledStudents
+                    } else {
+                        enrolledStudents.filter { student ->
+                            val name = student.name?.lowercase() ?: ""
+                            val email = student.email.lowercase()
+                            name.contains(searchQueryLower) || email.contains(searchQueryLower)
                         }
-                    },
-                    singleLine = true,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryIndigo,
-                        unfocusedBorderColor = Gray300,
-                    ),
-                )
-                Spacer(Modifier.height(12.dp))
-
-                val enrolledStudents = classStudents
-                val searchQueryLower = deleteSearchQuery.lowercase()
-                val filteredStudents = if (searchQueryLower.isBlank()) {
-                    enrolledStudents
-                } else {
-                    enrolledStudents.filter { student ->
-                        val name = student.name?.lowercase() ?: ""
-                        val email = student.email.lowercase()
-                        name.contains(searchQueryLower) || email.contains(searchQueryLower)
                     }
-                }
 
-                val isDeleteNetworkError = !classIsLoading && enrolledStudents.isEmpty() && classError != null && ErrorMessageMapper.isNetworkError(classError)
-                if (isDeleteNetworkError) {
-                    Text("네트워크가 불안정합니다", color = Gray600)
-                } else if (enrolledStudents.isEmpty()) {
-                    Text("삭제할 학생이 없습니다.", color = Gray600)
-                } else if (filteredStudents.isEmpty()) {
-                    Text("검색 결과가 없습니다.", color = Gray600)
-                } else {
-                    filteredStudents.forEach { student ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
-                                Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                    val isDeleteNetworkError = !classIsLoading && enrolledStudents.isEmpty() && classError != null && ErrorMessageMapper.isNetworkError(classError)
+                    if (isDeleteNetworkError) {
+                        Text("네트워크가 불안정합니다", color = Gray600)
+                    } else if (enrolledStudents.isEmpty()) {
+                        Text("삭제할 학생이 없습니다.", color = Gray600)
+                    } else if (filteredStudents.isEmpty()) {
+                        Text("검색 결과가 없습니다.", color = Gray600)
+                    } else {
+                        filteredStudents.forEach { student ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(student.name ?: "학생", fontWeight = FontWeight.Medium)
+                                    Text(student.email, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                                }
+                                val checked = selectedToDelete.contains(student.id)
+                                Checkbox(checked = checked, onCheckedChange = { isChecked ->
+                                    if (isChecked) selectedToDelete.add(student.id) else selectedToDelete.remove(student.id)
+                                })
                             }
-                            val checked = selectedToDelete.contains(student.id)
-                            Checkbox(checked = checked, onCheckedChange = { isChecked ->
-                                if (isChecked) selectedToDelete.add(student.id) else selectedToDelete.remove(student.id)
-                            })
                         }
                     }
                 }
