@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,8 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AssignmentDetailedResultsScreen(
@@ -144,10 +147,14 @@ fun AssignmentDetailedResultsScreen(
             }
         }
     } else {
+        val scrollState = rememberScrollState()
+        val coroutineScope = rememberCoroutineScope()
+        val density = LocalDensity.current
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(
@@ -216,7 +223,19 @@ fun AssignmentDetailedResultsScreen(
                         isExpanded = expandedStates[group.baseQuestion.questionNumber] ?: false,
                         onToggle = {
                             val currentState = expandedStates[group.baseQuestion.questionNumber] ?: false
-                            expandedStates[group.baseQuestion.questionNumber] = !currentState
+                            val willExpand = !currentState
+                            expandedStates[group.baseQuestion.questionNumber] = willExpand
+                            
+                            // 확장될 때 스크롤을 조금 내림
+                            if (willExpand) {
+                                coroutineScope.launch {
+                                    // 약간의 딜레이 후 스크롤 (레이아웃이 완료된 후)
+                                    delay(100)
+                                    val scrollOffset = with(density) { 150.dp.toPx() }.toInt()
+                                    val targetScroll = scrollState.value + scrollOffset
+                                    scrollState.animateScrollTo(targetScroll)
+                                }
+                            }
                         },
                     )
 
