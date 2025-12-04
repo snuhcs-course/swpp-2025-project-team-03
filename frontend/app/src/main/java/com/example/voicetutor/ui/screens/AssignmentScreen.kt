@@ -941,7 +941,7 @@ fun AssignmentScreen(
                                 modifier = Modifier.size(48.dp),
                             )
                             Text(
-                                text = "채점 중...",
+                                text = "채점 & 문제 생성중...",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
