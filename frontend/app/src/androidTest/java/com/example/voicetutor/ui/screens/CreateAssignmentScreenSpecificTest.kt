@@ -211,7 +211,7 @@ class CreateAssignmentScreenSpecificTest {
         // Select Due Date
         composeRule.onNodeWithText("마감일").performClick()
         composeRule.onNodeWithText("시간 선택").performClick() // DatePicker confirm
-        composeRule.onNodeWithText("확인").performClick() // TimePicker confirm
+        composeRule.onNodeWithText("취소").performClick() // TimePicker confirm
 
         // Set Question Count
         composeRule.onNodeWithText("문제 개수").performTextReplacement("5")
