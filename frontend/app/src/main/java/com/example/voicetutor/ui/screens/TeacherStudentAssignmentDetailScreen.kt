@@ -28,6 +28,8 @@ import com.example.voicetutor.ui.components.*
 import com.example.voicetutor.ui.theme.*
 import com.example.voicetutor.ui.utils.ErrorMessageMapper
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val HEADER_ALPHA = 0.08f
 private const val HEADER_CORNER_RADIUS = 16
@@ -236,10 +238,14 @@ fun TeacherStudentAssignmentDetailScreen(
     val isWaitingForStudentData = isLoading && hasBasicData && studentResult == null && loadedDataForKey != null
     val isWaitingForInitialData = isLoading && hasBasicData && studentResult == null && loadedDataForKey == null
 
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (isInitialLoading || isWaitingForInitialData) {
@@ -454,7 +460,19 @@ fun TeacherStudentAssignmentDetailScreen(
                             isExpanded = expandedStates[group.baseQuestion.questionNumber] ?: false,
                             onToggle = {
                                 val current = expandedStates[group.baseQuestion.questionNumber] ?: false
-                                expandedStates[group.baseQuestion.questionNumber] = !current
+                                val willExpand = !current
+                                expandedStates[group.baseQuestion.questionNumber] = willExpand
+
+                                // 확장될 때 스크롤을 조금 내림
+                                if (willExpand) {
+                                    coroutineScope.launch {
+                                        // 약간의 딜레이 후 스크롤 (레이아웃이 완료된 후)
+                                        delay(100)
+                                        val scrollOffset = with(density) { 150.dp.toPx() }.toInt()
+                                        val targetScroll = scrollState.value + scrollOffset
+                                        scrollState.animateScrollTo(targetScroll)
+                                    }
+                                }
                             },
                         )
                         if (index < questionGroups.size - 1) {

@@ -12,8 +12,6 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.voicetutor.HiltComponentActivity
-import com.example.voicetutor.data.repository.AssignmentRepository
-import com.example.voicetutor.data.repository.AuthRepository
 import com.example.voicetutor.di.NetworkModule
 import com.example.voicetutor.ui.theme.VoiceTutorTheme
 import com.example.voicetutor.ui.viewmodel.AssignmentViewModel
@@ -23,7 +21,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Before
@@ -47,7 +44,7 @@ class CreateAssignmentScreenSpecificTest {
     // Mocks
     private lateinit var mockAssignmentViewModel: AssignmentViewModel
     private lateinit var mockAuthViewModel: AuthViewModel
-    
+
     // StateFlows for Mock VM
     private val isCreatingAssignmentFlow = MutableStateFlow(false)
     private val errorFlow = MutableStateFlow<String?>(null)
@@ -74,7 +71,7 @@ class CreateAssignmentScreenSpecificTest {
         every { mockAssignmentViewModel.isUploading } returns isUploadingFlow
         every { mockAssignmentViewModel.uploadProgress } returns uploadProgressFlow
         every { mockAssignmentViewModel.uploadSuccess } returns uploadSuccessFlow
-        
+
         every { mockAuthViewModel.currentUser } returns currentUserFlow
     }
 
@@ -117,7 +114,7 @@ class CreateAssignmentScreenSpecificTest {
                 CreateAssignmentScreen(
                     teacherId = "2",
                     assignmentViewModel = mockAssignmentViewModel,
-                    authViewModel = mockAuthViewModel
+                    authViewModel = mockAuthViewModel,
                 )
             }
         }
@@ -130,7 +127,7 @@ class CreateAssignmentScreenSpecificTest {
             composeRule.onAllNodesWithText("파일 용량이 너무 큽니다", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("파일 용량이 너무 큽니다", substring = true).assertIsDisplayed()
-        
+
         // Clean up
         largeFile.delete()
     }
@@ -146,7 +143,7 @@ class CreateAssignmentScreenSpecificTest {
                 CreateAssignmentScreen(
                     teacherId = "2",
                     assignmentViewModel = mockAssignmentViewModel,
-                    authViewModel = mockAuthViewModel
+                    authViewModel = mockAuthViewModel,
                 )
             }
         }
@@ -167,7 +164,7 @@ class CreateAssignmentScreenSpecificTest {
 
         // Test removing file
         composeRule.onNodeWithContentDescription("파일 제거").performClick()
-        
+
         // Verify file is removed
         composeRule.waitUntil(timeoutMillis = 5000) {
             composeRule.onAllNodesWithText(smallFile.name).fetchSemanticsNodes().isEmpty()
@@ -188,7 +185,7 @@ class CreateAssignmentScreenSpecificTest {
                 CreateAssignmentScreen(
                     teacherId = "2",
                     assignmentViewModel = mockAssignmentViewModel,
-                    authViewModel = mockAuthViewModel
+                    authViewModel = mockAuthViewModel,
                 )
             }
         }
@@ -196,7 +193,7 @@ class CreateAssignmentScreenSpecificTest {
         // Fill form
         composeRule.onNodeWithText("과제 제목").performTextInput("Valid Title")
         composeRule.onNodeWithText("설명").performTextInput("Valid Description")
-        
+
         // Select Class
         composeRule.onNodeWithText("수업 선택").performClick()
         composeRule.waitForIdle()
@@ -214,7 +211,7 @@ class CreateAssignmentScreenSpecificTest {
         // Select Due Date
         composeRule.onNodeWithText("마감일").performClick()
         composeRule.onNodeWithText("시간 선택").performClick() // DatePicker confirm
-        composeRule.onNodeWithText("확인").performClick() // TimePicker confirm
+        composeRule.onNodeWithText("취소").performClick() // TimePicker confirm
 
         // Set Question Count
         composeRule.onNodeWithText("문제 개수").performTextReplacement("5")

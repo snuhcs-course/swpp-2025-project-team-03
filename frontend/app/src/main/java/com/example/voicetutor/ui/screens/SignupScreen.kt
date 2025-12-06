@@ -255,6 +255,7 @@ fun SignupScreen(
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                             isError = nameErrorMessage != null,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryIndigo,
@@ -300,6 +301,7 @@ fun SignupScreen(
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                             isError = emailErrorMessage != null,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryIndigo,
@@ -355,6 +357,7 @@ fun SignupScreen(
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                             isError = passwordErrorMessage != null,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryIndigo,
@@ -411,6 +414,7 @@ fun SignupScreen(
                             ),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                             isError = confirmPasswordErrorMessage != null,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryIndigo,

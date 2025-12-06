@@ -749,6 +749,8 @@ fun CreateAssignmentScreen(
                                     val count = filtered.toIntOrNull()
                                     if (count == null || count <= 0) {
                                         questionCountError = "문제 개수는 1 이상이어야 합니다"
+                                    } else if (count > 10) {
+                                        questionCountError = "문제 개수는 10개를 초과할 수 없습니다"
                                     } else {
                                         questionCountError = null
                                     }
