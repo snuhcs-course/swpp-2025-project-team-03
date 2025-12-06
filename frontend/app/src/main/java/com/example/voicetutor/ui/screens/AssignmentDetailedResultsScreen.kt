@@ -225,7 +225,7 @@ fun AssignmentDetailedResultsScreen(
                             val currentState = expandedStates[group.baseQuestion.questionNumber] ?: false
                             val willExpand = !currentState
                             expandedStates[group.baseQuestion.questionNumber] = willExpand
-                            
+
                             // 확장될 때 스크롤을 조금 내림
                             if (willExpand) {
                                 coroutineScope.launch {
